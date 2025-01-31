@@ -22,10 +22,14 @@ interface FormData {
   status: UserStatus;
 }
 
-export function AddUserDialog() {
+interface AddUserDialogProps {
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+}
+
+export function AddUserDialog({ open, onOpenChange }: AddUserDialogProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const [open, setOpen] = useState(false);
   const [formData, setFormData] = useState<FormData>({
     first_name: "",
     last_name: "",
@@ -54,7 +58,7 @@ export function AddUserDialog() {
         description: "User has been added successfully",
       });
 
-      // Reset form and close dialog
+      // Reset form
       setFormData({
         first_name: "",
         last_name: "",
@@ -65,7 +69,11 @@ export function AddUserDialog() {
         role: "user",
         status: "active"
       });
-      setOpen(false);
+      
+      // Close dialog if onOpenChange is provided
+      if (onOpenChange) {
+        onOpenChange(false);
+      }
 
       // Refresh users list
       queryClient.invalidateQueries({ queryKey: ["users"] });
@@ -80,7 +88,7 @@ export function AddUserDialog() {
   };
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogTrigger asChild>
         <Button className="bg-spotify-green hover:bg-spotify-green/90">
           <UserPlus className="h-4 w-4 mr-2" />
