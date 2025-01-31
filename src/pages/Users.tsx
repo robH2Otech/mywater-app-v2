@@ -1,11 +1,10 @@
-import { Layout } from "@/components/layout/Layout";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { UserPlus, Mail, Phone, Building2, Briefcase } from "lucide-react";
+import { Mail, Phone, Building2, Briefcase } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
+import { AddUserDialog } from "@/components/users/AddUserDialog";
 
 export const Users = () => {
   const { toast } = useToast();
@@ -55,18 +54,7 @@ export const Users = () => {
           <h1 className="text-2xl font-bold">Users</h1>
           <p className="text-gray-400">Manage system users and permissions</p>
         </div>
-        <Button
-          onClick={() => {
-            toast({
-              title: "Coming soon",
-              description: "This feature is not yet implemented.",
-            });
-          }}
-          className="bg-spotify-green hover:bg-spotify-green/90"
-        >
-          <UserPlus className="h-4 w-4 mr-2" />
-          Add User
-        </Button>
+        <AddUserDialog />
       </div>
       
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
