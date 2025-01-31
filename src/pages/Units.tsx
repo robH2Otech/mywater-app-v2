@@ -5,9 +5,13 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Droplet, Plus, MapPin, Calendar, Phone, Mail, User } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { AddUnitDialog } from "@/components/units/AddUnitDialog";
+import { useState } from "react";
 
 export const Units = () => {
   const { toast } = useToast();
+  const [isAddUnitOpen, setIsAddUnitOpen] = useState(false);
+  
   const { data: units = [], isLoading } = useQuery({
     queryKey: ["units"],
     queryFn: async () => {
@@ -55,12 +59,7 @@ export const Units = () => {
             <p className="text-gray-400">Manage and monitor your water treatment units</p>
           </div>
           <Button 
-            onClick={() => {
-              toast({
-                title: "Coming soon",
-                description: "This feature will be available soon",
-              });
-            }}
+            onClick={() => setIsAddUnitOpen(true)}
             className="bg-spotify-green hover:bg-spotify-green/90"
           >
             <Plus className="h-4 w-4 mr-2" />
@@ -138,6 +137,11 @@ export const Units = () => {
             ))}
           </div>
         )}
+
+        <AddUnitDialog 
+          open={isAddUnitOpen} 
+          onOpenChange={setIsAddUnitOpen} 
+        />
       </div>
     </Layout>
   );
