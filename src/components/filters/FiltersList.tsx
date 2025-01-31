@@ -19,16 +19,36 @@ export function FiltersList({ units, onFilterClick }: FiltersListProps) {
     return "ok";
   };
 
+  const getStatusIcon = (status: string) => {
+    switch (status) {
+      case "overdue":
+        return <AlertTriangle className="h-5 w-5 text-red-500" />;
+      case "soon":
+        return <Clock className="h-5 w-5 text-yellow-500" />;
+      case "ok":
+        return <CheckCircle2 className="h-5 w-5 text-spotify-green" />;
+      default:
+        return <Filter className="h-5 w-5 text-gray-400" />;
+    }
+  };
+
+  const getStatusText = (status: string) => {
+    switch (status) {
+      case "overdue":
+        return "Overdue";
+      case "soon":
+        return "Due Soon";
+      case "ok":
+        return "Active";
+      default:
+        return "Unknown";
+    }
+  };
+
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
       {units.map((unit) => {
         const status = getMaintenanceStatus(unit);
-        const statusColors = {
-          overdue: "text-red-500",
-          soon: "text-yellow-500",
-          ok: "text-spotify-green",
-          unknown: "text-gray-400",
-        };
         
         return (
           <Card 
@@ -40,7 +60,7 @@ export function FiltersList({ units, onFilterClick }: FiltersListProps) {
               <div className="space-y-4">
                 <div className="flex justify-between items-start">
                   <div>
-                    <h3 className="font-semibold">{unit.name}</h3>
+                    <h3 className="text-xl font-semibold">{unit.name}</h3>
                     {unit.location && (
                       <div className="flex items-center gap-1 text-sm text-gray-400 mt-1">
                         <MapPin className="h-4 w-4" />
@@ -48,21 +68,24 @@ export function FiltersList({ units, onFilterClick }: FiltersListProps) {
                       </div>
                     )}
                   </div>
-                  {status === "overdue" && <AlertTriangle className="h-5 w-5 text-red-500" />}
-                  {status === "soon" && <Clock className="h-5 w-5 text-yellow-500" />}
-                  {status === "ok" && <CheckCircle2 className="h-5 w-5 text-spotify-green" />}
+                  <div className="flex items-center gap-2">
+                    {getStatusIcon(status)}
+                    <span className="text-sm font-medium">
+                      {getStatusText(status)}
+                    </span>
+                  </div>
                 </div>
                 
                 <div className="space-y-2">
                   {unit.last_maintenance && (
-                    <div className="text-sm text-gray-400">
+                    <p className="text-sm text-gray-400">
                       Last Maintenance: {new Date(unit.last_maintenance).toLocaleDateString()}
-                    </div>
+                    </p>
                   )}
                   {unit.next_maintenance && (
-                    <div className={`text-sm ${statusColors[status]}`}>
+                    <p className="text-sm text-gray-400">
                       Next Maintenance: {new Date(unit.next_maintenance).toLocaleDateString()}
-                    </div>
+                    </p>
                   )}
                 </div>
               </div>

@@ -1,5 +1,5 @@
 import { Card, CardContent } from "@/components/ui/card";
-import { Mail, Phone, Building2, Briefcase } from "lucide-react";
+import { Mail, Phone, Building2, Briefcase, CheckCircle2, AlertCircle } from "lucide-react";
 
 interface UsersListProps {
   users: any[];
@@ -7,8 +7,17 @@ interface UsersListProps {
 }
 
 export function UsersList({ users, onUserClick }: UsersListProps) {
+  const getStatusIcon = (status: string) => {
+    switch (status) {
+      case "inactive":
+        return <AlertCircle className="h-5 w-5 text-red-500" />;
+      default:
+        return <CheckCircle2 className="h-5 w-5 text-spotify-green" />;
+    }
+  };
+
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
       {users.map((user) => (
         <Card 
           key={user.id} 
@@ -17,9 +26,14 @@ export function UsersList({ users, onUserClick }: UsersListProps) {
         >
           <CardContent className="p-6">
             <div className="space-y-4">
-              <div>
-                <h3 className="font-semibold">{user.first_name} {user.last_name}</h3>
-                <p className="text-sm text-gray-400">{user.role}</p>
+              <div className="flex justify-between items-start">
+                <div>
+                  <h3 className="text-xl font-semibold">
+                    {user.first_name} {user.last_name}
+                  </h3>
+                  <p className="text-sm text-gray-400">{user.role}</p>
+                </div>
+                {getStatusIcon(user.status)}
               </div>
               
               <div className="space-y-2">
