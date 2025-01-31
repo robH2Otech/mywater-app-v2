@@ -15,6 +15,11 @@ export function FilterDetailsDialog({ filter, open, onOpenChange }: FilterDetail
     return format(new Date(date), "PPP");
   };
 
+  // If filter is null, don't render the dialog content
+  if (!filter) {
+    return null;
+  }
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[600px] bg-spotify-darker border-spotify-accent">
