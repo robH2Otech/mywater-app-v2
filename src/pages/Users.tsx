@@ -1,12 +1,12 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Card, CardContent } from "@/components/ui/card";
-import { Mail, Phone, Building2, Briefcase } from "lucide-react";
-import { Skeleton } from "@/components/ui/skeleton";
+import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { AddUserDialog } from "@/components/users/AddUserDialog";
 import { UserDetailsDialog } from "@/components/users/UserDetailsDialog";
-import { useState } from "react";
+import { PageHeader } from "@/components/shared/PageHeader";
+import { LoadingSkeleton } from "@/components/shared/LoadingSkeleton";
+import { UsersList } from "@/components/users/UsersList";
 
 export const Users = () => {
   const { toast } = useToast();
@@ -33,76 +33,22 @@ export const Users = () => {
   });
 
   if (isLoading) {
-    return (
-      <div className="space-y-4">
-        {[...Array(3)].map((_, i) => (
-          <Card key={i} className="bg-spotify-darker">
-            <CardContent className="p-6">
-              <Skeleton className="h-6 w-1/3 bg-spotify-accent" />
-              <div className="mt-4 space-y-2">
-                <Skeleton className="h-4 w-2/3 bg-spotify-accent" />
-                <Skeleton className="h-4 w-1/2 bg-spotify-accent" />
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
-    );
+    return <LoadingSkeleton />;
   }
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-2xl font-bold">Users</h1>
-          <p className="text-gray-400">Manage system users and permissions</p>
-        </div>
-        <AddUserDialog />
-      </div>
+      <PageHeader
+        title="Users"
+        description="Manage system users and permissions"
+      />
       
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {users.map((user) => (
-          <Card 
-            key={user.id} 
-            className="bg-spotify-darker hover:bg-spotify-accent/40 transition-colors cursor-pointer"
-            onClick={() => setSelectedUser(user)}
-          >
-            <CardContent className="p-6">
-              <div className="space-y-4">
-                <div>
-                  <h3 className="font-semibold">{user.first_name} {user.last_name}</h3>
-                  <p className="text-sm text-gray-400">{user.role}</p>
-                </div>
-                
-                <div className="space-y-2">
-                  <div className="flex items-center gap-2 text-sm text-gray-400">
-                    <Mail className="h-4 w-4" />
-                    {user.email}
-                  </div>
-                  {user.phone && (
-                    <div className="flex items-center gap-2 text-sm text-gray-400">
-                      <Phone className="h-4 w-4" />
-                      {user.phone}
-                    </div>
-                  )}
-                  {user.company && (
-                    <div className="flex items-center gap-2 text-sm text-gray-400">
-                      <Building2 className="h-4 w-4" />
-                      {user.company}
-                    </div>
-                  )}
-                  {user.job_title && (
-                    <div className="flex items-center gap-2 text-sm text-gray-400">
-                      <Briefcase className="h-4 w-4" />
-                      {user.job_title}
-                    </div>
-                  )}
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
+      <UsersList
+        users={users}
+        onUserClick={setSelectedUser}
+      />
+
+      <AddUserDialog />
 
       <UserDetailsDialog
         open={!!selectedUser}
