@@ -41,7 +41,7 @@ export function AddFilterDialog({ open, onOpenChange }: { open: boolean; onOpenC
     setIsSubmitting(true);
 
     try {
-      const { error } = await supabase.from("filters").insert({
+      const { error } = await supabase.from("filters").insert([{
         unit_id: formData.unit_id,
         installation_date: formData.installation_date?.toISOString(),
         last_change: formData.last_change?.toISOString(),
@@ -51,7 +51,7 @@ export function AddFilterDialog({ open, onOpenChange }: { open: boolean; onOpenC
         email: formData.email || null,
         phone: formData.phone || null,
         notes: formData.notes || null,
-      });
+      }]);
 
       if (error) throw error;
 

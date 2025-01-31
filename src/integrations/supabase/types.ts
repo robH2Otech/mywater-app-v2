@@ -51,6 +51,59 @@ export type Database = {
         }
         Relationships: []
       }
+      filters: {
+        Row: {
+          contact_name: string | null
+          created_at: string | null
+          email: string | null
+          id: string
+          installation_date: string | null
+          last_change: string | null
+          next_change: string | null
+          notes: string | null
+          phone: string | null
+          unit_id: string | null
+          updated_at: string | null
+          volume_processed: number | null
+        }
+        Insert: {
+          contact_name?: string | null
+          created_at?: string | null
+          email?: string | null
+          id?: string
+          installation_date?: string | null
+          last_change?: string | null
+          next_change?: string | null
+          notes?: string | null
+          phone?: string | null
+          unit_id?: string | null
+          updated_at?: string | null
+          volume_processed?: number | null
+        }
+        Update: {
+          contact_name?: string | null
+          created_at?: string | null
+          email?: string | null
+          id?: string
+          installation_date?: string | null
+          last_change?: string | null
+          next_change?: string | null
+          notes?: string | null
+          phone?: string | null
+          unit_id?: string | null
+          updated_at?: string | null
+          volume_processed?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "filters_unit_id_fkey"
+            columns: ["unit_id"]
+            isOneToOne: false
+            referencedRelation: "units"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       units: {
         Row: {
           contact_email: string | null
