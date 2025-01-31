@@ -15,6 +15,7 @@ import { useEffect, useState } from "react";
 export const Header = () => {
   const navigate = useNavigate();
   const [firstName, setFirstName] = useState<string>("");
+  const [lastName, setLastName] = useState<string>("");
 
   useEffect(() => {
     const fetchUserProfile = async () => {
@@ -24,7 +25,7 @@ export const Header = () => {
           console.log("Fetching user profile for:", user.email);
           const { data: profiles, error } = await supabase
             .from('app_users')
-            .select('first_name')
+            .select('first_name, last_name')
             .eq('email', user.email)
             .single();
 
@@ -36,6 +37,7 @@ export const Header = () => {
           if (profiles) {
             console.log("User profile found:", profiles);
             setFirstName(profiles.first_name);
+            setLastName(profiles.last_name);
           }
         }
       } catch (error) {
@@ -57,6 +59,13 @@ export const Header = () => {
     }
   };
 
+  const getInitials = () => {
+    if (firstName && lastName) {
+      return `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase();
+    }
+    return "U";
+  };
+
   return (
     <header className="h-16 bg-spotify-darker border-b border-white/10 flex items-center justify-between px-6">
       {firstName && (
@@ -72,7 +81,7 @@ export const Header = () => {
           <DropdownMenuTrigger asChild>
             <Avatar className="h-8 w-8 cursor-pointer hover:opacity-80 transition-opacity">
               <AvatarFallback className="bg-spotify-green text-white">
-                {firstName ? firstName.charAt(0).toUpperCase() : "U"}
+                {getInitials()}
               </AvatarFallback>
             </Avatar>
           </DropdownMenuTrigger>
