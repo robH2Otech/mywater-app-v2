@@ -14,15 +14,16 @@ export const Filters = () => {
   const [isAddFilterOpen, setIsAddFilterOpen] = useState(false);
   const [selectedFilter, setSelectedFilter] = useState<any>(null);
 
-  const { data: units = [], isLoading } = useQuery({
+  const { data: units = [], isLoading, error } = useQuery({
     queryKey: ["filter-units"],
     queryFn: async () => {
+      console.log("Fetching filter units data...");
       const { data, error } = await supabase
         .from("units")
-        .select("*")
-        .order("next_maintenance", { ascending: true });
+        .select("*, filters(*)");
       
       if (error) {
+        console.error("Error fetching filter units:", error);
         toast({
           title: "Error fetching units",
           description: error.message,
@@ -30,9 +31,15 @@ export const Filters = () => {
         });
         throw error;
       }
+      console.log("Filter units data:", data);
       return data;
     },
   });
+
+  if (error) {
+    console.error("Error in Filters component:", error);
+    return <div>Error loading filters. Please try again.</div>;
+  }
 
   if (isLoading) {
     return <LoadingSkeleton />;

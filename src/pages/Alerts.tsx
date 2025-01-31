@@ -14,17 +14,32 @@ export const Alerts = () => {
   const [selectedAlert, setSelectedAlert] = useState<any>(null);
   const { toast } = useToast();
 
-  const { data: units = [], isLoading } = useQuery({
-    queryKey: ["units"],
+  const { data: units = [], isLoading, error } = useQuery({
+    queryKey: ["alert-units"],
     queryFn: async () => {
+      console.log("Fetching alert units data...");
       const { data, error } = await supabase
         .from("units")
-        .select("*")
-        .order("created_at", { ascending: false });
-      if (error) throw error;
+        .select("*, alerts(*)");
+      
+      if (error) {
+        console.error("Error fetching alert units:", error);
+        toast({
+          title: "Error fetching units",
+          description: error.message,
+          variant: "destructive",
+        });
+        throw error;
+      }
+      console.log("Alert units data:", data);
       return data;
     },
   });
+
+  if (error) {
+    console.error("Error in Alerts component:", error);
+    return <div>Error loading alerts. Please try again.</div>;
+  }
 
   if (isLoading) {
     return <LoadingSkeleton />;
