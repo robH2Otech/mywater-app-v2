@@ -1,0 +1,94 @@
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { useState } from "react";
+
+interface CreateAlertDialogProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onCreateAlert: () => void;
+}
+
+export const CreateAlertDialog = ({
+  open,
+  onOpenChange,
+  onCreateAlert,
+}: CreateAlertDialogProps) => {
+  const [status, setStatus] = useState("attention");
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="bg-spotify-darker text-white">
+        <DialogHeader>
+          <DialogTitle>Create Alert</DialogTitle>
+        </DialogHeader>
+        <div className="space-y-6 py-4">
+          <div className="space-y-2">
+            <label className="text-sm font-medium">Unit ID</label>
+            <Input 
+              placeholder="Enter unit ID"
+              className="bg-spotify-accent border-spotify-accent"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-sm font-medium">Status</label>
+            <Select value={status} onValueChange={setStatus}>
+              <SelectTrigger className="bg-spotify-accent border-spotify-accent">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent className="bg-spotify-darker border-spotify-accent">
+                <SelectItem value="attention">Attention</SelectItem>
+                <SelectItem value="urgent">Urgent</SelectItem>
+                <SelectItem value="maintenance">Maintenance</SelectItem>
+                <SelectItem value="offline">Offline</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-sm font-medium">Message</label>
+            <Input 
+              placeholder="Enter alert message"
+              className="bg-spotify-accent border-spotify-accent"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-sm font-medium">Assign To</label>
+            <Input 
+              placeholder="Enter assignee"
+              className="bg-spotify-accent border-spotify-accent"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-sm font-medium">Comments</label>
+            <Textarea 
+              placeholder="Enter any additional comments"
+              className="bg-spotify-accent border-spotify-accent min-h-[100px]"
+            />
+          </div>
+
+          <Button 
+            className="w-full bg-spotify-green hover:bg-spotify-green/90"
+            onClick={() => {
+              onCreateAlert();
+              onOpenChange(false);
+            }}
+          >
+            Create Alert
+          </Button>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+};

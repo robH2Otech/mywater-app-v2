@@ -11,33 +11,48 @@ export type Database = {
     Tables: {
       units: {
         Row: {
+          contact_email: string | null
+          contact_name: string | null
+          contact_phone: string | null
           created_at: string | null
           id: string
           last_maintenance: string | null
           location: string | null
           name: string
           next_maintenance: string | null
+          notes: string | null
           status: string
+          total_volume: number | null
           updated_at: string | null
         }
         Insert: {
+          contact_email?: string | null
+          contact_name?: string | null
+          contact_phone?: string | null
           created_at?: string | null
           id?: string
           last_maintenance?: string | null
           location?: string | null
           name: string
           next_maintenance?: string | null
+          notes?: string | null
           status: string
+          total_volume?: number | null
           updated_at?: string | null
         }
         Update: {
+          contact_email?: string | null
+          contact_name?: string | null
+          contact_phone?: string | null
           created_at?: string | null
           id?: string
           last_maintenance?: string | null
           location?: string | null
           name?: string
           next_maintenance?: string | null
+          notes?: string | null
           status?: string
+          total_volume?: number | null
           updated_at?: string | null
         }
         Relationships: []
