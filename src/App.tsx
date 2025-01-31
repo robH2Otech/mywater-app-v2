@@ -8,6 +8,7 @@ import { Dashboard } from "./pages/Dashboard";
 import { Settings } from "./pages/Settings";
 import { NotFound } from "./pages/NotFound";
 import { Units } from "./pages/Units";
+import { UnitDetails } from "./pages/UnitDetails";
 import { Filters } from "./pages/Filters";
 import { Alerts } from "./pages/Alerts";
 import { Analytics } from "./pages/Analytics";
@@ -70,6 +71,16 @@ const App = () => (
               <ProtectedRoute>
                 <Layout>
                   <Units />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/units/:id"
+            element={
+              <ProtectedRoute>
+                <Layout>
+                  <UnitDetails />
                 </Layout>
               </ProtectedRoute>
             }
