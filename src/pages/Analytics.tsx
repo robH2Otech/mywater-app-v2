@@ -28,10 +28,13 @@ export const Analytics = () => {
   const [selectedUnit, setSelectedUnit] = useState<string>("");
   const [reportType, setReportType] = useState<string>("daily");
 
-  const { data: units = [] } = useQuery({
+  const { data: units = [], isLoading } = useQuery({
     queryKey: ["units"],
     queryFn: async () => {
-      const { data, error } = await supabase.from("units").select("*");
+      const { data, error } = await supabase
+        .from("units")
+        .select("id, name")
+        .order('name');
       if (error) throw error;
       return data;
     },
@@ -39,7 +42,7 @@ export const Analytics = () => {
 
   const handleDownload = () => {
     // TODO: Implement report download functionality
-    console.log("Downloading report...");
+    console.log("Downloading report for unit:", selectedUnit, "type:", reportType);
   };
 
   return (
@@ -63,9 +66,13 @@ export const Analytics = () => {
               <SelectTrigger className="bg-spotify-dark border-spotify-accent">
                 <SelectValue placeholder="Select a unit..." />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className="bg-spotify-darker border-spotify-accent">
                 {units.map((unit) => (
-                  <SelectItem key={unit.id} value={unit.id}>
+                  <SelectItem 
+                    key={unit.id} 
+                    value={unit.id}
+                    className="text-white hover:bg-spotify-accent cursor-pointer"
+                  >
                     {unit.name}
                   </SelectItem>
                 ))}
@@ -79,10 +86,12 @@ export const Analytics = () => {
               <SelectTrigger className="bg-spotify-dark border-spotify-accent">
                 <SelectValue placeholder="Select report type..." />
               </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="daily">Daily</SelectItem>
-                <SelectItem value="weekly">Weekly</SelectItem>
-                <SelectItem value="monthly">Monthly</SelectItem>
+              <SelectContent className="bg-spotify-darker border-spotify-accent">
+                <SelectItem value="daily" className="text-white hover:bg-spotify-accent cursor-pointer">Daily</SelectItem>
+                <SelectItem value="weekly" className="text-white hover:bg-spotify-accent cursor-pointer">Weekly</SelectItem>
+                <SelectItem value="monthly" className="text-white hover:bg-spotify-accent cursor-pointer">Monthly</SelectItem>
+                <SelectItem value="yearly" className="text-white hover:bg-spotify-accent cursor-pointer">Yearly</SelectItem>
+                <SelectItem value="custom" className="text-white hover:bg-spotify-accent cursor-pointer">Custom Date Range</SelectItem>
               </SelectContent>
             </Select>
           </Card>
