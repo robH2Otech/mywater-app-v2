@@ -55,9 +55,7 @@ export function FiltersList({ units, onFilterClick }: FiltersListProps) {
                       </div>
                     )}
                   </div>
-                  <div className="flex items-center gap-2">
-                    {getStatusIcon(status)}
-                  </div>
+                  {getStatusIcon(status)}
                 </div>
                 
                 <div className="space-y-2 text-left">
