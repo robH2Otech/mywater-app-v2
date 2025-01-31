@@ -26,6 +26,11 @@ export function AlertDetailsDialog({ alert, open, onOpenChange }: AlertDetailsDi
     }
   };
 
+  // If alert is null, don't render the dialog content
+  if (!alert) {
+    return null;
+  }
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[600px] bg-spotify-darker border-spotify-accent">
