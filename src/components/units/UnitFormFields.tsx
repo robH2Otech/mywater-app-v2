@@ -1,0 +1,86 @@
+import { FormInput } from "@/components/shared/FormInput";
+import { FormDatePicker } from "@/components/shared/FormDatePicker";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+
+interface UnitFormFieldsProps {
+  formData: {
+    name: string;
+    location: string;
+    total_volume: string;
+    status: string;
+    contact_name: string;
+    contact_email: string;
+    contact_phone: string;
+    next_maintenance: Date | null;
+  };
+  setFormData: (data: any) => void;
+}
+
+export function UnitFormFields({ formData, setFormData }: UnitFormFieldsProps) {
+  return (
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <FormInput
+        label="Unit Name"
+        value={formData.name}
+        onChange={(value) => setFormData({ ...formData, name: value })}
+        placeholder="MYWATER XXX"
+        required
+      />
+      <FormInput
+        label="Maintenance Contact"
+        value={formData.contact_name}
+        onChange={(value) => setFormData({ ...formData, contact_name: value })}
+        placeholder="Enter contact name"
+      />
+      <FormInput
+        label="Location"
+        value={formData.location}
+        onChange={(value) => setFormData({ ...formData, location: value })}
+        placeholder="Enter location"
+      />
+      <FormInput
+        label="Email"
+        type="email"
+        value={formData.contact_email}
+        onChange={(value) => setFormData({ ...formData, contact_email: value })}
+        placeholder="Enter email"
+      />
+      <FormInput
+        label="Total Volume (m³)"
+        type="number"
+        value={formData.total_volume}
+        onChange={(value) => setFormData({ ...formData, total_volume: value })}
+        placeholder="Enter volume"
+        required
+      />
+      <FormInput
+        label="Phone"
+        type="tel"
+        value={formData.contact_phone}
+        onChange={(value) => setFormData({ ...formData, contact_phone: value })}
+        placeholder="Enter phone number"
+      />
+      <div className="space-y-2">
+        <label className="text-sm text-gray-400">Status</label>
+        <Select
+          value={formData.status}
+          onValueChange={(value) => setFormData({ ...formData, status: value })}
+        >
+          <SelectTrigger className="bg-spotify-accent border-spotify-accent-hover text-white">
+            <SelectValue placeholder="Select status" />
+          </SelectTrigger>
+          <SelectContent className="bg-spotify-darker border-spotify-accent">
+            <SelectItem value="active">Active</SelectItem>
+            <SelectItem value="maintenance">Maintenance</SelectItem>
+            <SelectItem value="inactive">Inactive</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+      <FormDatePicker
+        label="Next Maintenance"
+        value={formData.next_maintenance}
+        onChange={(date) => setFormData({ ...formData, next_maintenance: date })}
+      />
+    </div>
+  );
+}

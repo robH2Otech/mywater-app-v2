@@ -1,15 +1,15 @@
 import { useQuery } from "@tanstack/react-query";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { FormInput } from "@/components/shared/FormInput";
-import { FormDatePicker } from "@/components/shared/FormDatePicker";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Button } from "@/components/ui/button";
-import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
+import { useState } from "react";
+import { UnitFormFields } from "@/components/units/UnitFormFields";
+import { UnitFormActions } from "@/components/units/UnitFormActions";
+import { Card } from "@/components/ui/card";
 
 export const UnitDetails = () => {
   const { id } = useParams();
+  const navigate = useNavigate();
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -44,7 +44,6 @@ export const UnitDetails = () => {
     contact_email: unit?.contact_email || "",
     contact_phone: unit?.contact_phone || "",
     next_maintenance: unit?.next_maintenance ? new Date(unit.next_maintenance) : null,
-    notes: unit?.notes || "",
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -63,7 +62,6 @@ export const UnitDetails = () => {
           contact_email: formData.contact_email || null,
           contact_phone: formData.contact_phone || null,
           next_maintenance: formData.next_maintenance?.toISOString() || null,
-          notes: formData.notes || null,
         })
         .eq("id", id);
 
@@ -95,87 +93,17 @@ export const UnitDetails = () => {
   }
 
   return (
-    <div className="space-y-6 animate-fadeIn">
-      <div>
-        <h1 className="text-2xl font-bold text-white">Edit Water Unit</h1>
-        <p className="text-gray-400">Update unit information</p>
-      </div>
-
-      <form onSubmit={handleSubmit} className="space-y-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <FormInput
-            label="Unit Name"
-            value={formData.name}
-            onChange={(value) => setFormData({ ...formData, name: value })}
-            placeholder="MYWATER XXX"
-            required
+    <div className="container mx-auto p-6 max-w-4xl">
+      <Card className="bg-spotify-darker border-spotify-accent p-6">
+        <h1 className="text-2xl font-bold text-white mb-6">Edit Water Unit</h1>
+        <form onSubmit={handleSubmit} className="space-y-6">
+          <UnitFormFields formData={formData} setFormData={setFormData} />
+          <UnitFormActions 
+            onCancel={() => navigate("/units")} 
+            isSubmitting={isSubmitting} 
           />
-          <FormInput
-            label="Maintenance Contact"
-            value={formData.contact_name}
-            onChange={(value) => setFormData({ ...formData, contact_name: value })}
-            placeholder="Enter contact name"
-          />
-          <FormInput
-            label="Location"
-            value={formData.location}
-            onChange={(value) => setFormData({ ...formData, location: value })}
-            placeholder="Enter location"
-          />
-          <FormInput
-            label="Email"
-            type="email"
-            value={formData.contact_email}
-            onChange={(value) => setFormData({ ...formData, contact_email: value })}
-            placeholder="Enter email"
-          />
-          <FormInput
-            label="Total Volume (m³)"
-            type="number"
-            value={formData.total_volume}
-            onChange={(value) => setFormData({ ...formData, total_volume: value })}
-            placeholder="Enter volume"
-            required
-          />
-          <FormInput
-            label="Phone"
-            type="tel"
-            value={formData.contact_phone}
-            onChange={(value) => setFormData({ ...formData, contact_phone: value })}
-            placeholder="Enter phone number"
-          />
-          <div className="space-y-2">
-            <label className="text-sm text-gray-400">Status</label>
-            <Select
-              value={formData.status}
-              onValueChange={(value) => setFormData({ ...formData, status: value })}
-            >
-              <SelectTrigger className="bg-spotify-accent border-spotify-accent-hover text-white">
-                <SelectValue placeholder="Select status" />
-              </SelectTrigger>
-              <SelectContent className="bg-spotify-darker border-spotify-accent">
-                <SelectItem value="active">Active</SelectItem>
-                <SelectItem value="maintenance">Maintenance</SelectItem>
-                <SelectItem value="inactive">Inactive</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          <FormDatePicker
-            label="Next Maintenance"
-            value={formData.next_maintenance}
-            onChange={(date) => setFormData({ ...formData, next_maintenance: date })}
-          />
-        </div>
-        <div className="flex justify-end gap-3">
-          <Button
-            type="submit"
-            disabled={isSubmitting}
-            className="bg-spotify-green hover:bg-spotify-green/90 text-white"
-          >
-            Save Changes
-          </Button>
-        </div>
-      </form>
+        </form>
+      </Card>
     </div>
   );
 };
