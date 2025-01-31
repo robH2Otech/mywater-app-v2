@@ -15,6 +15,11 @@ export function UserDetailsDialog({ user, open, onOpenChange }: UserDetailsDialo
     return format(new Date(date), "PPP");
   };
 
+  // If user is null, don't render the dialog content
+  if (!user) {
+    return null;
+  }
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[600px] bg-spotify-darker border-spotify-accent">
