@@ -63,7 +63,7 @@ export const Units = () => {
               status={unit.status}
               location={unit.location}
               total_volume={unit.total_volume}
-              next_maintenance={unit.next_maintenance}
+              last_maintenance={unit.last_maintenance}
             />
           ))}
         </div>
