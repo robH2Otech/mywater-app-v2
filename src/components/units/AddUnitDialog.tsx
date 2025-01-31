@@ -31,12 +31,17 @@ export function AddUnitDialog({ open, onOpenChange }: { open: boolean; onOpenCha
     setIsSubmitting(true);
 
     try {
-      const { error } = await supabase.from("units").insert([
-        {
-          ...formData,
-          total_volume: parseFloat(formData.total_volume),
-        },
-      ]);
+      const { error } = await supabase.from("units").insert({
+        name: formData.name,
+        location: formData.location,
+        total_volume: parseFloat(formData.total_volume),
+        status: formData.status,
+        contact_name: formData.contact_name || null,
+        contact_email: formData.contact_email || null,
+        contact_phone: formData.contact_phone || null,
+        last_maintenance: formData.last_maintenance ? formData.last_maintenance.toISOString() : null,
+        next_maintenance: formData.next_maintenance ? formData.next_maintenance.toISOString() : null,
+      });
 
       if (error) throw error;
 
