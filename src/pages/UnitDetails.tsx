@@ -1,19 +1,16 @@
 import { useQuery } from "@tanstack/react-query";
 import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/hooks/use-toast";
-import { useState } from "react";
-import { UnitFormFields } from "@/components/units/UnitFormFields";
-import { UnitFormActions } from "@/components/units/UnitFormActions";
 import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { format } from "date-fns";
 
 export const UnitDetails = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { toast } = useToast();
-  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const { data: unit, isLoading, refetch } = useQuery({
+  const { data: unit, isLoading } = useQuery({
     queryKey: ["unit", id],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -22,67 +19,10 @@ export const UnitDetails = () => {
         .eq("id", id)
         .single();
       
-      if (error) {
-        toast({
-          title: "Error",
-          description: "Failed to fetch unit details",
-          variant: "destructive",
-        });
-        throw error;
-      }
-      
+      if (error) throw error;
       return data;
     },
   });
-
-  const [formData, setFormData] = useState({
-    name: unit?.name || "",
-    location: unit?.location || "",
-    total_volume: unit?.total_volume?.toString() || "",
-    status: unit?.status || "active",
-    contact_name: unit?.contact_name || "",
-    contact_email: unit?.contact_email || "",
-    contact_phone: unit?.contact_phone || "",
-    next_maintenance: unit?.next_maintenance ? new Date(unit.next_maintenance) : null,
-  });
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsSubmitting(true);
-
-    try {
-      const { error } = await supabase
-        .from("units")
-        .update({
-          name: formData.name,
-          location: formData.location,
-          total_volume: parseFloat(formData.total_volume),
-          status: formData.status,
-          contact_name: formData.contact_name || null,
-          contact_email: formData.contact_email || null,
-          contact_phone: formData.contact_phone || null,
-          next_maintenance: formData.next_maintenance?.toISOString() || null,
-        })
-        .eq("id", id);
-
-      if (error) throw error;
-
-      toast({
-        title: "Success",
-        description: "Water unit has been updated successfully",
-      });
-      refetch();
-    } catch (error) {
-      console.error("Error updating unit:", error);
-      toast({
-        title: "Error",
-        description: "Failed to update water unit",
-        variant: "destructive",
-      });
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
 
   if (isLoading) {
     return <div className="animate-pulse h-[400px] bg-spotify-darker rounded-lg" />;
@@ -92,17 +32,109 @@ export const UnitDetails = () => {
     return <div>Unit not found</div>;
   }
 
+  const formatDate = (date: string | null) => {
+    if (!date) return "Not available";
+    return format(new Date(date), "PPP");
+  };
+
   return (
-    <div className="container mx-auto p-6 max-w-4xl">
+    <div className="container mx-auto p-6 max-w-4xl animate-fadeIn">
       <Card className="bg-spotify-darker border-spotify-accent p-6">
-        <h1 className="text-2xl font-bold text-white mb-6">Edit Water Unit</h1>
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <UnitFormFields formData={formData} setFormData={setFormData} />
-          <UnitFormActions 
-            onCancel={() => navigate("/units")} 
-            isSubmitting={isSubmitting} 
-          />
-        </form>
+        <div className="flex justify-between items-center mb-6">
+          <h1 className="text-2xl font-bold text-white">Water Unit Details</h1>
+          <Button 
+            onClick={() => navigate("/units")}
+            variant="outline"
+            className="bg-spotify-accent hover:bg-spotify-accent-hover text-white border-none"
+          >
+            Back to Units
+          </Button>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="space-y-2">
+            <label className="text-sm text-gray-400">Unit Name</label>
+            <Input
+              value={unit.name}
+              readOnly
+              className="bg-spotify-accent border-spotify-accent-hover text-white cursor-default"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-sm text-gray-400">Maintenance Contact</label>
+            <Input
+              value={unit.contact_name || "Not specified"}
+              readOnly
+              className="bg-spotify-accent border-spotify-accent-hover text-white cursor-default"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-sm text-gray-400">Location</label>
+            <Input
+              value={unit.location || "Not specified"}
+              readOnly
+              className="bg-spotify-accent border-spotify-accent-hover text-white cursor-default"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-sm text-gray-400">Email</label>
+            <Input
+              value={unit.contact_email || "Not specified"}
+              readOnly
+              className="bg-spotify-accent border-spotify-accent-hover text-white cursor-default"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-sm text-gray-400">Total Volume (m³)</label>
+            <Input
+              value={unit.total_volume || "0"}
+              readOnly
+              className="bg-spotify-accent border-spotify-accent-hover text-white cursor-default"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-sm text-gray-400">Phone</label>
+            <Input
+              value={unit.contact_phone || "Not specified"}
+              readOnly
+              className="bg-spotify-accent border-spotify-accent-hover text-white cursor-default"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-sm text-gray-400">Status</label>
+            <Input
+              value={unit.status}
+              readOnly
+              className="bg-spotify-accent border-spotify-accent-hover text-white cursor-default"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-sm text-gray-400">Next Maintenance</label>
+            <Input
+              value={formatDate(unit.next_maintenance)}
+              readOnly
+              className="bg-spotify-accent border-spotify-accent-hover text-white cursor-default"
+            />
+          </div>
+
+          {unit.notes && (
+            <div className="col-span-2 space-y-2">
+              <label className="text-sm text-gray-400">Notes</label>
+              <Input
+                value={unit.notes}
+                readOnly
+                className="bg-spotify-accent border-spotify-accent-hover text-white cursor-default"
+              />
+            </div>
+          )}
+        </div>
       </Card>
     </div>
   );
