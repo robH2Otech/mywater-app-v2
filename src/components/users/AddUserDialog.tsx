@@ -8,11 +8,25 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
 
+type UserRole = "admin" | "technician" | "user";
+type UserStatus = "active" | "inactive" | "pending";
+
+interface FormData {
+  first_name: string;
+  last_name: string;
+  email: string;
+  phone: string;
+  company: string;
+  job_title: string;
+  role: UserRole;
+  status: UserStatus;
+}
+
 export function AddUserDialog() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [open, setOpen] = useState(false);
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<FormData>({
     first_name: "",
     last_name: "",
     email: "",
@@ -23,7 +37,7 @@ export function AddUserDialog() {
     status: "active"
   });
 
-  const handleInputChange = (field: string, value: string) => {
+  const handleInputChange = (field: keyof FormData, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
@@ -31,7 +45,7 @@ export function AddUserDialog() {
     try {
       const { error } = await supabase
         .from("app_users")
-        .insert([formData]);
+        .insert(formData);
 
       if (error) throw error;
 
@@ -111,7 +125,7 @@ export function AddUserDialog() {
             <label className="text-sm text-gray-400">Role</label>
             <Select
               value={formData.role}
-              onValueChange={(value) => handleInputChange("role", value)}
+              onValueChange={(value: UserRole) => handleInputChange("role", value)}
             >
               <SelectTrigger className="bg-spotify-accent border-spotify-accent-hover text-white">
                 <SelectValue placeholder="Select role" />
@@ -133,7 +147,7 @@ export function AddUserDialog() {
             <label className="text-sm text-gray-400">Status</label>
             <Select
               value={formData.status}
-              onValueChange={(value) => handleInputChange("status", value)}
+              onValueChange={(value: UserStatus) => handleInputChange("status", value)}
             >
               <SelectTrigger className="bg-spotify-accent border-spotify-accent-hover text-white">
                 <SelectValue placeholder="Select status" />
