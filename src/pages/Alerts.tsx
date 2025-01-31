@@ -5,11 +5,13 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { BellRing, AlertTriangle, AlertOctagon, Plus } from "lucide-react";
 import { CreateAlertDialog } from "@/components/alerts/CreateAlertDialog";
+import { AlertDetailsDialog } from "@/components/alerts/AlertDetailsDialog";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 
 export const Alerts = () => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [selectedAlert, setSelectedAlert] = useState<any>(null);
   const { toast } = useToast();
 
   const { data: units = [] } = useQuery({
@@ -78,7 +80,11 @@ export const Alerts = () => {
         
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {units.map((unit) => (
-            <Card key={unit.id} className="bg-spotify-darker hover:bg-spotify-accent/40 transition-colors">
+            <Card 
+              key={unit.id} 
+              className="bg-spotify-darker hover:bg-spotify-accent/40 transition-colors cursor-pointer"
+              onClick={() => setSelectedAlert(unit)}
+            >
               <CardContent className="p-6">
                 <div className="flex justify-between items-start">
                   <div className="space-y-4">
@@ -98,9 +104,6 @@ export const Alerts = () => {
                       </p>
                     </div>
                   </div>
-                  <Button variant="ghost" className="text-gray-400 hover:text-white">
-                    Edit
-                  </Button>
                 </div>
               </CardContent>
             </Card>
@@ -118,6 +121,12 @@ export const Alerts = () => {
           });
           setIsDialogOpen(false);
         }}
+      />
+
+      <AlertDetailsDialog
+        open={!!selectedAlert}
+        onOpenChange={(open) => !open && setSelectedAlert(null)}
+        alert={selectedAlert}
       />
     </Layout>
   );

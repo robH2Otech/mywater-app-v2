@@ -5,9 +5,12 @@ import { Mail, Phone, Building2, Briefcase } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
 import { AddUserDialog } from "@/components/users/AddUserDialog";
+import { UserDetailsDialog } from "@/components/users/UserDetailsDialog";
+import { useState } from "react";
 
 export const Users = () => {
   const { toast } = useToast();
+  const [selectedUser, setSelectedUser] = useState<any>(null);
 
   const { data: users = [], isLoading } = useQuery({
     queryKey: ["users"],
@@ -59,7 +62,11 @@ export const Users = () => {
       
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {users.map((user) => (
-          <Card key={user.id} className="bg-spotify-darker hover:bg-spotify-accent/40 transition-colors">
+          <Card 
+            key={user.id} 
+            className="bg-spotify-darker hover:bg-spotify-accent/40 transition-colors cursor-pointer"
+            onClick={() => setSelectedUser(user)}
+          >
             <CardContent className="p-6">
               <div className="space-y-4">
                 <div>
@@ -96,6 +103,12 @@ export const Users = () => {
           </Card>
         ))}
       </div>
+
+      <UserDetailsDialog
+        open={!!selectedUser}
+        onOpenChange={(open) => !open && setSelectedUser(null)}
+        user={selectedUser}
+      />
     </div>
   );
-};
+}

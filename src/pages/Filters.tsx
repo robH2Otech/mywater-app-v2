@@ -8,10 +8,12 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
 import { useState } from "react";
 import { AddFilterDialog } from "@/components/filters/AddFilterDialog";
+import { FilterDetailsDialog } from "@/components/filters/FilterDetailsDialog";
 
 export const Filters = () => {
   const { toast } = useToast();
   const [isAddFilterOpen, setIsAddFilterOpen] = useState(false);
+  const [selectedFilter, setSelectedFilter] = useState<any>(null);
 
   const { data: units = [], isLoading } = useQuery({
     queryKey: ["filter-units"],
@@ -91,7 +93,11 @@ export const Filters = () => {
             };
             
             return (
-              <Card key={unit.id} className="bg-spotify-darker hover:bg-spotify-accent/40 transition-colors">
+              <Card 
+                key={unit.id} 
+                className="bg-spotify-darker hover:bg-spotify-accent/40 transition-colors cursor-pointer"
+                onClick={() => setSelectedFilter(unit)}
+              >
                 <CardContent className="p-6">
                   <div className="space-y-4">
                     <div className="flex justify-between items-start">
@@ -121,19 +127,6 @@ export const Filters = () => {
                         </div>
                       )}
                     </div>
-                    
-                    <Button 
-                      variant="outline" 
-                      className="w-full"
-                      onClick={() => {
-                        toast({
-                          title: "Coming soon",
-                          description: "This feature is not yet implemented.",
-                        });
-                      }}
-                    >
-                      Schedule Maintenance
-                    </Button>
                   </div>
                 </CardContent>
               </Card>
@@ -144,6 +137,12 @@ export const Filters = () => {
         <AddFilterDialog 
           open={isAddFilterOpen} 
           onOpenChange={setIsAddFilterOpen} 
+        />
+
+        <FilterDetailsDialog
+          open={!!selectedFilter}
+          onOpenChange={(open) => !open && setSelectedFilter(null)}
+          filter={selectedFilter}
         />
       </div>
     </Layout>
