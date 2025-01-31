@@ -36,15 +36,10 @@ export const Dashboard = () => {
 
   return (
     <div className="space-y-6 animate-fadeIn">
-      <div className="flex justify-between items-center mb-8">
-        <h1 className="text-2xl font-bold">Dashboard</h1>
-        <p className="text-gray-400">Welcome back! Here's your water management overview.</p>
-      </div>
-      
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <Link to="/units">
-          <Card className="p-6 glass hover:bg-spotify-accent/40 transition-colors">
-            <div className="flex justify-between items-start">
+        <Link to="/units" className="block">
+          <Card className="p-6 glass hover:bg-spotify-accent/40 transition-colors h-[120px] flex items-center">
+            <div className="flex justify-between items-center w-full">
               <div>
                 <p className="text-sm text-gray-400">Total Units</p>
                 <p className="text-3xl font-bold mt-2">{units.length}</p>
@@ -54,9 +49,9 @@ export const Dashboard = () => {
           </Card>
         </Link>
 
-        <Link to="/filters">
-          <Card className="p-6 glass hover:bg-spotify-accent/40 transition-colors">
-            <div className="flex justify-between items-start">
+        <Link to="/filters" className="block">
+          <Card className="p-6 glass hover:bg-spotify-accent/40 transition-colors h-[120px] flex items-center">
+            <div className="flex justify-between items-center w-full">
               <div>
                 <p className="text-sm text-gray-400">Filter Changes Required</p>
                 <p className="text-3xl font-bold mt-2">{warningUnits}</p>
@@ -66,9 +61,9 @@ export const Dashboard = () => {
           </Card>
         </Link>
 
-        <Link to="/alerts">
-          <Card className="p-6 glass hover:bg-spotify-accent/40 transition-colors">
-            <div className="flex justify-between items-start">
+        <Link to="/alerts" className="block">
+          <Card className="p-6 glass hover:bg-spotify-accent/40 transition-colors h-[120px] flex items-center">
+            <div className="flex justify-between items-center w-full">
               <div>
                 <p className="text-sm text-gray-400">Active Alerts</p>
                 <p className="text-3xl font-bold mt-2">{errorUnits}</p>
@@ -78,9 +73,9 @@ export const Dashboard = () => {
           </Card>
         </Link>
 
-        <Link to="/analytics">
-          <Card className="p-6 glass hover:bg-spotify-accent/40 transition-colors">
-            <div className="flex justify-between items-start">
+        <Link to="/analytics" className="block">
+          <Card className="p-6 glass hover:bg-spotify-accent/40 transition-colors h-[120px] flex items-center">
+            <div className="flex justify-between items-center w-full">
               <div>
                 <p className="text-sm text-gray-400">Total Volume Today</p>
                 <p className="text-3xl font-bold mt-2">106.0 m³</p>
