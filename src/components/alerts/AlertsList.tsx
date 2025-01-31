@@ -29,7 +29,7 @@ export function AlertsList({ units, onAlertClick }: AlertsListProps) {
           <CardContent className="p-6">
             <div className="space-y-4">
               <div className="flex justify-between items-start">
-                <div>
+                <div className="text-left">
                   <h3 className="text-xl font-semibold text-white">{unit.name}</h3>
                   {unit.location && (
                     <div className="flex items-center gap-1 text-sm text-gray-400 mt-1">
@@ -43,7 +43,7 @@ export function AlertsList({ units, onAlertClick }: AlertsListProps) {
                 </div>
               </div>
               
-              <div className="space-y-2">
+              <div className="space-y-2 text-left">
                 <p className="text-sm text-gray-400">
                   Volume: {unit.total_volume ? `${unit.total_volume} m³` : 'N/A'}
                 </p>

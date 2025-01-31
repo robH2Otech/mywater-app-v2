@@ -46,7 +46,7 @@ export function FiltersList({ units, onFilterClick }: FiltersListProps) {
             <CardContent className="p-6">
               <div className="space-y-4">
                 <div className="flex justify-between items-start">
-                  <div>
+                  <div className="text-left">
                     <h3 className="text-xl font-semibold text-white">{unit.name}</h3>
                     {unit.location && (
                       <div className="flex items-center gap-1 text-sm text-gray-400 mt-1">
@@ -60,7 +60,7 @@ export function FiltersList({ units, onFilterClick }: FiltersListProps) {
                   </div>
                 </div>
                 
-                <div className="space-y-2">
+                <div className="space-y-2 text-left">
                   {unit.last_maintenance && (
                     <div className="flex items-center gap-2 text-sm text-gray-400">
                       <Calendar className="h-4 w-4" />

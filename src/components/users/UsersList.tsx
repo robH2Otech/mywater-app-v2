@@ -18,7 +18,7 @@ export function UsersList({ users, onUserClick }: UsersListProps) {
           <CardContent className="p-6">
             <div className="space-y-4">
               <div className="flex justify-between items-start">
-                <div>
+                <div className="text-left">
                   <h3 className="text-xl font-semibold text-white">
                     {user.first_name} {user.last_name}
                   </h3>
@@ -31,7 +31,7 @@ export function UsersList({ users, onUserClick }: UsersListProps) {
                 )}
               </div>
               
-              <div className="space-y-2">
+              <div className="space-y-2 text-left">
                 <div className="flex items-center gap-2 text-sm text-gray-400">
                   <Mail className="h-4 w-4" />
                   {user.email}
