@@ -2,7 +2,7 @@ import { DashboardStats } from "@/components/dashboard/DashboardStats";
 import { RecentAlerts } from "@/components/dashboard/RecentAlerts";
 import { FilterStatus } from "@/components/dashboard/FilterStatus";
 
-export const Dashboard = () => {
+const Dashboard = () => {
   return (
     <div className="space-y-6">
       <DashboardStats />

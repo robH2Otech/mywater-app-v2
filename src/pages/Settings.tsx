@@ -1,7 +1,7 @@
 import { ProfileSettings } from "@/components/settings/ProfileSettings";
 import { NotificationSettings } from "@/components/settings/NotificationSettings";
 
-export const Settings = () => {
+const Settings = () => {
   return (
     <div className="space-y-6">
       <ProfileSettings />
