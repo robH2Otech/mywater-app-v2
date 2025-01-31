@@ -1,13 +1,9 @@
 import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Calendar } from "@/components/ui/calendar";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { FormInput } from "@/components/shared/FormInput";
+import { FormDatePicker } from "@/components/shared/FormDatePicker";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { format } from "date-fns";
-import { Calendar as CalendarIcon } from "lucide-react";
-import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -22,7 +18,6 @@ export function AddUnitDialog({ open, onOpenChange }: { open: boolean; onOpenCha
     contact_name: "",
     contact_email: "",
     contact_phone: "",
-    last_maintenance: null as Date | null,
     next_maintenance: null as Date | null,
   });
 
@@ -39,7 +34,6 @@ export function AddUnitDialog({ open, onOpenChange }: { open: boolean; onOpenCha
         contact_name: formData.contact_name || null,
         contact_email: formData.contact_email || null,
         contact_phone: formData.contact_phone || null,
-        last_maintenance: formData.last_maintenance ? formData.last_maintenance.toISOString() : null,
         next_maintenance: formData.next_maintenance ? formData.next_maintenance.toISOString() : null,
       });
 
@@ -70,65 +64,47 @@ export function AddUnitDialog({ open, onOpenChange }: { open: boolean; onOpenCha
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="space-y-2">
-              <label className="text-sm text-gray-400">Unit Name</label>
-              <Input
-                placeholder="MYWATER XXX"
-                value={formData.name}
-                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                className="bg-spotify-accent border-spotify-accent-hover text-white"
-                required
-              />
-            </div>
-            <div className="space-y-2">
-              <label className="text-sm text-gray-400">Maintenance Contact</label>
-              <Input
-                placeholder="Enter contact name"
-                value={formData.contact_name}
-                onChange={(e) => setFormData({ ...formData, contact_name: e.target.value })}
-                className="bg-spotify-accent border-spotify-accent-hover text-white"
-              />
-            </div>
-            <div className="space-y-2">
-              <label className="text-sm text-gray-400">Location</label>
-              <Input
-                placeholder="Enter location"
-                value={formData.location}
-                onChange={(e) => setFormData({ ...formData, location: e.target.value })}
-                className="bg-spotify-accent border-spotify-accent-hover text-white"
-              />
-            </div>
-            <div className="space-y-2">
-              <label className="text-sm text-gray-400">Email</label>
-              <Input
-                type="email"
-                placeholder="Enter email"
-                value={formData.contact_email}
-                onChange={(e) => setFormData({ ...formData, contact_email: e.target.value })}
-                className="bg-spotify-accent border-spotify-accent-hover text-white"
-              />
-            </div>
-            <div className="space-y-2">
-              <label className="text-sm text-gray-400">Total Volume (m³)</label>
-              <Input
-                type="number"
-                placeholder="Enter volume"
-                value={formData.total_volume}
-                onChange={(e) => setFormData({ ...formData, total_volume: e.target.value })}
-                className="bg-spotify-accent border-spotify-accent-hover text-white"
-                required
-              />
-            </div>
-            <div className="space-y-2">
-              <label className="text-sm text-gray-400">Phone</label>
-              <Input
-                type="tel"
-                placeholder="Enter phone number"
-                value={formData.contact_phone}
-                onChange={(e) => setFormData({ ...formData, contact_phone: e.target.value })}
-                className="bg-spotify-accent border-spotify-accent-hover text-white"
-              />
-            </div>
+            <FormInput
+              label="Unit Name"
+              value={formData.name}
+              onChange={(value) => setFormData({ ...formData, name: value })}
+              placeholder="MYWATER XXX"
+              required
+            />
+            <FormInput
+              label="Maintenance Contact"
+              value={formData.contact_name}
+              onChange={(value) => setFormData({ ...formData, contact_name: value })}
+              placeholder="Enter contact name"
+            />
+            <FormInput
+              label="Location"
+              value={formData.location}
+              onChange={(value) => setFormData({ ...formData, location: value })}
+              placeholder="Enter location"
+            />
+            <FormInput
+              label="Email"
+              type="email"
+              value={formData.contact_email}
+              onChange={(value) => setFormData({ ...formData, contact_email: value })}
+              placeholder="Enter email"
+            />
+            <FormInput
+              label="Total Volume (m³)"
+              type="number"
+              value={formData.total_volume}
+              onChange={(value) => setFormData({ ...formData, total_volume: value })}
+              placeholder="Enter volume"
+              required
+            />
+            <FormInput
+              label="Phone"
+              type="tel"
+              value={formData.contact_phone}
+              onChange={(value) => setFormData({ ...formData, contact_phone: value })}
+              placeholder="Enter phone number"
+            />
             <div className="space-y-2">
               <label className="text-sm text-gray-400">Status</label>
               <Select
@@ -145,64 +121,11 @@ export function AddUnitDialog({ open, onOpenChange }: { open: boolean; onOpenCha
                 </SelectContent>
               </Select>
             </div>
-            <div className="space-y-2">
-              <label className="text-sm text-gray-400">Last Maintenance</label>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button
-                    variant="outline"
-                    className={cn(
-                      "w-full justify-start text-left font-normal bg-spotify-accent border-spotify-accent-hover text-white",
-                      !formData.last_maintenance && "text-gray-400"
-                    )}
-                  >
-                    <CalendarIcon className="mr-2 h-4 w-4" />
-                    {formData.last_maintenance ? (
-                      format(formData.last_maintenance, "PPP")
-                    ) : (
-                      "Pick a date"
-                    )}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0 bg-spotify-darker border-spotify-accent">
-                  <Calendar
-                    mode="single"
-                    selected={formData.last_maintenance}
-                    onSelect={(date) => setFormData({ ...formData, last_maintenance: date })}
-                    initialFocus
-                  />
-                </PopoverContent>
-              </Popover>
-            </div>
-            <div className="space-y-2">
-              <label className="text-sm text-gray-400">Next Maintenance</label>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button
-                    variant="outline"
-                    className={cn(
-                      "w-full justify-start text-left font-normal bg-spotify-accent border-spotify-accent-hover text-white",
-                      !formData.next_maintenance && "text-gray-400"
-                    )}
-                  >
-                    <CalendarIcon className="mr-2 h-4 w-4" />
-                    {formData.next_maintenance ? (
-                      format(formData.next_maintenance, "PPP")
-                    ) : (
-                      "Pick a date"
-                    )}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0 bg-spotify-darker border-spotify-accent">
-                  <Calendar
-                    mode="single"
-                    selected={formData.next_maintenance}
-                    onSelect={(date) => setFormData({ ...formData, next_maintenance: date })}
-                    initialFocus
-                  />
-                </PopoverContent>
-              </Popover>
-            </div>
+            <FormDatePicker
+              label="Next Maintenance"
+              value={formData.next_maintenance}
+              onChange={(date) => setFormData({ ...formData, next_maintenance: date })}
+            />
           </div>
           <div className="flex justify-end gap-3">
             <Button
