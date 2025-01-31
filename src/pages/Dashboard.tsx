@@ -54,7 +54,7 @@ export const Dashboard = () => {
           </Card>
         </Link>
 
-        <Link to="/units?filter=maintenance">
+        <Link to="/filters">
           <Card className="p-6 glass hover:bg-spotify-accent/40 transition-colors">
             <div className="flex justify-between items-start">
               <div>
