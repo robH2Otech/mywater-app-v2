@@ -1,3 +1,4 @@
+
 import { Layout } from "@/components/layout/Layout";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -14,7 +15,6 @@ export const Alerts = () => {
   const [selectedAlert, setSelectedAlert] = useState<any>(null);
   const { toast } = useToast();
 
-  // Fetch units and alerts separately
   const { data: units = [], isLoading: unitsLoading, error: unitsError } = useQuery({
     queryKey: ["units"],
     queryFn: async () => {
@@ -49,7 +49,6 @@ export const Alerts = () => {
     },
   });
 
-  // Combine units and their alerts
   const unitsWithAlerts = units.map(unit => ({
     ...unit,
     alerts: alerts.filter(alert => alert.unit_id === unit.id)
@@ -74,37 +73,35 @@ export const Alerts = () => {
 
   return (
     <Layout>
-      <div className="space-y-6">
-        <PageHeader
-          title="Alerts"
-          description="Manage and monitor system alerts"
-          onAddClick={() => setIsDialogOpen(true)}
-          addButtonText="New Alert"
-        />
-        
-        <AlertsList
-          units={unitsWithAlerts}
-          onAlertClick={setSelectedAlert}
-        />
+      <PageHeader
+        title="Alerts"
+        description="Manage and monitor system alerts"
+        onAddClick={() => setIsDialogOpen(true)}
+        addButtonText="New Alert"
+      />
+      
+      <AlertsList
+        units={unitsWithAlerts}
+        onAlertClick={setSelectedAlert}
+      />
 
-        <CreateAlertDialog 
-          open={isDialogOpen} 
-          onOpenChange={setIsDialogOpen}
-          onCreateAlert={() => {
-            toast({
-              title: "Alert created",
-              description: "The alert has been created successfully.",
-            });
-            setIsDialogOpen(false);
-          }}
-        />
+      <CreateAlertDialog 
+        open={isDialogOpen} 
+        onOpenChange={setIsDialogOpen}
+        onCreateAlert={() => {
+          toast({
+            title: "Alert created",
+            description: "The alert has been created successfully.",
+          });
+          setIsDialogOpen(false);
+        }}
+      />
 
-        <AlertDetailsDialog
-          open={!!selectedAlert}
-          onOpenChange={(open) => !open && setSelectedAlert(null)}
-          alert={selectedAlert}
-        />
-      </div>
+      <AlertDetailsDialog
+        open={!!selectedAlert}
+        onOpenChange={(open) => !open && setSelectedAlert(null)}
+        alert={selectedAlert}
+      />
     </Layout>
   );
 };

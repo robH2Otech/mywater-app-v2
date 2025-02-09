@@ -1,3 +1,4 @@
+
 import { Layout } from "@/components/layout/Layout";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -47,30 +48,28 @@ export const Filters = () => {
 
   return (
     <Layout>
-      <div className="space-y-6">
-        <PageHeader
-          title="Filter Maintenance"
-          description="Track and manage filter maintenance schedules"
-          onAddClick={() => setIsAddFilterOpen(true)}
-          addButtonText="Add Filter"
-        />
-        
-        <FiltersList
-          units={units}
-          onFilterClick={setSelectedFilter}
-        />
+      <PageHeader
+        title="Filter Maintenance"
+        description="Track and manage filter maintenance schedules"
+        onAddClick={() => setIsAddFilterOpen(true)}
+        addButtonText="Add Filter"
+      />
+      
+      <FiltersList
+        units={units}
+        onFilterClick={setSelectedFilter}
+      />
 
-        <AddFilterDialog 
-          open={isAddFilterOpen} 
-          onOpenChange={setIsAddFilterOpen} 
-        />
+      <AddFilterDialog 
+        open={isAddFilterOpen} 
+        onOpenChange={setIsAddFilterOpen} 
+      />
 
-        <FilterDetailsDialog
-          open={!!selectedFilter}
-          onOpenChange={(open) => !open && setSelectedFilter(null)}
-          filter={selectedFilter}
-        />
-      </div>
+      <FilterDetailsDialog
+        open={!!selectedFilter}
+        onOpenChange={(open) => !open && setSelectedFilter(null)}
+        filter={selectedFilter}
+      />
     </Layout>
   );
 };

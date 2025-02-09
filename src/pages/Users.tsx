@@ -54,36 +54,34 @@ export const Users = () => {
 
   return (
     <Layout>
-      <div className="space-y-4">
-        <PageHeader
-          title="Users"
-          description="Manage system users and permissions"
-          onAddClick={() => setIsAddUserOpen(true)}
-          addButtonText="Add User"
+      <PageHeader
+        title="Users"
+        description="Manage system users and permissions"
+        onAddClick={() => setIsAddUserOpen(true)}
+        addButtonText="Add User"
+      />
+      
+      {users.length === 0 ? (
+        <div className="text-center text-gray-400 py-8">
+          No users found. Click "Add User" to create one.
+        </div>
+      ) : (
+        <UsersList
+          users={users}
+          onUserClick={setSelectedUser}
         />
-        
-        {users.length === 0 ? (
-          <div className="text-center text-gray-400 py-8">
-            No users found. Click "Add User" to create one.
-          </div>
-        ) : (
-          <UsersList
-            users={users}
-            onUserClick={setSelectedUser}
-          />
-        )}
+      )}
 
-        <AddUserDialog 
-          open={isAddUserOpen}
-          onOpenChange={setIsAddUserOpen}
-        />
+      <AddUserDialog 
+        open={isAddUserOpen}
+        onOpenChange={setIsAddUserOpen}
+      />
 
-        <UserDetailsDialog
-          open={!!selectedUser}
-          onOpenChange={(open) => !open && setSelectedUser(null)}
-          user={selectedUser}
-        />
-      </div>
+      <UserDetailsDialog
+        open={!!selectedUser}
+        onOpenChange={(open) => !open && setSelectedUser(null)}
+        user={selectedUser}
+      />
     </Layout>
   );
 };
