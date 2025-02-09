@@ -1,6 +1,10 @@
-import { Check, AlertCircle } from "lucide-react";
+
+import { Check, AlertCircle, Edit } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { useState } from "react";
+import { EditUnitDialog } from "./EditUnitDialog";
 
 interface UnitCardProps {
   id: string;
@@ -9,6 +13,10 @@ interface UnitCardProps {
   location?: string | null;
   total_volume?: number | null;
   last_maintenance?: string | null;
+  contact_name?: string | null;
+  contact_email?: string | null;
+  contact_phone?: string | null;
+  next_maintenance?: string | null;
 }
 
 export const UnitCard = ({
@@ -18,7 +26,13 @@ export const UnitCard = ({
   location,
   total_volume,
   last_maintenance,
+  contact_name,
+  contact_email,
+  contact_phone,
+  next_maintenance,
 }: UnitCardProps) => {
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+
   const getStatusIcon = () => {
     switch (status) {
       case "error":
@@ -35,30 +49,61 @@ export const UnitCard = ({
     return new Date(date).toLocaleDateString();
   };
 
+  const handleEditClick = (e: React.MouseEvent) => {
+    e.preventDefault(); // Prevent navigation
+    setIsEditDialogOpen(true);
+  };
+
   return (
-    <Link to={`/units/${id}`} className="block">
-      <Card className="p-6 bg-spotify-darker hover:bg-spotify-accent/40 transition-colors">
-        <div className="flex justify-between items-start mb-4">
-          <div>
-            <h3 className="text-xl font-semibold text-white">{name}</h3>
-            {location && <p className="text-gray-400 text-sm">{location}</p>}
+    <>
+      <Link to={`/units/${id}`} className="block">
+        <Card className="p-6 bg-spotify-darker hover:bg-spotify-accent/40 transition-colors relative group">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity"
+            onClick={handleEditClick}
+          >
+            <Edit className="h-4 w-4 text-white" />
+          </Button>
+          <div className="flex justify-between items-start mb-4">
+            <div>
+              <h3 className="text-xl font-semibold text-white">{name}</h3>
+              {location && <p className="text-gray-400 text-sm">{location}</p>}
+            </div>
+            <div className="flex items-center gap-2">
+              {getStatusIcon()}
+              <span className="text-sm font-medium capitalize text-gray-200">
+                {status === "active" ? "Active" : status}
+              </span>
+            </div>
           </div>
-          <div className="flex items-center gap-2">
-            {getStatusIcon()}
-            <span className="text-sm font-medium capitalize text-gray-200">
-              {status === "active" ? "Active" : status}
-            </span>
+          <div className="space-y-2">
+            <p className="text-sm text-gray-400">
+              Volume: {total_volume ? `${total_volume} m³` : "N/A"}
+            </p>
+            <p className="text-sm text-gray-400">
+              Last Maintenance: {formatDate(last_maintenance)}
+            </p>
           </div>
-        </div>
-        <div className="space-y-2">
-          <p className="text-sm text-gray-400">
-            Volume: {total_volume ? `${total_volume} m³` : "N/A"}
-          </p>
-          <p className="text-sm text-gray-400">
-            Last Maintenance: {formatDate(last_maintenance)}
-          </p>
-        </div>
-      </Card>
-    </Link>
+        </Card>
+      </Link>
+
+      <EditUnitDialog
+        unit={{
+          id,
+          name,
+          status,
+          location,
+          total_volume,
+          contact_name,
+          contact_email,
+          contact_phone,
+          next_maintenance,
+        }}
+        open={isEditDialogOpen}
+        onOpenChange={setIsEditDialogOpen}
+      />
+    </>
   );
 };
