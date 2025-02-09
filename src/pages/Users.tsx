@@ -45,7 +45,6 @@ export const Users = () => {
   });
 
   if (error) {
-    console.error("Error in Users component:", error);
     return <div>Error loading users. Please try again.</div>;
   }
 
@@ -55,7 +54,7 @@ export const Users = () => {
 
   return (
     <Layout>
-      <div className="space-y-6">
+      <div className="space-y-4">
         <PageHeader
           title="Users"
           description="Manage system users and permissions"

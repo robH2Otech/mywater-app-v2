@@ -1,3 +1,4 @@
+
 import { Sidebar } from "./Sidebar";
 import { Header } from "./Header";
 
@@ -13,7 +14,7 @@ export const Layout = ({ children }: LayoutProps) => {
       </div>
       <div className="flex-1 pl-64">
         <Header />
-        <main className="p-6">{children}</main>
+        <main className="p-4 md:p-6 max-w-[2000px] mx-auto">{children}</main>
       </div>
     </div>
   );
