@@ -1,3 +1,4 @@
+
 import { Input } from "@/components/ui/input";
 
 interface FormInputProps {
@@ -7,6 +8,7 @@ interface FormInputProps {
   placeholder?: string;
   type?: string;
   required?: boolean;
+  minLength?: number;
 }
 
 export function FormInput({ 
@@ -15,7 +17,8 @@ export function FormInput({
   onChange, 
   placeholder, 
   type = "text",
-  required = false 
+  required = false,
+  minLength
 }: FormInputProps) {
   return (
     <div className="space-y-2">
@@ -27,6 +30,7 @@ export function FormInput({
         onChange={(e) => onChange(e.target.value)}
         className="bg-spotify-accent border-spotify-accent-hover text-white"
         required={required}
+        minLength={minLength}
       />
     </div>
   );
