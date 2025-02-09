@@ -21,7 +21,7 @@ const Index = () => {
       const { data, error } = await supabase
         .from("alerts")
         .select("*")
-        .eq("status", "urgent")
+        .in("status", ["urgent", "attention"])
         .order("created_at", { ascending: false });
 
       if (error) {
@@ -53,6 +53,11 @@ const Index = () => {
                   <p className="text-xs text-gray-500 mt-2">
                     {new Date(alert.created_at).toLocaleDateString()}
                   </p>
+                  <span className={`text-xs px-2 py-1 rounded-full inline-block mt-2 ${
+                    alert.status === 'urgent' ? 'bg-red-500/20 text-red-300' : 'bg-yellow-500/20 text-yellow-300'
+                  }`}>
+                    {alert.status === 'urgent' ? 'Urgent Change' : 'Attention Required'}
+                  </span>
                 </div>
               </div>
             ))}
