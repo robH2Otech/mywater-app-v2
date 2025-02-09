@@ -17,7 +17,7 @@ const Index = () => {
   const { data: alerts = [] } = useQuery({
     queryKey: ["alerts"],
     queryFn: async () => {
-      console.log("Fetching urgent alerts...");
+      console.log("Fetching alerts...");
       const { data, error } = await supabase
         .from("alerts")
         .select("*")
@@ -28,7 +28,7 @@ const Index = () => {
         console.error("Error fetching alerts:", error);
         throw error;
       }
-      console.log("Urgent alerts data:", data);
+      console.log("Alerts data:", data);
       return data as Alert[];
     },
   });
@@ -38,7 +38,7 @@ const Index = () => {
       <div className="max-w-4xl mx-auto">
         <Card className="p-6 glass">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-semibold text-white">Urgent Changes Required</h2>
+            <h2 className="text-lg font-semibold text-white">Active Alerts</h2>
             <Link to="/alerts" className="text-sm text-spotify-green hover:text-spotify-green/80">
               View All Alerts →
             </Link>
@@ -58,7 +58,7 @@ const Index = () => {
             ))}
             {alerts.length === 0 && (
               <div className="text-center py-6">
-                <p className="text-gray-400">No urgent changes required</p>
+                <p className="text-gray-400">No active alerts</p>
               </div>
             )}
           </div>
