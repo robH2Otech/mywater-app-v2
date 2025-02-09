@@ -1,3 +1,4 @@
+
 import { useQuery } from "@tanstack/react-query";
 import { Droplet, Bell, Calendar, Activity } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -18,6 +19,18 @@ export const Dashboard = () => {
       const { data, error } = await supabase.from("units").select("*");
       if (error) throw error;
       return data as Unit[];
+    },
+  });
+
+  const { data: alerts = [] } = useQuery({
+    queryKey: ["alerts"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("alerts")
+        .select("*")
+        .in("status", ["warning", "urgent"]);
+      if (error) throw error;
+      return data;
     },
   });
 
@@ -43,7 +56,7 @@ export const Dashboard = () => {
         />
         <StatCard
           title="Active Alerts"
-          value={errorUnits}
+          value={alerts.length}
           icon={Bell}
           link="/alerts"
           iconColor="text-red-500"
