@@ -1,3 +1,4 @@
+
 import { Bell } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
@@ -15,21 +16,23 @@ export const Header = () => {
         const { data: { user } } = await supabase.auth.getUser();
         if (user) {
           console.log("Fetching user profile for:", user.email);
-          const { data: profiles, error } = await supabase
+          const { data: profile, error } = await supabase
             .from('app_users')
             .select('first_name, last_name')
             .eq('email', user.email)
-            .single();
+            .maybeSingle();
 
           if (error) {
             console.error("Error fetching user profile:", error);
             return;
           }
 
-          if (profiles) {
-            console.log("User profile found:", profiles);
-            setFirstName(profiles.first_name);
-            setLastName(profiles.last_name);
+          if (profile) {
+            console.log("User profile found:", profile);
+            setFirstName(profile.first_name || "");
+            setLastName(profile.last_name || "");
+          } else {
+            console.log("No user profile found");
           }
         }
       } catch (error) {
