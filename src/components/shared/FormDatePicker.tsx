@@ -13,10 +13,6 @@ interface FormDatePickerProps {
 }
 
 export function FormDatePicker({ value, onChange, label }: FormDatePickerProps) {
-  const handleSelect = (date: Date | undefined) => {
-    onChange(date || null);
-  };
-
   return (
     <div className="space-y-2">
       <label className="text-sm text-gray-400">{label}</label>
@@ -42,12 +38,15 @@ export function FormDatePicker({ value, onChange, label }: FormDatePickerProps) 
           <Calendar
             mode="single"
             selected={value || undefined}
-            onSelect={handleSelect}
+            onSelect={(date) => {
+              onChange(date || null);
+            }}
             className="bg-spotify-darker text-white rounded-md border-spotify-accent"
             disabled={(date) => date < new Date()}
             captionLayout="dropdown-buttons"
             fromYear={2024}
             toYear={2030}
+            initialFocus
           />
         </PopoverContent>
       </Popover>
