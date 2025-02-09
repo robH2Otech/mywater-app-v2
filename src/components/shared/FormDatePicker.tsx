@@ -31,13 +31,17 @@ export function FormDatePicker({ value, onChange, label }: FormDatePickerProps) 
             {value ? format(value, "PPP") : "Pick a date"}
           </Button>
         </PopoverTrigger>
-        <PopoverContent className="w-auto p-0 bg-spotify-darker border-spotify-accent z-[100]">
+        <PopoverContent 
+          className="w-auto p-0 bg-spotify-darker border-spotify-accent z-[100]"
+          align="start"
+        >
           <Calendar
             mode="single"
             selected={value || undefined}
             onSelect={onChange}
             initialFocus
             className="bg-spotify-darker text-white rounded-md border-spotify-accent"
+            disabled={(date) => date < new Date()}
           />
         </PopoverContent>
       </Popover>
