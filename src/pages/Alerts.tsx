@@ -73,35 +73,37 @@ export const Alerts = () => {
 
   return (
     <Layout>
-      <PageHeader
-        title="Alerts"
-        description="Manage and monitor system alerts"
-        onAddClick={() => setIsDialogOpen(true)}
-        addButtonText="New Alert"
-      />
-      
-      <AlertsList
-        units={unitsWithAlerts}
-        onAlertClick={setSelectedAlert}
-      />
+      <div className="space-y-6">
+        <PageHeader
+          title="Alerts"
+          description="Manage and monitor system alerts"
+          onAddClick={() => setIsDialogOpen(true)}
+          addButtonText="New Alert"
+        />
+        
+        <AlertsList
+          units={unitsWithAlerts}
+          onAlertClick={setSelectedAlert}
+        />
 
-      <CreateAlertDialog 
-        open={isDialogOpen} 
-        onOpenChange={setIsDialogOpen}
-        onCreateAlert={() => {
-          toast({
-            title: "Alert created",
-            description: "The alert has been created successfully.",
-          });
-          setIsDialogOpen(false);
-        }}
-      />
+        <CreateAlertDialog 
+          open={isDialogOpen} 
+          onOpenChange={setIsDialogOpen}
+          onCreateAlert={() => {
+            toast({
+              title: "Alert created",
+              description: "The alert has been created successfully.",
+            });
+            setIsDialogOpen(false);
+          }}
+        />
 
-      <AlertDetailsDialog
-        open={!!selectedAlert}
-        onOpenChange={(open) => !open && setSelectedAlert(null)}
-        alert={selectedAlert}
-      />
+        <AlertDetailsDialog
+          open={!!selectedAlert}
+          onOpenChange={(open) => !open && setSelectedAlert(null)}
+          alert={selectedAlert}
+        />
+      </div>
     </Layout>
   );
 };
