@@ -1,5 +1,5 @@
 
-import { Check, AlertCircle, Edit } from "lucide-react";
+import { Check, AlertTriangle, AlertOctagon, MapPin, Edit } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -35,12 +35,23 @@ export const UnitCard = ({
 
   const getStatusIcon = () => {
     switch (status) {
-      case "error":
-        return <AlertCircle className="h-5 w-5 text-red-500" />;
+      case "urgent":
+        return <AlertOctagon className="h-5 w-5 text-red-500" />;
       case "warning":
-        return <AlertCircle className="h-5 w-5 text-yellow-500" />;
+        return <AlertTriangle className="h-5 w-5 text-yellow-500" />;
       default:
         return <Check className="h-5 w-5 text-spotify-green" />;
+    }
+  };
+
+  const getStatusText = (status: string) => {
+    switch (status) {
+      case "urgent":
+        return "Urgent Change";
+      case "warning":
+        return "Attention";
+      default:
+        return "Active";
     }
   };
 
@@ -74,7 +85,7 @@ export const UnitCard = ({
             <div className="flex items-center gap-2">
               {getStatusIcon()}
               <span className="text-sm font-medium capitalize text-gray-200">
-                {status === "active" ? "Active" : status}
+                {getStatusText(status)}
               </span>
             </div>
           </div>
