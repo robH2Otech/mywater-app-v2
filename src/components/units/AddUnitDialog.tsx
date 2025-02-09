@@ -1,12 +1,15 @@
+
 import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { UnitFormFields } from "./UnitFormFields";
 import { UnitFormActions } from "./UnitFormActions";
+import { useQueryClient } from "@tanstack/react-query";
 
 export function AddUnitDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (open: boolean) => void }) {
   const { toast } = useToast();
+  const queryClient = useQueryClient();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState({
     name: "",
@@ -21,6 +24,15 @@ export function AddUnitDialog({ open, onOpenChange }: { open: boolean; onOpenCha
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!formData.name || !formData.total_volume) {
+      toast({
+        title: "Error",
+        description: "Please fill in all required fields",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setIsSubmitting(true);
 
     try {
@@ -35,18 +47,36 @@ export function AddUnitDialog({ open, onOpenChange }: { open: boolean; onOpenCha
         next_maintenance: formData.next_maintenance ? formData.next_maintenance.toISOString() : null,
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error("Error adding unit:", error);
+        throw error;
+      }
 
+      await queryClient.invalidateQueries({ queryKey: ["units"] });
+      
       toast({
         title: "Success",
         description: "Water unit has been added successfully",
       });
+      
       onOpenChange(false);
+      
+      // Reset form
+      setFormData({
+        name: "",
+        location: "",
+        total_volume: "",
+        status: "active",
+        contact_name: "",
+        contact_email: "",
+        contact_phone: "",
+        next_maintenance: null,
+      });
     } catch (error) {
       console.error("Error adding unit:", error);
       toast({
         title: "Error",
-        description: "Failed to add water unit",
+        description: "Failed to add water unit. Please try again.",
         variant: "destructive",
       });
     } finally {

@@ -1,3 +1,4 @@
+
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -28,12 +29,13 @@ export function FormDatePicker({ value, onChange, label }: FormDatePickerProps) 
             {value ? format(value, "PPP") : "Pick a date"}
           </Button>
         </PopoverTrigger>
-        <PopoverContent className="w-auto p-0 bg-spotify-darker border-spotify-accent">
+        <PopoverContent className="w-auto p-0 bg-spotify-darker border-spotify-accent z-50">
           <Calendar
             mode="single"
-            selected={value}
+            selected={value || undefined}
             onSelect={onChange}
             initialFocus
+            className="bg-spotify-darker text-white"
           />
         </PopoverContent>
       </Popover>
