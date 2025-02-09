@@ -1,3 +1,4 @@
+
 import { Home, Droplets, Filter, Bell, BarChart2, Users, Settings } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 
@@ -18,7 +19,10 @@ export const Sidebar = () => {
     <div className="fixed top-0 left-0 h-screen w-64 bg-spotify-darker border-r border-white/10 p-4 animate-slideIn">
       <div className="flex items-center gap-2 mb-8">
         <Droplets className="h-8 w-8 text-spotify-green" />
-        <h1 className="text-xl font-bold text-white">MyWater</h1>
+        <div className="flex flex-col">
+          <h1 className="text-xl font-bold text-white leading-tight">MYWATER</h1>
+          <span className="text-sm text-white/80">Technologies</span>
+        </div>
       </div>
       
       <nav className="space-y-1">
