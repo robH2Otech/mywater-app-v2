@@ -8,11 +8,16 @@ const Index = () => {
   const { data: alerts = [] } = useQuery({
     queryKey: ["alerts"],
     queryFn: async () => {
+      console.log("Fetching active alerts...");
       const { data, error } = await supabase
         .from("alerts")
         .select("*")
         .in("status", ["warning", "urgent"]);
-      if (error) throw error;
+      if (error) {
+        console.error("Error fetching alerts:", error);
+        throw error;
+      }
+      console.log("Active alerts data:", data);
       return data;
     },
   });
