@@ -1,3 +1,4 @@
+
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useState } from "react";
@@ -32,6 +33,11 @@ export const Users = () => {
         });
         throw error;
       }
+      
+      if (!data) {
+        return [];
+      }
+      
       console.log("Users data:", data);
       return data;
     },
