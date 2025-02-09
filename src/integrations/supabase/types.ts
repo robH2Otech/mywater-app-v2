@@ -9,7 +9,184 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      alerts: {
+        Row: {
+          created_at: string | null
+          id: string
+          message: string
+          status: string | null
+          unit_id: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          message: string
+          status?: string | null
+          unit_id?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          message?: string
+          status?: string | null
+          unit_id?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "alerts_unit_id_fkey"
+            columns: ["unit_id"]
+            isOneToOne: false
+            referencedRelation: "units"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      app_users: {
+        Row: {
+          company: string | null
+          created_at: string | null
+          email: string
+          first_name: string | null
+          id: string
+          job_title: string | null
+          last_name: string | null
+          phone: string | null
+          role: string | null
+          status: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          company?: string | null
+          created_at?: string | null
+          email: string
+          first_name?: string | null
+          id?: string
+          job_title?: string | null
+          last_name?: string | null
+          phone?: string | null
+          role?: string | null
+          status?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          company?: string | null
+          created_at?: string | null
+          email?: string
+          first_name?: string | null
+          id?: string
+          job_title?: string | null
+          last_name?: string | null
+          phone?: string | null
+          role?: string | null
+          status?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      filters: {
+        Row: {
+          contact_name: string | null
+          created_at: string | null
+          email: string | null
+          id: string
+          installation_date: string | null
+          last_change: string | null
+          next_change: string | null
+          notes: string | null
+          phone: string | null
+          unit_id: string | null
+          updated_at: string | null
+          volume_processed: number | null
+        }
+        Insert: {
+          contact_name?: string | null
+          created_at?: string | null
+          email?: string | null
+          id?: string
+          installation_date?: string | null
+          last_change?: string | null
+          next_change?: string | null
+          notes?: string | null
+          phone?: string | null
+          unit_id?: string | null
+          updated_at?: string | null
+          volume_processed?: number | null
+        }
+        Update: {
+          contact_name?: string | null
+          created_at?: string | null
+          email?: string | null
+          id?: string
+          installation_date?: string | null
+          last_change?: string | null
+          next_change?: string | null
+          notes?: string | null
+          phone?: string | null
+          unit_id?: string | null
+          updated_at?: string | null
+          volume_processed?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "filters_unit_id_fkey"
+            columns: ["unit_id"]
+            isOneToOne: false
+            referencedRelation: "units"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      units: {
+        Row: {
+          contact_email: string | null
+          contact_name: string | null
+          contact_phone: string | null
+          created_at: string | null
+          id: string
+          last_maintenance: string | null
+          location: string | null
+          name: string
+          next_maintenance: string | null
+          notes: string | null
+          status: string | null
+          total_volume: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          contact_email?: string | null
+          contact_name?: string | null
+          contact_phone?: string | null
+          created_at?: string | null
+          id?: string
+          last_maintenance?: string | null
+          location?: string | null
+          name: string
+          next_maintenance?: string | null
+          notes?: string | null
+          status?: string | null
+          total_volume?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          contact_email?: string | null
+          contact_name?: string | null
+          contact_phone?: string | null
+          created_at?: string | null
+          id?: string
+          last_maintenance?: string | null
+          location?: string | null
+          name?: string
+          next_maintenance?: string | null
+          notes?: string | null
+          status?: string | null
+          total_volume?: number | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
