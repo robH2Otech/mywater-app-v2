@@ -54,8 +54,8 @@ export type Database = {
           job_title: string | null
           last_name: string | null
           phone: string | null
-          role: string | null
-          status: string | null
+          role: Database["public"]["Enums"]["user_role"] | null
+          status: Database["public"]["Enums"]["user_status"] | null
           updated_at: string | null
         }
         Insert: {
@@ -67,8 +67,8 @@ export type Database = {
           job_title?: string | null
           last_name?: string | null
           phone?: string | null
-          role?: string | null
-          status?: string | null
+          role?: Database["public"]["Enums"]["user_role"] | null
+          status?: Database["public"]["Enums"]["user_status"] | null
           updated_at?: string | null
         }
         Update: {
@@ -80,8 +80,8 @@ export type Database = {
           job_title?: string | null
           last_name?: string | null
           phone?: string | null
-          role?: string | null
-          status?: string | null
+          role?: Database["public"]["Enums"]["user_role"] | null
+          status?: Database["public"]["Enums"]["user_status"] | null
           updated_at?: string | null
         }
         Relationships: []
@@ -195,7 +195,8 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      [_ in never]: never
+      user_role: "admin" | "technician" | "user"
+      user_status: "active" | "inactive" | "pending"
     }
     CompositeTypes: {
       [_ in never]: never

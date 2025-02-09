@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogClose } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -7,8 +8,8 @@ import { useToast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
 import { UserFormFields } from "./UserFormFields";
 
-type UserRole = "admin" | "technician" | "user";
-type UserStatus = "active" | "inactive" | "pending";
+type UserStatus = 'active' | 'inactive' | 'pending';
+type UserRole = 'admin' | 'technician' | 'user';
 
 interface FormData {
   first_name: string;

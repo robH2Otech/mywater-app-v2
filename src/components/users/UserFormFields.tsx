@@ -1,5 +1,9 @@
+
 import { FormInput } from "@/components/shared/FormInput";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+
+type UserStatus = 'active' | 'inactive' | 'pending';
+type UserRole = 'admin' | 'technician' | 'user';
 
 interface UserFormFieldsProps {
   formData: {
@@ -9,8 +13,8 @@ interface UserFormFieldsProps {
     phone: string;
     company: string;
     job_title: string;
-    role: string;
-    status: string;
+    role: UserRole;
+    status: UserStatus;
   };
   handleInputChange: (field: string, value: string) => void;
 }
