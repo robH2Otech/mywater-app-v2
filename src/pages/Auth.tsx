@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -19,14 +18,6 @@ export function Auth() {
     setIsLoading(true);
     
     try {
-      // For test account, bypass Supabase completely
-      if (email === "test@example.com" && password === "test123") {
-        localStorage.setItem("is_authenticated", "true");
-        setIsLoading(false);
-        navigate("/");
-        return;
-      }
-
       if (isLogin) {
         const { error } = await supabase.auth.signInWithPassword({
           email,
@@ -50,10 +41,9 @@ export function Auth() {
         });
       }
     } catch (error: any) {
-      console.error("Auth error:", error);
       toast({
         title: "Error",
-        description: error.message || "An error occurred during authentication",
+        description: error.message,
         variant: "destructive",
       });
     } finally {
@@ -73,13 +63,6 @@ export function Auth() {
               ? "Please sign in to continue"
               : "Please sign up to get started"}
           </p>
-          <div className="mt-4 p-4 bg-spotify-accent rounded-lg">
-            <p className="text-sm text-gray-300">
-              Test Account:<br />
-              Email: test@example.com<br />
-              Password: test123
-            </p>
-          </div>
         </div>
 
         <form onSubmit={handleAuth} className="space-y-6">

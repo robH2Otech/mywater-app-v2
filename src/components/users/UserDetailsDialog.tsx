@@ -1,8 +1,7 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { User, Mail, Phone, Building2, Briefcase, Calendar, CheckCircle2 } from "lucide-react";
-import { UserInfoField } from "./UserInfoField";
 import { format } from "date-fns";
+import { User, Mail, Phone, Building2, Briefcase, Calendar, CheckCircle2 } from "lucide-react";
 
 interface UserDetailsDialogProps {
   user: any;
@@ -11,7 +10,15 @@ interface UserDetailsDialogProps {
 }
 
 export function UserDetailsDialog({ user, open, onOpenChange }: UserDetailsDialogProps) {
-  if (!user) return null;
+  const formatDate = (date: string | null) => {
+    if (!date) return "Not specified";
+    return format(new Date(date), "PPP");
+  };
+
+  // If user is null, don't render the dialog content
+  if (!user) {
+    return null;
+  }
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -24,52 +31,75 @@ export function UserDetailsDialog({ user, open, onOpenChange }: UserDetailsDialo
         </DialogHeader>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-4">
-          <UserInfoField
-            label="Full Name"
-            value={`${user.first_name} ${user.last_name}`}
-            icon={User}
-          />
-          <UserInfoField
-            label="Email"
-            value={user.email}
-            icon={Mail}
-          />
-          <UserInfoField
-            label="Role"
-            value={user.role}
-            icon={Briefcase}
-          />
-          <UserInfoField
-            label="Status"
-            value={user.status}
-            icon={CheckCircle2}
-          />
+          <div className="space-y-2">
+            <label className="text-sm text-gray-400">Full Name</label>
+            <div className="flex items-center gap-2 px-3 py-2 bg-spotify-accent rounded-md">
+              <User className="h-4 w-4 text-gray-400" />
+              <span className="text-white">{`${user.first_name} ${user.last_name}`}</span>
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-sm text-gray-400">Email</label>
+            <div className="flex items-center gap-2 px-3 py-2 bg-spotify-accent rounded-md">
+              <Mail className="h-4 w-4 text-gray-400" />
+              <span className="text-white">{user.email}</span>
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-sm text-gray-400">Role</label>
+            <div className="flex items-center gap-2 px-3 py-2 bg-spotify-accent rounded-md">
+              <Briefcase className="h-4 w-4 text-gray-400" />
+              <span className="text-white capitalize">{user.role}</span>
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-sm text-gray-400">Status</label>
+            <div className="flex items-center gap-2 px-3 py-2 bg-spotify-accent rounded-md">
+              <CheckCircle2 className="h-4 w-4 text-gray-400" />
+              <span className="text-white capitalize">{user.status}</span>
+            </div>
+          </div>
+
           {user.phone && (
-            <UserInfoField
-              label="Phone"
-              value={user.phone}
-              icon={Phone}
-            />
+            <div className="space-y-2">
+              <label className="text-sm text-gray-400">Phone</label>
+              <div className="flex items-center gap-2 px-3 py-2 bg-spotify-accent rounded-md">
+                <Phone className="h-4 w-4 text-gray-400" />
+                <span className="text-white">{user.phone}</span>
+              </div>
+            </div>
           )}
+
           {user.company && (
-            <UserInfoField
-              label="Company"
-              value={user.company}
-              icon={Building2}
-            />
+            <div className="space-y-2">
+              <label className="text-sm text-gray-400">Company</label>
+              <div className="flex items-center gap-2 px-3 py-2 bg-spotify-accent rounded-md">
+                <Building2 className="h-4 w-4 text-gray-400" />
+                <span className="text-white">{user.company}</span>
+              </div>
+            </div>
           )}
+
           {user.job_title && (
-            <UserInfoField
-              label="Job Title"
-              value={user.job_title}
-              icon={Briefcase}
-            />
+            <div className="space-y-2">
+              <label className="text-sm text-gray-400">Job Title</label>
+              <div className="flex items-center gap-2 px-3 py-2 bg-spotify-accent rounded-md">
+                <Briefcase className="h-4 w-4 text-gray-400" />
+                <span className="text-white">{user.job_title}</span>
+              </div>
+            </div>
           )}
-          <UserInfoField
-            label="Member Since"
-            value={format(new Date(user.created_at), "PPP")}
-            icon={Calendar}
-          />
+
+          <div className="space-y-2">
+            <label className="text-sm text-gray-400">Member Since</label>
+            <div className="flex items-center gap-2 px-3 py-2 bg-spotify-accent rounded-md">
+              <Calendar className="h-4 w-4 text-gray-400" />
+              <span className="text-white">{formatDate(user.created_at)}</span>
+            </div>
+          </div>
         </div>
 
         <div className="flex justify-end mt-6">

@@ -38,7 +38,9 @@ export function AlertsList({ units, onAlertClick }: AlertsListProps) {
                     </div>
                   )}
                 </div>
-                {getStatusIcon(unit.status)}
+                <div className="flex items-center gap-2">
+                  {getStatusIcon(unit.status)}
+                </div>
               </div>
               
               <div className="space-y-2 text-left">
