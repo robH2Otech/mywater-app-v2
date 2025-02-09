@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -19,6 +20,23 @@ export function Auth() {
     
     try {
       if (isLogin) {
+        // Default test account logic
+        if (email === "test@example.com" && password === "test123") {
+          const { data, error } = await supabase.auth.signUp({
+            email,
+            password,
+          });
+          
+          if (!error && data) {
+            await supabase.auth.signInWithPassword({
+              email,
+              password,
+            });
+            navigate("/");
+            return;
+          }
+        }
+
         const { error } = await supabase.auth.signInWithPassword({
           email,
           password,
@@ -63,6 +81,15 @@ export function Auth() {
               ? "Please sign in to continue"
               : "Please sign up to get started"}
           </p>
+          {isLogin && (
+            <div className="mt-4 p-4 bg-spotify-accent rounded-lg">
+              <p className="text-sm text-gray-300">
+                Test Account:<br />
+                Email: test@example.com<br />
+                Password: test123
+              </p>
+            </div>
+          )}
         </div>
 
         <form onSubmit={handleAuth} className="space-y-6">
