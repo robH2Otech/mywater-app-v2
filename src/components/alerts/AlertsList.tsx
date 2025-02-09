@@ -2,7 +2,7 @@
 import { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { BellRing, AlertTriangle, AlertOctagon, MapPin, Edit } from "lucide-react";
+import { Check, AlertTriangle, AlertOctagon, MapPin, Edit } from "lucide-react";
 import { AlertDetailsDialog } from "./AlertDetailsDialog";
 import { useToast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
@@ -21,12 +21,25 @@ export function AlertsList({ units, onAlertClick }: AlertsListProps) {
 
   const getStatusIcon = (status: string) => {
     switch (status) {
-      case "error":
+      case "urgent":
         return <AlertOctagon className="h-5 w-5 text-red-500" />;
       case "warning":
         return <AlertTriangle className="h-5 w-5 text-yellow-500" />;
+      case "active":
       default:
-        return <BellRing className="h-5 w-5 text-spotify-green" />;
+        return <Check className="h-5 w-5 text-spotify-green" />;
+    }
+  };
+
+  const getStatusText = (status: string) => {
+    switch (status) {
+      case "urgent":
+        return "Urgent Change";
+      case "warning":
+        return "Attention";
+      case "active":
+      default:
+        return "Active";
     }
   };
 
@@ -54,7 +67,6 @@ export function AlertsList({ units, onAlertClick }: AlertsListProps) {
 
       if (error) throw error;
 
-      // Invalidate both queries to ensure data consistency
       await queryClient.invalidateQueries({ queryKey: ['units'] });
       await queryClient.invalidateQueries({ queryKey: ['alerts'] });
       
@@ -105,6 +117,9 @@ export function AlertsList({ units, onAlertClick }: AlertsListProps) {
                   </div>
                   <div className="flex items-center gap-2">
                     {getStatusIcon(unit.status)}
+                    <span className="text-sm font-medium">
+                      {getStatusText(unit.status)}
+                    </span>
                   </div>
                 </div>
                 
@@ -112,9 +127,6 @@ export function AlertsList({ units, onAlertClick }: AlertsListProps) {
                   <div className="text-sm text-gray-400">
                     Total Volume: {unit.total_volume ? `${unit.total_volume} m³` : 'N/A'}
                   </div>
-                  <p className="text-sm text-gray-400">
-                    Last Maintenance: {unit.last_maintenance ? new Date(unit.last_maintenance).toLocaleDateString() : 'N/A'}
-                  </p>
                 </div>
               </div>
             </CardContent>
