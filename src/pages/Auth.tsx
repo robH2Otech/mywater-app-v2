@@ -19,24 +19,13 @@ export function Auth() {
     setIsLoading(true);
     
     try {
-      if (isLogin) {
-        // Default test account logic
-        if (email === "test@example.com" && password === "test123") {
-          const { data, error } = await supabase.auth.signUp({
-            email,
-            password,
-          });
-          
-          if (!error && data) {
-            await supabase.auth.signInWithPassword({
-              email,
-              password,
-            });
-            navigate("/");
-            return;
-          }
-        }
+      // For test account, bypass Supabase auth
+      if (email === "test@example.com" && password === "test123") {
+        navigate("/");
+        return;
+      }
 
+      if (isLogin) {
         const { error } = await supabase.auth.signInWithPassword({
           email,
           password,
