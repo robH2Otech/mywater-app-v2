@@ -15,11 +15,11 @@ export const Header = () => {
       try {
         const { data: { user } } = await supabase.auth.getUser();
         if (user) {
-          console.log("Fetching user profile for:", user.email);
+          console.log("Fetching user profile for id:", user.id);
           const { data: profile, error } = await supabase
             .from('app_users')
             .select('first_name, last_name')
-            .eq('email', user.email)
+            .eq('id', user.id)
             .maybeSingle();
 
           if (error) {
