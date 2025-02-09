@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { 
   Select,
@@ -146,7 +147,7 @@ export const Settings = () => {
             </p>
           </div>
           <p className="text-sm text-gray-400">
-            © 2025 WATER ReUSE App. All rights reserved.
+            © 2025 MYWATER Technologies app. All rights reserved.
           </p>
         </div>
       </section>
