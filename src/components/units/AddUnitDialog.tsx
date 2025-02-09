@@ -24,6 +24,8 @@ export function AddUnitDialog({ open, onOpenChange }: { open: boolean; onOpenCha
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Validate required fields
     if (!formData.name || !formData.total_volume) {
       toast({
         title: "Error",
@@ -38,13 +40,13 @@ export function AddUnitDialog({ open, onOpenChange }: { open: boolean; onOpenCha
     try {
       const { error } = await supabase.from("units").insert({
         name: formData.name,
-        location: formData.location,
+        location: formData.location || null,
         total_volume: parseFloat(formData.total_volume),
         status: formData.status,
         contact_name: formData.contact_name || null,
         contact_email: formData.contact_email || null,
         contact_phone: formData.contact_phone || null,
-        next_maintenance: formData.next_maintenance ? formData.next_maintenance.toISOString() : null,
+        next_maintenance: formData.next_maintenance?.toISOString() || null,
       });
 
       if (error) {
@@ -52,6 +54,7 @@ export function AddUnitDialog({ open, onOpenChange }: { open: boolean; onOpenCha
         throw error;
       }
 
+      // Invalidate and refetch units data
       await queryClient.invalidateQueries({ queryKey: ["units"] });
       
       toast({
@@ -59,9 +62,8 @@ export function AddUnitDialog({ open, onOpenChange }: { open: boolean; onOpenCha
         description: "Water unit has been added successfully",
       });
       
+      // Close dialog and reset form
       onOpenChange(false);
-      
-      // Reset form
       setFormData({
         name: "",
         location: "",
