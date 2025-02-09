@@ -13,6 +13,10 @@ interface FormDatePickerProps {
 }
 
 export function FormDatePicker({ value, onChange, label }: FormDatePickerProps) {
+  const handleSelect = (date: Date | undefined) => {
+    onChange(date || null);
+  };
+
   return (
     <div className="space-y-2">
       <label className="text-sm text-gray-400">{label}</label>
@@ -25,7 +29,6 @@ export function FormDatePicker({ value, onChange, label }: FormDatePickerProps) 
               "w-full justify-start text-left font-normal bg-spotify-darker border-spotify-accent hover:bg-spotify-darker hover:border-spotify-accent-hover text-white",
               !value && "text-gray-400"
             )}
-            onClick={(e) => e.preventDefault()}
           >
             <CalendarIcon className="mr-2 h-4 w-4" />
             {value ? format(value, "PPP") : "Pick a date"}
@@ -34,14 +37,17 @@ export function FormDatePicker({ value, onChange, label }: FormDatePickerProps) 
         <PopoverContent 
           className="w-auto p-0 bg-spotify-darker border-spotify-accent z-[100]"
           align="start"
+          sideOffset={4}
         >
           <Calendar
             mode="single"
             selected={value || undefined}
-            onSelect={onChange}
-            initialFocus
+            onSelect={handleSelect}
             className="bg-spotify-darker text-white rounded-md border-spotify-accent"
             disabled={(date) => date < new Date()}
+            captionLayout="dropdown-buttons"
+            fromYear={2024}
+            toYear={2030}
           />
         </PopoverContent>
       </Popover>
