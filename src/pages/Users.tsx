@@ -35,6 +35,7 @@ export const Users = () => {
       }
       
       if (!data) {
+        console.log("No users found");
         return [];
       }
       
@@ -62,10 +63,16 @@ export const Users = () => {
           addButtonText="Add User"
         />
         
-        <UsersList
-          users={users}
-          onUserClick={setSelectedUser}
-        />
+        {users.length === 0 ? (
+          <div className="text-center text-gray-400 py-8">
+            No users found. Click "Add User" to create one.
+          </div>
+        ) : (
+          <UsersList
+            users={users}
+            onUserClick={setSelectedUser}
+          />
+        )}
 
         <AddUserDialog 
           open={isAddUserOpen}
