@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -82,6 +83,9 @@ export function FiltersList({ units, onFilterClick }: FiltersListProps) {
                   </div>
                   
                   <div className="space-y-2 text-left">
+                    <div className="text-sm text-gray-400">
+                      Total Volume: {unit.total_volume ? `${unit.total_volume} m³` : 'N/A'}
+                    </div>
                     {unit.last_maintenance && (
                       <div className="flex items-center gap-2 text-sm text-gray-400">
                         <Calendar className="h-4 w-4" />

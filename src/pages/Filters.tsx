@@ -20,7 +20,10 @@ export const Filters = () => {
       console.log("Fetching filter units data...");
       const { data, error } = await supabase
         .from("units")
-        .select("*, filters(*)");
+        .select(`
+          *,
+          filters(*)
+        `);
       
       if (error) {
         console.error("Error fetching filter units:", error);

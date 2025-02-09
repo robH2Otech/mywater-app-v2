@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -65,9 +66,9 @@ export function AlertsList({ units, onAlertClick }: AlertsListProps) {
                 </div>
                 
                 <div className="space-y-2 text-left">
-                  <p className="text-sm text-gray-400">
-                    Volume: {unit.total_volume ? `${unit.total_volume} m³` : 'N/A'}
-                  </p>
+                  <div className="text-sm text-gray-400">
+                    Total Volume: {unit.total_volume ? `${unit.total_volume} m³` : 'N/A'}
+                  </div>
                   <p className="text-sm text-gray-400">
                     Last Maintenance: {unit.last_maintenance ? new Date(unit.last_maintenance).toLocaleDateString() : 'N/A'}
                   </p>
