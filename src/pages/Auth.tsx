@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -24,7 +25,14 @@ export function Auth() {
           password,
         });
         
-        if (error) throw error;
+        if (error) {
+          if (error.message.includes("Invalid login credentials")) {
+            throw new Error(
+              "Invalid email or password. Please check your credentials or sign up if you don't have an account."
+            );
+          }
+          throw error;
+        }
         
         navigate("/");
       } else {
@@ -33,7 +41,14 @@ export function Auth() {
           password,
         });
         
-        if (error) throw error;
+        if (error) {
+          if (error.message.includes("User already registered")) {
+            throw new Error(
+              "This email is already registered. Please try logging in instead."
+            );
+          }
+          throw error;
+        }
         
         toast({
           title: "Success",
@@ -79,6 +94,7 @@ export function Auth() {
             value={password}
             onChange={setPassword}
             required
+            minLength={6}
           />
 
           <Button
