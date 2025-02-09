@@ -36,7 +36,7 @@ export function AlertsList({ units, onAlertClick }: AlertsListProps) {
       case "urgent":
         return "Urgent Change";
       case "warning":
-        return "Attention";
+        return "Warning";
       case "active":
       default:
         return "Active";

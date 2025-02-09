@@ -49,7 +49,7 @@ export const UnitCard = ({
       case "urgent":
         return "Urgent Change";
       case "warning":
-        return "Attention";
+        return "Warning";
       default:
         return "Active";
     }
