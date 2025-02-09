@@ -1,5 +1,6 @@
+
 import { useState } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogClose } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { FormInput } from "@/components/shared/FormInput";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -70,7 +71,7 @@ export function AddUserDialog({ open, onOpenChange }: AddUserDialogProps) {
         status: "active"
       });
       
-      // Close dialog if onOpenChange is provided
+      // Close dialog
       if (onOpenChange) {
         onOpenChange(false);
       }
@@ -89,15 +90,9 @@ export function AddUserDialog({ open, onOpenChange }: AddUserDialogProps) {
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogTrigger asChild>
-        <Button className="bg-spotify-green hover:bg-spotify-green/90">
-          <UserPlus className="h-4 w-4 mr-2" />
-          Add User
-        </Button>
-      </DialogTrigger>
-      <DialogContent className="sm:max-w-[600px] bg-spotify-darker">
+      <DialogContent className="sm:max-w-[600px] bg-spotify-darker border-spotify-accent">
         <DialogHeader>
-          <DialogTitle className="text-xl">Add New User</DialogTitle>
+          <DialogTitle className="text-xl font-semibold text-white">Add New User</DialogTitle>
         </DialogHeader>
         <div className="grid grid-cols-2 gap-4 py-4">
           <FormInput
@@ -107,20 +102,10 @@ export function AddUserDialog({ open, onOpenChange }: AddUserDialogProps) {
             required
           />
           <FormInput
-            label="Company"
-            value={formData.company}
-            onChange={(value) => handleInputChange("company", value)}
-          />
-          <FormInput
             label="Last Name"
             value={formData.last_name}
             onChange={(value) => handleInputChange("last_name", value)}
             required
-          />
-          <FormInput
-            label="Job Title"
-            value={formData.job_title}
-            onChange={(value) => handleInputChange("job_title", value)}
           />
           <FormInput
             label="Email"
@@ -128,6 +113,21 @@ export function AddUserDialog({ open, onOpenChange }: AddUserDialogProps) {
             value={formData.email}
             onChange={(value) => handleInputChange("email", value)}
             required
+          />
+          <FormInput
+            label="Phone"
+            value={formData.phone}
+            onChange={(value) => handleInputChange("phone", value)}
+          />
+          <FormInput
+            label="Company"
+            value={formData.company}
+            onChange={(value) => handleInputChange("company", value)}
+          />
+          <FormInput
+            label="Job Title"
+            value={formData.job_title}
+            onChange={(value) => handleInputChange("job_title", value)}
           />
           <div className="space-y-2">
             <label className="text-sm text-gray-400">Role</label>
@@ -145,12 +145,6 @@ export function AddUserDialog({ open, onOpenChange }: AddUserDialogProps) {
               </SelectContent>
             </Select>
           </div>
-          <FormInput
-            label="Phone"
-            type="tel"
-            value={formData.phone}
-            onChange={(value) => handleInputChange("phone", value)}
-          />
           <div className="space-y-2">
             <label className="text-sm text-gray-400">Status</label>
             <Select
@@ -169,12 +163,16 @@ export function AddUserDialog({ open, onOpenChange }: AddUserDialogProps) {
           </div>
         </div>
         <div className="flex justify-end gap-3">
-          <DialogClose asChild>
-            <Button variant="outline">Cancel</Button>
-          </DialogClose>
+          <Button
+            variant="outline"
+            onClick={() => onOpenChange?.(false)}
+            className="bg-spotify-accent hover:bg-spotify-accent-hover"
+          >
+            Cancel
+          </Button>
           <Button 
-            className="bg-spotify-green hover:bg-spotify-green/90"
             onClick={handleSubmit}
+            className="bg-spotify-green hover:bg-spotify-green/90"
           >
             Add User
           </Button>

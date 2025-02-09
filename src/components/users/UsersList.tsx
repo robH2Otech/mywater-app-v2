@@ -1,5 +1,7 @@
+
 import { Card, CardContent } from "@/components/ui/card";
 import { Mail, Phone, Building2, Briefcase, CheckCircle2, AlertCircle } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 
 interface UsersListProps {
   users: any[];
@@ -12,7 +14,7 @@ export function UsersList({ users, onUserClick }: UsersListProps) {
       {users.map((user) => (
         <Card 
           key={user.id} 
-          className="bg-spotify-darker hover:bg-spotify-accent/40 transition-colors cursor-pointer"
+          className="bg-spotify-darker hover:bg-spotify-accent/40 transition-all cursor-pointer transform hover:scale-[1.02] duration-200"
           onClick={() => onUserClick(user)}
         >
           <CardContent className="p-6">
@@ -22,7 +24,12 @@ export function UsersList({ users, onUserClick }: UsersListProps) {
                   <h3 className="text-xl font-semibold text-white">
                     {user.first_name} {user.last_name}
                   </h3>
-                  <p className="text-sm text-gray-400">{user.role}</p>
+                  <Badge 
+                    variant={user.role === 'admin' ? 'destructive' : user.role === 'technician' ? 'default' : 'secondary'}
+                    className="mt-1"
+                  >
+                    {user.role}
+                  </Badge>
                 </div>
                 {user.status === 'active' ? (
                   <CheckCircle2 className="h-5 w-5 text-spotify-green" />

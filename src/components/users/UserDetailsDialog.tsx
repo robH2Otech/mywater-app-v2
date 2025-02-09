@@ -1,7 +1,12 @@
+
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { format } from "date-fns";
-import { User, Mail, Phone, Building2, Briefcase, Calendar, CheckCircle2 } from "lucide-react";
+import { FormInput } from "@/components/shared/FormInput";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
+import { useQueryClient } from "@tanstack/react-query";
 
 interface UserDetailsDialogProps {
   user: any;
@@ -10,104 +15,141 @@ interface UserDetailsDialogProps {
 }
 
 export function UserDetailsDialog({ user, open, onOpenChange }: UserDetailsDialogProps) {
-  const formatDate = (date: string | null) => {
-    if (!date) return "Not specified";
-    return format(new Date(date), "PPP");
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+  const [formData, setFormData] = useState({
+    first_name: user?.first_name || "",
+    last_name: user?.last_name || "",
+    email: user?.email || "",
+    phone: user?.phone || "",
+    company: user?.company || "",
+    job_title: user?.job_title || "",
+    role: user?.role || "user",
+    status: user?.status || "active"
+  });
+
+  const handleInputChange = (field: string, value: string) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
   };
 
-  // If user is null, don't render the dialog content
-  if (!user) {
-    return null;
-  }
+  const handleSubmit = async () => {
+    try {
+      const { error } = await supabase
+        .from("app_users")
+        .update(formData)
+        .eq("id", user.id);
+
+      if (error) throw error;
+
+      toast({
+        title: "Success",
+        description: "User details updated successfully",
+      });
+
+      queryClient.invalidateQueries({ queryKey: ["users"] });
+      onOpenChange(false);
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  };
+
+  if (!user) return null;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[600px] bg-spotify-darker border-spotify-accent">
         <DialogHeader>
-          <DialogTitle className="text-xl font-semibold text-white flex items-center gap-2">
-            <User className="h-5 w-5" />
-            User Details
+          <DialogTitle className="text-xl font-semibold text-white">
+            Edit User Details
           </DialogTitle>
         </DialogHeader>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-4">
-          <div className="space-y-2">
-            <label className="text-sm text-gray-400">Full Name</label>
-            <div className="flex items-center gap-2 px-3 py-2 bg-spotify-accent rounded-md">
-              <User className="h-4 w-4 text-gray-400" />
-              <span className="text-white">{`${user.first_name} ${user.last_name}`}</span>
-            </div>
-          </div>
-
-          <div className="space-y-2">
-            <label className="text-sm text-gray-400">Email</label>
-            <div className="flex items-center gap-2 px-3 py-2 bg-spotify-accent rounded-md">
-              <Mail className="h-4 w-4 text-gray-400" />
-              <span className="text-white">{user.email}</span>
-            </div>
-          </div>
-
+        <div className="grid grid-cols-2 gap-4 py-4">
+          <FormInput
+            label="First Name"
+            value={formData.first_name}
+            onChange={(value) => handleInputChange("first_name", value)}
+            required
+          />
+          <FormInput
+            label="Last Name"
+            value={formData.last_name}
+            onChange={(value) => handleInputChange("last_name", value)}
+            required
+          />
+          <FormInput
+            label="Email"
+            type="email"
+            value={formData.email}
+            onChange={(value) => handleInputChange("email", value)}
+            required
+          />
+          <FormInput
+            label="Phone"
+            value={formData.phone}
+            onChange={(value) => handleInputChange("phone", value)}
+          />
+          <FormInput
+            label="Company"
+            value={formData.company}
+            onChange={(value) => handleInputChange("company", value)}
+          />
+          <FormInput
+            label="Job Title"
+            value={formData.job_title}
+            onChange={(value) => handleInputChange("job_title", value)}
+          />
           <div className="space-y-2">
             <label className="text-sm text-gray-400">Role</label>
-            <div className="flex items-center gap-2 px-3 py-2 bg-spotify-accent rounded-md">
-              <Briefcase className="h-4 w-4 text-gray-400" />
-              <span className="text-white capitalize">{user.role}</span>
-            </div>
+            <Select
+              value={formData.role}
+              onValueChange={(value) => handleInputChange("role", value)}
+            >
+              <SelectTrigger className="bg-spotify-accent border-spotify-accent-hover text-white">
+                <SelectValue placeholder="Select role" />
+              </SelectTrigger>
+              <SelectContent className="bg-spotify-darker border-spotify-accent-hover">
+                <SelectItem value="admin">Admin</SelectItem>
+                <SelectItem value="technician">Technician</SelectItem>
+                <SelectItem value="user">User</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
-
           <div className="space-y-2">
             <label className="text-sm text-gray-400">Status</label>
-            <div className="flex items-center gap-2 px-3 py-2 bg-spotify-accent rounded-md">
-              <CheckCircle2 className="h-4 w-4 text-gray-400" />
-              <span className="text-white capitalize">{user.status}</span>
-            </div>
-          </div>
-
-          {user.phone && (
-            <div className="space-y-2">
-              <label className="text-sm text-gray-400">Phone</label>
-              <div className="flex items-center gap-2 px-3 py-2 bg-spotify-accent rounded-md">
-                <Phone className="h-4 w-4 text-gray-400" />
-                <span className="text-white">{user.phone}</span>
-              </div>
-            </div>
-          )}
-
-          {user.company && (
-            <div className="space-y-2">
-              <label className="text-sm text-gray-400">Company</label>
-              <div className="flex items-center gap-2 px-3 py-2 bg-spotify-accent rounded-md">
-                <Building2 className="h-4 w-4 text-gray-400" />
-                <span className="text-white">{user.company}</span>
-              </div>
-            </div>
-          )}
-
-          {user.job_title && (
-            <div className="space-y-2">
-              <label className="text-sm text-gray-400">Job Title</label>
-              <div className="flex items-center gap-2 px-3 py-2 bg-spotify-accent rounded-md">
-                <Briefcase className="h-4 w-4 text-gray-400" />
-                <span className="text-white">{user.job_title}</span>
-              </div>
-            </div>
-          )}
-
-          <div className="space-y-2">
-            <label className="text-sm text-gray-400">Member Since</label>
-            <div className="flex items-center gap-2 px-3 py-2 bg-spotify-accent rounded-md">
-              <Calendar className="h-4 w-4 text-gray-400" />
-              <span className="text-white">{formatDate(user.created_at)}</span>
-            </div>
+            <Select
+              value={formData.status}
+              onValueChange={(value) => handleInputChange("status", value)}
+            >
+              <SelectTrigger className="bg-spotify-accent border-spotify-accent-hover text-white">
+                <SelectValue placeholder="Select status" />
+              </SelectTrigger>
+              <SelectContent className="bg-spotify-darker border-spotify-accent-hover">
+                <SelectItem value="active">Active</SelectItem>
+                <SelectItem value="inactive">Inactive</SelectItem>
+                <SelectItem value="pending">Pending</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
         </div>
 
-        <div className="flex justify-end mt-6">
+        <div className="flex justify-end gap-3 mt-6">
           <Button
+            variant="outline"
             onClick={() => onOpenChange(false)}
-            className="bg-spotify-accent hover:bg-spotify-accent-hover text-white"
+            className="bg-spotify-accent hover:bg-spotify-accent-hover"
           >
-            Close
+            Cancel
+          </Button>
+          <Button
+            onClick={handleSubmit}
+            className="bg-spotify-green hover:bg-spotify-green/90"
+          >
+            Save Changes
           </Button>
         </div>
       </DialogContent>
