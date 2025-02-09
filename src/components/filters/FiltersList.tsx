@@ -4,6 +4,9 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Filter, Calendar, AlertTriangle, CheckCircle2, Clock, MapPin, Edit } from "lucide-react";
 import { FilterDetailsDialog } from "./FilterDetailsDialog";
+import { useToast } from "@/hooks/use-toast";
+import { useQueryClient } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 
 interface FiltersListProps {
   units: any[];
@@ -11,6 +14,8 @@ interface FiltersListProps {
 }
 
 export function FiltersList({ units, onFilterClick }: FiltersListProps) {
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
   const [selectedUnit, setSelectedUnit] = useState<any>(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
 
@@ -43,6 +48,43 @@ export function FiltersList({ units, onFilterClick }: FiltersListProps) {
     e.stopPropagation();
     setSelectedUnit(unit);
     setIsEditDialogOpen(true);
+  };
+
+  const handleSave = async (updatedData: any) => {
+    try {
+      const { error } = await supabase
+        .from('units')
+        .update({
+          name: updatedData.name,
+          location: updatedData.location,
+          total_volume: updatedData.total_volume,
+          status: updatedData.status,
+          contact_name: updatedData.contact_name,
+          contact_email: updatedData.contact_email,
+          contact_phone: updatedData.contact_phone,
+          next_maintenance: updatedData.next_maintenance,
+        })
+        .eq('id', selectedUnit.id);
+
+      if (error) throw error;
+
+      await queryClient.invalidateQueries({ queryKey: ['filter-units'] });
+      await queryClient.invalidateQueries({ queryKey: ['units'] });
+      
+      toast({
+        title: "Success",
+        description: "Filter unit has been updated successfully",
+      });
+      
+      setIsEditDialogOpen(false);
+    } catch (error) {
+      console.error('Error updating unit:', error);
+      toast({
+        title: "Error",
+        description: "Failed to update filter unit",
+        variant: "destructive",
+      });
+    }
   };
 
   return (
@@ -110,6 +152,7 @@ export function FiltersList({ units, onFilterClick }: FiltersListProps) {
         filter={selectedUnit}
         open={isEditDialogOpen}
         onOpenChange={setIsEditDialogOpen}
+        onSave={handleSave}
       />
     </>
   );

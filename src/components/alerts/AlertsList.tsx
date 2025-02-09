@@ -4,6 +4,9 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { BellRing, AlertTriangle, AlertOctagon, MapPin, Edit } from "lucide-react";
 import { AlertDetailsDialog } from "./AlertDetailsDialog";
+import { useToast } from "@/hooks/use-toast";
+import { useQueryClient } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 
 interface AlertsListProps {
   units: any[];
@@ -11,6 +14,8 @@ interface AlertsListProps {
 }
 
 export function AlertsList({ units, onAlertClick }: AlertsListProps) {
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
   const [selectedUnit, setSelectedUnit] = useState<any>(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
 
@@ -29,6 +34,44 @@ export function AlertsList({ units, onAlertClick }: AlertsListProps) {
     e.stopPropagation();
     setSelectedUnit(unit);
     setIsEditDialogOpen(true);
+  };
+
+  const handleSave = async (updatedData: any) => {
+    try {
+      const { error } = await supabase
+        .from('units')
+        .update({
+          name: updatedData.name,
+          location: updatedData.location,
+          total_volume: updatedData.total_volume,
+          status: updatedData.status,
+          contact_name: updatedData.contact_name,
+          contact_email: updatedData.contact_email,
+          contact_phone: updatedData.contact_phone,
+          next_maintenance: updatedData.next_maintenance,
+        })
+        .eq('id', selectedUnit.id);
+
+      if (error) throw error;
+
+      // Invalidate both queries to ensure data consistency
+      await queryClient.invalidateQueries({ queryKey: ['units'] });
+      await queryClient.invalidateQueries({ queryKey: ['alerts'] });
+      
+      toast({
+        title: "Success",
+        description: "Alert unit has been updated successfully",
+      });
+      
+      setIsEditDialogOpen(false);
+    } catch (error) {
+      console.error('Error updating unit:', error);
+      toast({
+        title: "Error",
+        description: "Failed to update alert unit",
+        variant: "destructive",
+      });
+    }
   };
 
   return (
@@ -83,6 +126,7 @@ export function AlertsList({ units, onAlertClick }: AlertsListProps) {
         alert={selectedUnit}
         open={isEditDialogOpen}
         onOpenChange={setIsEditDialogOpen}
+        onSave={handleSave}
       />
     </>
   );

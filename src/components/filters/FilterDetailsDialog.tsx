@@ -1,22 +1,47 @@
+
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { format } from "date-fns";
 import { Filter, Calendar, Mail, Phone, User, FileText } from "lucide-react";
+import { FormInput } from "@/components/shared/FormInput";
+import { FormDatePicker } from "@/components/shared/FormDatePicker";
+import { useState, useEffect } from "react";
 
 interface FilterDetailsDialogProps {
   filter: any;
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  onSave?: (updatedData: any) => void;
 }
 
-export function FilterDetailsDialog({ filter, open, onOpenChange }: FilterDetailsDialogProps) {
-  const formatDate = (date: string | null) => {
-    if (!date) return "Not specified";
-    return format(new Date(date), "PPP");
+export function FilterDetailsDialog({ filter, open, onOpenChange, onSave }: FilterDetailsDialogProps) {
+  const [formData, setFormData] = useState<any>(null);
+
+  useEffect(() => {
+    if (filter) {
+      setFormData({
+        name: filter.name,
+        location: filter.location || "",
+        total_volume: filter.total_volume?.toString() || "",
+        status: filter.status || "active",
+        contact_name: filter.contact_name || "",
+        contact_email: filter.contact_email || "",
+        contact_phone: filter.contact_phone || "",
+        next_maintenance: filter.next_maintenance ? new Date(filter.next_maintenance) : null,
+      });
+    }
+  }, [filter]);
+
+  const handleSave = () => {
+    if (onSave && formData) {
+      onSave({
+        ...formData,
+        total_volume: formData.total_volume ? parseFloat(formData.total_volume) : null,
+      });
+    }
   };
 
-  // If filter is null, don't render the dialog content
-  if (!filter) {
+  if (!filter || !formData) {
     return null;
   }
 
@@ -31,79 +56,64 @@ export function FilterDetailsDialog({ filter, open, onOpenChange }: FilterDetail
         </DialogHeader>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-4">
-          <div className="space-y-2">
-            <label className="text-sm text-gray-400">Installation Date</label>
-            <div className="flex items-center gap-2 px-3 py-2 bg-spotify-accent rounded-md">
-              <Calendar className="h-4 w-4 text-gray-400" />
-              <span className="text-white">{formatDate(filter.installation_date)}</span>
-            </div>
-          </div>
+          <FormInput
+            label="Name"
+            value={formData.name}
+            onChange={(value) => setFormData({ ...formData, name: value })}
+          />
 
-          <div className="space-y-2">
-            <label className="text-sm text-gray-400">Last Change</label>
-            <div className="flex items-center gap-2 px-3 py-2 bg-spotify-accent rounded-md">
-              <Calendar className="h-4 w-4 text-gray-400" />
-              <span className="text-white">{formatDate(filter.last_change)}</span>
-            </div>
-          </div>
+          <FormInput
+            label="Location"
+            value={formData.location}
+            onChange={(value) => setFormData({ ...formData, location: value })}
+          />
 
-          <div className="space-y-2">
-            <label className="text-sm text-gray-400">Next Change</label>
-            <div className="flex items-center gap-2 px-3 py-2 bg-spotify-accent rounded-md">
-              <Calendar className="h-4 w-4 text-gray-400" />
-              <span className="text-white">{formatDate(filter.next_change)}</span>
-            </div>
-          </div>
+          <FormInput
+            label="Total Volume (m³)"
+            type="number"
+            value={formData.total_volume}
+            onChange={(value) => setFormData({ ...formData, total_volume: value })}
+          />
 
-          <div className="space-y-2">
-            <label className="text-sm text-gray-400">Volume Processed (m³)</label>
-            <div className="flex items-center gap-2 px-3 py-2 bg-spotify-accent rounded-md">
-              <Filter className="h-4 w-4 text-gray-400" />
-              <span className="text-white">{filter.volume_processed || "0"}</span>
-            </div>
-          </div>
+          <FormDatePicker
+            label="Next Maintenance"
+            value={formData.next_maintenance}
+            onChange={(date) => setFormData({ ...formData, next_maintenance: date })}
+          />
 
-          <div className="space-y-2">
-            <label className="text-sm text-gray-400">Contact Name</label>
-            <div className="flex items-center gap-2 px-3 py-2 bg-spotify-accent rounded-md">
-              <User className="h-4 w-4 text-gray-400" />
-              <span className="text-white">{filter.contact_name || "Not specified"}</span>
-            </div>
-          </div>
+          <FormInput
+            label="Contact Name"
+            value={formData.contact_name}
+            onChange={(value) => setFormData({ ...formData, contact_name: value })}
+          />
 
-          <div className="space-y-2">
-            <label className="text-sm text-gray-400">Email</label>
-            <div className="flex items-center gap-2 px-3 py-2 bg-spotify-accent rounded-md">
-              <Mail className="h-4 w-4 text-gray-400" />
-              <span className="text-white">{filter.email || "Not specified"}</span>
-            </div>
-          </div>
+          <FormInput
+            label="Email"
+            type="email"
+            value={formData.contact_email}
+            onChange={(value) => setFormData({ ...formData, contact_email: value })}
+          />
 
-          <div className="space-y-2">
-            <label className="text-sm text-gray-400">Phone</label>
-            <div className="flex items-center gap-2 px-3 py-2 bg-spotify-accent rounded-md">
-              <Phone className="h-4 w-4 text-gray-400" />
-              <span className="text-white">{filter.phone || "Not specified"}</span>
-            </div>
-          </div>
+          <FormInput
+            label="Phone"
+            value={formData.contact_phone}
+            onChange={(value) => setFormData({ ...formData, contact_phone: value })}
+          />
         </div>
 
-        {filter.notes && (
-          <div className="space-y-2 mt-6">
-            <label className="text-sm text-gray-400">Notes</label>
-            <div className="flex items-start gap-2 px-3 py-2 bg-spotify-accent rounded-md">
-              <FileText className="h-4 w-4 text-gray-400 mt-1" />
-              <span className="text-white">{filter.notes}</span>
-            </div>
-          </div>
-        )}
-
-        <div className="flex justify-end mt-6">
+        <div className="flex justify-end gap-4 mt-6">
           <Button
             onClick={() => onOpenChange(false)}
+            variant="outline"
             className="bg-spotify-accent hover:bg-spotify-accent-hover text-white"
           >
-            Close
+            Cancel
+          </Button>
+          <Button
+            onClick={handleSave}
+            className="bg-spotify-green hover:bg-spotify-green/90 text-white"
+          >
+            Save Changes
           </Button>
         </div>
       </DialogContent>
