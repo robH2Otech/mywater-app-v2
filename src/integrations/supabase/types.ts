@@ -11,75 +11,77 @@ export type Database = {
     Tables: {
       alerts: {
         Row: {
-          assign_to: string | null
-          comments: string | null
           created_at: string | null
           id: string
-          message: string | null
-          status: string
-          unit_id: string
+          message: string
+          status: string | null
+          unit_id: string | null
           updated_at: string | null
         }
         Insert: {
-          assign_to?: string | null
-          comments?: string | null
           created_at?: string | null
           id?: string
-          message?: string | null
-          status: string
-          unit_id: string
+          message: string
+          status?: string | null
+          unit_id?: string | null
           updated_at?: string | null
         }
         Update: {
-          assign_to?: string | null
-          comments?: string | null
           created_at?: string | null
           id?: string
-          message?: string | null
-          status?: string
-          unit_id?: string
+          message?: string
+          status?: string | null
+          unit_id?: string | null
           updated_at?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "alerts_unit_id_fkey"
+            columns: ["unit_id"]
+            isOneToOne: false
+            referencedRelation: "units"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       app_users: {
         Row: {
           company: string | null
           created_at: string | null
           email: string
-          first_name: string
+          first_name: string | null
           id: string
           job_title: string | null
-          last_name: string
+          last_name: string | null
           phone: string | null
-          role: Database["public"]["Enums"]["app_role"]
-          status: string | null
+          role: Database["public"]["Enums"]["user_role"] | null
+          status: Database["public"]["Enums"]["user_status"] | null
           updated_at: string | null
         }
         Insert: {
           company?: string | null
           created_at?: string | null
           email: string
-          first_name: string
+          first_name?: string | null
           id?: string
           job_title?: string | null
-          last_name: string
+          last_name?: string | null
           phone?: string | null
-          role?: Database["public"]["Enums"]["app_role"]
-          status?: string | null
+          role?: Database["public"]["Enums"]["user_role"] | null
+          status?: Database["public"]["Enums"]["user_status"] | null
           updated_at?: string | null
         }
         Update: {
           company?: string | null
           created_at?: string | null
           email?: string
-          first_name?: string
+          first_name?: string | null
           id?: string
           job_title?: string | null
-          last_name?: string
+          last_name?: string | null
           phone?: string | null
-          role?: Database["public"]["Enums"]["app_role"]
-          status?: string | null
+          role?: Database["public"]["Enums"]["user_role"] | null
+          status?: Database["public"]["Enums"]["user_status"] | null
           updated_at?: string | null
         }
         Relationships: []
@@ -149,7 +151,7 @@ export type Database = {
           name: string
           next_maintenance: string | null
           notes: string | null
-          status: string
+          status: string | null
           total_volume: number | null
           updated_at: string | null
         }
@@ -164,7 +166,7 @@ export type Database = {
           name: string
           next_maintenance?: string | null
           notes?: string | null
-          status: string
+          status?: string | null
           total_volume?: number | null
           updated_at?: string | null
         }
@@ -179,7 +181,7 @@ export type Database = {
           name?: string
           next_maintenance?: string | null
           notes?: string | null
-          status?: string
+          status?: string | null
           total_volume?: number | null
           updated_at?: string | null
         }
@@ -193,7 +195,8 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      app_role: "admin" | "technician" | "user"
+      user_role: "admin" | "technician" | "user"
+      user_status: "active" | "inactive" | "pending"
     }
     CompositeTypes: {
       [_ in never]: never
