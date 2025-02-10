@@ -5,7 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
 
 const Index = () => {
-  const { data: alerts = [] } = useQuery({
+  const { data: alerts = [], isLoading } = useQuery({
     queryKey: ["alerts"],
     queryFn: async () => {
       console.log("Fetching active alerts...");
@@ -19,7 +19,7 @@ const Index = () => {
         throw error;
       }
       console.log("Active alerts data:", data);
-      return data;
+      return data || [];
     },
   });
 
@@ -29,7 +29,7 @@ const Index = () => {
         <div className="text-center space-y-4">
           <h1 className="text-4xl font-bold text-white">MYWATER Technologies</h1>
           <div className="flex items-center justify-center gap-2 text-2xl">
-            <Bell className="h-6 w-6 text-red-500" />
+            <Bell className={`h-6 w-6 ${alerts.length > 0 ? 'text-red-500' : 'text-gray-400'}`} />
             <p className="text-white">Active Alerts: {alerts.length}</p>
           </div>
           <p className="text-xl text-gray-400">Monitor and manage your water systems</p>
