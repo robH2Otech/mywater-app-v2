@@ -12,7 +12,7 @@ const Index = () => {
       const { data, error } = await supabase
         .from("alerts")
         .select("*")
-        .or('status.eq.warning,status.eq.urgent change');  // Updated to use OR condition for exact matches
+        .in("status", ["warning", "urgent"]);  // Fixed to match exact status values
       
       if (error) {
         console.error("Error fetching alerts:", error);
