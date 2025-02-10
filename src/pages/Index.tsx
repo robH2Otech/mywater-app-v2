@@ -5,21 +5,21 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
 
 const Index = () => {
-  const { data: alerts = [], isLoading } = useQuery({
-    queryKey: ["active-alerts"],
+  const { data: alerts = [] } = useQuery({
+    queryKey: ["alerts"],
     queryFn: async () => {
       console.log("Fetching active alerts...");
       const { data, error } = await supabase
         .from("alerts")
         .select("*")
-        .in("status", ["warning", "urgent"]);
+        .in("status", ["warning", "urgent change"]);  // Updated to match the status values used
       
       if (error) {
         console.error("Error fetching alerts:", error);
         throw error;
       }
       console.log("Active alerts data:", data);
-      return data || [];
+      return data;
     },
   });
 
@@ -29,7 +29,7 @@ const Index = () => {
         <div className="text-center space-y-4">
           <h1 className="text-4xl font-bold text-white">MYWATER Technologies</h1>
           <div className="flex items-center justify-center gap-2 text-2xl">
-            <Bell className={`h-6 w-6 ${alerts.length > 0 ? 'text-red-500' : 'text-gray-400'}`} />
+            <Bell className="h-6 w-6 text-red-500" />
             <p className="text-white">Active Alerts: {alerts.length}</p>
           </div>
           <p className="text-xl text-gray-400">Monitor and manage your water systems</p>
