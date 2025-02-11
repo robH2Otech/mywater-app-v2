@@ -1,3 +1,4 @@
+
 import { useQuery } from "@tanstack/react-query";
 import { Card } from "@/components/ui/card";
 import { Bell } from "lucide-react";
@@ -8,6 +9,10 @@ interface Alert {
   unit_id: string;
   message: string;
   created_at: string;
+  status: string;
+  units: {
+    name: string;
+  } | null;
 }
 
 export const RecentAlerts = () => {
@@ -16,9 +21,15 @@ export const RecentAlerts = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("alerts")
-        .select("*")
+        .select(`
+          *,
+          units (
+            name
+          )
+        `)
         .order("created_at", { ascending: false })
         .limit(5);
+
       if (error) throw error;
       return data as Alert[];
     },
@@ -32,9 +43,25 @@ export const RecentAlerts = () => {
       </div>
       <div className="space-y-4">
         {alerts.map((alert) => (
-          <div key={alert.id} className="p-4 rounded-lg bg-spotify-accent/30">
-            <h3 className="font-semibold">Alert #{alert.id.slice(0, 8)}</h3>
-            <p className="text-sm text-gray-400 mt-1">{alert.message}</p>
+          <div 
+            key={alert.id} 
+            className={`p-4 rounded-lg ${
+              alert.status === 'urgent' ? 'bg-red-500/20' : 'bg-yellow-500/20'
+            }`}
+          >
+            <div className="flex justify-between items-start">
+              <div>
+                <h3 className="font-semibold">
+                  {alert.units?.name || 'Unknown Unit'}
+                </h3>
+                <p className="text-sm text-gray-400 mt-1">{alert.message}</p>
+              </div>
+              <span className={`text-xs px-2 py-1 rounded-full ${
+                alert.status === 'urgent' ? 'bg-red-500/30 text-red-200' : 'bg-yellow-500/30 text-yellow-200'
+              }`}>
+                {alert.status}
+              </span>
+            </div>
             <p className="text-xs text-gray-500 mt-2">
               {new Date(alert.created_at).toLocaleDateString()}
             </p>

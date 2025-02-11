@@ -12,8 +12,8 @@ const Index = () => {
       console.log("Fetching active alerts...");
       const { data, error } = await supabase
         .from("alerts")
-        .select("*")
-        .in("status", ["warning", "urgent"]);
+        .select("*, units(name)")
+        .order('created_at', { ascending: false });
       
       if (error) {
         console.error("Error fetching alerts:", error);
