@@ -5,14 +5,14 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
 
 const Index = () => {
-  const { data: alerts = [] } = useQuery({
+  const { data: alerts = [], isError } = useQuery({
     queryKey: ["active-alerts"],
     queryFn: async () => {
       console.log("Fetching active alerts...");
       const { data, error } = await supabase
         .from("alerts")
         .select("*")
-        .in("status", ["warning", "urgent"]); // Changed "urgent change" to "urgent" to match actual status values
+        .in("status", ["warning", "urgent"]);
       
       if (error) {
         console.error("Error fetching alerts:", error);
@@ -27,6 +27,11 @@ const Index = () => {
   // Get active alerts count (warning + urgent)
   const activeAlertsCount = alerts.length;
   const bellColor = activeAlertsCount > 0 ? "text-red-500" : "text-gray-400";
+
+  if (isError) {
+    console.error("Error loading alerts");
+    return <div>Error loading alerts</div>;
+  }
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-spotify-darker">
