@@ -12,7 +12,7 @@ const Index = () => {
       const { data, error } = await supabase
         .from("alerts")
         .select("*")
-        .in("status", ["warning", "urgent change"]);
+        .in("status", ["warning", "urgent"]); // Changed "urgent change" to "urgent" to match actual status values
       
       if (error) {
         console.error("Error fetching alerts:", error);
