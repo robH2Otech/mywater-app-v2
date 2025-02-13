@@ -13,7 +13,7 @@ const Index = () => {
       const { data, error } = await supabase
         .from("alerts")
         .select("*, units(name)")
-        .in("status", ["warning", "urgent"])  // Only get warning and urgent alerts
+        .in("status", ["warning", "urgent"])
         .order('created_at', { ascending: false });
       
       if (error) {
@@ -49,9 +49,7 @@ const Index = () => {
           </div>
         </Card>
         
-        <div className="mt-8">
-          <RecentAlerts />
-        </div>
+        <RecentAlerts />
       </div>
     </div>
   );
