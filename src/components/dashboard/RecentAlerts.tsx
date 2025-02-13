@@ -17,7 +17,7 @@ interface Alert {
 
 export const RecentAlerts = () => {
   const { data: alerts = [] } = useQuery({
-    queryKey: ["alerts"],
+    queryKey: ["recent-alerts"],  // Changed query key to be distinct
     queryFn: async () => {
       const { data, error } = await supabase
         .from("alerts")
@@ -27,10 +27,16 @@ export const RecentAlerts = () => {
             name
           )
         `)
+        .in("status", ["warning", "urgent"])  // Only get warning and urgent alerts
         .order("created_at", { ascending: false })
         .limit(5);
 
-      if (error) throw error;
+      if (error) {
+        console.error("Error fetching recent alerts:", error);
+        throw error;
+      }
+      
+      console.log("Recent alerts data:", data);
       return data as Alert[];
     },
   });
@@ -39,7 +45,7 @@ export const RecentAlerts = () => {
     <Card className="p-6 glass">
       <div className="flex items-center justify-between mb-4">
         <h2 className="text-lg font-semibold">Recent Alerts</h2>
-        <Bell className="h-5 w-5 text-red-500" />
+        <Bell className={`h-5 w-5 ${alerts.length > 0 ? 'text-red-500' : 'text-gray-400'}`} />
       </div>
       <div className="space-y-4">
         {alerts.map((alert) => (
@@ -68,7 +74,7 @@ export const RecentAlerts = () => {
           </div>
         ))}
         {alerts.length === 0 && (
-          <p className="text-gray-400 text-center py-4">No recent alerts</p>
+          <p className="text-gray-400 text-center py-4">No active alerts</p>
         )}
       </div>
     </Card>

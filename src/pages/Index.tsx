@@ -13,6 +13,7 @@ const Index = () => {
       const { data, error } = await supabase
         .from("alerts")
         .select("*, units(name)")
+        .in("status", ["warning", "urgent"])  // Only get warning and urgent alerts
         .order('created_at', { ascending: false });
       
       if (error) {
