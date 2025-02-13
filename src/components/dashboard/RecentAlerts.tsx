@@ -19,6 +19,10 @@ export const RecentAlerts = () => {
   const { data: alerts = [], isError } = useQuery({
     queryKey: ["recent-alerts"],
     queryFn: async () => {
+      // Calculate date 7 days ago
+      const sevenDaysAgo = new Date();
+      sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+
       const { data, error } = await supabase
         .from("alerts")
         .select(`
@@ -28,6 +32,7 @@ export const RecentAlerts = () => {
           )
         `)
         .in("status", ["warning", "urgent"])
+        .gte('created_at', sevenDaysAgo.toISOString())
         .order("created_at", { ascending: false })
         .limit(5);
 
@@ -48,7 +53,7 @@ export const RecentAlerts = () => {
   return (
     <Card className="p-6 glass">
       <div className="flex items-center justify-between mb-4">
-        <h2 className="text-lg font-semibold text-white">Recent Alerts</h2>
+        <h2 className="text-lg font-semibold text-white">Recent Alerts (Last 7 Days)</h2>
         <Bell className={`h-5 w-5 ${alerts.length > 0 ? 'text-red-500' : 'text-gray-400'}`} />
       </div>
       <div className="space-y-4">
@@ -80,7 +85,7 @@ export const RecentAlerts = () => {
           ))
         ) : (
           <div className="text-center py-4">
-            <p className="text-gray-400">No active alerts</p>
+            <p className="text-gray-400">No active alerts in the last 7 days</p>
           </div>
         )}
       </div>

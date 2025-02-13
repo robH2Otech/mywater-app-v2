@@ -10,10 +10,15 @@ const Index = () => {
     queryKey: ["active-alerts"],
     queryFn: async () => {
       console.log("Fetching active alerts...");
+      // Calculate date 7 days ago
+      const sevenDaysAgo = new Date();
+      sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+      
       const { data, error } = await supabase
         .from("alerts")
         .select("*, units(name)")
         .in("status", ["warning", "urgent"])
+        .gte('created_at', sevenDaysAgo.toISOString())
         .order('created_at', { ascending: false });
       
       if (error) {
@@ -43,7 +48,7 @@ const Index = () => {
             <h1 className="text-4xl font-bold text-white">MYWATER Technologies</h1>
             <div className="flex items-center justify-center gap-2 text-2xl">
               <Bell className={`h-6 w-6 ${bellColor}`} />
-              <p className="text-white">Active Alerts: {activeAlertsCount}</p>
+              <p className="text-white">Active Alerts (Last 7 Days): {activeAlertsCount}</p>
             </div>
             <p className="text-xl text-gray-400">Monitor and manage your water systems</p>
           </div>
