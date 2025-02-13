@@ -26,7 +26,11 @@ export const RecentAlerts = () => {
       const { data, error } = await supabase
         .from("alerts")
         .select(`
-          *,
+          id,
+          unit_id,
+          message,
+          created_at,
+          status,
           units (
             name
           )
@@ -42,7 +46,18 @@ export const RecentAlerts = () => {
       }
       
       console.log("Recent alerts data:", data);
-      return data as Alert[];
+      // Remove duplicates based on message and unit_id combination
+      const uniqueAlerts = data?.reduce((acc: Alert[], current) => {
+        const exists = acc.some(
+          alert => alert.message === current.message && alert.unit_id === current.unit_id
+        );
+        if (!exists) {
+          acc.push(current);
+        }
+        return acc;
+      }, []) || [];
+
+      return uniqueAlerts as Alert[];
     },
   });
 
