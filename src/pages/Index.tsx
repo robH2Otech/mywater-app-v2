@@ -27,7 +27,18 @@ const Index = () => {
       }
       
       console.log("Active alerts data:", data);
-      return data || [];
+      // Remove duplicates based on message and unit_id combination
+      const uniqueAlerts = data?.reduce((acc: any[], current) => {
+        const exists = acc.some(
+          alert => alert.message === current.message && alert.unit_id === current.unit_id
+        );
+        if (!exists) {
+          acc.push(current);
+        }
+        return acc;
+      }, []) || [];
+
+      return uniqueAlerts;
     },
   });
 
