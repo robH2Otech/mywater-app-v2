@@ -39,8 +39,22 @@ export function Analytics() {
   });
 
   const handleGenerateReport = async () => {
+    if (!selectedUnit || !reportType) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Please select a unit and report type",
+      });
+      return;
+    }
+
     setIsGenerating(true);
     try {
+      const { data: session } = await supabase.auth.getSession();
+      if (!session.session) {
+        throw new Error("No authenticated session");
+      }
+
       // Fetch unit data
       const { data: unitData, error: unitError } = await supabase
         .from("units")
@@ -60,6 +74,7 @@ export function Analytics() {
           unit_id: selectedUnit,
           report_type: reportType,
           content: reportContent,
+          generated_by: session.session.user.id
         });
 
       if (saveError) throw saveError;
@@ -68,7 +83,7 @@ export function Analytics() {
       await refetchReports();
 
       toast({
-        title: "Report Generated",
+        title: "Success",
         description: `Generated ${reportType} report for ${unitData.name}`,
       });
     } catch (error: any) {
@@ -86,17 +101,22 @@ export function Analytics() {
   const handleDownloadPDF = async (reportId: string, content: string) => {
     try {
       // Create a Blob from the content
-      const blob = new Blob([content], { type: 'application/pdf' });
+      const blob = new Blob([content], { type: 'text/plain' });
       const url = window.URL.createObjectURL(blob);
       
       // Create a temporary link and trigger download
       const link = document.createElement('a');
       link.href = url;
-      link.download = `report-${reportId}.pdf`;
+      link.download = `report-${reportId}.txt`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
       window.URL.revokeObjectURL(url);
+
+      toast({
+        title: "Success",
+        description: "Report downloaded successfully",
+      });
     } catch (error) {
       console.error("Error downloading report:", error);
       toast({
@@ -145,7 +165,7 @@ export function Analytics() {
                     <p className="text-sm text-gray-400 mt-1">
                       Generated on {new Date(report.created_at).toLocaleString()}
                     </p>
-                    <div className="mt-2 text-sm text-gray-300">
+                    <div className="mt-2 text-sm text-gray-300 whitespace-pre-wrap">
                       {report.content}
                     </div>
                   </div>
@@ -156,7 +176,7 @@ export function Analytics() {
                     className="ml-4"
                   >
                     <Download className="h-4 w-4 mr-2" />
-                    Download PDF
+                    Download Report
                   </Button>
                 </div>
               </Card>
@@ -171,8 +191,7 @@ export function Analytics() {
 // Helper function to generate report content
 function generateReportContent(unitData: any, reportType: string): string {
   const timestamp = new Date().toLocaleString();
-  return `
-${reportType.toUpperCase()} REPORT
+  return `${reportType.toUpperCase()} REPORT
 Generated: ${timestamp}
 
 Unit Information:
@@ -190,6 +209,5 @@ Email: ${unitData.contact_email || 'N/A'}
 Phone: ${unitData.contact_phone || 'N/A'}
 
 Notes:
-${unitData.notes || 'No additional notes'}
-`;
+${unitData.notes || 'No additional notes'}`;
 }

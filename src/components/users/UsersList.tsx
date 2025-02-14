@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -20,6 +21,11 @@ export function UsersList({ users, onUserClick }: UsersListProps) {
     setIsEditDialogOpen(true);
   };
 
+  const handleCardClick = (user: any) => {
+    setSelectedUser(user);
+    setIsEditDialogOpen(true);
+  };
+
   return (
     <>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
@@ -27,7 +33,7 @@ export function UsersList({ users, onUserClick }: UsersListProps) {
           <Card 
             key={user.id} 
             className="bg-spotify-darker hover:bg-spotify-accent/40 transition-all cursor-pointer transform hover:scale-[1.02] duration-200 relative group"
-            onClick={() => onUserClick(user)}
+            onClick={() => handleCardClick(user)}
           >
             <Button
               variant="ghost"
