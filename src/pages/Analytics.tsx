@@ -5,11 +5,38 @@ import { ReportTypeSelector } from "@/components/analytics/ReportTypeSelector";
 import { Button } from "@/components/ui/button";
 import { toast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { Card } from "@/components/ui/card";
+import { Download } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
 
 export function Analytics() {
   const [selectedUnit, setSelectedUnit] = useState("");
   const [reportType, setReportType] = useState("");
   const [isGenerating, setIsGenerating] = useState(false);
+
+  // Query for fetching generated reports
+  const { data: reports = [], refetch: refetchReports } = useQuery({
+    queryKey: ["reports", selectedUnit],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("reports")
+        .select(`
+          id,
+          report_type,
+          content,
+          created_at,
+          units (
+            name
+          )
+        `)
+        .eq("unit_id", selectedUnit)
+        .order("created_at", { ascending: false });
+
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: !!selectedUnit,
+  });
 
   const handleGenerateReport = async () => {
     setIsGenerating(true);
@@ -17,35 +44,66 @@ export function Analytics() {
       // Fetch unit data
       const { data: unitData, error: unitError } = await supabase
         .from("units")
-        .select("name")
+        .select("*")
         .eq("id", selectedUnit)
         .single();
 
       if (unitError) throw unitError;
 
-      // Show success message
+      // Generate report content based on unit data
+      const reportContent = generateReportContent(unitData, reportType);
+
+      // Save report to database
+      const { error: saveError } = await supabase
+        .from("reports")
+        .insert({
+          unit_id: selectedUnit,
+          report_type: reportType,
+          content: reportContent,
+        });
+
+      if (saveError) throw saveError;
+
+      // Refetch reports to show the new one
+      await refetchReports();
+
       toast({
         title: "Report Generated",
         description: `Generated ${reportType} report for ${unitData.name}`,
       });
-
-      // Log for debugging
-      console.log("Generated report for:", {
-        unit: unitData.name,
-        unitId: selectedUnit,
-        reportType,
-        timestamp: new Date().toISOString()
-      });
-      
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error generating report:", error);
       toast({
         variant: "destructive",
         title: "Error",
-        description: "Failed to generate report. Please try again.",
+        description: error.message || "Failed to generate report",
       });
     } finally {
       setIsGenerating(false);
+    }
+  };
+
+  const handleDownloadPDF = async (reportId: string, content: string) => {
+    try {
+      // Create a Blob from the content
+      const blob = new Blob([content], { type: 'application/pdf' });
+      const url = window.URL.createObjectURL(blob);
+      
+      // Create a temporary link and trigger download
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `report-${reportId}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error("Error downloading report:", error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to download report",
+      });
     }
   };
 
@@ -72,6 +130,66 @@ export function Analytics() {
       >
         {isGenerating ? "Generating..." : "Generate Report"}
       </Button>
+
+      {reports.length > 0 && (
+        <div className="space-y-4 mt-8">
+          <h2 className="text-xl font-semibold">Generated Reports</h2>
+          <div className="grid gap-4">
+            {reports.map((report) => (
+              <Card key={report.id} className="p-4 bg-spotify-darker">
+                <div className="flex justify-between items-start">
+                  <div>
+                    <h3 className="font-semibold text-white">
+                      {report.report_type} Report
+                    </h3>
+                    <p className="text-sm text-gray-400 mt-1">
+                      Generated on {new Date(report.created_at).toLocaleString()}
+                    </p>
+                    <div className="mt-2 text-sm text-gray-300">
+                      {report.content}
+                    </div>
+                  </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleDownloadPDF(report.id, report.content)}
+                    className="ml-4"
+                  >
+                    <Download className="h-4 w-4 mr-2" />
+                    Download PDF
+                  </Button>
+                </div>
+              </Card>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
+}
+
+// Helper function to generate report content
+function generateReportContent(unitData: any, reportType: string): string {
+  const timestamp = new Date().toLocaleString();
+  return `
+${reportType.toUpperCase()} REPORT
+Generated: ${timestamp}
+
+Unit Information:
+Name: ${unitData.name}
+Location: ${unitData.location || 'N/A'}
+Status: ${unitData.status}
+Total Volume: ${unitData.total_volume || 0} units
+
+Last Maintenance: ${unitData.last_maintenance ? new Date(unitData.last_maintenance).toLocaleDateString() : 'N/A'}
+Next Maintenance: ${unitData.next_maintenance ? new Date(unitData.next_maintenance).toLocaleDateString() : 'N/A'}
+
+Contact Information:
+Name: ${unitData.contact_name || 'N/A'}
+Email: ${unitData.contact_email || 'N/A'}
+Phone: ${unitData.contact_phone || 'N/A'}
+
+Notes:
+${unitData.notes || 'No additional notes'}
+`;
 }

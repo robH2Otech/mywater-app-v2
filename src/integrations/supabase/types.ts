@@ -139,6 +139,51 @@ export type Database = {
           },
         ]
       }
+      reports: {
+        Row: {
+          content: string
+          created_at: string | null
+          file_path: string | null
+          generated_by: string | null
+          id: string
+          report_type: string
+          unit_id: string | null
+        }
+        Insert: {
+          content: string
+          created_at?: string | null
+          file_path?: string | null
+          generated_by?: string | null
+          id?: string
+          report_type: string
+          unit_id?: string | null
+        }
+        Update: {
+          content?: string
+          created_at?: string | null
+          file_path?: string | null
+          generated_by?: string | null
+          id?: string
+          report_type?: string
+          unit_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reports_generated_by_fkey"
+            columns: ["generated_by"]
+            isOneToOne: false
+            referencedRelation: "app_users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reports_unit_id_fkey"
+            columns: ["unit_id"]
+            isOneToOne: false
+            referencedRelation: "units"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       units: {
         Row: {
           contact_email: string | null
