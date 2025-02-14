@@ -1,15 +1,52 @@
+
 import { useState } from "react";
 import { UnitSelector } from "@/components/analytics/UnitSelector";
 import { ReportTypeSelector } from "@/components/analytics/ReportTypeSelector";
 import { Button } from "@/components/ui/button";
+import { toast } from "@/components/ui/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
 export function Analytics() {
   const [selectedUnit, setSelectedUnit] = useState("");
   const [reportType, setReportType] = useState("");
+  const [isGenerating, setIsGenerating] = useState(false);
 
-  const handleGenerateReport = () => {
-    console.log("Generating report for:", { selectedUnit, reportType });
-    // Implement report generation logic here
+  const handleGenerateReport = async () => {
+    setIsGenerating(true);
+    try {
+      // Fetch unit data
+      const { data: unitData, error: unitError } = await supabase
+        .from("units")
+        .select("name")
+        .eq("id", selectedUnit)
+        .single();
+
+      if (unitError) throw unitError;
+
+      // Show success message
+      toast({
+        title: "Report Generated",
+        description: `Generated ${reportType} report for ${unitData.name}`,
+      });
+
+      // Log for debugging
+      console.log("Generated report for:", {
+        unit: unitData.name,
+        unitId: selectedUnit,
+        reportType,
+        timestamp: new Date().toISOString()
+      });
+      
+    } catch (error) {
+      console.error("Error generating report:", error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to generate report. Please try again.",
+      });
+    } finally {
+      setIsGenerating(false);
+    }
   };
 
   return (
@@ -31,9 +68,9 @@ export function Analytics() {
       <Button 
         onClick={handleGenerateReport}
         className="bg-spotify-green hover:bg-spotify-green/90"
-        disabled={!selectedUnit || !reportType}
+        disabled={!selectedUnit || !reportType || isGenerating}
       >
-        Generate Report
+        {isGenerating ? "Generating..." : "Generate Report"}
       </Button>
     </div>
   );
