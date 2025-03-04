@@ -1,8 +1,9 @@
 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useQuery } from "@tanstack/react-query";
-import { collection, getDocs, orderBy, query } from "firebase/firestore";
-import { db } from "@/integrations/firebase/client";
+import { LoadingSkeleton } from "@/components/shared/LoadingSkeleton";
+import { useUnits } from "@/hooks/useUnits";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { AlertCircle } from "lucide-react";
 
 interface UnitSelectorProps {
   value: string;
@@ -10,19 +11,27 @@ interface UnitSelectorProps {
 }
 
 export function UnitSelector({ value, onChange }: UnitSelectorProps) {
-  const { data: units = [], isLoading } = useQuery({
-    queryKey: ["units"],
-    queryFn: async () => {
-      const unitsCollection = collection(db, "units");
-      const unitsQuery = query(unitsCollection, orderBy("name"));
-      const unitsSnapshot = await getDocs(unitsQuery);
-      
-      return unitsSnapshot.docs.map(doc => ({
-        id: doc.id,
-        name: doc.data().name
-      }));
-    },
-  });
+  const { data: units = [], isLoading, error } = useUnits();
+
+  if (isLoading) {
+    return (
+      <div className="space-y-2">
+        <label className="text-sm text-gray-400">Select Unit</label>
+        <LoadingSkeleton />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <Alert variant="destructive">
+        <AlertCircle className="h-4 w-4" />
+        <AlertDescription>
+          Failed to load units. Please try again later.
+        </AlertDescription>
+      </Alert>
+    );
+  }
 
   return (
     <div className="space-y-2">
@@ -30,7 +39,6 @@ export function UnitSelector({ value, onChange }: UnitSelectorProps) {
       <Select
         value={value}
         onValueChange={onChange}
-        disabled={isLoading}
       >
         <SelectTrigger className="bg-spotify-accent border-spotify-accent-hover text-white">
           <SelectValue placeholder="Select a unit" />
