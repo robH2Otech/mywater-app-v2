@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { UnitSelector } from "@/components/analytics/UnitSelector";
 import { ReportTypeSelector } from "@/components/analytics/ReportTypeSelector";
@@ -7,7 +6,7 @@ import { toast } from "@/components/ui/use-toast";
 import { Card } from "@/components/ui/card";
 import { Download } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
-import { collection, query, where, getDocs, addDoc, orderBy } from "firebase/firestore";
+import { collection, query, where, getDocs, addDoc, orderBy, doc, getDoc } from "firebase/firestore";
 import { getAuth } from "firebase/auth";
 import { db } from "@/integrations/firebase/client";
 
@@ -62,15 +61,14 @@ export function Analytics() {
       }
 
       // Fetch unit data
-      const unitsCollection = collection(db, "units");
-      const unitQuery = query(unitsCollection, where("id", "==", selectedUnit));
-      const unitSnapshot = await getDocs(unitQuery);
+      const unitDocRef = doc(db, "units", selectedUnit);
+      const unitSnapshot = await getDoc(unitDocRef);
       
-      if (unitSnapshot.empty) {
+      if (!unitSnapshot.exists()) {
         throw new Error("Unit not found");
       }
       
-      const unitData = { id: unitSnapshot.docs[0].id, ...unitSnapshot.docs[0].data() };
+      const unitData = { id: unitSnapshot.id, ...unitSnapshot.data() };
 
       // Generate report content based on unit data
       const reportContent = generateReportContent(unitData, reportType);
@@ -90,7 +88,7 @@ export function Analytics() {
 
       toast({
         title: "Success",
-        description: `Generated ${reportType} report for ${unitData.name}`,
+        description: `Generated ${reportType} report for ${unitData.name || 'selected unit'}`,
       });
     } catch (error: any) {
       console.error("Error generating report:", error);
@@ -201,9 +199,9 @@ function generateReportContent(unitData: any, reportType: string): string {
 Generated: ${timestamp}
 
 Unit Information:
-Name: ${unitData.name}
+Name: ${unitData.name || 'N/A'}
 Location: ${unitData.location || 'N/A'}
-Status: ${unitData.status}
+Status: ${unitData.status || 'N/A'}
 Total Volume: ${unitData.total_volume || 0} units
 
 Last Maintenance: ${unitData.last_maintenance ? new Date(unitData.last_maintenance).toLocaleDateString() : 'N/A'}
