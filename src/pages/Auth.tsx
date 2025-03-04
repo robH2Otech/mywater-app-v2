@@ -80,6 +80,16 @@ export function Auth() {
     }
   };
 
+  const handleTempAccess = () => {
+    // Store a flag in local storage to indicate temporary access
+    localStorage.setItem('tempAccess', 'true');
+    toast({
+      title: "Temporary Access Granted",
+      description: "You now have temporary access to the app.",
+    });
+    navigate("/");
+  };
+
   return (
     <div className="min-h-screen bg-spotify-dark flex items-center justify-center p-4">
       <div className="w-full max-w-md space-y-8 bg-spotify-darker p-8 rounded-lg">
@@ -124,7 +134,7 @@ export function Auth() {
           </Button>
         </form>
 
-        <div className="text-center">
+        <div className="text-center space-y-4">
           <button
             type="button"
             onClick={() => setIsLogin(!isLogin)}
@@ -134,6 +144,17 @@ export function Auth() {
               ? "Need an account? Sign up"
               : "Already have an account? Sign in"}
           </button>
+          
+          <div className="pt-2 border-t border-gray-700">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={handleTempAccess}
+              className="w-full mt-4 border-spotify-accent text-white hover:bg-spotify-accent/30"
+            >
+              Temporary Access (Bypass Login)
+            </Button>
+          </div>
         </div>
       </div>
     </div>

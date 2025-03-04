@@ -21,8 +21,12 @@ const queryClient = new QueryClient();
 
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
+  const [isTempAccess, setIsTempAccess] = useState(false);
 
   useEffect(() => {
+    const tempAccess = localStorage.getItem('tempAccess') === 'true';
+    setIsTempAccess(tempAccess);
+
     supabase.auth.getSession().then(({ data: { session } }) => {
       setIsAuthenticated(!!session);
     });
@@ -36,11 +40,11 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
     return () => subscription.unsubscribe();
   }, []);
 
-  if (isAuthenticated === null) {
+  if (isAuthenticated === null && !isTempAccess) {
     return <div>Loading...</div>;
   }
 
-  if (!isAuthenticated) {
+  if (!isAuthenticated && !isTempAccess) {
     return <Navigate to="/auth" />;
   }
 
