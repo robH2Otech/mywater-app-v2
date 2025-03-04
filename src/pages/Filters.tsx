@@ -1,6 +1,5 @@
 
 import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { AddFilterDialog } from "@/components/filters/AddFilterDialog";
@@ -8,6 +7,8 @@ import { FilterDetailsDialog } from "@/components/filters/FilterDetailsDialog";
 import { PageHeader } from "@/components/shared/PageHeader";
 import { LoadingSkeleton } from "@/components/shared/LoadingSkeleton";
 import { FiltersList } from "@/components/filters/FiltersList";
+import { collection, getDocs } from "firebase/firestore";
+import { db } from "@/integrations/firebase/client";
 
 export const Filters = () => {
   const { toast } = useToast();
@@ -18,24 +19,43 @@ export const Filters = () => {
     queryKey: ["filter-units"],
     queryFn: async () => {
       console.log("Fetching filter units data...");
-      const { data, error } = await supabase
-        .from("units")
-        .select(`
-          *,
-          filters(*)
-        `);
-      
-      if (error) {
+      try {
+        // Get units
+        const unitsCollection = collection(db, "units");
+        const unitsSnapshot = await getDocs(unitsCollection);
+        const unitsData = unitsSnapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data(),
+          filters: [] // Will be populated with filters below
+        }));
+        
+        // Get filters
+        const filtersCollection = collection(db, "filters");
+        const filtersSnapshot = await getDocs(filtersCollection);
+        const filtersData = filtersSnapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data()
+        }));
+        
+        // Associate filters with units
+        for (const filter of filtersData) {
+          const unitIndex = unitsData.findIndex(unit => unit.id === filter.unit_id);
+          if (unitIndex >= 0) {
+            unitsData[unitIndex].filters.push(filter);
+          }
+        }
+        
+        console.log("Filter units data:", unitsData);
+        return unitsData;
+      } catch (error) {
         console.error("Error fetching filter units:", error);
         toast({
           title: "Error fetching units",
-          description: error.message,
+          description: "Failed to load filter units",
           variant: "destructive",
         });
         throw error;
       }
-      console.log("Filter units data:", data);
-      return data;
     },
   });
 

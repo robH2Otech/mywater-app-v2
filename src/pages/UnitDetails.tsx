@@ -1,10 +1,12 @@
+
 import { useQuery } from "@tanstack/react-query";
 import { useParams, useNavigate } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { format } from "date-fns";
+import { doc, getDoc } from "firebase/firestore";
+import { db } from "@/integrations/firebase/client";
 
 export const UnitDetails = () => {
   const { id } = useParams();
@@ -13,14 +15,19 @@ export const UnitDetails = () => {
   const { data: unit, isLoading } = useQuery({
     queryKey: ["unit", id],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("units")
-        .select("*")
-        .eq("id", id)
-        .single();
+      if (!id) throw new Error("Unit ID is required");
       
-      if (error) throw error;
-      return data;
+      const unitDocRef = doc(db, "units", id);
+      const unitSnapshot = await getDoc(unitDocRef);
+      
+      if (!unitSnapshot.exists()) {
+        throw new Error("Unit not found");
+      }
+      
+      return {
+        id: unitSnapshot.id,
+        ...unitSnapshot.data()
+      };
     },
   });
 

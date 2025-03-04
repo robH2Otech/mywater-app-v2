@@ -1,6 +1,5 @@
 
 import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { CreateAlertDialog } from "@/components/alerts/CreateAlertDialog";
@@ -8,6 +7,8 @@ import { AlertDetailsDialog } from "@/components/alerts/AlertDetailsDialog";
 import { PageHeader } from "@/components/shared/PageHeader";
 import { LoadingSkeleton } from "@/components/shared/LoadingSkeleton";
 import { AlertsList } from "@/components/alerts/AlertsList";
+import { collection, getDocs } from "firebase/firestore";
+import { db } from "@/integrations/firebase/client";
 
 export const Alerts = () => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -18,16 +19,19 @@ export const Alerts = () => {
     queryKey: ["units"],
     queryFn: async () => {
       console.log("Fetching units data...");
-      const { data, error } = await supabase
-        .from("units")
-        .select("*");
-      
-      if (error) {
+      try {
+        const unitsCollection = collection(db, "units");
+        const unitsSnapshot = await getDocs(unitsCollection);
+        const unitsData = unitsSnapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data()
+        }));
+        console.log("Units data:", unitsData);
+        return unitsData;
+      } catch (error) {
         console.error("Error fetching units:", error);
         throw error;
       }
-      console.log("Units data:", data);
-      return data;
     },
   });
 
@@ -35,16 +39,19 @@ export const Alerts = () => {
     queryKey: ["alerts"],
     queryFn: async () => {
       console.log("Fetching alerts data...");
-      const { data, error } = await supabase
-        .from("alerts")
-        .select("*");
-      
-      if (error) {
+      try {
+        const alertsCollection = collection(db, "alerts");
+        const alertsSnapshot = await getDocs(alertsCollection);
+        const alertsData = alertsSnapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data()
+        }));
+        console.log("Alerts data:", alertsData);
+        return alertsData;
+      } catch (error) {
         console.error("Error fetching alerts:", error);
         throw error;
       }
-      console.log("Alerts data:", data);
-      return data;
     },
   });
 

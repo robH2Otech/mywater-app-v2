@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -6,7 +5,8 @@ import { Check, AlertTriangle, AlertOctagon, MapPin, Edit, Calendar } from "luci
 import { FilterDetailsDialog } from "./FilterDetailsDialog";
 import { useToast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { doc, updateDoc } from "firebase/firestore";
+import { db } from "@/integrations/firebase/client";
 
 interface FiltersListProps {
   units: any[];
@@ -51,21 +51,18 @@ export function FiltersList({ units, onFilterClick }: FiltersListProps) {
 
   const handleSave = async (updatedData: any) => {
     try {
-      const { error } = await supabase
-        .from('units')
-        .update({
-          name: updatedData.name,
-          location: updatedData.location,
-          total_volume: updatedData.total_volume,
-          status: updatedData.status,
-          contact_name: updatedData.contact_name,
-          contact_email: updatedData.contact_email,
-          contact_phone: updatedData.contact_phone,
-          next_maintenance: updatedData.next_maintenance,
-        })
-        .eq('id', selectedUnit.id);
-
-      if (error) throw error;
+      const unitDocRef = doc(db, "units", selectedUnit.id);
+      await updateDoc(unitDocRef, {
+        name: updatedData.name,
+        location: updatedData.location,
+        total_volume: updatedData.total_volume,
+        status: updatedData.status,
+        contact_name: updatedData.contact_name,
+        contact_email: updatedData.contact_email,
+        contact_phone: updatedData.contact_phone,
+        next_maintenance: updatedData.next_maintenance,
+        updated_at: new Date().toISOString()
+      });
 
       await queryClient.invalidateQueries({ queryKey: ['filter-units'] });
       await queryClient.invalidateQueries({ queryKey: ['units'] });

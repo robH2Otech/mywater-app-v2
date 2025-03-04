@@ -1,11 +1,11 @@
-
 import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
-import { supabase } from "@/integrations/supabase/client";
 import { UnitFormFields } from "./UnitFormFields";
 import { UnitFormActions } from "./UnitFormActions";
 import { useQueryClient } from "@tanstack/react-query";
+import { doc, updateDoc } from "firebase/firestore";
+import { db } from "@/integrations/firebase/client";
 
 interface EditUnitDialogProps {
   unit: {
@@ -53,24 +53,18 @@ export function EditUnitDialog({ unit, open, onOpenChange }: EditUnitDialogProps
     setIsSubmitting(true);
 
     try {
-      const { error } = await supabase
-        .from("units")
-        .update({
-          name: formData.name,
-          location: formData.location || null,
-          total_volume: parseFloat(formData.total_volume),
-          status: formData.status,
-          contact_name: formData.contact_name || null,
-          contact_email: formData.contact_email || null,
-          contact_phone: formData.contact_phone || null,
-          next_maintenance: formData.next_maintenance?.toISOString() || null,
-        })
-        .eq('id', unit.id);
-
-      if (error) {
-        console.error("Error updating unit:", error);
-        throw error;
-      }
+      const unitDocRef = doc(db, "units", unit.id);
+      await updateDoc(unitDocRef, {
+        name: formData.name,
+        location: formData.location || null,
+        total_volume: parseFloat(formData.total_volume),
+        status: formData.status,
+        contact_name: formData.contact_name || null,
+        contact_email: formData.contact_email || null,
+        contact_phone: formData.contact_phone || null,
+        next_maintenance: formData.next_maintenance?.toISOString() || null,
+        updated_at: new Date().toISOString(),
+      });
 
       await queryClient.invalidateQueries({ queryKey: ["units"] });
       

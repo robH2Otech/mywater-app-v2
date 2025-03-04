@@ -2,10 +2,11 @@
 import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
-import { supabase } from "@/integrations/supabase/client";
 import { UnitFormFields } from "./UnitFormFields";
 import { UnitFormActions } from "./UnitFormActions";
 import { useQueryClient } from "@tanstack/react-query";
+import { addDoc, collection } from "firebase/firestore";
+import { db } from "@/integrations/firebase/client";
 
 export function AddUnitDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (open: boolean) => void }) {
   const { toast } = useToast();
@@ -38,7 +39,9 @@ export function AddUnitDialog({ open, onOpenChange }: { open: boolean; onOpenCha
     setIsSubmitting(true);
 
     try {
-      const { error } = await supabase.from("units").insert({
+      // Add unit to Firestore
+      const unitsCollection = collection(db, "units");
+      await addDoc(unitsCollection, {
         name: formData.name,
         location: formData.location || null,
         total_volume: parseFloat(formData.total_volume),
@@ -47,12 +50,9 @@ export function AddUnitDialog({ open, onOpenChange }: { open: boolean; onOpenCha
         contact_email: formData.contact_email || null,
         contact_phone: formData.contact_phone || null,
         next_maintenance: formData.next_maintenance?.toISOString() || null,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
       });
-
-      if (error) {
-        console.error("Error adding unit:", error);
-        throw error;
-      }
 
       // Invalidate and refetch units data
       await queryClient.invalidateQueries({ queryKey: ["units"] });

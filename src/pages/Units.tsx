@@ -1,11 +1,13 @@
+
 import { useQuery } from "@tanstack/react-query";
 import { Plus } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { UnitCard } from "@/components/units/UnitCard";
 import { AddUnitDialog } from "@/components/units/AddUnitDialog";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
+import { collection, getDocs, orderBy, query } from "firebase/firestore";
+import { db } from "@/integrations/firebase/client";
 
 export const Units = () => {
   const { toast } = useToast();
@@ -14,11 +16,16 @@ export const Units = () => {
   const { data: units = [], isLoading } = useQuery({
     queryKey: ["units"],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("units")
-        .select("*")
-        .order("created_at", { ascending: false });
-      if (error) {
+      try {
+        const unitsCollection = collection(db, "units");
+        const unitsQuery = query(unitsCollection, orderBy("created_at", "desc"));
+        const unitsSnapshot = await getDocs(unitsQuery);
+        
+        return unitsSnapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data()
+        }));
+      } catch (error) {
         console.error("Error fetching units:", error);
         toast({
           title: "Error",
@@ -27,7 +34,6 @@ export const Units = () => {
         });
         throw error;
       }
-      return data;
     },
   });
 

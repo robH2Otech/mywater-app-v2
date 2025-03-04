@@ -1,12 +1,14 @@
+
 import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { supabase } from "@/integrations/supabase/client";
 import { FormDatePicker } from "../shared/FormDatePicker";
 import { FormInput } from "../shared/FormInput";
 import { useQuery } from "@tanstack/react-query";
+import { collection, addDoc, getDocs, query, orderBy } from "firebase/firestore";
+import { db } from "@/integrations/firebase/client";
 
 export function AddFilterDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (open: boolean) => void }) {
   const { toast } = useToast();
@@ -26,13 +28,14 @@ export function AddFilterDialog({ open, onOpenChange }: { open: boolean; onOpenC
   const { data: units = [] } = useQuery({
     queryKey: ["units"],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("units")
-        .select("id, name")
-        .order("name");
+      const unitsCollection = collection(db, "units");
+      const unitsQuery = query(unitsCollection, orderBy("name"));
+      const unitsSnapshot = await getDocs(unitsQuery);
       
-      if (error) throw error;
-      return data;
+      return unitsSnapshot.docs.map(doc => ({
+        id: doc.id,
+        name: doc.data().name
+      }));
     },
   });
 
@@ -41,19 +44,20 @@ export function AddFilterDialog({ open, onOpenChange }: { open: boolean; onOpenC
     setIsSubmitting(true);
 
     try {
-      const { error } = await supabase.from("filters").insert([{
+      const filtersCollection = collection(db, "filters");
+      await addDoc(filtersCollection, {
         unit_id: formData.unit_id,
-        installation_date: formData.installation_date?.toISOString(),
-        last_change: formData.last_change?.toISOString(),
-        next_change: formData.next_change?.toISOString(),
+        installation_date: formData.installation_date?.toISOString() || null,
+        last_change: formData.last_change?.toISOString() || null,
+        next_change: formData.next_change?.toISOString() || null,
         volume_processed: parseFloat(formData.volume_processed) || 0,
         contact_name: formData.contact_name || null,
         email: formData.email || null,
         phone: formData.phone || null,
         notes: formData.notes || null,
-      }]);
-
-      if (error) throw error;
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      });
 
       toast({
         title: "Success",
