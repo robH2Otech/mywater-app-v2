@@ -4,10 +4,10 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Button } from "@/components/ui/button";
 import { FormInput } from "@/components/shared/FormInput";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { UserPlus } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
+import { collection, addDoc } from "firebase/firestore";
+import { db } from "@/integrations/firebase/client";
 
 type UserRole = "admin" | "technician" | "user";
 type UserStatus = "active" | "inactive" | "pending";
@@ -48,11 +48,18 @@ export function AddUserDialog({ open, onOpenChange }: AddUserDialogProps) {
 
   const handleSubmit = async () => {
     try {
-      const { error } = await supabase
-        .from("app_users")
-        .insert(formData);
+      // Validate required fields
+      if (!formData.first_name || !formData.last_name || !formData.email) {
+        throw new Error("First name, last name, and email are required");
+      }
 
-      if (error) throw error;
+      // Add user to Firebase
+      const usersCollectionRef = collection(db, "app_users");
+      await addDoc(usersCollectionRef, {
+        ...formData,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      });
 
       toast({
         title: "Success",

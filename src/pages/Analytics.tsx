@@ -4,10 +4,12 @@ import { UnitSelector } from "@/components/analytics/UnitSelector";
 import { ReportTypeSelector } from "@/components/analytics/ReportTypeSelector";
 import { Button } from "@/components/ui/button";
 import { toast } from "@/components/ui/use-toast";
-import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
 import { Download } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
+import { collection, query, where, getDocs, addDoc, orderBy } from "firebase/firestore";
+import { getAuth } from "firebase/auth";
+import { db } from "@/integrations/firebase/client";
 
 export function Analytics() {
   const [selectedUnit, setSelectedUnit] = useState("");
@@ -18,22 +20,24 @@ export function Analytics() {
   const { data: reports = [], refetch: refetchReports } = useQuery({
     queryKey: ["reports", selectedUnit],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("reports")
-        .select(`
-          id,
-          report_type,
-          content,
-          created_at,
-          units (
-            name
-          )
-        `)
-        .eq("unit_id", selectedUnit)
-        .order("created_at", { ascending: false });
-
-      if (error) throw error;
-      return data || [];
+      if (!selectedUnit) return [];
+      
+      console.log("Fetching reports for unit:", selectedUnit);
+      const reportsCollection = collection(db, "reports");
+      const q = query(
+        reportsCollection, 
+        where("unit_id", "==", selectedUnit),
+        orderBy("created_at", "desc")
+      );
+      
+      const reportsSnapshot = await getDocs(q);
+      const reportsList = reportsSnapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      }));
+      
+      console.log("Reports data:", reportsList);
+      return reportsList;
     },
     enabled: !!selectedUnit,
   });
@@ -50,34 +54,36 @@ export function Analytics() {
 
     setIsGenerating(true);
     try {
-      const { data: session } = await supabase.auth.getSession();
-      if (!session.session) {
+      const auth = getAuth();
+      const user = auth.currentUser;
+      
+      if (!user) {
         throw new Error("No authenticated session");
       }
 
       // Fetch unit data
-      const { data: unitData, error: unitError } = await supabase
-        .from("units")
-        .select("*")
-        .eq("id", selectedUnit)
-        .single();
-
-      if (unitError) throw unitError;
+      const unitsCollection = collection(db, "units");
+      const unitQuery = query(unitsCollection, where("id", "==", selectedUnit));
+      const unitSnapshot = await getDocs(unitQuery);
+      
+      if (unitSnapshot.empty) {
+        throw new Error("Unit not found");
+      }
+      
+      const unitData = { id: unitSnapshot.docs[0].id, ...unitSnapshot.docs[0].data() };
 
       // Generate report content based on unit data
       const reportContent = generateReportContent(unitData, reportType);
 
       // Save report to database
-      const { error: saveError } = await supabase
-        .from("reports")
-        .insert({
-          unit_id: selectedUnit,
-          report_type: reportType,
-          content: reportContent,
-          generated_by: session.session.user.id
-        });
-
-      if (saveError) throw saveError;
+      const reportsCollection = collection(db, "reports");
+      await addDoc(reportsCollection, {
+        unit_id: selectedUnit,
+        report_type: reportType,
+        content: reportContent,
+        generated_by: user.uid,
+        created_at: new Date().toISOString()
+      });
 
       // Refetch reports to show the new one
       await refetchReports();
@@ -155,7 +161,7 @@ export function Analytics() {
         <div className="space-y-4 mt-8">
           <h2 className="text-xl font-semibold">Generated Reports</h2>
           <div className="grid gap-4">
-            {reports.map((report) => (
+            {reports.map((report: any) => (
               <Card key={report.id} className="p-4 bg-spotify-darker">
                 <div className="flex justify-between items-start">
                   <div>

@@ -3,8 +3,10 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { FormInput } from "@/components/shared/FormInput";
-import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword } from "firebase/auth";
+import { collection, addDoc } from "firebase/firestore";
+import { auth, db } from "@/integrations/firebase/client";
 
 export function Auth() {
   const navigate = useNavigate();
@@ -20,45 +22,57 @@ export function Auth() {
     
     try {
       if (isLogin) {
-        const { error } = await supabase.auth.signInWithPassword({
-          email,
-          password,
-        });
+        const userCredential = await signInWithEmailAndPassword(auth, email, password);
+        const user = userCredential.user;
         
-        if (error) {
-          if (error.message.includes("Invalid login credentials")) {
-            throw new Error(
-              "Invalid email or password. Please check your credentials or sign up if you don't have an account."
-            );
-          }
-          throw error;
-        }
-        
+        console.log("User signed in:", user);
         navigate("/");
       } else {
-        const { error } = await supabase.auth.signUp({
-          email,
-          password,
-        });
+        const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+        const user = userCredential.user;
         
-        if (error) {
-          if (error.message.includes("User already registered")) {
-            throw new Error(
-              "This email is already registered. Please try logging in instead."
-            );
-          }
-          throw error;
-        }
+        // Create a user profile document in Firestore
+        await addDoc(collection(db, "app_users"), {
+          id: user.uid,
+          email: user.email,
+          first_name: "",
+          last_name: "",
+          role: "user",
+          status: "active",
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        });
         
         toast({
           title: "Success",
-          description: "Please check your email to verify your account",
+          description: "Account created successfully. You may now sign in.",
         });
+        
+        // Switch to login view
+        setIsLogin(true);
       }
     } catch (error: any) {
+      console.error("Auth error:", error);
+      let errorMessage = "Authentication failed";
+      
+      // Handle common Firebase auth errors
+      if (error.code === 'auth/invalid-email') {
+        errorMessage = "Invalid email address format";
+      } else if (error.code === 'auth/user-disabled') {
+        errorMessage = "This account has been disabled";
+      } else if (error.code === 'auth/user-not-found') {
+        errorMessage = "No account with this email exists";
+      } else if (error.code === 'auth/wrong-password') {
+        errorMessage = "Incorrect password";
+      } else if (error.code === 'auth/email-already-in-use') {
+        errorMessage = "An account with this email already exists";
+      } else if (error.code === 'auth/weak-password') {
+        errorMessage = "Password should be at least 6 characters";
+      }
+      
       toast({
         title: "Error",
-        description: error.message,
+        description: errorMessage,
         variant: "destructive",
       });
     } finally {

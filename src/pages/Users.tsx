@@ -1,6 +1,5 @@
 
 import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { AddUserDialog } from "@/components/users/AddUserDialog";
@@ -8,6 +7,8 @@ import { UserDetailsDialog } from "@/components/users/UserDetailsDialog";
 import { PageHeader } from "@/components/shared/PageHeader";
 import { LoadingSkeleton } from "@/components/shared/LoadingSkeleton";
 import { UsersList } from "@/components/users/UsersList";
+import { collection, getDocs } from "firebase/firestore";
+import { db } from "@/integrations/firebase/client";
 
 export const Users = () => {
   const { toast } = useToast();
@@ -17,29 +18,26 @@ export const Users = () => {
   const { data: users = [], isLoading, error } = useQuery({
     queryKey: ["users"],
     queryFn: async () => {
-      console.log("Fetching users data...");
-      const { data, error } = await supabase
-        .from("app_users")
-        .select("*")
-        .order("created_at", { ascending: false });
-      
-      if (error) {
+      console.log("Fetching users data from Firebase...");
+      try {
+        const usersCollection = collection(db, "app_users");
+        const usersSnapshot = await getDocs(usersCollection);
+        const usersList = usersSnapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data()
+        }));
+        
+        console.log("Users data:", usersList);
+        return usersList;
+      } catch (error) {
         console.error("Error fetching users:", error);
         toast({
           title: "Error fetching users",
-          description: error.message,
+          description: error instanceof Error ? error.message : "Unknown error",
           variant: "destructive",
         });
         throw error;
       }
-      
-      if (!data) {
-        console.log("No users found");
-        return [];
-      }
-      
-      console.log("Users data:", data);
-      return data;
     },
   });
 

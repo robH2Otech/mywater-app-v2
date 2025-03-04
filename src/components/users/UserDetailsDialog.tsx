@@ -4,9 +4,10 @@ import { Button } from "@/components/ui/button";
 import { FormInput } from "@/components/shared/FormInput";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
+import { doc, updateDoc } from "firebase/firestore";
+import { db } from "@/integrations/firebase/client";
 
 interface UserDetailsDialogProps {
   user: any;
@@ -34,12 +35,12 @@ export function UserDetailsDialog({ user, open, onOpenChange }: UserDetailsDialo
 
   const handleSubmit = async () => {
     try {
-      const { error } = await supabase
-        .from("app_users")
-        .update(formData)
-        .eq("id", user.id);
-
-      if (error) throw error;
+      if (!user?.id) {
+        throw new Error("User ID is required");
+      }
+      
+      const userDocRef = doc(db, "app_users", user.id);
+      await updateDoc(userDocRef, formData);
 
       toast({
         title: "Success",
