@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { UnitSelector } from "@/components/analytics/UnitSelector";
 import { ReportTypeSelector } from "@/components/analytics/ReportTypeSelector";
@@ -6,9 +7,24 @@ import { toast } from "@/components/ui/use-toast";
 import { Card } from "@/components/ui/card";
 import { Download } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
-import { collection, query, where, getDocs, addDoc, orderBy, doc, getDoc } from "firebase/firestore";
+import { collection, query, where, getDocs, addDoc, orderBy, doc, getDoc, DocumentData } from "firebase/firestore";
 import { getAuth } from "firebase/auth";
 import { db } from "@/integrations/firebase/client";
+
+// Define interface for unit data to ensure type safety
+interface UnitData {
+  id: string;
+  name?: string;
+  location?: string;
+  status?: string;
+  total_volume?: number;
+  last_maintenance?: string;
+  next_maintenance?: string;
+  contact_name?: string;
+  contact_email?: string;
+  contact_phone?: string;
+  notes?: string;
+}
 
 export function Analytics() {
   const [selectedUnit, setSelectedUnit] = useState("");
@@ -68,7 +84,11 @@ export function Analytics() {
         throw new Error("Unit not found");
       }
       
-      const unitData = { id: unitSnapshot.id, ...unitSnapshot.data() };
+      // Cast the data to our UnitData interface to ensure type safety
+      const unitData: UnitData = {
+        id: unitSnapshot.id,
+        ...unitSnapshot.data() as DocumentData
+      };
 
       // Generate report content based on unit data
       const reportContent = generateReportContent(unitData, reportType);
@@ -193,7 +213,7 @@ export function Analytics() {
 }
 
 // Helper function to generate report content
-function generateReportContent(unitData: any, reportType: string): string {
+function generateReportContent(unitData: UnitData, reportType: string): string {
   const timestamp = new Date().toLocaleString();
   return `${reportType.toUpperCase()} REPORT
 Generated: ${timestamp}
