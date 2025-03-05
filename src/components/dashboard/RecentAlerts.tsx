@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Card } from "@/components/ui/card";
 import { Bell } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { collection, query, where, orderBy, limit, getDocs } from "firebase/firestore";
+import { collection, query, where, orderBy, limit, getDocs, getDoc, doc } from "firebase/firestore";
 import { db } from "@/integrations/firebase/client";
 
 interface Alert {
@@ -19,65 +19,76 @@ interface Alert {
 
 export const RecentAlerts = () => {
   const navigate = useNavigate();
-  const { data: alerts = [], isError } = useQuery({
+  const { data: alerts = [], isError, isLoading } = useQuery({
     queryKey: ["recent-alerts"],
     queryFn: async () => {
       // Calculate date 7 days ago
       const sevenDaysAgo = new Date();
       sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
 
-      // Get alerts
-      const alertsCollection = collection(db, "alerts");
-      const alertsQuery = query(
-        alertsCollection,
-        where("status", "in", ["warning", "urgent"]),
-        where("created_at", ">=", sevenDaysAgo.toISOString()),
-        orderBy("created_at", "desc"),
-        limit(2)
-      );
-      
-      const alertsSnapshot = await getDocs(alertsQuery);
-      const alertsData = alertsSnapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      })) as Alert[];
-      
-      // Get unit details for each alert
-      const enrichedAlerts = await Promise.all(alertsData.map(async (alert) => {
-        if (alert.unit_id) {
-          const unitDoc = await getDocs(query(
-            collection(db, "units"),
-            where("id", "==", alert.unit_id),
-            limit(1)
-          ));
-          
-          if (!unitDoc.empty) {
-            const unitData = unitDoc.docs[0].data();
-            return {
-              ...alert,
-              unit: {
-                name: unitData.name
-              }
-            };
-          }
-        }
-        return alert;
-      }));
-      
-      console.log("Recent alerts data:", enrichedAlerts);
-      
-      // Remove duplicates based on message and unit_id combination
-      const uniqueAlerts = enrichedAlerts.reduce((acc: Alert[], current) => {
-        const exists = acc.some(
-          alert => alert.message === current.message && alert.unit_id === current.unit_id
+      try {
+        console.log("Fetching recent alerts...");
+        
+        // Get alerts
+        const alertsCollection = collection(db, "alerts");
+        const alertsQuery = query(
+          alertsCollection,
+          where("status", "in", ["warning", "urgent"]),
+          orderBy("created_at", "desc"),
+          limit(5)
         );
-        if (!exists) {
-          acc.push(current);
-        }
-        return acc;
-      }, []);
+        
+        const alertsSnapshot = await getDocs(alertsQuery);
+        const alertsData = alertsSnapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data()
+        })) as Alert[];
+        
+        console.log("Raw alerts data:", alertsData);
+        
+        // Get unit details for each alert
+        const enrichedAlerts = await Promise.all(alertsData.map(async (alert) => {
+          if (alert.unit_id) {
+            try {
+              const unitDoc = await getDoc(doc(db, "units", alert.unit_id));
+              
+              if (unitDoc.exists()) {
+                const unitData = unitDoc.data();
+                return {
+                  ...alert,
+                  unit: {
+                    name: unitData.name || "Unknown Unit"
+                  }
+                };
+              }
+            } catch (error) {
+              console.error("Error fetching unit details:", error);
+            }
+          }
+          return {
+            ...alert,
+            unit: { name: "Unknown Unit" }
+          };
+        }));
+        
+        console.log("Enriched alerts data:", enrichedAlerts);
+        
+        // Remove duplicates based on message and unit_id combination
+        const uniqueAlerts = enrichedAlerts.reduce((acc: Alert[], current) => {
+          const exists = acc.some(
+            alert => alert.message === current.message && alert.unit_id === current.unit_id
+          );
+          if (!exists) {
+            acc.push(current);
+          }
+          return acc;
+        }, []);
 
-      return uniqueAlerts;
+        return uniqueAlerts;
+      } catch (error) {
+        console.error("Error fetching recent alerts:", error);
+        throw error;
+      }
     },
   });
 
@@ -95,7 +106,11 @@ export const RecentAlerts = () => {
         <Bell className={`h-5 w-5 ${alerts.length > 0 ? 'text-red-500' : 'text-gray-400'}`} />
       </div>
       <div className="space-y-4">
-        {alerts.length > 0 ? (
+        {isLoading ? (
+          <div className="text-center py-4">
+            <p className="text-gray-400">Loading alerts...</p>
+          </div>
+        ) : alerts.length > 0 ? (
           <>
             {alerts.map((alert) => (
               <div 

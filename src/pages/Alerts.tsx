@@ -36,7 +36,7 @@ export const Alerts = () => {
           return {
             id: doc.id,
             ...data,
-            // Use calculated status
+            // Override with calculated status
             status: calculatedStatus
           };
         }) as UnitData[];
