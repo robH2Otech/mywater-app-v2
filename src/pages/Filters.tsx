@@ -9,6 +9,11 @@ import { LoadingSkeleton } from "@/components/shared/LoadingSkeleton";
 import { FiltersList } from "@/components/filters/FiltersList";
 import { collection, getDocs } from "firebase/firestore";
 import { db } from "@/integrations/firebase/client";
+import { UnitData, FilterData } from "@/types/analytics";
+
+interface UnitWithFilters extends UnitData {
+  filters: FilterData[];
+}
 
 export const Filters = () => {
   const { toast } = useToast();
@@ -27,7 +32,7 @@ export const Filters = () => {
           id: doc.id,
           ...doc.data(),
           filters: [] // Will be populated with filters below
-        }));
+        })) as UnitWithFilters[];
         
         // Get filters
         const filtersCollection = collection(db, "filters");
@@ -35,7 +40,7 @@ export const Filters = () => {
         const filtersData = filtersSnapshot.docs.map(doc => ({
           id: doc.id,
           ...doc.data()
-        }));
+        })) as FilterData[];
         
         // Associate filters with units
         for (const filter of filtersData) {

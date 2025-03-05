@@ -8,6 +8,7 @@ import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { collection, getDocs, orderBy, query } from "firebase/firestore";
 import { db } from "@/integrations/firebase/client";
+import { UnitData } from "@/types/analytics";
 
 export const Units = () => {
   const { toast } = useToast();
@@ -24,7 +25,7 @@ export const Units = () => {
         return unitsSnapshot.docs.map(doc => ({
           id: doc.id,
           ...doc.data()
-        }));
+        })) as UnitData[];
       } catch (error) {
         console.error("Error fetching units:", error);
         toast({
@@ -66,7 +67,7 @@ export const Units = () => {
               key={unit.id}
               id={unit.id}
               name={unit.name}
-              status={unit.status}
+              status={unit.status || "active"}
               location={unit.location}
               total_volume={unit.total_volume}
               last_maintenance={unit.last_maintenance}

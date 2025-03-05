@@ -1,4 +1,3 @@
-
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
@@ -9,6 +8,11 @@ import { LoadingSkeleton } from "@/components/shared/LoadingSkeleton";
 import { AlertsList } from "@/components/alerts/AlertsList";
 import { collection, getDocs } from "firebase/firestore";
 import { db } from "@/integrations/firebase/client";
+import { UnitData, AlertData } from "@/types/analytics";
+
+interface UnitWithAlerts extends UnitData {
+  alerts: AlertData[];
+}
 
 export const Alerts = () => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -25,7 +29,7 @@ export const Alerts = () => {
         const unitsData = unitsSnapshot.docs.map(doc => ({
           id: doc.id,
           ...doc.data()
-        }));
+        })) as UnitData[];
         console.log("Units data:", unitsData);
         return unitsData;
       } catch (error) {
@@ -45,7 +49,7 @@ export const Alerts = () => {
         const alertsData = alertsSnapshot.docs.map(doc => ({
           id: doc.id,
           ...doc.data()
-        }));
+        })) as AlertData[];
         console.log("Alerts data:", alertsData);
         return alertsData;
       } catch (error) {
@@ -58,7 +62,7 @@ export const Alerts = () => {
   const unitsWithAlerts = units.map(unit => ({
     ...unit,
     alerts: alerts.filter(alert => alert.unit_id === unit.id)
-  }));
+  })) as UnitWithAlerts[];
 
   const isLoading = unitsLoading || alertsLoading;
   const error = unitsError || alertsError;

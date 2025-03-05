@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { format } from "date-fns";
 import { doc, getDoc } from "firebase/firestore";
 import { db } from "@/integrations/firebase/client";
+import { UnitData } from "@/types/analytics";
 
 export const UnitDetails = () => {
   const { id } = useParams();
@@ -27,7 +28,7 @@ export const UnitDetails = () => {
       return {
         id: unitSnapshot.id,
         ...unitSnapshot.data()
-      };
+      } as UnitData;
     },
   });
 
@@ -62,7 +63,7 @@ export const UnitDetails = () => {
           <div className="space-y-2">
             <label className="text-sm text-gray-400">Unit Name</label>
             <Input
-              value={unit.name}
+              value={unit?.name || ""}
               readOnly
               className="bg-spotify-accent border-spotify-accent-hover text-white cursor-default"
             />
@@ -71,7 +72,7 @@ export const UnitDetails = () => {
           <div className="space-y-2">
             <label className="text-sm text-gray-400">Maintenance Contact</label>
             <Input
-              value={unit.contact_name || "Not specified"}
+              value={unit?.contact_name || "Not specified"}
               readOnly
               className="bg-spotify-accent border-spotify-accent-hover text-white cursor-default"
             />
@@ -80,7 +81,7 @@ export const UnitDetails = () => {
           <div className="space-y-2">
             <label className="text-sm text-gray-400">Location</label>
             <Input
-              value={unit.location || "Not specified"}
+              value={unit?.location || "Not specified"}
               readOnly
               className="bg-spotify-accent border-spotify-accent-hover text-white cursor-default"
             />
@@ -89,7 +90,7 @@ export const UnitDetails = () => {
           <div className="space-y-2">
             <label className="text-sm text-gray-400">Email</label>
             <Input
-              value={unit.contact_email || "Not specified"}
+              value={unit?.contact_email || "Not specified"}
               readOnly
               className="bg-spotify-accent border-spotify-accent-hover text-white cursor-default"
             />
@@ -98,7 +99,7 @@ export const UnitDetails = () => {
           <div className="space-y-2">
             <label className="text-sm text-gray-400">Total Volume (m³)</label>
             <Input
-              value={unit.total_volume || "0"}
+              value={unit?.total_volume?.toString() || "0"}
               readOnly
               className="bg-spotify-accent border-spotify-accent-hover text-white cursor-default"
             />
@@ -107,7 +108,7 @@ export const UnitDetails = () => {
           <div className="space-y-2">
             <label className="text-sm text-gray-400">Phone</label>
             <Input
-              value={unit.contact_phone || "Not specified"}
+              value={unit?.contact_phone || "Not specified"}
               readOnly
               className="bg-spotify-accent border-spotify-accent-hover text-white cursor-default"
             />
@@ -116,7 +117,7 @@ export const UnitDetails = () => {
           <div className="space-y-2">
             <label className="text-sm text-gray-400">Status</label>
             <Input
-              value={unit.status}
+              value={unit?.status || ""}
               readOnly
               className="bg-spotify-accent border-spotify-accent-hover text-white cursor-default"
             />
@@ -125,13 +126,13 @@ export const UnitDetails = () => {
           <div className="space-y-2">
             <label className="text-sm text-gray-400">Next Maintenance</label>
             <Input
-              value={formatDate(unit.next_maintenance)}
+              value={formatDate(unit?.next_maintenance || null)}
               readOnly
               className="bg-spotify-accent border-spotify-accent-hover text-white cursor-default"
             />
           </div>
 
-          {unit.notes && (
+          {unit?.notes && (
             <div className="col-span-2 space-y-2">
               <label className="text-sm text-gray-400">Notes</label>
               <Input
