@@ -1,3 +1,4 @@
+
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
@@ -9,6 +10,7 @@ import { AlertsList } from "@/components/alerts/AlertsList";
 import { collection, getDocs } from "firebase/firestore";
 import { db } from "@/integrations/firebase/client";
 import { UnitData, AlertData } from "@/types/analytics";
+import { determineUnitStatus } from "@/utils/unitStatusUtils";
 
 interface UnitWithAlerts extends UnitData {
   alerts: AlertData[];
@@ -26,10 +28,18 @@ export const Alerts = () => {
       try {
         const unitsCollection = collection(db, "units");
         const unitsSnapshot = await getDocs(unitsCollection);
-        const unitsData = unitsSnapshot.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data()
-        })) as UnitData[];
+        const unitsData = unitsSnapshot.docs.map(doc => {
+          const data = doc.data();
+          // Calculate the correct status based on volume
+          const calculatedStatus = determineUnitStatus(data.total_volume);
+          
+          return {
+            id: doc.id,
+            ...data,
+            // Use calculated status
+            status: calculatedStatus
+          };
+        }) as UnitData[];
         console.log("Units data:", unitsData);
         return unitsData;
       } catch (error) {

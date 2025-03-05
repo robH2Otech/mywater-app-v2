@@ -10,6 +10,7 @@ import { FiltersList } from "@/components/filters/FiltersList";
 import { collection, getDocs } from "firebase/firestore";
 import { db } from "@/integrations/firebase/client";
 import { UnitData, FilterData } from "@/types/analytics";
+import { determineUnitStatus } from "@/utils/unitStatusUtils";
 
 interface UnitWithFilters extends UnitData {
   filters: FilterData[];
@@ -28,11 +29,19 @@ export const Filters = () => {
         // Get units
         const unitsCollection = collection(db, "units");
         const unitsSnapshot = await getDocs(unitsCollection);
-        const unitsData = unitsSnapshot.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data(),
-          filters: [] // Will be populated with filters below
-        })) as UnitWithFilters[];
+        const unitsData = unitsSnapshot.docs.map(doc => {
+          const data = doc.data();
+          // Calculate the correct status based on volume
+          const calculatedStatus = determineUnitStatus(data.total_volume);
+          
+          return {
+            id: doc.id,
+            ...data,
+            // Use calculated status
+            status: calculatedStatus,
+            filters: [] // Will be populated with filters below
+          };
+        }) as UnitWithFilters[];
         
         // Get filters
         const filtersCollection = collection(db, "filters");
