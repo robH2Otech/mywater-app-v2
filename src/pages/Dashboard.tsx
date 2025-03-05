@@ -1,42 +1,50 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { Droplet, Bell, Calendar, Activity } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
 import { StatCard } from "@/components/dashboard/StatCard";
 import { WaterUsageChart } from "@/components/dashboard/WaterUsageChart";
 import { RecentAlerts } from "@/components/dashboard/RecentAlerts";
-
-interface Unit {
-  id: string;
-  name: string;
-  status: string;
-}
+import { collection, query, where, getDocs } from "firebase/firestore";
+import { db } from "@/integrations/firebase/client";
 
 export const Dashboard = () => {
-  const { data: units = [] } = useQuery({
-    queryKey: ["units"],
+  const { data: units = [], isLoading: isLoadingUnits } = useQuery({
+    queryKey: ["dashboard-units"],
     queryFn: async () => {
-      const { data, error } = await supabase.from("units").select("*");
-      if (error) throw error;
-      return data as Unit[];
+      const unitsCollection = collection(db, "units");
+      const unitsSnapshot = await getDocs(unitsCollection);
+      
+      return unitsSnapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      }));
     },
   });
 
-  const { data: alerts = [] } = useQuery({
-    queryKey: ["alerts"],
+  const { data: alerts = [], isLoading: isLoadingAlerts } = useQuery({
+    queryKey: ["dashboard-alerts"],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("alerts")
-        .select("*")
-        .in("status", ["warning", "urgent"]);
-      if (error) throw error;
-      return data;
+      const alertsCollection = collection(db, "alerts");
+      const alertsQuery = query(
+        alertsCollection,
+        where("status", "in", ["warning", "urgent"])
+      );
+      const alertsSnapshot = await getDocs(alertsQuery);
+      
+      return alertsSnapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      }));
     },
   });
 
   const activeUnits = units.filter((unit) => unit.status === "active").length;
   const warningUnits = units.filter((unit) => unit.status === "warning").length;
-  const errorUnits = units.filter((unit) => unit.status === "error").length;
+  const errorUnits = units.filter((unit) => unit.status === "urgent").length;
+
+  if (isLoadingUnits || isLoadingAlerts) {
+    return <div className="flex justify-center p-12">Loading dashboard data...</div>;
+  }
 
   return (
     <div className="space-y-6 animate-fadeIn">
@@ -63,17 +71,27 @@ export const Dashboard = () => {
         />
         <StatCard
           title="Total Volume Today"
-          value="106.0 m³"
+          value={`${calculateTotalVolume(units)} m³`}
           icon={Activity}
           link="/analytics"
-          subValue="↑ 13.2%"
+          subValue={`${units.length > 0 ? '↑ 13.2%' : '-'}`}
         />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        <WaterUsageChart />
+        <WaterUsageChart units={units} />
         <RecentAlerts />
       </div>
     </div>
   );
 };
+
+// Helper function to calculate total volume from all units
+function calculateTotalVolume(units: any[]): string {
+  const total = units.reduce((sum, unit) => {
+    const volume = unit.total_volume ? parseFloat(unit.total_volume) : 0;
+    return sum + volume;
+  }, 0);
+  
+  return total.toFixed(1);
+}
