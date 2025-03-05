@@ -3,10 +3,10 @@ import { DocumentData } from "firebase/firestore";
 
 export interface UnitData {
   id: string;
-  name?: string; // Changed from required to optional
+  name?: string;
   location?: string;
   status?: string;
-  total_volume?: number;
+  total_volume?: number | string;
   last_maintenance?: string;
   next_maintenance?: string;
   contact_name?: string;

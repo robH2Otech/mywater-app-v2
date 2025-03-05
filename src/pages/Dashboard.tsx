@@ -6,6 +6,7 @@ import { WaterUsageChart } from "@/components/dashboard/WaterUsageChart";
 import { RecentAlerts } from "@/components/dashboard/RecentAlerts";
 import { collection, query, where, getDocs } from "firebase/firestore";
 import { db } from "@/integrations/firebase/client";
+import { UnitData } from "@/types/analytics";
 
 export const Dashboard = () => {
   const { data: units = [], isLoading: isLoadingUnits } = useQuery({
@@ -17,7 +18,7 @@ export const Dashboard = () => {
       return unitsSnapshot.docs.map(doc => ({
         id: doc.id,
         ...doc.data()
-      }));
+      })) as UnitData[];
     },
   });
 
@@ -87,9 +88,9 @@ export const Dashboard = () => {
 };
 
 // Helper function to calculate total volume from all units
-function calculateTotalVolume(units: any[]): string {
+function calculateTotalVolume(units: UnitData[]): string {
   const total = units.reduce((sum, unit) => {
-    const volume = unit.total_volume ? parseFloat(unit.total_volume) : 0;
+    const volume = unit.total_volume ? parseFloat(unit.total_volume.toString()) : 0;
     return sum + volume;
   }, 0);
   
