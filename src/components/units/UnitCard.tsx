@@ -11,7 +11,7 @@ interface UnitCardProps {
   name: string;
   status: string;
   location?: string | null;
-  total_volume?: number | null;
+  total_volume?: number | string | null;
   last_maintenance?: string | null;
   contact_name?: string | null;
   contact_email?: string | null;
