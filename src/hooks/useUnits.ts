@@ -14,8 +14,11 @@ export function useUnits() {
       
       return unitsSnapshot.docs.map(doc => ({
         id: doc.id,
-        name: doc.data().name
-      })) as Pick<UnitData, "id" | "name">[];
+        name: doc.data().name,
+        // Include other basic fields that might be needed
+        status: doc.data().status,
+        location: doc.data().location
+      })) as UnitData[];
     },
   });
 }

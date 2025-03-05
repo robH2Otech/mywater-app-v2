@@ -51,9 +51,10 @@ export function ReportGenerationForm({
         throw new Error("Unit not found");
       }
       
-      // Cast the data to our UnitData interface to ensure type safety
+      // Create a base UnitData object with required id and default empty name
       const unitData: UnitData = {
         id: unitSnapshot.id,
+        name: unitSnapshot.data().name || 'Unknown Unit',
         ...unitSnapshot.data() as DocumentData
       };
 
