@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -5,8 +6,9 @@ import { Check, AlertTriangle, AlertOctagon, MapPin, Edit } from "lucide-react";
 import { AlertDetailsDialog } from "./AlertDetailsDialog";
 import { useToast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
-import { doc, updateDoc } from "firebase/firestore";
+import { doc, updateDoc, collection, addDoc } from "firebase/firestore";
 import { db } from "@/integrations/firebase/client";
+import { determineUnitStatus, createAlertMessage } from "@/utils/unitStatusUtils";
 
 interface AlertsListProps {
   units: any[];
@@ -51,18 +53,45 @@ export function AlertsList({ units, onAlertClick }: AlertsListProps) {
 
   const handleSave = async (updatedData: any) => {
     try {
+      // Convert total_volume to a number if it's a string
+      const numericVolume = typeof updatedData.total_volume === 'string' 
+        ? parseFloat(updatedData.total_volume) 
+        : updatedData.total_volume;
+
+      // Determine the new status based on the updated volume
+      const newStatus = determineUnitStatus(numericVolume);
+      
+      // Update the unit document
       const unitDocRef = doc(db, "units", selectedUnit.id);
       await updateDoc(unitDocRef, {
         name: updatedData.name,
-        location: updatedData.location,
-        total_volume: updatedData.total_volume,
-        status: updatedData.status,
-        contact_name: updatedData.contact_name,
-        contact_email: updatedData.contact_email,
-        contact_phone: updatedData.contact_phone,
-        next_maintenance: updatedData.next_maintenance,
+        location: updatedData.location || null,
+        total_volume: numericVolume,
+        status: newStatus,
+        contact_name: updatedData.contact_name || null,
+        contact_email: updatedData.contact_email || null,
+        contact_phone: updatedData.contact_phone || null,
+        next_maintenance: updatedData.next_maintenance || null,
         updated_at: new Date().toISOString()
       });
+
+      // Check if the new status requires an alert
+      if (newStatus === 'warning' || newStatus === 'urgent') {
+        // Only create alert if status changed or it's urgent
+        if (selectedUnit.status !== newStatus || newStatus === 'urgent') {
+          const alertMessage = createAlertMessage(updatedData.name, numericVolume, newStatus);
+          
+          // Add a new alert to the alerts collection
+          const alertsCollection = collection(db, "alerts");
+          await addDoc(alertsCollection, {
+            unit_id: selectedUnit.id,
+            message: alertMessage,
+            status: newStatus,
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+          });
+        }
+      }
 
       await queryClient.invalidateQueries({ queryKey: ['units'] });
       await queryClient.invalidateQueries({ queryKey: ['alerts'] });

@@ -5,8 +5,9 @@ import { useToast } from "@/hooks/use-toast";
 import { UnitFormFields } from "./UnitFormFields";
 import { UnitFormActions } from "./UnitFormActions";
 import { useQueryClient } from "@tanstack/react-query";
-import { doc, updateDoc } from "firebase/firestore";
+import { doc, updateDoc, collection, addDoc } from "firebase/firestore";
 import { db } from "@/integrations/firebase/client";
+import { determineUnitStatus, createAlertMessage } from "@/utils/unitStatusUtils";
 
 interface EditUnitDialogProps {
   unit: {
@@ -54,12 +55,19 @@ export function EditUnitDialog({ unit, open, onOpenChange }: EditUnitDialogProps
     setIsSubmitting(true);
 
     try {
+      // Parse volume to numeric value
+      const numericVolume = parseFloat(formData.total_volume);
+      
+      // Determine the new status based on the updated volume
+      const newStatus = determineUnitStatus(numericVolume);
+      
+      // Update the unit document
       const unitDocRef = doc(db, "units", unit.id);
       await updateDoc(unitDocRef, {
         name: formData.name,
         location: formData.location || null,
-        total_volume: parseFloat(formData.total_volume),
-        status: formData.status,
+        total_volume: numericVolume,
+        status: newStatus,
         contact_name: formData.contact_name || null,
         contact_email: formData.contact_email || null,
         contact_phone: formData.contact_phone || null,
@@ -67,7 +75,26 @@ export function EditUnitDialog({ unit, open, onOpenChange }: EditUnitDialogProps
         updated_at: new Date().toISOString(),
       });
 
+      // Check if the new status requires an alert
+      if (newStatus === 'warning' || newStatus === 'urgent') {
+        // Only create alert if status changed or was already warning/urgent
+        if (unit.status !== newStatus || newStatus === 'urgent') {
+          const alertMessage = createAlertMessage(formData.name, numericVolume, newStatus);
+          
+          // Add a new alert to the alerts collection
+          const alertsCollection = collection(db, "alerts");
+          await addDoc(alertsCollection, {
+            unit_id: unit.id,
+            message: alertMessage,
+            status: newStatus,
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+          });
+        }
+      }
+
       await queryClient.invalidateQueries({ queryKey: ["units"] });
+      await queryClient.invalidateQueries({ queryKey: ["alerts"] });
       
       toast({
         title: "Success",

@@ -7,6 +7,7 @@ import { UnitFormActions } from "./UnitFormActions";
 import { useQueryClient } from "@tanstack/react-query";
 import { addDoc, collection } from "firebase/firestore";
 import { db } from "@/integrations/firebase/client";
+import { determineUnitStatus, createAlertMessage } from "@/utils/unitStatusUtils";
 
 export function AddUnitDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (open: boolean) => void }) {
   const { toast } = useToast();
@@ -39,13 +40,19 @@ export function AddUnitDialog({ open, onOpenChange }: { open: boolean; onOpenCha
     setIsSubmitting(true);
 
     try {
+      // Parse volume to numeric value
+      const numericVolume = parseFloat(formData.total_volume);
+      
+      // Determine the status based on the volume
+      const status = determineUnitStatus(numericVolume);
+      
       // Add unit to Firestore
       const unitsCollection = collection(db, "units");
-      await addDoc(unitsCollection, {
+      const unitRef = await addDoc(unitsCollection, {
         name: formData.name,
         location: formData.location || null,
-        total_volume: parseFloat(formData.total_volume),
-        status: formData.status,
+        total_volume: numericVolume,
+        status: status,
         contact_name: formData.contact_name || null,
         contact_email: formData.contact_email || null,
         contact_phone: formData.contact_phone || null,
@@ -54,8 +61,24 @@ export function AddUnitDialog({ open, onOpenChange }: { open: boolean; onOpenCha
         updated_at: new Date().toISOString(),
       });
 
+      // Check if an alert should be created
+      if (status === 'warning' || status === 'urgent') {
+        const alertMessage = createAlertMessage(formData.name, numericVolume, status);
+        
+        // Add a new alert to the alerts collection
+        const alertsCollection = collection(db, "alerts");
+        await addDoc(alertsCollection, {
+          unit_id: unitRef.id,
+          message: alertMessage,
+          status: status,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        });
+      }
+
       // Invalidate and refetch units data
       await queryClient.invalidateQueries({ queryKey: ["units"] });
+      await queryClient.invalidateQueries({ queryKey: ["alerts"] });
       
       toast({
         title: "Success",
