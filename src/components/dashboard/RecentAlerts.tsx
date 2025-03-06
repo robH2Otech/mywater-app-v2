@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Card } from "@/components/ui/card";
 import { Bell } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { collection, query, where, orderBy, limit, getDocs, getDoc, doc } from "firebase/firestore";
+import { collection, query, getDocs, getDoc, doc, orderBy, limit } from "firebase/firestore";
 import { db } from "@/integrations/firebase/client";
 
 interface Alert {
@@ -29,11 +29,10 @@ export const RecentAlerts = () => {
       try {
         console.log("Fetching recent alerts...");
         
-        // Get alerts
+        // Get alerts - Note: Removing the "where" clause that was causing the index error
         const alertsCollection = collection(db, "alerts");
         const alertsQuery = query(
           alertsCollection,
-          where("status", "in", ["warning", "urgent"]),
           orderBy("created_at", "desc"),
           limit(5)
         );
@@ -73,8 +72,19 @@ export const RecentAlerts = () => {
         
         console.log("Enriched alerts data:", enrichedAlerts);
         
+        // Filter for alerts in the last 7 days and with warning/urgent status
+        const recentAlerts = enrichedAlerts.filter(alert => {
+          if (!alert.created_at) return false;
+          
+          const alertDate = new Date(alert.created_at);
+          const isRecent = alertDate >= sevenDaysAgo;
+          const isActive = alert.status === 'warning' || alert.status === 'urgent';
+          
+          return isRecent && isActive;
+        });
+        
         // Remove duplicates based on message and unit_id combination
-        const uniqueAlerts = enrichedAlerts.reduce((acc: Alert[], current) => {
+        const uniqueAlerts = recentAlerts.reduce((acc: Alert[], current) => {
           const exists = acc.some(
             alert => alert.message === current.message && alert.unit_id === current.unit_id
           );

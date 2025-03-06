@@ -45,7 +45,7 @@ export const Header = () => {
 
   return (
     <header className="h-16 bg-spotify-darker border-b border-white/10 flex items-center justify-between px-6">
-      {firstName && <WelcomeMessage firstName={firstName} />}
+      <WelcomeMessage firstName={firstName} />
       <div className="flex items-center gap-4">
         <Button variant="ghost" size="icon" className="text-gray-400 hover:text-white">
           <Bell className="h-5 w-5" />
