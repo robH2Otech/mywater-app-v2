@@ -132,6 +132,24 @@ export const UnitDetails = () => {
             />
           </div>
 
+          <div className="space-y-2">
+            <label className="text-sm text-gray-400">EID</label>
+            <Input
+              value={unit?.eid || "Not specified"}
+              readOnly
+              className="bg-spotify-accent border-spotify-accent-hover text-white cursor-default"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-sm text-gray-400">ICCID</label>
+            <Input
+              value={unit?.iccid || "Not specified"}
+              readOnly
+              className="bg-spotify-accent border-spotify-accent-hover text-white cursor-default"
+            />
+          </div>
+
           {unit?.notes && (
             <div className="col-span-2 space-y-2">
               <label className="text-sm text-gray-400">Notes</label>

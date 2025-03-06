@@ -20,6 +20,8 @@ interface EditUnitDialogProps {
     contact_email: string | null;
     contact_phone: string | null;
     next_maintenance: string | null;
+    eid?: string | null;
+    iccid?: string | null;
   };
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -38,6 +40,8 @@ export function EditUnitDialog({ unit, open, onOpenChange }: EditUnitDialogProps
     contact_email: unit.contact_email || "",
     contact_phone: unit.contact_phone || "",
     next_maintenance: unit.next_maintenance ? new Date(unit.next_maintenance) : null,
+    eid: unit.eid || "",
+    iccid: unit.iccid || "",
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -72,6 +76,8 @@ export function EditUnitDialog({ unit, open, onOpenChange }: EditUnitDialogProps
         contact_email: formData.contact_email || null,
         contact_phone: formData.contact_phone || null,
         next_maintenance: formData.next_maintenance?.toISOString() || null,
+        eid: formData.eid || null,
+        iccid: formData.iccid || null,
         updated_at: new Date().toISOString(),
       });
 
