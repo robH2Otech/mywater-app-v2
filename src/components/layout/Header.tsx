@@ -1,46 +1,54 @@
 
 import { Bell } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { supabase } from "@/integrations/supabase/client";
 import { useEffect, useState } from "react";
 import { UserAvatar } from "./UserAvatar";
 import { WelcomeMessage } from "./WelcomeMessage";
+import { collection, query, where, getDocs } from "firebase/firestore";
+import { onAuthStateChanged } from "firebase/auth";
+import { db, auth } from "@/integrations/firebase/client";
 
 export const Header = () => {
   const [firstName, setFirstName] = useState<string>("");
   const [lastName, setLastName] = useState<string>("");
 
   useEffect(() => {
-    const fetchUserProfile = async () => {
-      try {
-        const { data: { user } } = await supabase.auth.getUser();
-        if (user) {
-          console.log("Fetching user profile for id:", user.id);
-          const { data: profile, error } = await supabase
-            .from('app_users')
-            .select('first_name, last_name')
-            .eq('id', user.id)
-            .maybeSingle();
-
-          if (error) {
-            console.error("Error fetching user profile:", error);
-            return;
-          }
-
-          if (profile) {
-            console.log("User profile found:", profile);
-            setFirstName(profile.first_name || "");
-            setLastName(profile.last_name || "");
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+      if (user) {
+        try {
+          console.log("Fetching user profile for email:", user.email);
+          
+          // Query the app_users collection to find the user by email
+          const usersRef = collection(db, "app_users");
+          const q = query(usersRef, where("email", "==", user.email));
+          const querySnapshot = await getDocs(q);
+          
+          if (!querySnapshot.empty) {
+            const userData = querySnapshot.docs[0].data();
+            console.log("User profile found:", userData);
+            
+            setFirstName(userData.first_name || "");
+            setLastName(userData.last_name || "");
           } else {
-            console.log("No user profile found");
+            // Check if we have a temp access user or need to create a profile
+            const tempAccess = localStorage.getItem('tempAccess') === 'true';
+            if (!tempAccess) {
+              console.log("No user profile found, extracting from email");
+              // Extract name from email as fallback (e.g., robert@example.com -> Robert)
+              const emailName = user.email?.split('@')[0] || "";
+              if (emailName) {
+                const formattedName = emailName.charAt(0).toUpperCase() + emailName.slice(1);
+                setFirstName(formattedName);
+              }
+            }
           }
+        } catch (error) {
+          console.error("Error in fetchUserProfile:", error);
         }
-      } catch (error) {
-        console.error("Error in fetchUserProfile:", error);
       }
-    };
+    });
 
-    fetchUserProfile();
+    return () => unsubscribe();
   }, []);
 
   return (

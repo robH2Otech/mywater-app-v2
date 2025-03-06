@@ -1,3 +1,4 @@
+
 import { LogOut } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
@@ -8,7 +9,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
-import { supabase } from "@/integrations/supabase/client";
+import { auth } from "@/integrations/firebase/client";
 
 interface UserAvatarProps {
   firstName: string;
@@ -20,7 +21,7 @@ export const UserAvatar = ({ firstName, lastName }: UserAvatarProps) => {
 
   const handleLogout = async () => {
     try {
-      await supabase.auth.signOut();
+      await auth.signOut();
       toast.success("Logged out successfully");
       navigate("/auth");
     } catch (error) {

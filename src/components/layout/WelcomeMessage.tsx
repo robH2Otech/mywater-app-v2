@@ -4,6 +4,15 @@ interface WelcomeMessageProps {
 }
 
 export const WelcomeMessage = ({ firstName }: WelcomeMessageProps) => {
+  // If no firstName is provided, return a default message
+  if (!firstName) {
+    return (
+      <div className="text-white text-lg">
+        Welcome to the dashboard!
+      </div>
+    );
+  }
+  
   // Capitalize first letter of the name
   const capitalizedName = firstName.charAt(0).toUpperCase() + firstName.slice(1);
   
