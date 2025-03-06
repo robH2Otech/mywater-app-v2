@@ -1,4 +1,3 @@
-
 import { DocumentData } from "firebase/firestore";
 
 export interface UnitData {
@@ -15,6 +14,8 @@ export interface UnitData {
   notes?: string;
   created_at?: string;
   updated_at?: string;
+  eid?: string;
+  iccid?: string;
 }
 
 export interface FilterData {

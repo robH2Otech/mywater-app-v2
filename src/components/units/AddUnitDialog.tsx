@@ -1,11 +1,11 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { UnitFormFields } from "./UnitFormFields";
 import { UnitFormActions } from "./UnitFormActions";
 import { useQueryClient } from "@tanstack/react-query";
-import { addDoc, collection } from "firebase/firestore";
+import { addDoc, collection, getDocs, setDoc, doc } from "firebase/firestore";
 import { db } from "@/integrations/firebase/client";
 import { determineUnitStatus, createAlertMessage } from "@/utils/unitStatusUtils";
 
@@ -13,6 +13,7 @@ export function AddUnitDialog({ open, onOpenChange }: { open: boolean; onOpenCha
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [nextUnitNumber, setNextUnitNumber] = useState(1);
   const [formData, setFormData] = useState({
     name: "",
     location: "",
@@ -22,7 +23,45 @@ export function AddUnitDialog({ open, onOpenChange }: { open: boolean; onOpenCha
     contact_email: "",
     contact_phone: "",
     next_maintenance: null as Date | null,
+    eid: "",
+    iccid: "",
   });
+
+  // Fetch the highest unit number on load
+  useEffect(() => {
+    const fetchNextUnitNumber = async () => {
+      try {
+        const unitsCollection = collection(db, "units");
+        const unitsSnapshot = await getDocs(unitsCollection);
+        
+        let highestNumber = 0;
+        
+        unitsSnapshot.forEach(docSnapshot => {
+          const unitName = docSnapshot.data().name || "";
+          if (unitName.startsWith("MYWATER ")) {
+            const numberPart = unitName.replace("MYWATER ", "");
+            const number = parseInt(numberPart, 10);
+            if (!isNaN(number) && number > highestNumber) {
+              highestNumber = number;
+            }
+          }
+        });
+        
+        setNextUnitNumber(highestNumber + 1);
+        // Pre-fill the name field with the next MYWATER unit number
+        setFormData(prev => ({
+          ...prev,
+          name: `MYWATER ${String(highestNumber + 1).padStart(3, '0')}`
+        }));
+      } catch (error) {
+        console.error("Error fetching next unit number:", error);
+      }
+    };
+    
+    if (open) {
+      fetchNextUnitNumber();
+    }
+  }, [open]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -46,9 +85,13 @@ export function AddUnitDialog({ open, onOpenChange }: { open: boolean; onOpenCha
       // Determine the status based on the volume
       const status = determineUnitStatus(numericVolume);
       
-      // Add unit to Firestore
-      const unitsCollection = collection(db, "units");
-      const unitRef = await addDoc(unitsCollection, {
+      // Create a custom ID in the format MYWATER_XXX
+      const formattedNumber = String(nextUnitNumber).padStart(3, '0');
+      const customId = `MYWATER_${formattedNumber}`;
+      
+      // Add unit to Firestore with a custom ID
+      const unitDocRef = doc(db, "units", customId);
+      await setDoc(unitDocRef, {
         name: formData.name,
         location: formData.location || null,
         total_volume: numericVolume,
@@ -57,6 +100,8 @@ export function AddUnitDialog({ open, onOpenChange }: { open: boolean; onOpenCha
         contact_email: formData.contact_email || null,
         contact_phone: formData.contact_phone || null,
         next_maintenance: formData.next_maintenance?.toISOString() || null,
+        eid: formData.eid || null,
+        iccid: formData.iccid || null,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
       });
@@ -68,7 +113,7 @@ export function AddUnitDialog({ open, onOpenChange }: { open: boolean; onOpenCha
         // Add a new alert to the alerts collection
         const alertsCollection = collection(db, "alerts");
         await addDoc(alertsCollection, {
-          unit_id: unitRef.id,
+          unit_id: customId,
           message: alertMessage,
           status: status,
           created_at: new Date().toISOString(),
@@ -96,6 +141,8 @@ export function AddUnitDialog({ open, onOpenChange }: { open: boolean; onOpenCha
         contact_email: "",
         contact_phone: "",
         next_maintenance: null,
+        eid: "",
+        iccid: "",
       });
     } catch (error) {
       console.error("Error adding unit:", error);

@@ -1,3 +1,4 @@
+
 import { FormInput } from "@/components/shared/FormInput";
 import { FormDatePicker } from "@/components/shared/FormDatePicker";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -12,6 +13,8 @@ interface UnitFormFieldsProps {
     contact_email: string;
     contact_phone: string;
     next_maintenance: Date | null;
+    eid: string;
+    iccid: string;
   };
   setFormData: (data: any) => void;
 }
@@ -59,6 +62,18 @@ export function UnitFormFields({ formData, setFormData }: UnitFormFieldsProps) {
         value={formData.contact_phone}
         onChange={(value) => setFormData({ ...formData, contact_phone: value })}
         placeholder="Enter phone number"
+      />
+      <FormInput
+        label="EID"
+        value={formData.eid}
+        onChange={(value) => setFormData({ ...formData, eid: value })}
+        placeholder="e.g. 89001054010100176627012218592217"
+      />
+      <FormInput
+        label="ICCID"
+        value={formData.iccid}
+        onChange={(value) => setFormData({ ...formData, iccid: value })}
+        placeholder="e.g. 8944502701221859223"
       />
       <div className="space-y-2">
         <label className="text-sm text-gray-400">Status</label>
