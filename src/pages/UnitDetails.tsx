@@ -8,6 +8,7 @@ import { format } from "date-fns";
 import { doc, getDoc } from "firebase/firestore";
 import { db } from "@/integrations/firebase/client";
 import { UnitData } from "@/types/analytics";
+import { UnitMeasurements } from "@/components/units/UnitMeasurements";
 
 export const UnitDetails = () => {
   const { id } = useParams();
@@ -46,7 +47,7 @@ export const UnitDetails = () => {
   };
 
   return (
-    <div className="container mx-auto p-6 max-w-4xl animate-fadeIn">
+    <div className="container mx-auto p-6 max-w-4xl animate-fadeIn space-y-6">
       <Card className="bg-spotify-darker border-spotify-accent p-6">
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-2xl font-bold text-white">Water Unit Details</h1>
@@ -162,6 +163,8 @@ export const UnitDetails = () => {
           )}
         </div>
       </Card>
+
+      {id && <UnitMeasurements unitId={id} />}
     </div>
   );
 };

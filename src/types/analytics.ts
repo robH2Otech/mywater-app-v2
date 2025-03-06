@@ -51,3 +51,11 @@ export interface ReportData {
   created_at: string;
   [key: string]: any;
 }
+
+export interface MeasurementData {
+  id: string;
+  timestamp: string;
+  volume: number;
+  temperature: number;
+  cumulative_volume: number;
+}
