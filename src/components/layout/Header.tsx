@@ -1,9 +1,7 @@
-
-import { Bell } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { useEffect, useState } from "react";
 import { UserAvatar } from "./UserAvatar";
 import { WelcomeMessage } from "./WelcomeMessage";
+import { NotificationsMenu } from "./NotificationsMenu";
 import { collection, query, where, getDocs } from "firebase/firestore";
 import { onAuthStateChanged } from "firebase/auth";
 import { db, auth } from "@/integrations/firebase/client";
@@ -55,9 +53,7 @@ export const Header = () => {
     <header className="h-16 bg-spotify-darker border-b border-white/10 flex items-center justify-between px-6">
       <WelcomeMessage firstName={firstName} />
       <div className="flex items-center gap-4">
-        <Button variant="ghost" size="icon" className="text-gray-400 hover:text-white">
-          <Bell className="h-5 w-5" />
-        </Button>
+        <NotificationsMenu />
         <UserAvatar firstName={firstName} lastName={lastName} />
       </div>
     </header>
