@@ -1,5 +1,5 @@
 
-import { collection, doc, addDoc, getDocs, query, orderBy, limit, getDoc, updateDoc, setDoc } from "firebase/firestore";
+import { collection, doc, addDoc, getDocs, query, orderBy, limit, getDoc, updateDoc } from "firebase/firestore";
 import { db } from "@/integrations/firebase/client";
 import { formatInTimeZone } from 'date-fns-tz';
 
@@ -37,21 +37,11 @@ export const addMeasurement = async (unitId: string, volume: number, temperature
       cumulative_volume: currentTotalVolume + volume
     };
     
-    let measurementId;
-    
-    // For MYWATER_* units, use a specific document ID
-    if (unitId.startsWith("MYWATER_")) {
-      const specificDocRef = doc(db, `units/${unitId}/measurements`, "zRQ8NhGTAb5MD7Qw4DwA");
-      await setDoc(specificDocRef, measurementData);
-      measurementId = "zRQ8NhGTAb5MD7Qw4DwA";
-      console.log(`Measurement updated for ${unitId} at fixed document ID`);
-    } else {
-      // For other units, add as a new document
-      const measurementsCollectionRef = collection(db, `units/${unitId}/measurements`);
-      const newMeasurementRef = await addDoc(measurementsCollectionRef, measurementData);
-      measurementId = newMeasurementRef.id;
-      console.log(`Measurement added with ID: ${measurementId}`);
-    }
+    // Add as a new document with a random ID for all units
+    const measurementsCollectionRef = collection(db, `units/${unitId}/measurements`);
+    const newMeasurementRef = await addDoc(measurementsCollectionRef, measurementData);
+    const measurementId = newMeasurementRef.id;
+    console.log(`Measurement added with ID: ${measurementId}`);
     
     // Update the unit's total_volume with the new cumulative value
     await updateDoc(unitDocRef, {
@@ -71,21 +61,6 @@ export const addMeasurement = async (unitId: string, volume: number, temperature
  */
 export const getLatestMeasurements = async (unitId: string, count: number = 10) => {
   try {
-    // Special handling for MYWATER_* units
-    if (unitId.startsWith("MYWATER_")) {
-      const specificDocRef = doc(db, `units/${unitId}/measurements`, "zRQ8NhGTAb5MD7Qw4DwA");
-      const docSnapshot = await getDoc(specificDocRef);
-      
-      if (docSnapshot.exists()) {
-        return [{
-          id: docSnapshot.id,
-          ...docSnapshot.data()
-        }] as (Measurement & { id: string })[];
-      }
-      return [];
-    }
-    
-    // Standard handling for other units
     const measurementsCollectionRef = collection(db, `units/${unitId}/measurements`);
     const q = query(
       measurementsCollectionRef,
@@ -109,35 +84,6 @@ export const getLatestMeasurements = async (unitId: string, count: number = 10) 
  */
 export const initializeSampleMeasurements = async (unitId: string) => {
   try {
-    // Special handling for MYWATER_* units
-    if (unitId.startsWith("MYWATER_")) {
-      const now = new Date();
-      const timestamp = formatInTimeZone(now, 'Europe/Paris', "yyyy-MM-dd'T'HH:mm:ssXXX");
-      
-      // Create a single sample measurement
-      const measurementData: Measurement = {
-        timestamp,
-        volume: 100,
-        temperature: 22.5,
-        cumulative_volume: 100
-      };
-      
-      // Set the document with the specific ID
-      const specificDocRef = doc(db, `units/${unitId}/measurements`, "zRQ8NhGTAb5MD7Qw4DwA");
-      await setDoc(specificDocRef, measurementData);
-      
-      // Update the unit's total volume
-      const unitDocRef = doc(db, "units", unitId);
-      await updateDoc(unitDocRef, {
-        total_volume: measurementData.cumulative_volume,
-        updated_at: timestamp
-      });
-      
-      console.log(`Sample measurement added for unit ${unitId}`);
-      return;
-    }
-    
-    // Regular handling for other units
     // Get unit's current total volume as starting point
     const unitDocRef = doc(db, "units", unitId);
     const unitDoc = await getDoc(unitDocRef);
@@ -175,7 +121,7 @@ export const initializeSampleMeasurements = async (unitId: string) => {
         cumulative_volume: cumulativeVolume
       };
       
-      // Add to subcollection
+      // Add to subcollection with random document ID
       const measurementsCollectionRef = collection(db, `units/${unitId}/measurements`);
       await addDoc(measurementsCollectionRef, measurementData);
     }

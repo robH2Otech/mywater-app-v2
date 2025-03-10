@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from "react";
-import { collection, doc, onSnapshot, query, orderBy, limit } from "firebase/firestore";
+import { collection, onSnapshot, query, orderBy, limit } from "firebase/firestore";
 import { db } from "@/integrations/firebase/client";
 import { Measurement } from "@/utils/measurementUtils";
 
@@ -22,59 +22,31 @@ export function useRealtimeMeasurements(unitId: string, count: number = 10) {
     let unsubscribe: () => void;
 
     try {
-      // Check if this is a MYWATER_ unit with fixed document ID
-      if (unitId.startsWith("MYWATER_")) {
-        // For MYWATER units, listen to the specific document
-        const specificDocRef = doc(db, `units/${unitId}/measurements`, "zRQ8NhGTAb5MD7Qw4DwA");
-        
-        unsubscribe = onSnapshot(
-          specificDocRef,
-          (docSnapshot) => {
-            if (docSnapshot.exists()) {
-              const data = {
-                id: docSnapshot.id,
-                ...docSnapshot.data()
-              } as (Measurement & { id: string });
-              
-              setMeasurements([data]);
-            } else {
-              setMeasurements([]);
-            }
-            setIsLoading(false);
-          },
-          (err) => {
-            console.error("Error listening to measurement:", err);
-            setError(err as Error);
-            setIsLoading(false);
-          }
-        );
-      } else {
-        // For other units, query the collection with ordering and limiting
-        const measurementsCollectionRef = collection(db, `units/${unitId}/measurements`);
-        const q = query(
-          measurementsCollectionRef,
-          orderBy("timestamp", "desc"),
-          limit(count)
-        );
-        
-        unsubscribe = onSnapshot(
-          q,
-          (querySnapshot) => {
-            const measurementsData = querySnapshot.docs.map(doc => ({
-              id: doc.id,
-              ...doc.data()
-            })) as (Measurement & { id: string })[];
-            
-            setMeasurements(measurementsData);
-            setIsLoading(false);
-          },
-          (err) => {
-            console.error("Error listening to measurements:", err);
-            setError(err as Error);
-            setIsLoading(false);
-          }
-        );
-      }
+      // For all units, query the collection with ordering and limiting
+      const measurementsCollectionRef = collection(db, `units/${unitId}/measurements`);
+      const q = query(
+        measurementsCollectionRef,
+        orderBy("timestamp", "desc"),
+        limit(count)
+      );
+      
+      unsubscribe = onSnapshot(
+        q,
+        (querySnapshot) => {
+          const measurementsData = querySnapshot.docs.map(doc => ({
+            id: doc.id,
+            ...doc.data()
+          })) as (Measurement & { id: string })[];
+          
+          setMeasurements(measurementsData);
+          setIsLoading(false);
+        },
+        (err) => {
+          console.error("Error listening to measurements:", err);
+          setError(err as Error);
+          setIsLoading(false);
+        }
+      );
     } catch (err) {
       console.error("Failed to set up measurements listener:", err);
       setError(err as Error);
