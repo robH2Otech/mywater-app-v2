@@ -1,5 +1,5 @@
 
-import { collection, doc, addDoc, getDocs, query, orderBy, limit, getDoc, updateDoc } from "firebase/firestore";
+import { collection, doc, addDoc, getDocs, query, orderBy, limit, getDoc, updateDoc, setDoc } from "firebase/firestore";
 import { db } from "@/integrations/firebase/client";
 import { formatInTimeZone } from 'date-fns-tz';
 
@@ -37,9 +37,21 @@ export const addMeasurement = async (unitId: string, volume: number, temperature
       cumulative_volume: currentTotalVolume + volume
     };
     
-    // Add the measurement to the subcollection
-    const measurementsCollectionRef = collection(db, `units/${unitId}/measurements`);
-    const newMeasurementRef = await addDoc(measurementsCollectionRef, measurementData);
+    let measurementId;
+    
+    // For MYWATER_001, use a specific document ID
+    if (unitId === "MYWATER_001") {
+      const specificDocRef = doc(db, `units/${unitId}/measurements`, "zRQ8NhGTAb5MD7Qw4DwA");
+      await setDoc(specificDocRef, measurementData);
+      measurementId = "zRQ8NhGTAb5MD7Qw4DwA";
+      console.log(`Measurement updated for ${unitId} at fixed document ID`);
+    } else {
+      // For other units, add as a new document
+      const measurementsCollectionRef = collection(db, `units/${unitId}/measurements`);
+      const newMeasurementRef = await addDoc(measurementsCollectionRef, measurementData);
+      measurementId = newMeasurementRef.id;
+      console.log(`Measurement added with ID: ${measurementId}`);
+    }
     
     // Update the unit's total_volume with the new cumulative value
     await updateDoc(unitDocRef, {
@@ -47,8 +59,7 @@ export const addMeasurement = async (unitId: string, volume: number, temperature
       updated_at: timestamp
     });
     
-    console.log(`Measurement added with ID: ${newMeasurementRef.id}`);
-    return newMeasurementRef.id;
+    return measurementId;
   } catch (error) {
     console.error("Error adding measurement:", error);
     throw error;
@@ -60,6 +71,21 @@ export const addMeasurement = async (unitId: string, volume: number, temperature
  */
 export const getLatestMeasurements = async (unitId: string, count: number = 10) => {
   try {
+    // Special handling for MYWATER_001
+    if (unitId === "MYWATER_001") {
+      const specificDocRef = doc(db, `units/${unitId}/measurements`, "zRQ8NhGTAb5MD7Qw4DwA");
+      const docSnapshot = await getDoc(specificDocRef);
+      
+      if (docSnapshot.exists()) {
+        return [{
+          id: docSnapshot.id,
+          ...docSnapshot.data()
+        }] as (Measurement & { id: string })[];
+      }
+      return [];
+    }
+    
+    // Standard handling for other units
     const measurementsCollectionRef = collection(db, `units/${unitId}/measurements`);
     const q = query(
       measurementsCollectionRef,
@@ -83,6 +109,35 @@ export const getLatestMeasurements = async (unitId: string, count: number = 10) 
  */
 export const initializeSampleMeasurements = async (unitId: string) => {
   try {
+    // Special handling for MYWATER_001
+    if (unitId === "MYWATER_001") {
+      const now = new Date();
+      const timestamp = formatInTimeZone(now, 'Europe/Paris', "yyyy-MM-dd'T'HH:mm:ssXXX");
+      
+      // Create a single sample measurement
+      const measurementData: Measurement = {
+        timestamp,
+        volume: 100,
+        temperature: 22.5,
+        cumulative_volume: 100
+      };
+      
+      // Set the document with the specific ID
+      const specificDocRef = doc(db, `units/${unitId}/measurements`, "zRQ8NhGTAb5MD7Qw4DwA");
+      await setDoc(specificDocRef, measurementData);
+      
+      // Update the unit's total volume
+      const unitDocRef = doc(db, "units", unitId);
+      await updateDoc(unitDocRef, {
+        total_volume: measurementData.cumulative_volume,
+        updated_at: timestamp
+      });
+      
+      console.log(`Sample measurement added for unit ${unitId}`);
+      return;
+    }
+    
+    // Regular handling for other units
     // Get unit's current total volume as starting point
     const unitDocRef = doc(db, "units", unitId);
     const unitDoc = await getDoc(unitDocRef);
