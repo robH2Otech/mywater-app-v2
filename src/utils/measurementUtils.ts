@@ -11,20 +11,6 @@ export interface Measurement {
 }
 
 /**
- * Check if a unit ID follows the MYWATER_XXX pattern
- */
-const isMyWaterUnit = (unitId: string): boolean => {
-  return /^MYWATER_\d+$/.test(unitId);
-};
-
-/**
- * Get the document ID for measurements based on unit type
- */
-const getMeasurementDocId = (unitId: string): string => {
-  return "zRQ8NhGTAb5MD7Qw4DwA";
-};
-
-/**
  * Add a new measurement to a water unit
  */
 export const addMeasurement = async (unitId: string, volume: number, temperature: number) => {
@@ -53,13 +39,12 @@ export const addMeasurement = async (unitId: string, volume: number, temperature
     
     let measurementId;
     
-    // For MYWATER_XXX units, use a specific document ID
-    if (isMyWaterUnit(unitId)) {
-      const docId = getMeasurementDocId(unitId);
-      const specificDocRef = doc(db, `units/${unitId}/measurements`, docId);
+    // For MYWATER_001, use a specific document ID
+    if (unitId === "MYWATER_001") {
+      const specificDocRef = doc(db, `units/${unitId}/measurements`, "zRQ8NhGTAb5MD7Qw4DwA");
       await setDoc(specificDocRef, measurementData);
-      measurementId = docId;
-      console.log(`Measurement updated for ${unitId} at fixed document ID: ${docId}`);
+      measurementId = "zRQ8NhGTAb5MD7Qw4DwA";
+      console.log(`Measurement updated for ${unitId} at fixed document ID`);
     } else {
       // For other units, add as a new document
       const measurementsCollectionRef = collection(db, `units/${unitId}/measurements`);
@@ -86,10 +71,9 @@ export const addMeasurement = async (unitId: string, volume: number, temperature
  */
 export const getLatestMeasurements = async (unitId: string, count: number = 10) => {
   try {
-    // Special handling for MYWATER_XXX units
-    if (isMyWaterUnit(unitId)) {
-      const docId = getMeasurementDocId(unitId);
-      const specificDocRef = doc(db, `units/${unitId}/measurements`, docId);
+    // Special handling for MYWATER_001
+    if (unitId === "MYWATER_001") {
+      const specificDocRef = doc(db, `units/${unitId}/measurements`, "zRQ8NhGTAb5MD7Qw4DwA");
       const docSnapshot = await getDoc(specificDocRef);
       
       if (docSnapshot.exists()) {
@@ -125,8 +109,8 @@ export const getLatestMeasurements = async (unitId: string, count: number = 10) 
  */
 export const initializeSampleMeasurements = async (unitId: string) => {
   try {
-    // Special handling for MYWATER_XXX units
-    if (isMyWaterUnit(unitId)) {
+    // Special handling for MYWATER_001
+    if (unitId === "MYWATER_001") {
       const now = new Date();
       const timestamp = formatInTimeZone(now, 'Europe/Paris', "yyyy-MM-dd'T'HH:mm:ssXXX");
       
@@ -139,8 +123,7 @@ export const initializeSampleMeasurements = async (unitId: string) => {
       };
       
       // Set the document with the specific ID
-      const docId = getMeasurementDocId(unitId);
-      const specificDocRef = doc(db, `units/${unitId}/measurements`, docId);
+      const specificDocRef = doc(db, `units/${unitId}/measurements`, "zRQ8NhGTAb5MD7Qw4DwA");
       await setDoc(specificDocRef, measurementData);
       
       // Update the unit's total volume
