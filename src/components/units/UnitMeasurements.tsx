@@ -1,44 +1,28 @@
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { getLatestMeasurements, initializeSampleMeasurements, Measurement } from "@/utils/measurementUtils";
+import { initializeSampleMeasurements } from "@/utils/measurementUtils";
+import { useRealtimeMeasurements } from "@/hooks/useRealtimeMeasurements";
 import { format } from "date-fns";
+import { toast } from "sonner";
 
 interface UnitMeasurementsProps {
   unitId: string;
 }
 
 export function UnitMeasurements({ unitId }: UnitMeasurementsProps) {
-  const [measurements, setMeasurements] = useState<(Measurement & { id: string })[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
   const [isGenerating, setIsGenerating] = useState(false);
-
-  const fetchMeasurements = async () => {
-    setIsLoading(true);
-    try {
-      const data = await getLatestMeasurements(unitId);
-      setMeasurements(data);
-    } catch (error) {
-      console.error("Failed to fetch measurements:", error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    if (unitId) {
-      fetchMeasurements();
-    }
-  }, [unitId]);
+  const { measurements, isLoading, error } = useRealtimeMeasurements(unitId);
 
   const handleGenerateSample = async () => {
     setIsGenerating(true);
     try {
       await initializeSampleMeasurements(unitId);
-      await fetchMeasurements();
+      toast.success("Sample data generated successfully");
     } catch (error) {
       console.error("Failed to generate sample data:", error);
+      toast.error("Failed to generate sample data");
     } finally {
       setIsGenerating(false);
     }
@@ -48,21 +32,46 @@ export function UnitMeasurements({ unitId }: UnitMeasurementsProps) {
     return format(new Date(isoString), "MMM d, yyyy HH:mm");
   };
 
+  // Show error message if there's an error
+  if (error) {
+    return (
+      <Card className="bg-spotify-darker border-spotify-accent p-6">
+        <div className="flex justify-between items-center mb-4">
+          <h2 className="text-xl font-semibold text-white">Water Measurements</h2>
+          <Button 
+            onClick={handleGenerateSample}
+            disabled={isGenerating}
+            variant="outline"
+            className="bg-spotify-accent hover:bg-spotify-accent-hover text-white border-none"
+          >
+            {isGenerating ? "Generating..." : "Generate Sample Data"}
+          </Button>
+        </div>
+        <div className="h-60 flex items-center justify-center">
+          <p className="text-red-400">Error loading measurements: {error.message}</p>
+        </div>
+      </Card>
+    );
+  }
+
   return (
     <Card className="bg-spotify-darker border-spotify-accent p-6">
       <div className="flex justify-between items-center mb-4">
         <h2 className="text-xl font-semibold text-white">Water Measurements</h2>
-        <Button 
-          onClick={handleGenerateSample}
-          disabled={isGenerating}
-          variant="outline"
-          className="bg-spotify-accent hover:bg-spotify-accent-hover text-white border-none"
-        >
-          {isGenerating ? "Generating..." : "Generate Sample Data"}
-        </Button>
+        <div className="flex gap-2 items-center">
+          {isLoading && <span className="text-gray-400 text-sm">Syncing...</span>}
+          <Button 
+            onClick={handleGenerateSample}
+            disabled={isGenerating}
+            variant="outline"
+            className="bg-spotify-accent hover:bg-spotify-accent-hover text-white border-none"
+          >
+            {isGenerating ? "Generating..." : "Generate Sample Data"}
+          </Button>
+        </div>
       </div>
 
-      {isLoading ? (
+      {isLoading && measurements.length === 0 ? (
         <div className="h-60 flex items-center justify-center">
           <p className="text-gray-400">Loading measurements...</p>
         </div>

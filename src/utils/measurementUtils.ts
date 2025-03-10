@@ -39,8 +39,8 @@ export const addMeasurement = async (unitId: string, volume: number, temperature
     
     let measurementId;
     
-    // For MYWATER_001, use a specific document ID
-    if (unitId === "MYWATER_001") {
+    // For MYWATER_* units, use a specific document ID
+    if (unitId.startsWith("MYWATER_")) {
       const specificDocRef = doc(db, `units/${unitId}/measurements`, "zRQ8NhGTAb5MD7Qw4DwA");
       await setDoc(specificDocRef, measurementData);
       measurementId = "zRQ8NhGTAb5MD7Qw4DwA";
@@ -71,8 +71,8 @@ export const addMeasurement = async (unitId: string, volume: number, temperature
  */
 export const getLatestMeasurements = async (unitId: string, count: number = 10) => {
   try {
-    // Special handling for MYWATER_001
-    if (unitId === "MYWATER_001") {
+    // Special handling for MYWATER_* units
+    if (unitId.startsWith("MYWATER_")) {
       const specificDocRef = doc(db, `units/${unitId}/measurements`, "zRQ8NhGTAb5MD7Qw4DwA");
       const docSnapshot = await getDoc(specificDocRef);
       
@@ -109,8 +109,8 @@ export const getLatestMeasurements = async (unitId: string, count: number = 10) 
  */
 export const initializeSampleMeasurements = async (unitId: string) => {
   try {
-    // Special handling for MYWATER_001
-    if (unitId === "MYWATER_001") {
+    // Special handling for MYWATER_* units
+    if (unitId.startsWith("MYWATER_")) {
       const now = new Date();
       const timestamp = formatInTimeZone(now, 'Europe/Paris', "yyyy-MM-dd'T'HH:mm:ssXXX");
       
