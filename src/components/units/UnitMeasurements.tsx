@@ -2,7 +2,7 @@
 import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { initializeSampleMeasurements } from "@/utils/measurementUtils";
+import { initializeSampleMeasurements, parseTimestamp } from "@/utils/measurementUtils";
 import { useRealtimeMeasurements } from "@/hooks/useRealtimeMeasurements";
 import { format } from "date-fns";
 import { toast } from "sonner";
@@ -29,16 +29,14 @@ export function UnitMeasurements({ unitId }: UnitMeasurementsProps) {
     }
   };
 
-  const formatDateTime = (isoString: string) => {
+  const formatDateTime = (timestamp: any) => {
     try {
-      // Check if the timestamp is a valid date
-      const date = new Date(isoString);
-      if (isNaN(date.getTime())) {
-        return "Invalid date";
-      }
-      return format(date, "MMM d, yyyy HH:mm");
+      const parsedDate = parseTimestamp(timestamp);
+      if (!parsedDate) return "Invalid date";
+      
+      return format(parsedDate, "MMM d, yyyy HH:mm");
     } catch (error) {
-      console.error("Error formatting date:", error, isoString);
+      console.error("Error formatting date:", error, timestamp);
       return "Invalid date";
     }
   };
