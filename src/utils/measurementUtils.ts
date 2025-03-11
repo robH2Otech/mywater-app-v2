@@ -8,12 +8,13 @@ export interface Measurement {
   volume: number;
   temperature: number;
   cumulative_volume: number;
+  uvc_hours?: number; // Add support for UVC hours tracking
 }
 
 /**
  * Add a new measurement to a water unit
  */
-export const addMeasurement = async (unitId: string, volume: number, temperature: number) => {
+export const addMeasurement = async (unitId: string, volume: number, temperature: number, uvcHours?: number) => {
   try {
     // Get the unit document to read the current total_volume
     const unitDocRef = doc(db, "units", unitId);
@@ -34,7 +35,8 @@ export const addMeasurement = async (unitId: string, volume: number, temperature
       timestamp,
       volume,
       temperature,
-      cumulative_volume: currentTotalVolume + volume
+      cumulative_volume: currentTotalVolume + volume,
+      ...(uvcHours !== undefined && { uvc_hours: uvcHours })
     };
     
     // Determine the collection path based on unit ID
@@ -109,6 +111,8 @@ export const initializeSampleMeasurements = async (unitId: string) => {
     
     // Create sample measurements for the past 24 hours (1 per hour)
     const now = new Date();
+    let cumulativeUvcHours = 0;
+    
     for (let i = 24; i >= 1; i--) {
       // Create timestamp for this measurement (i hours ago)
       const timestamp = new Date(now.getTime() - (i * 60 * 60 * 1000));
@@ -125,12 +129,18 @@ export const initializeSampleMeasurements = async (unitId: string) => {
       // Accumulate the volume
       cumulativeVolume += hourlyVolume;
       
+      // Add 1 hour to UVC hours (assuming it's always on)
+      // With some randomness to simulate occasional maintenance or downtime
+      const uvcActiveTime = Math.random() > 0.1 ? 1 : 0.5; // 90% chance of full hour, 10% chance of half hour
+      cumulativeUvcHours += uvcActiveTime;
+      
       // Create the measurement
       const measurementData: Measurement = {
         timestamp: formattedTimestamp,
         volume: hourlyVolume,
         temperature: parseFloat(temperature),
-        cumulative_volume: cumulativeVolume
+        cumulative_volume: cumulativeVolume,
+        uvc_hours: parseFloat(cumulativeUvcHours.toFixed(1))
       };
       
       // Add to subcollection with random document ID

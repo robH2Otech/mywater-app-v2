@@ -87,6 +87,7 @@ export function UnitMeasurements({ unitId }: UnitMeasurementsProps) {
                 <th className="text-left py-2 px-4 text-gray-400">Timestamp</th>
                 <th className="text-right py-2 px-4 text-gray-400">Volume (m³)</th>
                 <th className="text-right py-2 px-4 text-gray-400">Temperature (°C)</th>
+                <th className="text-right py-2 px-4 text-gray-400">UVC Hours</th>
                 <th className="text-right py-2 px-4 text-gray-400">Cumulative Volume (m³)</th>
               </tr>
             </thead>
@@ -96,6 +97,11 @@ export function UnitMeasurements({ unitId }: UnitMeasurementsProps) {
                   <td className="py-2 px-4 text-white">{formatDateTime(measurement.timestamp)}</td>
                   <td className="py-2 px-4 text-white text-right">{measurement.volume.toLocaleString()}</td>
                   <td className="py-2 px-4 text-white text-right">{measurement.temperature.toFixed(1)}</td>
+                  <td className="py-2 px-4 text-white text-right">
+                    {measurement.uvc_hours !== undefined 
+                      ? measurement.uvc_hours.toLocaleString(undefined, { maximumFractionDigits: 1 }) 
+                      : "N/A"}
+                  </td>
                   <td className="py-2 px-4 text-white text-right">{measurement.cumulative_volume.toLocaleString()}</td>
                 </tr>
               ))}

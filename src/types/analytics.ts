@@ -1,3 +1,4 @@
+
 import { DocumentData } from "firebase/firestore";
 
 export interface UnitData {
@@ -58,4 +59,5 @@ export interface MeasurementData {
   volume: number;
   temperature: number;
   cumulative_volume: number;
+  uvc_hours?: number;
 }
