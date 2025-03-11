@@ -37,11 +37,15 @@ export const addMeasurement = async (unitId: string, volume: number, temperature
       cumulative_volume: currentTotalVolume + volume
     };
     
-    // Add as a new document with a random ID for all units
-    const measurementsCollectionRef = collection(db, `units/${unitId}/measurements`);
+    // Determine the collection path based on unit ID
+    const isMyWaterUnit = unitId.startsWith('MYWATER_');
+    const collectionPath = isMyWaterUnit ? `units/${unitId}/data` : `units/${unitId}/measurements`;
+    
+    // Add as a new document with a random ID
+    const measurementsCollectionRef = collection(db, collectionPath);
     const newMeasurementRef = await addDoc(measurementsCollectionRef, measurementData);
     const measurementId = newMeasurementRef.id;
-    console.log(`Measurement added with ID: ${measurementId}`);
+    console.log(`Measurement added with ID: ${measurementId} to ${collectionPath}`);
     
     // Update the unit's total_volume with the new cumulative value
     await updateDoc(unitDocRef, {
@@ -61,7 +65,11 @@ export const addMeasurement = async (unitId: string, volume: number, temperature
  */
 export const getLatestMeasurements = async (unitId: string, count: number = 10) => {
   try {
-    const measurementsCollectionRef = collection(db, `units/${unitId}/measurements`);
+    // Determine the collection path based on unit ID
+    const isMyWaterUnit = unitId.startsWith('MYWATER_');
+    const collectionPath = isMyWaterUnit ? `units/${unitId}/data` : `units/${unitId}/measurements`;
+    
+    const measurementsCollectionRef = collection(db, collectionPath);
     const q = query(
       measurementsCollectionRef,
       orderBy("timestamp", "desc"),
@@ -95,6 +103,10 @@ export const initializeSampleMeasurements = async (unitId: string) => {
     const unitData = unitDoc.data();
     let cumulativeVolume = parseFloat(unitData.total_volume || "0");
     
+    // Determine the collection path based on unit ID
+    const isMyWaterUnit = unitId.startsWith('MYWATER_');
+    const collectionPath = isMyWaterUnit ? `units/${unitId}/data` : `units/${unitId}/measurements`;
+    
     // Create sample measurements for the past 24 hours (1 per hour)
     const now = new Date();
     for (let i = 24; i >= 1; i--) {
@@ -122,7 +134,7 @@ export const initializeSampleMeasurements = async (unitId: string) => {
       };
       
       // Add to subcollection with random document ID
-      const measurementsCollectionRef = collection(db, `units/${unitId}/measurements`);
+      const measurementsCollectionRef = collection(db, collectionPath);
       await addDoc(measurementsCollectionRef, measurementData);
     }
     
@@ -132,7 +144,7 @@ export const initializeSampleMeasurements = async (unitId: string) => {
       updated_at: formatInTimeZone(new Date(), 'Europe/Paris', "yyyy-MM-dd'T'HH:mm:ssXXX")
     });
     
-    console.log(`Sample measurements added for unit ${unitId}`);
+    console.log(`Sample measurements added for unit ${unitId} in ${collectionPath}`);
   } catch (error) {
     console.error("Error adding sample measurements:", error);
   }

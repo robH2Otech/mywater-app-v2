@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from "react";
-import { collection, onSnapshot, query, orderBy, limit } from "firebase/firestore";
+import { collection, onSnapshot, query, orderBy, limit, doc } from "firebase/firestore";
 import { db } from "@/integrations/firebase/client";
 import { Measurement } from "@/utils/measurementUtils";
 
@@ -22,8 +22,13 @@ export function useRealtimeMeasurements(unitId: string, count: number = 10) {
     let unsubscribe: () => void;
 
     try {
-      // For all units, query the collection with ordering and limiting
-      const measurementsCollectionRef = collection(db, `units/${unitId}/measurements`);
+      // Use data subcollection instead of measurements for MYWATER_ units
+      const isMyWaterUnit = unitId.startsWith('MYWATER_');
+      const collectionPath = isMyWaterUnit 
+        ? `units/${unitId}/data` 
+        : `units/${unitId}/measurements`;
+      
+      const measurementsCollectionRef = collection(db, collectionPath);
       const q = query(
         measurementsCollectionRef,
         orderBy("timestamp", "desc"),
@@ -42,13 +47,13 @@ export function useRealtimeMeasurements(unitId: string, count: number = 10) {
           setIsLoading(false);
         },
         (err) => {
-          console.error("Error listening to measurements:", err);
+          console.error(`Error listening to ${isMyWaterUnit ? 'data' : 'measurements'}:`, err);
           setError(err as Error);
           setIsLoading(false);
         }
       );
     } catch (err) {
-      console.error("Failed to set up measurements listener:", err);
+      console.error(`Failed to set up ${unitId.startsWith('MYWATER_') ? 'data' : 'measurements'} listener:`, err);
       setError(err as Error);
       setIsLoading(false);
     }
