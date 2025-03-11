@@ -29,7 +29,17 @@ export function UnitMeasurements({ unitId }: UnitMeasurementsProps) {
   };
 
   const formatDateTime = (isoString: string) => {
-    return format(new Date(isoString), "MMM d, yyyy HH:mm");
+    try {
+      // Check if the timestamp is a valid date
+      const date = new Date(isoString);
+      if (isNaN(date.getTime())) {
+        return "Invalid date";
+      }
+      return format(date, "MMM d, yyyy HH:mm");
+    } catch (error) {
+      console.error("Error formatting date:", error, isoString);
+      return "Invalid date";
+    }
   };
 
   // Show error message if there's an error
