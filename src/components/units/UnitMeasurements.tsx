@@ -6,6 +6,7 @@ import { initializeSampleMeasurements } from "@/utils/measurementUtils";
 import { useRealtimeMeasurements } from "@/hooks/useRealtimeMeasurements";
 import { format } from "date-fns";
 import { toast } from "sonner";
+import { MeasurementData } from "@/types/analytics";
 
 interface UnitMeasurementsProps {
   unitId: string;
@@ -40,6 +41,40 @@ export function UnitMeasurements({ unitId }: UnitMeasurementsProps) {
       console.error("Error formatting date:", error, isoString);
       return "Invalid date";
     }
+  };
+
+  const safeRenderMeasurements = (measurements: MeasurementData[]) => {
+    return measurements.map((measurement) => {
+      try {
+        // Safely access and format all fields with fallbacks
+        const timestamp = measurement.timestamp ? formatDateTime(measurement.timestamp) : "Invalid date";
+        const volume = typeof measurement.volume === 'number' ? measurement.volume.toLocaleString() : "N/A";
+        const temperature = typeof measurement.temperature === 'number' ? measurement.temperature.toFixed(1) : "N/A";
+        const uvcHours = measurement.uvc_hours !== undefined && typeof measurement.uvc_hours === 'number'
+          ? measurement.uvc_hours.toLocaleString(undefined, { maximumFractionDigits: 1 })
+          : "N/A";
+        const cumulativeVolume = typeof measurement.cumulative_volume === 'number'
+          ? measurement.cumulative_volume.toLocaleString()
+          : "N/A";
+
+        return (
+          <tr key={measurement.id} className="border-b border-spotify-accent hover:bg-spotify-accent/20">
+            <td className="py-2 px-4 text-white">{timestamp}</td>
+            <td className="py-2 px-4 text-white text-right">{volume}</td>
+            <td className="py-2 px-4 text-white text-right">{temperature}</td>
+            <td className="py-2 px-4 text-white text-right">{uvcHours}</td>
+            <td className="py-2 px-4 text-white text-right">{cumulativeVolume}</td>
+          </tr>
+        );
+      } catch (err) {
+        console.error("Error rendering measurement row:", err, measurement);
+        return (
+          <tr key={measurement.id || 'error-row'} className="border-b border-spotify-accent hover:bg-spotify-accent/20">
+            <td colSpan={5} className="py-2 px-4 text-red-400 text-center">Error displaying measurement data</td>
+          </tr>
+        );
+      }
+    });
   };
 
   // Show error message if there's an error
@@ -102,19 +137,7 @@ export function UnitMeasurements({ unitId }: UnitMeasurementsProps) {
               </tr>
             </thead>
             <tbody>
-              {measurements.map((measurement) => (
-                <tr key={measurement.id} className="border-b border-spotify-accent hover:bg-spotify-accent/20">
-                  <td className="py-2 px-4 text-white">{formatDateTime(measurement.timestamp)}</td>
-                  <td className="py-2 px-4 text-white text-right">{measurement.volume.toLocaleString()}</td>
-                  <td className="py-2 px-4 text-white text-right">{measurement.temperature.toFixed(1)}</td>
-                  <td className="py-2 px-4 text-white text-right">
-                    {measurement.uvc_hours !== undefined 
-                      ? measurement.uvc_hours.toLocaleString(undefined, { maximumFractionDigits: 1 }) 
-                      : "N/A"}
-                  </td>
-                  <td className="py-2 px-4 text-white text-right">{measurement.cumulative_volume.toLocaleString()}</td>
-                </tr>
-              ))}
+              {safeRenderMeasurements(measurements)}
             </tbody>
           </table>
         </div>

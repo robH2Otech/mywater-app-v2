@@ -27,9 +27,9 @@ export const addMeasurement = async (unitId: string, volume: number, temperature
     const unitData = unitDoc.data();
     const currentTotalVolume = parseFloat(unitData.total_volume || "0");
     
-    // Create the new measurement with UTC/GMT+1 timestamp
+    // Create the new measurement with ISO 8601 format for better compatibility
     const now = new Date();
-    const timestamp = formatInTimeZone(now, 'Europe/Paris', "yyyy-MM-dd'T'HH:mm:ssXXX");
+    const timestamp = now.toISOString(); // Use standard ISO format instead of formatInTimeZone
     
     const measurementData: Measurement = {
       timestamp,
@@ -117,14 +117,14 @@ export const initializeSampleMeasurements = async (unitId: string) => {
       // Create timestamp for this measurement (i hours ago)
       const timestamp = new Date(now.getTime() - (i * 60 * 60 * 1000));
       
-      // Format timestamp in UTC/GMT+1
-      const formattedTimestamp = formatInTimeZone(timestamp, 'Europe/Paris', "yyyy-MM-dd'T'HH:mm:ssXXX");
+      // Format timestamp in ISO format for better reliability
+      const formattedTimestamp = timestamp.toISOString();
       
       // Generate random volume between 80-120 m³ per hour
       const hourlyVolume = Math.floor(Math.random() * 40) + 80;
       
       // Generate random temperature between 18-25°C
-      const temperature = (Math.random() * 7 + 18).toFixed(1);
+      const temperature = parseFloat((Math.random() * 7 + 18).toFixed(1));
       
       // Accumulate the volume
       cumulativeVolume += hourlyVolume;
@@ -138,7 +138,7 @@ export const initializeSampleMeasurements = async (unitId: string) => {
       const measurementData: Measurement = {
         timestamp: formattedTimestamp,
         volume: hourlyVolume,
-        temperature: parseFloat(temperature),
+        temperature: temperature,
         cumulative_volume: cumulativeVolume,
         uvc_hours: parseFloat(cumulativeUvcHours.toFixed(1))
       };
@@ -151,11 +151,12 @@ export const initializeSampleMeasurements = async (unitId: string) => {
     // Update the unit's total volume to match the final cumulative value and timestamp
     await updateDoc(unitDocRef, {
       total_volume: cumulativeVolume,
-      updated_at: formatInTimeZone(new Date(), 'Europe/Paris', "yyyy-MM-dd'T'HH:mm:ssXXX")
+      updated_at: new Date().toISOString()
     });
     
     console.log(`Sample measurements added for unit ${unitId} in ${collectionPath}`);
   } catch (error) {
     console.error("Error adding sample measurements:", error);
+    throw error;
   }
 };
