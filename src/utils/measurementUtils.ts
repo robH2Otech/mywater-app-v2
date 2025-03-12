@@ -1,7 +1,6 @@
 
 import { collection, doc, addDoc, getDocs, query, orderBy, limit, getDoc, updateDoc } from "firebase/firestore";
 import { db } from "@/integrations/firebase/client";
-import { format, parseISO } from 'date-fns';
 import { formatInTimeZone } from 'date-fns-tz';
 
 export interface Measurement {
@@ -30,7 +29,7 @@ export const addMeasurement = async (unitId: string, volume: number, temperature
     
     // Create the new measurement with ISO 8601 format for better compatibility
     const now = new Date();
-    const timestamp = now.toISOString(); // Use standard ISO format
+    const timestamp = now.toISOString(); // Use standard ISO format instead of formatInTimeZone
     
     const measurementData: Measurement = {
       timestamp,
@@ -87,62 +86,6 @@ export const getLatestMeasurements = async (unitId: string, count: number = 10) 
   } catch (error) {
     console.error("Error getting latest measurements:", error);
     throw error;
-  }
-};
-
-/**
- * Parse timestamp in various formats
- * This function can handle both ISO strings and Firebase timestamp strings
- */
-export const parseTimestamp = (timestampValue: any): Date | null => {
-  if (!timestampValue) return null;
-  
-  try {
-    // If it's already a Date object
-    if (timestampValue instanceof Date) {
-      return timestampValue;
-    }
-    
-    // If it's an ISO string (e.g., "2023-01-01T12:00:00Z")
-    if (typeof timestampValue === 'string') {
-      // Try to parse as ISO first
-      if (timestampValue.includes('T') && (timestampValue.includes('Z') || timestampValue.includes('+'))) {
-        const date = parseISO(timestampValue);
-        if (!isNaN(date.getTime())) {
-          return date;
-        }
-      }
-      
-      // Try to parse Firebase format like "March 11, 2025 at 9:13:15PM UTC+1"
-      if (timestampValue.includes('at')) {
-        // Extract only the date part for simplicity
-        const date = new Date(timestampValue);
-        if (!isNaN(date.getTime())) {
-          return date;
-        }
-      }
-      
-      // Fallback: try direct Date parsing
-      const date = new Date(timestampValue);
-      if (!isNaN(date.getTime())) {
-        return date;
-      }
-    }
-    
-    // If it's a Firebase Timestamp object with seconds and nanoseconds
-    if (timestampValue.seconds !== undefined && timestampValue.nanoseconds !== undefined) {
-      return new Date(timestampValue.seconds * 1000 + timestampValue.nanoseconds / 1000000);
-    }
-    
-    // If it's a number (timestamp in milliseconds)
-    if (typeof timestampValue === 'number') {
-      return new Date(timestampValue);
-    }
-    
-    return null;
-  } catch (error) {
-    console.error("Error parsing timestamp:", error, timestampValue);
-    return null;
   }
 };
 
