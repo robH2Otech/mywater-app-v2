@@ -38,9 +38,7 @@ export function FormDatePicker({ value, onChange, label }: FormDatePickerProps) 
           <Calendar
             mode="single"
             selected={value || undefined}
-            onSelect={(date) => {
-              onChange(date || null);
-            }}
+            onSelect={onChange}
             className="bg-spotify-darker text-white rounded-md border-spotify-accent"
             disabled={(date) => date < new Date()}
             captionLayout="dropdown-buttons"
