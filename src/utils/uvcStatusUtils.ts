@@ -6,8 +6,11 @@
 // Maximum UVC bulb lifetime in hours
 export const MAX_UVC_HOURS = 15000;
 
-// Warning threshold (1 month before max, assuming 24h/day operation)
-const WARNING_THRESHOLD = MAX_UVC_HOURS - (30 * 24);
+// Warning threshold at 10,001 hours
+const WARNING_THRESHOLD = 10001;
+
+// Urgent threshold at 14,000 hours
+const URGENT_THRESHOLD = 14000;
 
 /**
  * Determines the status of a UVC system based on its operational hours
@@ -21,8 +24,8 @@ export const determineUVCStatus = (hours: number | string | null): 'active' | 'w
   
   if (isNaN(numericHours)) return 'active';
   
-  if (numericHours <= WARNING_THRESHOLD) return 'active';
-  if (numericHours < MAX_UVC_HOURS) return 'warning';
+  if (numericHours < WARNING_THRESHOLD) return 'active';
+  if (numericHours < URGENT_THRESHOLD) return 'warning';
   return 'urgent';
 };
 
@@ -39,9 +42,9 @@ export const createUVCAlertMessage = (unitName: string, hours: number | string |
   
   switch (status) {
     case 'urgent':
-      return `URGENT: ${unitName} UVC bulb has reached ${numericHours.toLocaleString()} operational hours (max: ${MAX_UVC_HOURS.toLocaleString()}). Immediate replacement required.`;
+      return `URGENT: ${unitName} UVC bulb has reached ${numericHours.toLocaleString()} operational hours (${hoursRemaining.toLocaleString()} hours before max). Replacement required soon.`;
     case 'warning':
-      return `WARNING: ${unitName} UVC bulb has ${hoursRemaining.toFixed(0)} hours remaining before replacement (current: ${numericHours.toLocaleString()} hours). Schedule maintenance soon.`;
+      return `WARNING: ${unitName} UVC bulb has ${hoursRemaining.toLocaleString()} hours remaining before replacement (current: ${numericHours.toLocaleString()} hours). Schedule maintenance within next service period.`;
     default:
       return '';
   }

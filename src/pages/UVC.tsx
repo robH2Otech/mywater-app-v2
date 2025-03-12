@@ -6,7 +6,7 @@ import { UVCDetailsDialog } from "@/components/uvc/UVCDetailsDialog";
 import { PageHeader } from "@/components/shared/PageHeader";
 import { LoadingSkeleton } from "@/components/shared/LoadingSkeleton";
 import { UVCList } from "@/components/uvc/UVCList";
-import { collection, getDocs, doc, updateDoc } from "firebase/firestore";
+import { collection, getDocs, doc, updateDoc, addDoc } from "firebase/firestore";
 import { db } from "@/integrations/firebase/client";
 import { UnitData } from "@/types/analytics";
 import { determineUVCStatus, createUVCAlertMessage } from "@/utils/uvcStatusUtils";
@@ -66,12 +66,16 @@ export const UVC = () => {
     if (!selectedUnit) return;
     
     try {
-      // Determine new status based on updated hours
-      const newStatus = determineUVCStatus(updatedData.uvc_hours);
+      // Convert hours to numeric value and determine new status
+      const numericHours = typeof updatedData.uvc_hours === 'string' ? 
+        parseFloat(updatedData.uvc_hours) : updatedData.uvc_hours;
+      
+      const newStatus = determineUVCStatus(numericHours);
+      const oldStatus = selectedUnit.uvc_status;
       
       // Prepare data for Firestore update
       const updateData: any = {
-        uvc_hours: updatedData.uvc_hours,
+        uvc_hours: numericHours,
         uvc_status: newStatus,
         updated_at: new Date().toISOString()
       };
@@ -85,12 +89,25 @@ export const UVC = () => {
       const unitDocRef = doc(db, "units", selectedUnit.id);
       await updateDoc(unitDocRef, updateData);
       
-      // Handle alert creation if needed (reuse the logic in UVCList)
-      // This will be handled by the effect in UVCList that monitors status changes
+      // Create alert if status changed to warning or urgent
+      if ((newStatus === 'warning' || newStatus === 'urgent') && newStatus !== oldStatus) {
+        const alertMessage = createUVCAlertMessage(selectedUnit.name || '', numericHours, newStatus);
+        
+        // Create new alert
+        const alertsCollection = collection(db, "alerts");
+        await addDoc(alertsCollection, {
+          unit_id: selectedUnit.id,
+          message: alertMessage,
+          status: newStatus,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        });
+      }
       
       // Invalidate queries to refresh data
       await queryClient.invalidateQueries({ queryKey: ["uvc-units"] });
       await queryClient.invalidateQueries({ queryKey: ["units"] });
+      await queryClient.invalidateQueries({ queryKey: ["alerts"] });
       
       toast({
         title: "UVC details updated",
