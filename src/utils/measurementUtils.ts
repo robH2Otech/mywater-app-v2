@@ -50,10 +50,20 @@ export const addMeasurement = async (unitId: string, volume: number, temperature
     console.log(`Measurement added with ID: ${measurementId} to ${collectionPath}`);
     
     // Update the unit's total_volume with the new cumulative value
-    await updateDoc(unitDocRef, {
+    // Also update the UVC hours if provided
+    const updateData: any = {
       total_volume: measurementData.cumulative_volume,
       updated_at: timestamp
-    });
+    };
+    
+    // Update UVC hours if provided
+    if (uvcHours !== undefined) {
+      // Get current UVC hours and add the new hours
+      const currentUVCHours = unitData.uvc_hours || 0;
+      updateData.uvc_hours = currentUVCHours + uvcHours;
+    }
+    
+    await updateDoc(unitDocRef, updateData);
     
     return measurementId;
   } catch (error) {
@@ -111,7 +121,7 @@ export const initializeSampleMeasurements = async (unitId: string) => {
     
     // Create sample measurements for the past 24 hours (1 per hour)
     const now = new Date();
-    let cumulativeUvcHours = 0;
+    let cumulativeUvcHours = unitData.uvc_hours || 0;
     
     for (let i = 24; i >= 1; i--) {
       // Create timestamp for this measurement (i hours ago)
@@ -148,9 +158,10 @@ export const initializeSampleMeasurements = async (unitId: string) => {
       await addDoc(measurementsCollectionRef, measurementData);
     }
     
-    // Update the unit's total volume to match the final cumulative value and timestamp
+    // Update the unit's total volume and UVC hours to match the final cumulative values
     await updateDoc(unitDocRef, {
       total_volume: cumulativeVolume,
+      uvc_hours: cumulativeUvcHours,
       updated_at: new Date().toISOString()
     });
     

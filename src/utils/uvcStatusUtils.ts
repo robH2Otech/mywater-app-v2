@@ -1,0 +1,60 @@
+
+/**
+ * Utility functions for determining UVC status based on operational hours
+ */
+
+// Maximum UVC bulb lifetime in hours
+export const MAX_UVC_HOURS = 15000;
+
+// Warning threshold (1 month before max, assuming 24h/day operation)
+const WARNING_THRESHOLD = MAX_UVC_HOURS - (30 * 24);
+
+/**
+ * Determines the status of a UVC system based on its operational hours
+ * @param hours The total operational hours of the UVC system
+ * @returns The status ('active', 'warning', or 'urgent')
+ */
+export const determineUVCStatus = (hours: number | string | null): 'active' | 'warning' | 'urgent' => {
+  if (!hours) return 'active';
+  
+  const numericHours = typeof hours === 'string' ? parseFloat(hours) : hours;
+  
+  if (numericHours <= WARNING_THRESHOLD) return 'active';
+  if (numericHours < MAX_UVC_HOURS) return 'warning';
+  return 'urgent';
+};
+
+/**
+ * Creates an alert message based on UVC status
+ * @param unitName The name of the water unit
+ * @param hours The total operational hours of the UVC system
+ * @param status The determined status
+ * @returns An appropriate alert message
+ */
+export const createUVCAlertMessage = (unitName: string, hours: number | string | null, status: string): string => {
+  const numericHours = typeof hours === 'string' ? parseFloat(hours) : (hours || 0);
+  const hoursRemaining = MAX_UVC_HOURS - numericHours;
+  
+  switch (status) {
+    case 'urgent':
+      return `URGENT: ${unitName} UVC bulb has reached ${numericHours} operational hours (max: ${MAX_UVC_HOURS}). Immediate replacement required.`;
+    case 'warning':
+      return `WARNING: ${unitName} UVC bulb has ${hoursRemaining.toFixed(0)} hours remaining before replacement (current: ${numericHours} hours). Schedule maintenance soon.`;
+    default:
+      return '';
+  }
+};
+
+/**
+ * Calculates the percentage of UVC bulb life used
+ * @param hours The total operational hours of the UVC system
+ * @returns The percentage of bulb life used (0-100)
+ */
+export const calculateUVCLifePercentage = (hours: number | string | null): number => {
+  if (!hours) return 0;
+  
+  const numericHours = typeof hours === 'string' ? parseFloat(hours) : hours;
+  const percentage = (numericHours / MAX_UVC_HOURS) * 100;
+  
+  return Math.min(Math.max(percentage, 0), 100);
+};

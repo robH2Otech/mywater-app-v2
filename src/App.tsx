@@ -1,3 +1,4 @@
+
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
@@ -10,6 +11,7 @@ import { NotFound } from "./pages/NotFound";
 import { Units } from "./pages/Units";
 import { UnitDetails } from "./pages/UnitDetails";
 import { Filters } from "./pages/Filters";
+import { UVC } from "./pages/UVC";
 import { Alerts } from "./pages/Alerts";
 import { Analytics } from "./pages/Analytics";
 import { Users } from "./pages/Users";
@@ -95,6 +97,16 @@ const App = () => (
               <ProtectedRoute>
                 <Layout>
                   <Filters />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/uvc"
+            element={
+              <ProtectedRoute>
+                <Layout>
+                  <UVC />
                 </Layout>
               </ProtectedRoute>
             }

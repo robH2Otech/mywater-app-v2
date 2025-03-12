@@ -1,11 +1,12 @@
 
-import { Home, Droplets, Filter, Bell, BarChart2, Users, Settings } from "lucide-react";
+import { Home, Droplets, Filter, Bell, BarChart2, Users, Settings, Lightbulb } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 
 const navigation = [
   { name: "Dashboard", icon: Home, path: "/" },
   { name: "Water Units", icon: Droplets, path: "/units" },
   { name: "Filters", icon: Filter, path: "/filters" },
+  { name: "UVC", icon: Lightbulb, path: "/uvc" },
   { name: "Alerts", icon: Bell, path: "/alerts" },
   { name: "Analytics", icon: BarChart2, path: "/analytics" },
   { name: "Users", icon: Users, path: "/users" },
@@ -46,4 +47,4 @@ export const Sidebar = () => {
       </nav>
     </div>
   );
-};
+}
