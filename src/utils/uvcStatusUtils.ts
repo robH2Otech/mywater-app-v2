@@ -7,10 +7,10 @@
 export const MAX_UVC_HOURS = 15000;
 
 // Warning threshold at 10,001 hours
-const WARNING_THRESHOLD = 10001;
+export const WARNING_THRESHOLD = 10001;
 
 // Urgent threshold at 14,000 hours
-const URGENT_THRESHOLD = 14000;
+export const URGENT_THRESHOLD = 14000;
 
 /**
  * Determines the status of a UVC system based on its operational hours
