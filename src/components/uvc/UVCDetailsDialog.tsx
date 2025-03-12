@@ -5,7 +5,7 @@ import { Lightbulb } from "lucide-react";
 import { FormInput } from "@/components/shared/FormInput";
 import { FormDatePicker } from "@/components/shared/FormDatePicker";
 import { useState, useEffect } from "react";
-import { MAX_UVC_HOURS } from "@/utils/uvcStatusUtils";
+import { MAX_UVC_HOURS, determineUVCStatus } from "@/utils/uvcStatusUtils";
 
 interface UVCDetailsDialogProps {
   unit: any;
@@ -32,6 +32,7 @@ export function UVCDetailsDialog({ unit, open, onOpenChange, onSave }: UVCDetail
         ...formData,
         uvc_hours: formData.uvc_hours ? parseFloat(formData.uvc_hours) : 0,
       });
+      onOpenChange(false);
     }
   };
 

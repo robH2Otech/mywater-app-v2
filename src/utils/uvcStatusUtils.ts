@@ -15,9 +15,11 @@ const WARNING_THRESHOLD = MAX_UVC_HOURS - (30 * 24);
  * @returns The status ('active', 'warning', or 'urgent')
  */
 export const determineUVCStatus = (hours: number | string | null): 'active' | 'warning' | 'urgent' => {
-  if (!hours) return 'active';
+  if (hours === null || hours === undefined) return 'active';
   
   const numericHours = typeof hours === 'string' ? parseFloat(hours) : hours;
+  
+  if (isNaN(numericHours)) return 'active';
   
   if (numericHours <= WARNING_THRESHOLD) return 'active';
   if (numericHours < MAX_UVC_HOURS) return 'warning';
@@ -37,9 +39,9 @@ export const createUVCAlertMessage = (unitName: string, hours: number | string |
   
   switch (status) {
     case 'urgent':
-      return `URGENT: ${unitName} UVC bulb has reached ${numericHours} operational hours (max: ${MAX_UVC_HOURS}). Immediate replacement required.`;
+      return `URGENT: ${unitName} UVC bulb has reached ${numericHours.toLocaleString()} operational hours (max: ${MAX_UVC_HOURS.toLocaleString()}). Immediate replacement required.`;
     case 'warning':
-      return `WARNING: ${unitName} UVC bulb has ${hoursRemaining.toFixed(0)} hours remaining before replacement (current: ${numericHours} hours). Schedule maintenance soon.`;
+      return `WARNING: ${unitName} UVC bulb has ${hoursRemaining.toFixed(0)} hours remaining before replacement (current: ${numericHours.toLocaleString()} hours). Schedule maintenance soon.`;
     default:
       return '';
   }
@@ -51,9 +53,12 @@ export const createUVCAlertMessage = (unitName: string, hours: number | string |
  * @returns The percentage of bulb life used (0-100)
  */
 export const calculateUVCLifePercentage = (hours: number | string | null): number => {
-  if (!hours) return 0;
+  if (hours === null || hours === undefined) return 0;
   
   const numericHours = typeof hours === 'string' ? parseFloat(hours) : hours;
+  
+  if (isNaN(numericHours)) return 0;
+  
   const percentage = (numericHours / MAX_UVC_HOURS) * 100;
   
   return Math.min(Math.max(percentage, 0), 100);
