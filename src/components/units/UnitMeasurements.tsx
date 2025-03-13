@@ -1,10 +1,8 @@
-
 import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { initializeSampleMeasurements } from "@/utils/measurementUtils";
 import { useRealtimeMeasurements } from "@/hooks/useRealtimeMeasurements";
-import { format } from "date-fns";
 import { toast } from "sonner";
 import { MeasurementData } from "@/types/analytics";
 
@@ -29,16 +27,34 @@ export function UnitMeasurements({ unitId }: UnitMeasurementsProps) {
     }
   };
 
-  const formatDateTime = (isoString: string) => {
+  const formatDateTime = (timestamp: string) => {
     try {
-      // Check if the timestamp is a valid date
-      const date = new Date(isoString);
+      // Check if the timestamp is in the format from the screenshot (human readable)
+      if (timestamp.includes("at")) {
+        return timestamp;
+      }
+      
+      // Otherwise, it's an ISO string that needs formatting
+      const date = new Date(timestamp);
       if (isNaN(date.getTime())) {
         return "Invalid date";
       }
-      return format(date, "MMM d, yyyy HH:mm");
+      
+      // Format to match "March 13, 2025 at 11:34:56 AM UTC+1" style from the screenshot
+      const options: Intl.DateTimeFormatOptions = {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+        hour: 'numeric',
+        minute: '2-digit',
+        second: '2-digit',
+        hour12: true,
+        timeZoneName: 'short'
+      };
+      
+      return date.toLocaleString('en-US', options);
     } catch (error) {
-      console.error("Error formatting date:", error, isoString);
+      console.error("Error formatting date:", error, timestamp);
       return "Invalid date";
     }
   };
@@ -82,7 +98,7 @@ export function UnitMeasurements({ unitId }: UnitMeasurementsProps) {
     return (
       <Card className="bg-spotify-darker border-spotify-accent p-6">
         <div className="flex justify-between items-center mb-4">
-          <h2 className="text-xl font-semibold text-white">Water Measurements</h2>
+          <h2 className="text-xl font-semibold text-white">Last 24 hours Water Data</h2>
           <Button 
             onClick={handleGenerateSample}
             disabled={isGenerating}
@@ -102,7 +118,7 @@ export function UnitMeasurements({ unitId }: UnitMeasurementsProps) {
   return (
     <Card className="bg-spotify-darker border-spotify-accent p-6">
       <div className="flex justify-between items-center mb-4">
-        <h2 className="text-xl font-semibold text-white">Water Measurements</h2>
+        <h2 className="text-xl font-semibold text-white">Last 24 hours Water Data</h2>
         <div className="flex gap-2 items-center">
           {isLoading && <span className="text-gray-400 text-sm">Syncing...</span>}
           <Button 

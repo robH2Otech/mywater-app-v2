@@ -1,14 +1,13 @@
 
 import { collection, doc, addDoc, getDocs, query, orderBy, limit, getDoc, updateDoc } from "firebase/firestore";
 import { db } from "@/integrations/firebase/client";
-import { formatInTimeZone } from 'date-fns-tz';
 
 export interface Measurement {
   timestamp: string;
   volume: number;
   temperature: number;
   cumulative_volume: number;
-  uvc_hours?: number; // Add support for UVC hours tracking
+  uvc_hours?: number;
 }
 
 /**
@@ -27,9 +26,22 @@ export const addMeasurement = async (unitId: string, volume: number, temperature
     const unitData = unitDoc.data();
     const currentTotalVolume = parseFloat(unitData.total_volume || "0");
     
-    // Create the new measurement with ISO 8601 format for better compatibility
+    // Create the new measurement with human-readable format as shown in the screenshot
     const now = new Date();
-    const timestamp = now.toISOString(); // Use standard ISO format instead of formatInTimeZone
+    
+    // Format timestamp in the style "March 13, 2025 at 11:34:56 AM UTC+1"
+    const options: Intl.DateTimeFormatOptions = {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+      hour: 'numeric',
+      minute: '2-digit',
+      second: '2-digit',
+      hour12: true,
+      timeZoneName: 'short'
+    };
+    
+    const timestamp = now.toLocaleString('en-US', options);
     
     const measurementData: Measurement = {
       timestamp,
@@ -127,8 +139,19 @@ export const initializeSampleMeasurements = async (unitId: string) => {
       // Create timestamp for this measurement (i hours ago)
       const timestamp = new Date(now.getTime() - (i * 60 * 60 * 1000));
       
-      // Format timestamp in ISO format for better reliability
-      const formattedTimestamp = timestamp.toISOString();
+      // Format timestamp in the style "March 13, 2025 at 11:34:56 AM UTC+1"
+      const options: Intl.DateTimeFormatOptions = {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+        hour: 'numeric',
+        minute: '2-digit',
+        second: '2-digit',
+        hour12: true,
+        timeZoneName: 'short'
+      };
+      
+      const formattedTimestamp = timestamp.toLocaleString('en-US', options);
       
       // Generate random volume between 80-120 m³ per hour
       const hourlyVolume = Math.floor(Math.random() * 40) + 80;
@@ -162,7 +185,16 @@ export const initializeSampleMeasurements = async (unitId: string) => {
     await updateDoc(unitDocRef, {
       total_volume: cumulativeVolume,
       uvc_hours: cumulativeUvcHours,
-      updated_at: new Date().toISOString()
+      updated_at: new Date().toLocaleString('en-US', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+        hour: 'numeric',
+        minute: '2-digit',
+        second: '2-digit',
+        hour12: true,
+        timeZoneName: 'short'
+      })
     });
     
     console.log(`Sample measurements added for unit ${unitId} in ${collectionPath}`);
