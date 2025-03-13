@@ -13,6 +13,8 @@ interface UnitFormFieldsProps {
     contact_email: string;
     contact_phone: string;
     next_maintenance: Date | null;
+    setup_date: Date | null;
+    uvc_hours: string;
     eid: string;
     iccid: string;
   };
@@ -62,6 +64,18 @@ export function UnitFormFields({ formData, setFormData }: UnitFormFieldsProps) {
         value={formData.contact_phone}
         onChange={(value) => setFormData({ ...formData, contact_phone: value })}
         placeholder="Enter phone number"
+      />
+      <FormInput
+        label="UVC Hours"
+        type="number"
+        value={formData.uvc_hours}
+        onChange={(value) => setFormData({ ...formData, uvc_hours: value })}
+        placeholder="Enter UVC start hours"
+      />
+      <FormDatePicker
+        label="Setup Date"
+        value={formData.setup_date}
+        onChange={(date) => setFormData({ ...formData, setup_date: date })}
       />
       <FormInput
         label="EID"

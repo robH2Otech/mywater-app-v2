@@ -9,6 +9,10 @@ export interface UnitData {
   total_volume?: number | string;
   last_maintenance?: string;
   next_maintenance?: string;
+  setup_date?: string;
+  uvc_hours?: number;
+  uvc_status?: string;
+  uvc_installation_date?: string;
   contact_name?: string;
   contact_email?: string;
   contact_phone?: string;

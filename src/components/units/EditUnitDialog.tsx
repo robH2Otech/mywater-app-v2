@@ -8,6 +8,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { doc, updateDoc, collection, addDoc } from "firebase/firestore";
 import { db } from "@/integrations/firebase/client";
 import { determineUnitStatus, createAlertMessage } from "@/utils/unitStatusUtils";
+import { determineUVCStatus, createUVCAlertMessage } from "@/utils/uvcStatusUtils";
 
 interface EditUnitDialogProps {
   unit: {
@@ -20,6 +21,9 @@ interface EditUnitDialogProps {
     contact_email: string | null;
     contact_phone: string | null;
     next_maintenance: string | null;
+    setup_date?: string | null;
+    uvc_hours?: number | string | null;
+    uvc_status?: string | null;
     eid?: string | null;
     iccid?: string | null;
   };
@@ -40,6 +44,8 @@ export function EditUnitDialog({ unit, open, onOpenChange }: EditUnitDialogProps
     contact_email: unit.contact_email || "",
     contact_phone: unit.contact_phone || "",
     next_maintenance: unit.next_maintenance ? new Date(unit.next_maintenance) : null,
+    setup_date: unit.setup_date ? new Date(unit.setup_date) : null,
+    uvc_hours: unit.uvc_hours?.toString() || "",
     eid: unit.eid || "",
     iccid: unit.iccid || "",
   });
@@ -65,9 +71,16 @@ export function EditUnitDialog({ unit, open, onOpenChange }: EditUnitDialogProps
       // Determine the new status based on the updated volume
       const newStatus = determineUnitStatus(numericVolume);
       
-      // Update the unit document
-      const unitDocRef = doc(db, "units", unit.id);
-      await updateDoc(unitDocRef, {
+      // Parse UVC hours if provided
+      const uvcHours = formData.uvc_hours ? parseFloat(formData.uvc_hours) : null;
+      let uvcStatus = unit.uvc_status;
+      
+      if (uvcHours !== null) {
+        uvcStatus = determineUVCStatus(uvcHours);
+      }
+      
+      // Prepare update data
+      const updateData: any = {
         name: formData.name,
         location: formData.location || null,
         total_volume: numericVolume,
@@ -76,10 +89,25 @@ export function EditUnitDialog({ unit, open, onOpenChange }: EditUnitDialogProps
         contact_email: formData.contact_email || null,
         contact_phone: formData.contact_phone || null,
         next_maintenance: formData.next_maintenance?.toISOString() || null,
+        setup_date: formData.setup_date?.toISOString() || null,
+        updated_at: new Date().toISOString(),
         eid: formData.eid || null,
         iccid: formData.iccid || null,
-        updated_at: new Date().toISOString(),
-      });
+      };
+      
+      // Add UVC fields if hours are provided
+      if (uvcHours !== null) {
+        updateData.uvc_hours = uvcHours;
+        updateData.uvc_status = uvcStatus;
+        // Use setup_date as UVC installation date if no specific installation date exists
+        if (!unit.uvc_installation_date) {
+          updateData.uvc_installation_date = formData.setup_date?.toISOString() || null;
+        }
+      }
+      
+      // Update the unit document
+      const unitDocRef = doc(db, "units", unit.id);
+      await updateDoc(unitDocRef, updateData);
 
       // Check if the new status requires an alert
       if (newStatus === 'warning' || newStatus === 'urgent') {
@@ -98,8 +126,27 @@ export function EditUnitDialog({ unit, open, onOpenChange }: EditUnitDialogProps
           });
         }
       }
+      
+      // Check if UVC status requires an alert
+      if (uvcHours !== null && uvcStatus && (uvcStatus === 'warning' || uvcStatus === 'urgent')) {
+        // Only create alert if status changed or was already warning/urgent
+        if (unit.uvc_status !== uvcStatus || uvcStatus === 'urgent') {
+          const uvcAlertMessage = createUVCAlertMessage(formData.name, uvcHours, uvcStatus);
+          
+          // Add a new alert to the alerts collection
+          const alertsCollection = collection(db, "alerts");
+          await addDoc(alertsCollection, {
+            unit_id: unit.id,
+            message: uvcAlertMessage,
+            status: uvcStatus,
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+          });
+        }
+      }
 
       await queryClient.invalidateQueries({ queryKey: ["units"] });
+      await queryClient.invalidateQueries({ queryKey: ["uvc-units"] });
       await queryClient.invalidateQueries({ queryKey: ["alerts"] });
       
       toast({

@@ -8,6 +8,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { addDoc, collection, getDocs, setDoc, doc } from "firebase/firestore";
 import { db } from "@/integrations/firebase/client";
 import { determineUnitStatus, createAlertMessage } from "@/utils/unitStatusUtils";
+import { determineUVCStatus, createUVCAlertMessage } from "@/utils/uvcStatusUtils";
 
 export function AddUnitDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (open: boolean) => void }) {
   const { toast } = useToast();
@@ -23,6 +24,8 @@ export function AddUnitDialog({ open, onOpenChange }: { open: boolean; onOpenCha
     contact_email: "",
     contact_phone: "",
     next_maintenance: null as Date | null,
+    setup_date: null as Date | null,
+    uvc_hours: "",
     eid: "",
     iccid: "",
   });
@@ -89,6 +92,10 @@ export function AddUnitDialog({ open, onOpenChange }: { open: boolean; onOpenCha
       const formattedNumber = String(nextUnitNumber).padStart(3, '0');
       const customId = `MYWATER_${formattedNumber}`;
       
+      // Process UVC hours if provided
+      const uvcHours = formData.uvc_hours ? parseFloat(formData.uvc_hours) : 0;
+      const uvcStatus = determineUVCStatus(uvcHours);
+      
       // Add unit to Firestore with a custom ID
       const unitDocRef = doc(db, "units", customId);
       await setDoc(unitDocRef, {
@@ -100,13 +107,17 @@ export function AddUnitDialog({ open, onOpenChange }: { open: boolean; onOpenCha
         contact_email: formData.contact_email || null,
         contact_phone: formData.contact_phone || null,
         next_maintenance: formData.next_maintenance?.toISOString() || null,
+        setup_date: formData.setup_date?.toISOString() || null,
+        uvc_hours: uvcHours,
+        uvc_status: uvcStatus,
+        uvc_installation_date: formData.setup_date?.toISOString() || null,
         eid: formData.eid || null,
         iccid: formData.iccid || null,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
       });
 
-      // Check if an alert should be created
+      // Check if an alert should be created for unit status
       if (status === 'warning' || status === 'urgent') {
         const alertMessage = createAlertMessage(formData.name, numericVolume, status);
         
@@ -121,8 +132,23 @@ export function AddUnitDialog({ open, onOpenChange }: { open: boolean; onOpenCha
         });
       }
 
+      // Check if UVC alert should be created
+      if (uvcHours > 0 && (uvcStatus === 'warning' || uvcStatus === 'urgent')) {
+        const uvcAlertMessage = createUVCAlertMessage(formData.name, uvcHours, uvcStatus);
+        
+        const alertsCollection = collection(db, "alerts");
+        await addDoc(alertsCollection, {
+          unit_id: customId,
+          message: uvcAlertMessage,
+          status: uvcStatus,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        });
+      }
+
       // Invalidate and refetch units data
       await queryClient.invalidateQueries({ queryKey: ["units"] });
+      await queryClient.invalidateQueries({ queryKey: ["uvc-units"] });
       await queryClient.invalidateQueries({ queryKey: ["alerts"] });
       
       toast({
@@ -141,6 +167,8 @@ export function AddUnitDialog({ open, onOpenChange }: { open: boolean; onOpenCha
         contact_email: "",
         contact_phone: "",
         next_maintenance: null,
+        setup_date: null,
+        uvc_hours: "",
         eid: "",
         iccid: "",
       });
