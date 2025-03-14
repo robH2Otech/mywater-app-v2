@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -5,7 +6,6 @@ import { initializeSampleMeasurements } from "@/utils/measurements/sampleDataUti
 import { useRealtimeMeasurements } from "@/hooks/useRealtimeMeasurements";
 import { toast } from "sonner";
 import { MeasurementData } from "@/types/analytics";
-import { safeFormatTimestamp } from "@/utils/measurements/formatUtils";
 import {
   Table,
   TableBody,
@@ -39,10 +39,8 @@ export function UnitMeasurements({ unitId }: UnitMeasurementsProps) {
   const safeRenderMeasurements = (measurements: MeasurementData[]) => {
     return measurements.map((measurement) => {
       try {
-        // Safely access and format all fields with fallbacks
-        const timestamp = measurement.timestamp 
-          ? safeFormatTimestamp(measurement.timestamp)
-          : "Invalid date";
+        // Get timestamp directly - it should already be formatted by useRealtimeMeasurements
+        const timestamp = measurement.timestamp || "Invalid date";
           
         const volume = typeof measurement.volume === 'number' 
           ? measurement.volume.toLocaleString(undefined, { maximumFractionDigits: 2 }) 

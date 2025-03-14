@@ -1,5 +1,4 @@
-
-import { collection, doc, addDoc, getDocs, query, orderBy, limit, getDoc, updateDoc } from "firebase/firestore";
+import { collection, doc, addDoc, getDocs, query, orderBy, limit, getDoc, updateDoc, serverTimestamp } from "firebase/firestore";
 import { db } from "@/integrations/firebase/client";
 import { Measurement } from './types';
 import { formatTimestamp } from './formatUtils';
@@ -20,12 +19,19 @@ export const addMeasurement = async (unitId: string, volume: number, temperature
     const unitData = unitDoc.data();
     const currentTotalVolume = parseFloat(unitData.total_volume || "0");
     
-    // Create the new measurement with human-readable format
+    // Create the new measurement
+    // Include both server timestamp and formatted human-readable timestamp
     const now = new Date();
-    const timestamp = formatTimestamp(now);
+    const formattedTimestamp = formatTimestamp(now);
     
     const measurementData: Measurement = {
-      timestamp,
+      // Use the server timestamp for proper ordering but will be converted to string format
+      // by the Firestore SDK when retrieved
+      timestamp: formattedTimestamp,
+      
+      // Include raw timestamp for backup
+      raw_timestamp: serverTimestamp(),
+      
       volume,
       temperature,
       cumulative_volume: currentTotalVolume + volume,
@@ -46,7 +52,7 @@ export const addMeasurement = async (unitId: string, volume: number, temperature
     // Also update the UVC hours if provided
     const updateData: any = {
       total_volume: measurementData.cumulative_volume,
-      updated_at: timestamp
+      updated_at: formattedTimestamp
     };
     
     // Update UVC hours if provided
@@ -82,10 +88,28 @@ export const getLatestMeasurements = async (unitId: string, count: number = 24) 
     );
     
     const snapshot = await getDocs(q);
-    return snapshot.docs.map(doc => ({
-      id: doc.id,
-      ...doc.data()
-    })) as (Measurement & { id: string })[];
+    return snapshot.docs.map(doc => {
+      const data = doc.data();
+      
+      // Ensure proper timestamp formatting when retrieving data
+      if (data.timestamp) {
+        try {
+          // If it's a Firestore timestamp with toDate method
+          if (typeof data.timestamp === 'object' && data.timestamp !== null && typeof data.timestamp.toDate === 'function') {
+            const date = data.timestamp.toDate();
+            data.timestamp = formatTimestamp(date);
+          }
+          // Otherwise, assume it's already in the correct string format
+        } catch (err) {
+          console.error("Error formatting timestamp in getLatestMeasurements:", err);
+        }
+      }
+      
+      return {
+        id: doc.id,
+        ...data
+      };
+    }) as (Measurement & { id: string })[];
   } catch (error) {
     console.error("Error getting latest measurements:", error);
     throw error;

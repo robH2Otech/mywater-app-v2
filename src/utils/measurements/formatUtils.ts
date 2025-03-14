@@ -30,29 +30,36 @@ export const parseTimestamp = (timestamp: string): Date => {
   }
   
   // Check if it's already in our expected format with "at" separator
-  if (timestamp.includes(" at ")) {
+  if (typeof timestamp === 'string' && timestamp.includes(" at ")) {
     try {
-      // Extract date parts
-      const [datePart, timePart] = timestamp.split(" at ");
-      const timezonePart = timePart.split(" ").slice(-1)[0];
-      const timeWithoutZone = timePart.split(" ").slice(0, -1).join(" ");
-      
-      // Reconstruct in a format that Date constructor can parse
-      const dateString = `${datePart} ${timeWithoutZone} ${timezonePart}`;
-      const date = new Date(dateString);
-      
-      if (isNaN(date.getTime())) {
-        throw new Error(`Invalid date parsed from: ${timestamp}`);
-      }
-      
-      return date;
+      // For strings like "March 13, 2025 at 11:34:56 AM UTC+1"
+      // Convert to a standard format that the Date constructor can handle
+      return new Date(timestamp.replace(' at ', ' '));
     } catch (err) {
-      console.error("Error parsing formatted timestamp:", err);
+      console.error("Error parsing formatted timestamp:", err, timestamp);
       throw new Error(`Failed to parse timestamp: ${timestamp}`);
     }
   }
   
-  // If it's a standard date string or timestamp
+  // Handle Firestore timestamp objects that might be serialized differently
+  if (typeof timestamp === 'object' && timestamp !== null) {
+    // If it's a Firestore Timestamp object with seconds and nanoseconds
+    if ('seconds' in timestamp && 'nanoseconds' in timestamp) {
+      try {
+        return new Date(timestamp.seconds * 1000);
+      } catch (err) {
+        console.error("Error parsing Firestore timestamp:", err, timestamp);
+        throw new Error(`Failed to parse Firestore timestamp object`);
+      }
+    }
+    
+    // If it's already a Date object
+    if (timestamp instanceof Date) {
+      return timestamp;
+    }
+  }
+  
+  // Try with standard date parsing as a fallback
   try {
     const date = new Date(timestamp);
     if (isNaN(date.getTime())) {
@@ -60,7 +67,7 @@ export const parseTimestamp = (timestamp: string): Date => {
     }
     return date;
   } catch (err) {
-    console.error("Error parsing timestamp:", err);
+    console.error("Error parsing timestamp:", err, timestamp);
     throw new Error(`Failed to parse timestamp: ${timestamp}`);
   }
 };
@@ -69,40 +76,66 @@ export const parseTimestamp = (timestamp: string): Date => {
  * Safely parse and format a timestamp from any format to our standard format
  * Returns the formatted string or "Invalid date" if parsing fails
  */
-export const safeFormatTimestamp = (timestamp: string | Date): string => {
+export const safeFormatTimestamp = (timestamp: any): string => {
   try {
     if (!timestamp) {
       return "Invalid date";
     }
     
-    // If it's already a Date object
-    if (timestamp instanceof Date) {
-      return formatTimestamp(timestamp);
-    }
-    
-    // If it's already in our expected format
+    // If it's already a properly formatted string in our expected format
     if (typeof timestamp === 'string' && timestamp.includes(" at ")) {
-      // Validate it's actually a valid date in this format
+      // Verify that it can be parsed as a valid date
       try {
-        const date = parseTimestamp(timestamp);
-        if (isNaN(date.getTime())) {
+        const parsedDate = parseTimestamp(timestamp);
+        if (isNaN(parsedDate.getTime())) {
+          console.error("Invalid date from formatted string:", timestamp);
           return "Invalid date";
         }
-        return timestamp; // Return as is if valid
+        return timestamp; // Return as is if it's valid
       } catch (e) {
+        console.error("Error validating formatted timestamp:", e, timestamp);
         return "Invalid date";
       }
     }
     
-    // Try to parse and format
-    const date = new Date(timestamp);
-    if (isNaN(date.getTime())) {
-      return "Invalid date";
+    // If it's a Firestore timestamp object
+    if (timestamp && typeof timestamp === 'object') {
+      if ('seconds' in timestamp && 'nanoseconds' in timestamp) {
+        const date = new Date(timestamp.seconds * 1000);
+        return formatTimestamp(date);
+      }
+      
+      // If it's a Date object
+      if (timestamp instanceof Date) {
+        return formatTimestamp(timestamp);
+      }
+      
+      // If it has a toDate() method (Firestore Timestamp)
+      if (typeof timestamp.toDate === 'function') {
+        try {
+          const date = timestamp.toDate();
+          return formatTimestamp(date);
+        } catch (e) {
+          console.error("Error calling toDate():", e, timestamp);
+          return "Invalid date";
+        }
+      }
     }
     
-    return formatTimestamp(date);
+    // Try to parse as a regular date
+    try {
+      const date = new Date(timestamp);
+      if (isNaN(date.getTime())) {
+        console.error("Invalid date from timestamp:", timestamp);
+        return "Invalid date";
+      }
+      return formatTimestamp(date);
+    } catch (error) {
+      console.error("Error formatting timestamp:", error, "Original value:", timestamp);
+      return "Invalid date";
+    }
   } catch (error) {
-    console.error("Error formatting timestamp:", error, "Original value:", timestamp);
+    console.error("Unexpected error in safeFormatTimestamp:", error, "Original value:", timestamp);
     return "Invalid date";
   }
 };

@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { collection, onSnapshot, query, orderBy, limit } from "firebase/firestore";
 import { db } from "@/integrations/firebase/client";
@@ -42,13 +41,24 @@ export function useRealtimeMeasurements(unitId: string, count: number = 24) {
           const measurementsData = querySnapshot.docs.map(doc => {
             const data = doc.data();
             
-            // Ensure timestamp is in the correct format
+            // Enhanced timestamp handling
             if (data.timestamp) {
+              // Handle various timestamp formats from Firestore
               try {
-                data.timestamp = safeFormatTimestamp(data.timestamp);
+                // If it's a Firestore timestamp object with toDate method
+                if (typeof data.timestamp === 'object' && data.timestamp !== null && typeof data.timestamp.toDate === 'function') {
+                  const date = data.timestamp.toDate();
+                  data.timestamp = safeFormatTimestamp(date);
+                } else {
+                  // Otherwise try to format whatever we have
+                  data.timestamp = safeFormatTimestamp(data.timestamp);
+                }
               } catch (err) {
-                console.error("Failed to format timestamp:", err);
+                console.error("Failed to format timestamp:", err, data.timestamp);
+                data.timestamp = "Invalid date";
               }
+            } else {
+              data.timestamp = "Invalid date";
             }
             
             return {
