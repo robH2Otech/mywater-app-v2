@@ -4,6 +4,7 @@ import { generatePDF } from "@/utils/pdfGenerator";
 import { getDateRangeForReportType } from "@/utils/reportGenerator";
 import { doc, getDoc } from "firebase/firestore";
 import { db } from "@/integrations/firebase/client";
+import { toast } from "@/components/ui/use-toast";
 
 export function getReportTitle(reportType: string): string {
   if (!reportType) return "Report";
@@ -30,7 +31,7 @@ export async function downloadReportAsTxt(report: ReportData): Promise<void> {
     // Get date range
     const { startDate, endDate } = getDateRangeForReportType(report.report_type);
     
-    // Generate PDF directly instead of TXT
+    // Generate PDF
     await generatePDF(
       unitData, 
       report.report_type, 
@@ -39,8 +40,18 @@ export async function downloadReportAsTxt(report: ReportData): Promise<void> {
       endDate
     );
     
+    toast({
+      title: "Success",
+      description: "PDF downloaded successfully",
+    });
+    
   } catch (error) {
     console.error("Error downloading report:", error);
+    toast({
+      variant: "destructive",
+      title: "Error",
+      description: "Failed to download report as PDF",
+    });
     throw error;
   }
 }

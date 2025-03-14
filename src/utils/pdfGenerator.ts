@@ -3,7 +3,6 @@ import { jsPDF } from "jspdf";
 import 'jspdf-autotable';
 import { format } from "date-fns";
 import { UnitData } from "@/types/analytics";
-import { getDateRangeForReportType } from "@/utils/reportGenerator";
 import { getReportTitle } from "@/utils/reportUtils";
 
 // Add type declaration to handle jspdf-autotable extension

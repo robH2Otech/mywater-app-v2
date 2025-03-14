@@ -69,7 +69,7 @@ export function ReportListItem({ report, onViewReport, onReportDeleted }: Report
   const unitName = report.unit_name || "Unknown Unit";
 
   return (
-    <Card key={report.id} className="p-4 bg-spotify-darker">
+    <Card key={report.id} className="p-4 bg-spotify-darker rounded-xl overflow-hidden">
       <div className="flex justify-between items-start">
         <div>
           <h3 className="font-semibold text-white">
@@ -114,7 +114,7 @@ export function ReportListItem({ report, onViewReport, onReportDeleted }: Report
       </div>
 
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
-        <AlertDialogContent className="bg-spotify-darker border-spotify-accent">
+        <AlertDialogContent className="bg-spotify-darker border-spotify-accent rounded-xl">
           <AlertDialogHeader>
             <AlertDialogTitle>Are you sure?</AlertDialogTitle>
             <AlertDialogDescription>
