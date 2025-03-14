@@ -67,6 +67,7 @@ export async function downloadReportAsPdf(report: ReportData): Promise<void> {
     );
     
     if (!pdfBlob) {
+      console.error("PDF generation failed - blob is null or undefined");
       throw new Error("Failed to generate PDF blob");
     }
     
@@ -84,18 +85,18 @@ export async function downloadReportAsPdf(report: ReportData): Promise<void> {
     downloadLink.href = url;
     downloadLink.download = fileName;
     downloadLink.style.display = 'none';
-    document.body.appendChild(downloadLink);
     
-    // Trigger the download
+    // Add to document and trigger click
+    document.body.appendChild(downloadLink);
     console.log("Triggering download");
     downloadLink.click();
     
-    // Clean up
+    // Clean up with a longer timeout to ensure the download has time to start
     setTimeout(() => {
       document.body.removeChild(downloadLink);
       URL.revokeObjectURL(url);
       console.log("PDF download complete, cleaned up resources");
-    }, 1000);
+    }, 5000);
     
     toast({
       title: "Success",

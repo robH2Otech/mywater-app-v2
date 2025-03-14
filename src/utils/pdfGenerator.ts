@@ -59,7 +59,6 @@ export async function generatePDF(
       ["Total Capacity", `${unit.total_volume || 0} m³`]
     ];
     
-    // @ts-ignore - jspdf-autotable types
     doc.autoTable({
       startY: 55,
       head: [["Property", "Value"]],
@@ -74,14 +73,13 @@ export async function generatePDF(
     doc.text("Performance Metrics", 14, finalY1 + 10);
     
     const performanceMetrics = [
-      ["Total Volume Processed", `${metrics.totalVolume.toFixed(2)} m³`],
-      ["Average Daily Volume", `${metrics.avgVolume.toFixed(2)} m³`],
-      ["Maximum Daily Volume", `${metrics.maxVolume.toFixed(2)} m³`],
-      ["Average Temperature", `${metrics.avgTemperature.toFixed(2)} °C`],
-      ["Total UVC Hours", `${metrics.totalUvcHours.toFixed(2)} hours`]
+      ["Total Volume Processed", `${metrics.totalVolume?.toFixed(2) || '0.00'} m³`],
+      ["Average Daily Volume", `${metrics.avgVolume?.toFixed(2) || '0.00'} m³`],
+      ["Maximum Daily Volume", `${metrics.maxVolume?.toFixed(2) || '0.00'} m³`],
+      ["Average Temperature", `${metrics.avgTemperature?.toFixed(2) || '0.00'} °C`],
+      ["Total UVC Hours", `${metrics.totalUvcHours?.toFixed(2) || '0.00'} hours`]
     ];
     
-    // @ts-ignore - jspdf-autotable types
     doc.autoTable({
       startY: finalY1 + 15,
       head: [["Metric", "Value"]],
@@ -90,31 +88,32 @@ export async function generatePDF(
       headStyles: { fillColor: [0, 150, 0] }
     });
     
-    // Add daily data table
-    doc.setFontSize(14);
-    const finalY2 = doc.lastAutoTable?.finalY || 200;
-    doc.text("Daily Measurements", 14, finalY2 + 10);
-    
-    // Sort data by date (ascending)
-    const sortedData = [...(metrics.dailyData || [])].sort((a, b) => 
-      new Date(a.date).getTime() - new Date(b.date).getTime()
-    );
-    
-    const dailyData = sortedData.map(day => [
-      new Date(day.date).toLocaleDateString(),
-      `${day.volume.toFixed(2)} m³`,
-      `${day.avgTemperature.toFixed(2)} °C`,
-      `${day.uvcHours.toFixed(2)} hours`
-    ]);
-    
-    // @ts-ignore - jspdf-autotable types
-    doc.autoTable({
-      startY: finalY2 + 15,
-      head: [["Date", "Volume", "Avg. Temperature", "UVC Hours"]],
-      body: dailyData,
-      theme: 'grid',
-      headStyles: { fillColor: [0, 150, 0] }
-    });
+    // Add daily data table if available
+    if (metrics.dailyData && metrics.dailyData.length > 0) {
+      doc.setFontSize(14);
+      const finalY2 = doc.lastAutoTable?.finalY || 200;
+      doc.text("Daily Measurements", 14, finalY2 + 10);
+      
+      // Sort data by date (ascending)
+      const sortedData = [...(metrics.dailyData || [])].sort((a, b) => 
+        new Date(a.date).getTime() - new Date(b.date).getTime()
+      );
+      
+      const dailyData = sortedData.map(day => [
+        new Date(day.date).toLocaleDateString(),
+        `${day.volume?.toFixed(2) || '0.00'} m³`,
+        `${day.avgTemperature?.toFixed(2) || '0.00'} °C`,
+        `${day.uvcHours?.toFixed(2) || '0.00'} hours`
+      ]);
+      
+      doc.autoTable({
+        startY: finalY2 + 15,
+        head: [["Date", "Volume", "Avg. Temperature", "UVC Hours"]],
+        body: dailyData,
+        theme: 'grid',
+        headStyles: { fillColor: [0, 150, 0] }
+      });
+    }
     
     // Add maintenance information
     doc.setFontSize(14);
@@ -126,7 +125,6 @@ export async function generatePDF(
       ["Next Maintenance", unit.next_maintenance ? new Date(unit.next_maintenance).toLocaleDateString() : "N/A"]
     ];
     
-    // @ts-ignore - jspdf-autotable types
     doc.autoTable({
       startY: finalY3 + 15,
       head: [["Maintenance", "Date"]],
@@ -135,7 +133,7 @@ export async function generatePDF(
       headStyles: { fillColor: [0, 150, 0] }
     });
     
-    // Add contact information
+    // Add contact information if available
     if (unit.contact_name || unit.contact_email || unit.contact_phone) {
       doc.setFontSize(14);
       const finalY4 = doc.lastAutoTable?.finalY || 320;
@@ -147,7 +145,6 @@ export async function generatePDF(
         ["Phone", unit.contact_phone || "N/A"]
       ];
       
-      // @ts-ignore - jspdf-autotable types
       doc.autoTable({
         startY: finalY4 + 15,
         head: [["Contact", "Details"]],
@@ -171,10 +168,21 @@ export async function generatePDF(
     doc.setFontSize(8);
     doc.text(`Generated on: ${generatedDate}`, pageWidth - 15, doc.internal.pageSize.getHeight() - 10, { align: "right" });
     
-    // Return blob using ArrayBuffer - this is more reliable than using the built-in blob output
-    console.log("PDF generation complete, creating blob from arraybuffer");
-    const pdfArrayBuffer = doc.output('arraybuffer');
-    return new Blob([pdfArrayBuffer], { type: 'application/pdf' });
+    // Output as PDF using saveAs method to force download
+    try {
+      // Return blob directly for better browser compatibility
+      const pdfOutput = doc.output('blob');
+      console.log("PDF blob generated successfully:", pdfOutput.size, "bytes");
+      return pdfOutput;
+    } catch (blobError) {
+      console.error("Error creating blob directly:", blobError);
+      
+      // Fallback to ArrayBuffer method if direct blob fails
+      const pdfArrayBuffer = doc.output('arraybuffer');
+      const blob = new Blob([pdfArrayBuffer], { type: 'application/pdf' });
+      console.log("PDF blob generated via ArrayBuffer fallback:", blob.size, "bytes");
+      return blob;
+    }
   } catch (error) {
     console.error("Error generating PDF:", error);
     throw new Error("Failed to generate PDF report");

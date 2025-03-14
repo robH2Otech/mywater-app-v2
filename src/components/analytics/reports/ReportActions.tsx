@@ -24,13 +24,15 @@ export function ReportActions({ unit, reportType, metrics, startDate, endDate }:
     setIsDownloading(true);
     try {
       console.log("Generating PDF from ReportActions");
+      
+      // Generate the PDF
       const pdfBlob = await generatePDF(unit, reportType, metrics, startDate, endDate);
       
       if (!pdfBlob) {
         throw new Error("Failed to generate PDF blob");
       }
       
-      console.log("PDF Blob created, size:", pdfBlob.size, "bytes");
+      console.log("PDF Blob created successfully, size:", pdfBlob.size, "bytes");
       
       // Create a download link
       const fileName = `${unit.name}_${reportType}_report_${new Date().toISOString().split('T')[0]}.pdf`;
@@ -52,7 +54,7 @@ export function ReportActions({ unit, reportType, metrics, startDate, endDate }:
         document.body.removeChild(a);
         URL.revokeObjectURL(url);
         console.log("Cleaned up download resources");
-      }, 1000);
+      }, 5000);  // Increase timeout to ensure browser has time to process the download
       
       toast({
         title: "Success",

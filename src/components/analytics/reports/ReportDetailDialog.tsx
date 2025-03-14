@@ -94,7 +94,7 @@ export function ReportDetailDialog({ report, open, onOpenChange }: ReportDetailD
         throw new Error("Failed to generate PDF blob");
       }
       
-      console.log("PDF Blob created, size:", pdfBlob.size, "bytes");
+      console.log("PDF Blob created, size:", pdfBlob.size, "bytes", "type:", pdfBlob.type);
       
       // Create filename
       const fileName = `${unitData.name}_${report.report_type}_report_${new Date().toISOString().split('T')[0]}.pdf`;
@@ -102,7 +102,7 @@ export function ReportDetailDialog({ report, open, onOpenChange }: ReportDetailD
       // Create URL for download
       const url = URL.createObjectURL(pdfBlob);
       
-      // Create download link
+      // Force download using a hidden anchor element
       const a = document.createElement('a');
       a.style.display = 'none';
       a.href = url;
@@ -110,13 +110,15 @@ export function ReportDetailDialog({ report, open, onOpenChange }: ReportDetailD
       
       // Trigger download
       document.body.appendChild(a);
+      console.log("Triggering download from dialog");
       a.click();
       
-      // Clean up
+      // Clean up with extended timeout
       setTimeout(() => {
         document.body.removeChild(a);
         URL.revokeObjectURL(url);
-      }, 1000);
+        console.log("Download cleanup completed");
+      }, 5000);
       
       toast({
         title: "Success",
