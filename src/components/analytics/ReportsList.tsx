@@ -39,7 +39,9 @@ export function ReportsList({ reports, isLoading, error }: ReportsListProps) {
         <div className="grid gap-4">
           {[1, 2, 3].map((index) => (
             <Card key={index} className="p-4 bg-spotify-darker">
-              <LoadingSkeleton className="h-32 w-full" />
+              <div className="h-32 w-full">
+                <LoadingSkeleton />
+              </div>
             </Card>
           ))}
         </div>

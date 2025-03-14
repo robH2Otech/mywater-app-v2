@@ -6,6 +6,13 @@ import { UnitData } from "@/types/analytics";
 import { getDateRangeForReportType } from "@/utils/reportGenerator";
 import { getReportTitle } from "@/utils/reportUtils";
 
+// Add type declaration to handle jspdf-autotable extension
+interface ExtendedJsPDF extends jsPDF {
+  lastAutoTable?: {
+    finalY: number;
+  };
+}
+
 export async function generatePDF(
   unit: UnitData, 
   reportType: string, 
@@ -14,7 +21,7 @@ export async function generatePDF(
   endDate: Date
 ): Promise<void> {
   // Create a new jsPDF instance
-  const doc = new jsPDF();
+  const doc = new jsPDF() as ExtendedJsPDF;
   const pageWidth = doc.internal.pageSize.getWidth();
   
   // Add company logo/header
@@ -59,8 +66,8 @@ export async function generatePDF(
   
   // Add performance metrics section
   doc.setFontSize(14);
-  // @ts-ignore - lastAutoTable is added by jspdf-autotable
-  doc.text("Performance Metrics", 14, doc.lastAutoTable.finalY + 10);
+  const finalY1 = doc.lastAutoTable?.finalY || 120;
+  doc.text("Performance Metrics", 14, finalY1 + 10);
   
   const performanceMetrics = [
     ["Total Volume Processed", `${metrics.totalVolume.toFixed(2)} units`],
@@ -72,8 +79,7 @@ export async function generatePDF(
   
   // @ts-ignore - jspdf-autotable types
   doc.autoTable({
-    // @ts-ignore - lastAutoTable is added by jspdf-autotable
-    startY: doc.lastAutoTable.finalY + 15,
+    startY: finalY1 + 15,
     head: [["Metric", "Value"]],
     body: performanceMetrics,
     theme: 'grid',
@@ -82,8 +88,8 @@ export async function generatePDF(
   
   // Add daily data table
   doc.setFontSize(14);
-  // @ts-ignore - lastAutoTable is added by jspdf-autotable
-  doc.text("Daily Measurements", 14, doc.lastAutoTable.finalY + 10);
+  const finalY2 = doc.lastAutoTable?.finalY || 200;
+  doc.text("Daily Measurements", 14, finalY2 + 10);
   
   // Sort data by date (ascending)
   const sortedData = [...metrics.dailyData].sort((a, b) => 
@@ -99,8 +105,7 @@ export async function generatePDF(
   
   // @ts-ignore - jspdf-autotable types
   doc.autoTable({
-    // @ts-ignore - lastAutoTable is added by jspdf-autotable
-    startY: doc.lastAutoTable.finalY + 15,
+    startY: finalY2 + 15,
     head: [["Date", "Volume", "Avg. Temperature", "UVC Hours"]],
     body: dailyData,
     theme: 'grid',
@@ -109,8 +114,8 @@ export async function generatePDF(
   
   // Add maintenance information
   doc.setFontSize(14);
-  // @ts-ignore - lastAutoTable is added by jspdf-autotable
-  doc.text("Maintenance Information", 14, doc.lastAutoTable.finalY + 10);
+  const finalY3 = doc.lastAutoTable?.finalY || 280;
+  doc.text("Maintenance Information", 14, finalY3 + 10);
   
   const maintenanceInfo = [
     ["Last Maintenance", unit.last_maintenance ? new Date(unit.last_maintenance).toLocaleDateString() : "N/A"],
@@ -119,8 +124,7 @@ export async function generatePDF(
   
   // @ts-ignore - jspdf-autotable types
   doc.autoTable({
-    // @ts-ignore - lastAutoTable is added by jspdf-autotable
-    startY: doc.lastAutoTable.finalY + 15,
+    startY: finalY3 + 15,
     head: [["Maintenance", "Date"]],
     body: maintenanceInfo,
     theme: 'grid',
@@ -130,8 +134,8 @@ export async function generatePDF(
   // Add contact information
   if (unit.contact_name || unit.contact_email || unit.contact_phone) {
     doc.setFontSize(14);
-    // @ts-ignore - lastAutoTable is added by jspdf-autotable
-    doc.text("Contact Information", 14, doc.lastAutoTable.finalY + 10);
+    const finalY4 = doc.lastAutoTable?.finalY || 320;
+    doc.text("Contact Information", 14, finalY4 + 10);
     
     const contactInfo = [
       ["Name", unit.contact_name || "N/A"],
@@ -141,8 +145,7 @@ export async function generatePDF(
     
     // @ts-ignore - jspdf-autotable types
     doc.autoTable({
-      // @ts-ignore - lastAutoTable is added by jspdf-autotable
-      startY: doc.lastAutoTable.finalY + 15,
+      startY: finalY4 + 15,
       head: [["Contact", "Details"]],
       body: contactInfo,
       theme: 'grid',
@@ -153,11 +156,10 @@ export async function generatePDF(
   // Add notes if available
   if (unit.notes) {
     doc.setFontSize(14);
-    // @ts-ignore - lastAutoTable is added by jspdf-autotable
-    doc.text("Notes", 14, doc.lastAutoTable.finalY + 10);
+    const finalY5 = doc.lastAutoTable?.finalY || 350;
+    doc.text("Notes", 14, finalY5 + 10);
     doc.setFontSize(10);
-    // @ts-ignore - lastAutoTable is added by jspdf-autotable
-    doc.text(unit.notes, 14, doc.lastAutoTable.finalY + 20);
+    doc.text(unit.notes, 14, finalY5 + 20);
   }
   
   // Add footer with generation date
