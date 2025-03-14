@@ -38,9 +38,10 @@ export function ReportActions({ unit, reportType, metrics, startDate, endDate }:
       const fileName = `${unit.name}_${reportType}_report_${new Date().toISOString().split('T')[0]}.pdf`;
       
       // Force download using browser download API
-      if (window.navigator && window.navigator.msSaveOrOpenBlob) {
+      const navigator = window.navigator as any;
+      if (navigator && typeof navigator.msSaveOrOpenBlob === 'function') {
         // For IE/Edge
-        window.navigator.msSaveOrOpenBlob(pdfBlob, fileName);
+        navigator.msSaveOrOpenBlob(pdfBlob, fileName);
         console.log("Download triggered via msSaveOrOpenBlob");
       } else {
         // For modern browsers
