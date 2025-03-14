@@ -52,6 +52,7 @@ export interface ReportData {
   unit_id: string;
   report_type: string;
   content: string;
+  measurements?: any[];
   generated_by: string;
   created_at: string;
   [key: string]: any;

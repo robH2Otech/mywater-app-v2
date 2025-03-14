@@ -8,7 +8,11 @@ import { doc, getDoc, addDoc, collection, DocumentData } from "firebase/firestor
 import { getAuth } from "firebase/auth";
 import { db } from "@/integrations/firebase/client";
 import { UnitData } from "@/types/analytics";
-import { generateReportContent } from "@/utils/reportGenerator";
+import { 
+  generateReportContent, 
+  fetchMeasurementsForReport,
+  calculateMetricsFromMeasurements
+} from "@/utils/reportGenerator";
 
 interface ReportGenerationFormProps {
   selectedUnit: string;
@@ -57,9 +61,12 @@ export function ReportGenerationForm({
         name: unitSnapshot.data().name || 'Unknown Unit',
         ...unitSnapshot.data() as DocumentData
       };
-
-      // Generate report content based on unit data
-      const reportContent = generateReportContent(unitData, reportType);
+      
+      // Fetch measurements for the report period
+      const measurements = await fetchMeasurementsForReport(selectedUnit, reportType);
+      
+      // Generate report content based on unit data and measurements
+      const reportContent = generateReportContent(unitData, reportType, measurements);
 
       // Save report to database
       const reportsCollection = collection(db, "reports");
@@ -67,6 +74,7 @@ export function ReportGenerationForm({
         unit_id: selectedUnit,
         report_type: reportType,
         content: reportContent,
+        measurements: measurements,
         generated_by: user.uid,
         created_at: new Date().toISOString()
       });
