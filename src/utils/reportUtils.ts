@@ -26,11 +26,6 @@ export async function downloadReportAsPdf(report: ReportData): Promise<void> {
   try {
     console.log("Starting PDF download for report:", report.id);
     
-    toast({
-      title: "Processing",
-      description: "Generating PDF, please wait...",
-    });
-    
     // Get unit data
     const unitDocRef = doc(db, "units", report.unit_id);
     const unitSnapshot = await getDoc(unitDocRef);
@@ -75,15 +70,16 @@ export async function downloadReportAsPdf(report: ReportData): Promise<void> {
       throw new Error("Failed to generate PDF blob");
     }
     
-    console.log("PDF blob created:", pdfBlob.size, "bytes", pdfBlob.type);
-    
     // Prepare filename
     const fileName = `${unitData.name}_${report.report_type}_report_${new Date().toISOString().split('T')[0]}.pdf`;
     console.log("Prepared filename:", fileName);
     
-    // Create a download link
+    // Create URL for the blob
+    const url = URL.createObjectURL(new Blob([pdfBlob], { type: 'application/pdf' }));
+    
+    // Create a download link and trigger download
     const downloadLink = document.createElement('a');
-    downloadLink.href = URL.createObjectURL(pdfBlob);
+    downloadLink.href = url;
     downloadLink.download = fileName;
     downloadLink.style.display = 'none';
     document.body.appendChild(downloadLink);
@@ -95,9 +91,9 @@ export async function downloadReportAsPdf(report: ReportData): Promise<void> {
     // Clean up
     setTimeout(() => {
       document.body.removeChild(downloadLink);
-      URL.revokeObjectURL(downloadLink.href);
+      URL.revokeObjectURL(url);
       console.log("PDF download complete, cleaned up resources");
-    }, 1000);
+    }, 100);
     
     toast({
       title: "Success",
