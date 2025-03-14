@@ -25,24 +25,19 @@ export const addMeasurement = async (unitId: string, volume: number, temperature
         ? parseFloat(unitData.total_volume) 
         : 0;
     
-    // Calculate new cumulative volume
-    const newCumulativeVolume = currentTotalVolume + volume;
+    // Calculate new total volume by adding current volume
+    const newTotalVolume = currentTotalVolume + volume;
     
     // Create the new measurement
-    // Include both server timestamp and formatted human-readable timestamp
     const now = new Date();
     const formattedTimestamp = formatTimestamp(now);
     
     const measurementData: Measurement = {
-      // Set the formatted timestamp
       timestamp: formattedTimestamp,
-      
-      // Include raw timestamp for Firestore ordering
       raw_timestamp: serverTimestamp(),
-      
       volume,
       temperature,
-      cumulative_volume: newCumulativeVolume,
+      cumulative_volume: newTotalVolume,
       ...(uvcHours !== undefined && { uvc_hours: uvcHours })
     };
     
@@ -50,29 +45,24 @@ export const addMeasurement = async (unitId: string, volume: number, temperature
     const isMyWaterUnit = unitId.startsWith('MYWATER_');
     const collectionPath = isMyWaterUnit ? `units/${unitId}/data` : `units/${unitId}/measurements`;
     
-    // Add as a new document with a random ID
+    // Add the new measurement
     const measurementsCollectionRef = collection(db, collectionPath);
     const newMeasurementRef = await addDoc(measurementsCollectionRef, measurementData);
-    const measurementId = newMeasurementRef.id;
-    console.log(`Measurement added with ID: ${measurementId} to ${collectionPath}`);
     
-    // Update the unit's total_volume with the new cumulative value
-    // Also update the UVC hours if provided
+    // Update the unit's total_volume
     const updateData: any = {
-      total_volume: newCumulativeVolume,
+      total_volume: newTotalVolume,
       updated_at: formattedTimestamp
     };
     
-    // Update UVC hours if provided
     if (uvcHours !== undefined) {
-      // Get current UVC hours and add the new hours
       const currentUVCHours = typeof unitData.uvc_hours === 'number' ? unitData.uvc_hours : 0;
       updateData.uvc_hours = currentUVCHours + uvcHours;
     }
     
     await updateDoc(unitDocRef, updateData);
     
-    return measurementId;
+    return newMeasurementRef.id;
   } catch (error) {
     console.error("Error adding measurement:", error);
     throw error;
@@ -139,36 +129,38 @@ export const getLatestMeasurements = async (unitId: string, count: number = 24) 
 };
 
 /**
- * Calculate proper cumulative volume for a unit's measurements
- * This function recalculates the unit's measurements to ensure consistent cumulative volumes
+ * Recalculate cumulative volumes for a unit's measurements
  */
 export const recalculateCumulativeVolumes = async (unitId: string) => {
   try {
-    // Determine the collection path based on unit ID
     const isMyWaterUnit = unitId.startsWith('MYWATER_');
     const collectionPath = isMyWaterUnit ? `units/${unitId}/data` : `units/${unitId}/measurements`;
     
     const measurementsCollectionRef = collection(db, collectionPath);
     const q = query(
       measurementsCollectionRef,
-      orderBy("timestamp", "asc") // Important: Process in chronological order
+      orderBy("timestamp", "asc") // Process in chronological order
     );
     
     const snapshot = await getDocs(q);
     const measurements = snapshot.docs.map(doc => ({
       id: doc.id,
-      ...doc.data() as Measurement // Fix: Properly type the document data
+      ...doc.data() as Measurement
     }));
     
-    // Start with 0 cumulative volume
-    let cumulativeVolume = 0;
+    // Get the unit's starting volume
+    const unitDocRef = doc(db, "units", unitId);
+    const unitDoc = await getDoc(unitDocRef);
+    const startingVolume = unitDoc.exists() ? (unitDoc.data().starting_volume || 0) : 0;
+    
+    // Recalculate cumulative volumes
+    let cumulativeVolume = startingVolume;
     
     // Update each measurement with the proper cumulative volume
     for (const measurement of measurements) {
       const volume = typeof measurement.volume === 'number' ? measurement.volume : 0;
       cumulativeVolume += volume;
       
-      // Update the measurement document with the correct cumulative_volume
       const measurementDocRef = doc(db, collectionPath, measurement.id);
       await updateDoc(measurementDocRef, {
         cumulative_volume: cumulativeVolume
@@ -176,13 +168,11 @@ export const recalculateCumulativeVolumes = async (unitId: string) => {
     }
     
     // Update the unit's total_volume to match the final cumulative value
-    const unitDocRef = doc(db, "units", unitId);
     await updateDoc(unitDocRef, {
       total_volume: cumulativeVolume,
       updated_at: new Date().toISOString()
     });
     
-    console.log(`Recalculated cumulative volumes for unit ${unitId}. Final total: ${cumulativeVolume}`);
     return cumulativeVolume;
   } catch (error) {
     console.error("Error recalculating cumulative volumes:", error);
