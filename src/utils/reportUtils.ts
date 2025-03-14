@@ -46,28 +46,52 @@ export async function downloadReportAsPdf(report: ReportData): Promise<void> {
     // Get date range
     const { startDate, endDate } = getDateRangeForReportType(report.report_type);
     
+    // Use metrics from report if available, otherwise use empty default metrics
+    const metrics = report.metrics || {
+      totalVolume: 0,
+      avgVolume: 0,
+      maxVolume: 0,
+      avgTemperature: 0,
+      totalUvcHours: 0,
+      dailyData: []
+    };
+    
     // Generate PDF and get blob
+    console.log("Calling generatePDF function");
     const pdfBlob = await generatePDF(
       unitData, 
       report.report_type, 
-      report.metrics || {}, 
+      metrics, 
       startDate, 
       endDate
     );
     
+    if (!pdfBlob) {
+      throw new Error("Failed to generate PDF blob");
+    }
+    
+    // Prepare filename
+    const fileName = `${unitData.name}_${report.report_type}_report_${new Date().toISOString().split('T')[0]}.pdf`;
+    console.log("Prepared filename:", fileName);
+    
+    // Create URL for the blob
+    const url = URL.createObjectURL(pdfBlob);
+    
     // Create a download link and trigger download
     const downloadLink = document.createElement('a');
-    const url = URL.createObjectURL(pdfBlob);
     downloadLink.href = url;
-    downloadLink.download = `${unitData.name}_${report.report_type}_report_${new Date().toISOString().split('T')[0]}.pdf`;
+    downloadLink.download = fileName;
     document.body.appendChild(downloadLink);
+    
+    // Trigger the download
+    console.log("Triggering download");
     downloadLink.click();
     
     // Clean up
     setTimeout(() => {
       document.body.removeChild(downloadLink);
       URL.revokeObjectURL(url);
-      console.log("PDF download complete");
+      console.log("PDF download complete, cleaned up resources");
     }, 100);
     
     toast({

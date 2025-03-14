@@ -20,30 +20,36 @@ export function ReportActions({ unit, reportType, metrics, startDate, endDate }:
       console.log("Generating PDF from ReportActions");
       const pdfBlob = await generatePDF(unit, reportType, metrics, startDate, endDate);
       
-      // Create a download link and trigger download
-      const downloadLink = document.createElement('a');
+      // Create a download link
       const url = URL.createObjectURL(pdfBlob);
-      downloadLink.href = url;
-      downloadLink.download = `${unit.name}_${reportType}_report_${new Date().toISOString().split('T')[0]}.pdf`;
-      document.body.appendChild(downloadLink);
-      downloadLink.click();
+      const fileName = `${unit.name}_${reportType}_report_${new Date().toISOString().split('T')[0]}.pdf`;
+      
+      // Create an anchor element for downloading
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = fileName;
+      document.body.appendChild(a);
+      
+      // Trigger download and clean up
+      console.log("Triggering download for", fileName);
+      a.click();
       
       // Clean up
       setTimeout(() => {
-        document.body.removeChild(downloadLink);
+        document.body.removeChild(a);
         URL.revokeObjectURL(url);
       }, 100);
       
       toast({
         title: "Success",
-        description: "PDF generated and downloaded successfully",
+        description: "PDF downloaded successfully",
       });
     } catch (error) {
       console.error("Error generating PDF:", error);
       toast({
         variant: "destructive",
         title: "Error",
-        description: "Failed to generate PDF",
+        description: "Failed to generate PDF. Please try again.",
       });
     }
   };
