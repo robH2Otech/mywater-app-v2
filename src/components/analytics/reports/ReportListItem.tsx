@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { ReportData } from "@/types/analytics";
 import { Button } from "@/components/ui/button";
@@ -27,22 +26,20 @@ export function ReportListItem({ report, onViewReport, onReportDeleted }: Report
     setIsDownloading(true);
     try {
       console.log("Initiating download for report:", report.id);
-      
-      // Try the download
       await downloadReportAsPdf(report);
-      
-      console.log("Download function completed successfully");
-      
+      toast({
+        title: "Success",
+        description: "Report downloaded successfully",
+      });
     } catch (error) {
-      console.error("Error in download handler:", error);
+      console.error("Error downloading report:", error);
       toast({
         variant: "destructive",
         title: "Error",
         description: "Failed to download report",
       });
     } finally {
-      // Ensure we always reset the downloading state
-      setTimeout(() => setIsDownloading(false), 1000);
+      setIsDownloading(false);
     }
   };
 

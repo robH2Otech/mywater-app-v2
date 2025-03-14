@@ -34,7 +34,7 @@ export function ReportActions({ unit, reportType, metrics, startDate, endDate }:
       
       console.log("PDF Blob created successfully, size:", pdfBlob.size, "bytes");
       
-      // Create a filename for the PDF
+      // Create a download link
       const fileName = `${unit.name}_${reportType}_report_${new Date().toISOString().split('T')[0]}.pdf`;
       
       // Create a download link and trigger download
@@ -44,6 +44,8 @@ export function ReportActions({ unit, reportType, metrics, startDate, endDate }:
       a.style.display = 'none';
       a.href = url;
       a.download = fileName;
+      
+      console.log("Triggering download for", fileName);
       a.click();
       
       // Clean up
@@ -62,7 +64,7 @@ export function ReportActions({ unit, reportType, metrics, startDate, endDate }:
         description: "Failed to generate PDF. Please try again.",
       });
     } finally {
-      setTimeout(() => setIsDownloading(false), 1000);
+      setIsDownloading(false);
     }
   };
 

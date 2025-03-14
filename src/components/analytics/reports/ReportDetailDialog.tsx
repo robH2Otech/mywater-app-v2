@@ -99,13 +99,17 @@ export function ReportDetailDialog({ report, open, onOpenChange }: ReportDetailD
       // Create filename
       const fileName = `${unitData.name}_${report.report_type}_report_${new Date().toISOString().split('T')[0]}.pdf`;
       
-      // Create a download link and trigger download
+      // Create URL for download
       const url = window.URL.createObjectURL(pdfBlob);
+      
+      // Create download link
       const a = document.createElement('a');
       document.body.appendChild(a);
       a.style.display = 'none';
       a.href = url;
       a.download = fileName;
+      
+      console.log("Triggering download from dialog");
       a.click();
       
       // Clean up
@@ -124,7 +128,7 @@ export function ReportDetailDialog({ report, open, onOpenChange }: ReportDetailD
         description: "Failed to download PDF. Please try again.",
       });
     } finally {
-      setTimeout(() => setIsDownloading(false), 1000);
+      setIsDownloading(false);
     }
   };
 

@@ -168,15 +168,9 @@ export async function generatePDF(
     doc.setFontSize(8);
     doc.text(`Generated on: ${generatedDate}`, pageWidth - 15, doc.internal.pageSize.getHeight() - 10, { align: "right" });
     
-    console.log("PDF generation completed successfully");
-    
-    // Get raw PDF data as array buffer and create a blob from it
-    const arrayBuffer = doc.output('arraybuffer');
-    const blob = new Blob([arrayBuffer], { type: 'application/pdf' });
-    
-    console.log("PDF Blob created, size:", blob.size, "bytes");
-    
-    return blob;
+    // Save the PDF directly (more reliable than creating blob)
+    console.log("Saving PDF directly using jsPDF output method");
+    return new Blob([doc.output('arraybuffer')], { type: 'application/pdf' });
   } catch (error) {
     console.error("Error generating PDF:", error);
     throw new Error("Failed to generate PDF report");
