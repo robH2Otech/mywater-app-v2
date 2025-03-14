@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Download, Eye, Trash2 } from "lucide-react";
 import { toast } from "@/components/ui/use-toast";
-import { getReportTitle, downloadReportAsPdf } from "@/utils/reportUtils";
+import { getReportTitle, downloadReportAsTxt } from "@/utils/reportUtils";
 import { formatDistanceToNow } from "date-fns";
 import { deleteDoc, doc } from "firebase/firestore";
 import { db } from "@/integrations/firebase/client";
@@ -22,14 +22,17 @@ export function ReportListItem({ report, onViewReport, onReportDeleted }: Report
 
   const handleDownloadReport = async () => {
     try {
-      console.log("Downloading report:", report.id);
-      await downloadReportAsPdf(report);
+      await downloadReportAsTxt(report);
+      toast({
+        title: "Success",
+        description: "Report downloaded successfully",
+      });
     } catch (error) {
       console.error("Error downloading report:", error);
       toast({
         variant: "destructive",
         title: "Error",
-        description: "Failed to download report: " + (error instanceof Error ? error.message : String(error)),
+        description: "Failed to download report",
       });
     }
   };
@@ -66,7 +69,7 @@ export function ReportListItem({ report, onViewReport, onReportDeleted }: Report
   const unitName = report.unit_name || "Unknown Unit";
 
   return (
-    <Card key={report.id} className="p-4 bg-spotify-darker rounded-xl border-spotify-accent overflow-hidden">
+    <Card key={report.id} className="p-4 bg-spotify-darker rounded-xl overflow-hidden">
       <div className="flex justify-between items-start">
         <div>
           <h3 className="font-semibold text-white">

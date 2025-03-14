@@ -18,18 +18,17 @@ interface ReportActionsProps {
 export function ReportActions({ unit, reportType, metrics, startDate, endDate }: ReportActionsProps) {
   const handleGeneratePDF = async () => {
     try {
-      console.log("Generating PDF for unit:", unit.name);
       await generatePDF(unit, reportType, metrics, startDate, endDate);
       toast({
         title: "Success",
-        description: "PDF downloaded successfully",
+        description: "PDF generated and downloaded successfully",
       });
     } catch (error) {
       console.error("Error generating PDF:", error);
       toast({
         variant: "destructive",
         title: "Error",
-        description: "Failed to download PDF: " + (error instanceof Error ? error.message : String(error)),
+        description: "Failed to generate PDF",
       });
     }
   };

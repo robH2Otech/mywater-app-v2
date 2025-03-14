@@ -1,3 +1,4 @@
+
 import { ReportData } from "@/types/analytics";
 import { generatePDF } from "@/utils/pdfGenerator";
 import { getDateRangeForReportType } from "@/utils/reportGenerator";
@@ -11,10 +12,8 @@ export function getReportTitle(reportType: string): string {
   return reportType.charAt(0).toUpperCase() + reportType.slice(1) + " Report";
 }
 
-export async function downloadReportAsPdf(report: ReportData): Promise<void> {
+export async function downloadReportAsTxt(report: ReportData): Promise<void> {
   try {
-    console.log("Starting PDF download for report:", report.id);
-    
     // Get unit data
     const unitDocRef = doc(db, "units", report.unit_id);
     const unitSnapshot = await getDoc(unitDocRef);
@@ -29,36 +28,17 @@ export async function downloadReportAsPdf(report: ReportData): Promise<void> {
       ...unitSnapshot.data()
     };
     
-    console.log("Unit data retrieved:", unitData.name);
-    
     // Get date range
     const { startDate, endDate } = getDateRangeForReportType(report.report_type);
     
-    console.log("Date range:", { 
-      startDate: startDate.toISOString(), 
-      endDate: endDate.toISOString() 
-    });
-    
-    // Prepare metrics from report data if available
-    const metrics = report.metrics || {
-      totalVolume: 0,
-      avgVolume: 0,
-      maxVolume: 0,
-      avgTemperature: 0,
-      totalUvcHours: 0,
-      dailyData: []
-    };
-    
-    // Generate and directly download PDF
+    // Generate PDF
     await generatePDF(
       unitData, 
       report.report_type, 
-      metrics, 
+      report.metrics || {}, 
       startDate, 
       endDate
     );
-    
-    console.log("PDF generated successfully");
     
     toast({
       title: "Success",
@@ -70,11 +50,8 @@ export async function downloadReportAsPdf(report: ReportData): Promise<void> {
     toast({
       variant: "destructive",
       title: "Error",
-      description: "Failed to download report as PDF: " + (error instanceof Error ? error.message : String(error)),
+      description: "Failed to download report as PDF",
     });
+    throw error;
   }
-}
-
-export async function downloadReportAsTxt(report: ReportData): Promise<void> {
-  return downloadReportAsPdf(report);
 }
