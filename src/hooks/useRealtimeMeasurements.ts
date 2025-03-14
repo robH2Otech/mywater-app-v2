@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react";
 import { collection, onSnapshot, query, orderBy, limit } from "firebase/firestore";
 import { db } from "@/integrations/firebase/client";
-import { Measurement } from "@/utils/measurementUtils";
+import { Measurement } from "@/utils/measurements/types";
 
 export function useRealtimeMeasurements(unitId: string, count: number = 24) {
   const [measurements, setMeasurements] = useState<(Measurement & { id: string })[]>([]);
