@@ -1,17 +1,15 @@
 
-import { Card } from "@/components/ui/card";
-import { FileText } from "lucide-react";
+import { AlertCircle } from "lucide-react";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 export function ReportNoData() {
   return (
-    <Card className="p-6 bg-spotify-darker border-spotify-accent">
-      <div className="text-center">
-        <FileText className="h-16 w-16 mx-auto text-gray-400 mb-4" />
-        <h3 className="text-xl font-semibold mb-2">No Data Available</h3>
-        <p className="text-gray-400 mb-4">
-          There is no measurement data available for the selected period.
-        </p>
-      </div>
-    </Card>
+    <Alert className="bg-spotify-darker border-spotify-accent-hover">
+      <AlertCircle className="h-4 w-4" />
+      <AlertTitle>No data available</AlertTitle>
+      <AlertDescription>
+        There is no measurement data available for this report period. Try selecting a different time range or unit.
+      </AlertDescription>
+    </Alert>
   );
 }

@@ -1,31 +1,58 @@
 
+import { addDays, differenceInDays, format } from "date-fns";
+
 /**
- * Generate sample report data when no real data exists
+ * Generate sample report data for testing/demonstration
  */
 export function generateSampleReportData(startDate: Date, endDate: Date) {
+  const dayCount = differenceInDays(endDate, startDate) + 1;
   const sampleData = [];
-  let currentDate = new Date(startDate);
   
-  while (currentDate <= endDate) {
-    // Generate random volume between 500 and 2000
-    const volume = Math.floor(Math.random() * 1500) + 500;
+  console.log(`Generating ${dayCount} days of sample data from ${format(startDate, 'yyyy-MM-dd')} to ${format(endDate, 'yyyy-MM-dd')}`);
+  
+  // Base values
+  const baseVolume = 50 + Math.random() * 50; // Between 50-100
+  const baseTemperature = 20 + Math.random() * 10; // Between 20-30
+  const baseUvcHours = 2 + Math.random() * 3; // Between 2-5
+  
+  // Generate a data point for each day in the range
+  for (let i = 0; i < dayCount; i++) {
+    const currentDate = addDays(startDate, i);
+    const formattedDate = format(currentDate, 'yyyy-MM-dd');
     
-    // Generate random temperature between 18 and 28
-    const temperature = Math.floor(Math.random() * 10) + 18;
+    // Add some random variations
+    const volume = baseVolume + (Math.random() * 20 - 10); // +/- 10
+    const temperature = baseTemperature + (Math.random() * 4 - 2); // +/- 2
+    const uvcHours = baseUvcHours + (Math.random() * 2 - 1); // +/- 1
     
-    // Generate random UVC hours between 1 and 8
-    const uvcHours = Math.random() * 7 + 1;
-    
-    sampleData.push({
-      timestamp: currentDate.toISOString(),
-      volume: volume,
-      temperature: temperature,
-      uvc_hours: uvcHours
-    });
-    
-    // Move to next day
-    currentDate.setDate(currentDate.getDate() + 1);
+    // Create 3 data points per day to simulate multiple readings
+    for (let j = 0; j < 3; j++) {
+      const hour = 8 + j * 4; // 8am, 12pm, 4pm
+      const timestamp = `${formattedDate}T${hour.toString().padStart(2, '0')}:00:00.000Z`;
+      
+      // Small variations for each reading within the day
+      const hourlyVariation = (Math.random() * 2) - 1; // +/- 1
+      
+      sampleData.push({
+        id: `sample-${formattedDate}-${j}`,
+        timestamp,
+        volume: volume + hourlyVariation,
+        temperature: temperature + (hourlyVariation / 2),
+        uvc_hours: (uvcHours + (hourlyVariation / 3)) / 3, // Divide by 3 as we have 3 readings per day
+        cumulative_volume: 0 // Will be calculated in processing
+      });
+    }
   }
   
+  // Sort by timestamp and add cumulative volume
+  sampleData.sort((a, b) => a.timestamp.localeCompare(b.timestamp));
+  
+  let cumulativeVolume = 0;
+  sampleData.forEach(item => {
+    cumulativeVolume += item.volume;
+    item.cumulative_volume = cumulativeVolume;
+  });
+  
+  console.log(`Generated ${sampleData.length} sample data points`);
   return sampleData;
 }

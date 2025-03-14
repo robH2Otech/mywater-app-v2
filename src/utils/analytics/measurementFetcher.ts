@@ -40,6 +40,7 @@ export const fetchMeasurementsForReport = async (unitId: string, reportType: str
     
     // Create sample data if no real measurements exist (for testing/demo)
     if (measurements.length === 0) {
+      console.log("No real measurements found, generating sample data");
       const sampleData = generateSampleReportData(startDate, endDate);
       console.log("Generated sample data:", sampleData.length);
       return sampleData;
@@ -49,6 +50,7 @@ export const fetchMeasurementsForReport = async (unitId: string, reportType: str
   } catch (error) {
     console.error("Error fetching measurements for report:", error);
     // Generate sample data as fallback in case of error
+    console.log("Error fetching measurements, falling back to sample data");
     const { startDate, endDate } = getDateRangeForReportType(reportType);
     return generateSampleReportData(startDate, endDate);
   }

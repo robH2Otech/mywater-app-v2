@@ -48,9 +48,18 @@ export interface AlertData {
 export interface ReportData {
   id: string;
   unit_id: string;
+  unit_name?: string;
   report_type: string;
   content: string;
   measurements: any[];
+  metrics?: {
+    totalVolume: number;
+    avgVolume: number;
+    maxVolume: number;
+    avgTemperature: number;
+    totalUvcHours: number;
+    dailyData: any[];
+  };
   generated_by: string;
   created_at: string;
   updated_at?: string;

@@ -68,9 +68,11 @@ export async function handleReportGeneration(
     const reportsCollection = collection(db, "reports");
     const reportDoc = await addDoc(reportsCollection, {
       unit_id: selectedUnit,
+      unit_name: unitData.name,
       report_type: reportType,
       content: reportContent,
       measurements: measurements,
+      metrics: metrics,
       generated_by: user.uid,
       created_at: new Date().toISOString()
     });
