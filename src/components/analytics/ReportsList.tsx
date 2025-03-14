@@ -57,7 +57,7 @@ export function ReportsList({ reports, isLoading, error }: ReportsListProps) {
         <Alert variant="destructive">
           <AlertCircle className="h-4 w-4" />
           <AlertDescription>
-            Error loading reports: {error.message}
+            {error.message || "Error loading reports"}
           </AlertDescription>
         </Alert>
       </div>

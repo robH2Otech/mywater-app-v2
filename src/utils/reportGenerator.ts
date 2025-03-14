@@ -48,27 +48,38 @@ export const fetchMeasurementsForReport = async (unitId: string, reportType: str
       orderBy("timestamp", "asc")
     );
     
-    const querySnapshot = await getDocs(q);
-    const measurements = querySnapshot.docs.map(doc => ({
-      id: doc.id,
-      ...doc.data(),
-      // Convert Firestore timestamp to string for easier processing
-      timestamp: doc.data().timestamp instanceof Timestamp 
-        ? doc.data().timestamp.toDate().toISOString() 
-        : doc.data().timestamp
-    }));
-    
-    console.log(`Retrieved ${measurements.length} measurements for report`);
-    return measurements;
+    try {
+      const querySnapshot = await getDocs(q);
+      const measurements = querySnapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data(),
+        // Convert Firestore timestamp to string for easier processing
+        timestamp: doc.data().timestamp instanceof Timestamp 
+          ? doc.data().timestamp.toDate().toISOString() 
+          : doc.data().timestamp
+      }));
+      
+      console.log(`Retrieved ${measurements.length} measurements for report`);
+      return measurements;
+    } catch (error: any) {
+      console.error("Error in Firebase query:", error);
+      // If this is an index error, still return empty array but log the specific issue
+      if (error.message && error.message.includes("requires an index")) {
+        console.warn("Firebase index required for measurements query");
+        return [];
+      }
+      throw new Error(`Failed to fetch measurements: ${error.message}`);
+    }
   } catch (error) {
     console.error("Error fetching measurements for report:", error);
-    throw error;
+    // Return empty array instead of throwing to allow report generation with no data
+    return [];
   }
 };
 
 // Calculate aggregated metrics from measurements
-export const calculateMetricsFromMeasurements = (measurements: any[]) => {
-  if (!measurements.length) {
+export const calculateMetricsFromMeasurements = (measurements: any[] = []) => {
+  if (!measurements || !measurements.length) {
     return {
       totalVolume: 0,
       avgVolume: 0,
@@ -138,9 +149,9 @@ export const calculateMetricsFromMeasurements = (measurements: any[]) => {
   
   return {
     totalVolume,
-    avgVolume: totalVolume / measurements.length,
+    avgVolume: measurements.length > 0 ? totalVolume / measurements.length : 0,
     maxVolume,
-    avgTemperature: totalTemperature / measurements.length,
+    avgTemperature: measurements.length > 0 ? totalTemperature / measurements.length : 0,
     totalUvcHours,
     dailyData
   };

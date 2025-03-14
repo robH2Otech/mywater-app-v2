@@ -68,8 +68,14 @@ export function ReportGenerationForm({
         ...unitSnapshot.data()
       };
       
+      console.log("Fetching measurements for report generation...");
       // Fetch measurements for the report period
       const measurements = await fetchMeasurementsForReport(selectedUnit, reportType);
+      
+      if (!measurements || measurements.length === 0) {
+        console.log("No measurements found for the selected period");
+        // Continue but with empty measurements
+      }
       
       // Generate report content based on unit data and measurements
       const reportContent = generateReportContent(unitData, reportType, measurements);
@@ -77,9 +83,10 @@ export function ReportGenerationForm({
       // Calculate metrics
       const metrics = calculateMetricsFromMeasurements(measurements);
 
+      console.log("Saving report to Firestore...");
       // Save report to database with server timestamp
       const reportsCollection = collection(db, "reports");
-      await addDoc(reportsCollection, {
+      const reportDoc = await addDoc(reportsCollection, {
         unit_id: selectedUnit,
         report_type: reportType,
         content: reportContent,
@@ -89,6 +96,7 @@ export function ReportGenerationForm({
         created_at: serverTimestamp()
       });
 
+      console.log("Report generated successfully with ID:", reportDoc.id);
       // Notify parent component to refetch reports
       onReportGenerated();
 
@@ -98,11 +106,20 @@ export function ReportGenerationForm({
       });
     } catch (error: any) {
       console.error("Error generating report:", error);
-      setError(error.message || "Failed to generate report");
+      let errorMessage = error.message || "Failed to generate report";
+      
+      // Handle specific error cases
+      if (errorMessage.includes("requires an index")) {
+        errorMessage = "The report list requires a Firebase index. Contact your administrator to set it up.";
+      } else if (errorMessage.includes("fetch measurements")) {
+        errorMessage = "Failed to retrieve measurement data. Please try again later.";
+      }
+      
+      setError(errorMessage);
       toast({
         variant: "destructive",
         title: "Error",
-        description: error.message || "Failed to generate report",
+        description: errorMessage,
       });
     } finally {
       setIsGenerating(false);

@@ -11,6 +11,7 @@ interface ExtendedJsPDF extends jsPDF {
   lastAutoTable?: {
     finalY: number;
   };
+  autoTable: Function;
 }
 
 export async function generatePDF(
@@ -20,153 +21,158 @@ export async function generatePDF(
   startDate: Date,
   endDate: Date
 ): Promise<void> {
-  // Create a new jsPDF instance
-  const doc = new jsPDF() as ExtendedJsPDF;
-  const pageWidth = doc.internal.pageSize.getWidth();
-  
-  // Add company logo/header
-  doc.setFontSize(20);
-  doc.setTextColor(0, 128, 0);
-  doc.text("MYWATER Technologies", pageWidth / 2, 20, { align: "center" });
-  
-  // Add report title
-  doc.setFontSize(16);
-  doc.setTextColor(0, 0, 0);
-  doc.text(`${getReportTitle(reportType)}: ${unit.name || ""}`, pageWidth / 2, 30, { align: "center" });
-  
-  // Add date range
-  doc.setFontSize(12);
-  doc.text(
-    `Period: ${format(startDate, 'MMM dd, yyyy')} to ${format(endDate, 'MMM dd, yyyy')}`,
-    pageWidth / 2, 
-    40, 
-    { align: "center" }
-  );
-  
-  // Add unit information section
-  doc.setFontSize(14);
-  doc.text("Unit Information", 14, 50);
-  doc.setFontSize(10);
-  
-  const unitInfo = [
-    ["Name", unit.name || "N/A"],
-    ["Location", unit.location || "N/A"],
-    ["Status", unit.status || "N/A"],
-    ["Total Capacity", `${unit.total_volume || 0} units`]
-  ];
-  
-  // @ts-ignore - jspdf-autotable types
-  doc.autoTable({
-    startY: 55,
-    head: [["Property", "Value"]],
-    body: unitInfo,
-    theme: 'grid',
-    headStyles: { fillColor: [0, 150, 0] }
-  });
-  
-  // Add performance metrics section
-  doc.setFontSize(14);
-  const finalY1 = doc.lastAutoTable?.finalY || 120;
-  doc.text("Performance Metrics", 14, finalY1 + 10);
-  
-  const performanceMetrics = [
-    ["Total Volume Processed", `${metrics.totalVolume.toFixed(2)} units`],
-    ["Average Daily Volume", `${metrics.avgVolume.toFixed(2)} units`],
-    ["Maximum Daily Volume", `${metrics.maxVolume.toFixed(2)} units`],
-    ["Average Temperature", `${metrics.avgTemperature.toFixed(2)} °C`],
-    ["Total UVC Hours", `${metrics.totalUvcHours.toFixed(2)} hours`]
-  ];
-  
-  // @ts-ignore - jspdf-autotable types
-  doc.autoTable({
-    startY: finalY1 + 15,
-    head: [["Metric", "Value"]],
-    body: performanceMetrics,
-    theme: 'grid',
-    headStyles: { fillColor: [0, 150, 0] }
-  });
-  
-  // Add daily data table
-  doc.setFontSize(14);
-  const finalY2 = doc.lastAutoTable?.finalY || 200;
-  doc.text("Daily Measurements", 14, finalY2 + 10);
-  
-  // Sort data by date (ascending)
-  const sortedData = [...metrics.dailyData].sort((a, b) => 
-    new Date(a.date).getTime() - new Date(b.date).getTime()
-  );
-  
-  const dailyData = sortedData.map(day => [
-    new Date(day.date).toLocaleDateString(),
-    `${day.volume.toFixed(2)} units`,
-    `${day.avgTemperature.toFixed(2)} °C`,
-    `${day.uvcHours.toFixed(2)} hours`
-  ]);
-  
-  // @ts-ignore - jspdf-autotable types
-  doc.autoTable({
-    startY: finalY2 + 15,
-    head: [["Date", "Volume", "Avg. Temperature", "UVC Hours"]],
-    body: dailyData,
-    theme: 'grid',
-    headStyles: { fillColor: [0, 150, 0] }
-  });
-  
-  // Add maintenance information
-  doc.setFontSize(14);
-  const finalY3 = doc.lastAutoTable?.finalY || 280;
-  doc.text("Maintenance Information", 14, finalY3 + 10);
-  
-  const maintenanceInfo = [
-    ["Last Maintenance", unit.last_maintenance ? new Date(unit.last_maintenance).toLocaleDateString() : "N/A"],
-    ["Next Maintenance", unit.next_maintenance ? new Date(unit.next_maintenance).toLocaleDateString() : "N/A"]
-  ];
-  
-  // @ts-ignore - jspdf-autotable types
-  doc.autoTable({
-    startY: finalY3 + 15,
-    head: [["Maintenance", "Date"]],
-    body: maintenanceInfo,
-    theme: 'grid',
-    headStyles: { fillColor: [0, 150, 0] }
-  });
-  
-  // Add contact information
-  if (unit.contact_name || unit.contact_email || unit.contact_phone) {
-    doc.setFontSize(14);
-    const finalY4 = doc.lastAutoTable?.finalY || 320;
-    doc.text("Contact Information", 14, finalY4 + 10);
+  try {
+    // Create a new jsPDF instance
+    const doc = new jsPDF() as ExtendedJsPDF;
+    const pageWidth = doc.internal.pageSize.getWidth();
     
-    const contactInfo = [
-      ["Name", unit.contact_name || "N/A"],
-      ["Email", unit.contact_email || "N/A"],
-      ["Phone", unit.contact_phone || "N/A"]
+    // Add company logo/header
+    doc.setFontSize(20);
+    doc.setTextColor(0, 128, 0);
+    doc.text("MYWATER Technologies", pageWidth / 2, 20, { align: "center" });
+    
+    // Add report title
+    doc.setFontSize(16);
+    doc.setTextColor(0, 0, 0);
+    doc.text(`${getReportTitle(reportType)}: ${unit.name || ""}`, pageWidth / 2, 30, { align: "center" });
+    
+    // Add date range
+    doc.setFontSize(12);
+    doc.text(
+      `Period: ${format(startDate, 'MMM dd, yyyy')} to ${format(endDate, 'MMM dd, yyyy')}`,
+      pageWidth / 2, 
+      40, 
+      { align: "center" }
+    );
+    
+    // Add unit information section
+    doc.setFontSize(14);
+    doc.text("Unit Information", 14, 50);
+    doc.setFontSize(10);
+    
+    const unitInfo = [
+      ["Name", unit.name || "N/A"],
+      ["Location", unit.location || "N/A"],
+      ["Status", unit.status || "N/A"],
+      ["Total Capacity", `${unit.total_volume || 0} units`]
     ];
     
     // @ts-ignore - jspdf-autotable types
     doc.autoTable({
-      startY: finalY4 + 15,
-      head: [["Contact", "Details"]],
-      body: contactInfo,
+      startY: 55,
+      head: [["Property", "Value"]],
+      body: unitInfo,
       theme: 'grid',
       headStyles: { fillColor: [0, 150, 0] }
     });
-  }
-  
-  // Add notes if available
-  if (unit.notes) {
+    
+    // Add performance metrics section
     doc.setFontSize(14);
-    const finalY5 = doc.lastAutoTable?.finalY || 350;
-    doc.text("Notes", 14, finalY5 + 10);
-    doc.setFontSize(10);
-    doc.text(unit.notes, 14, finalY5 + 20);
+    const finalY1 = doc.lastAutoTable?.finalY || 120;
+    doc.text("Performance Metrics", 14, finalY1 + 10);
+    
+    const performanceMetrics = [
+      ["Total Volume Processed", `${metrics.totalVolume.toFixed(2)} units`],
+      ["Average Daily Volume", `${metrics.avgVolume.toFixed(2)} units`],
+      ["Maximum Daily Volume", `${metrics.maxVolume.toFixed(2)} units`],
+      ["Average Temperature", `${metrics.avgTemperature.toFixed(2)} °C`],
+      ["Total UVC Hours", `${metrics.totalUvcHours.toFixed(2)} hours`]
+    ];
+    
+    // @ts-ignore - jspdf-autotable types
+    doc.autoTable({
+      startY: finalY1 + 15,
+      head: [["Metric", "Value"]],
+      body: performanceMetrics,
+      theme: 'grid',
+      headStyles: { fillColor: [0, 150, 0] }
+    });
+    
+    // Add daily data table
+    doc.setFontSize(14);
+    const finalY2 = doc.lastAutoTable?.finalY || 200;
+    doc.text("Daily Measurements", 14, finalY2 + 10);
+    
+    // Sort data by date (ascending)
+    const sortedData = [...(metrics.dailyData || [])].sort((a, b) => 
+      new Date(a.date).getTime() - new Date(b.date).getTime()
+    );
+    
+    const dailyData = sortedData.map(day => [
+      new Date(day.date).toLocaleDateString(),
+      `${day.volume.toFixed(2)} units`,
+      `${day.avgTemperature.toFixed(2)} °C`,
+      `${day.uvcHours.toFixed(2)} hours`
+    ]);
+    
+    // @ts-ignore - jspdf-autotable types
+    doc.autoTable({
+      startY: finalY2 + 15,
+      head: [["Date", "Volume", "Avg. Temperature", "UVC Hours"]],
+      body: dailyData,
+      theme: 'grid',
+      headStyles: { fillColor: [0, 150, 0] }
+    });
+    
+    // Add maintenance information
+    doc.setFontSize(14);
+    const finalY3 = doc.lastAutoTable?.finalY || 280;
+    doc.text("Maintenance Information", 14, finalY3 + 10);
+    
+    const maintenanceInfo = [
+      ["Last Maintenance", unit.last_maintenance ? new Date(unit.last_maintenance).toLocaleDateString() : "N/A"],
+      ["Next Maintenance", unit.next_maintenance ? new Date(unit.next_maintenance).toLocaleDateString() : "N/A"]
+    ];
+    
+    // @ts-ignore - jspdf-autotable types
+    doc.autoTable({
+      startY: finalY3 + 15,
+      head: [["Maintenance", "Date"]],
+      body: maintenanceInfo,
+      theme: 'grid',
+      headStyles: { fillColor: [0, 150, 0] }
+    });
+    
+    // Add contact information
+    if (unit.contact_name || unit.contact_email || unit.contact_phone) {
+      doc.setFontSize(14);
+      const finalY4 = doc.lastAutoTable?.finalY || 320;
+      doc.text("Contact Information", 14, finalY4 + 10);
+      
+      const contactInfo = [
+        ["Name", unit.contact_name || "N/A"],
+        ["Email", unit.contact_email || "N/A"],
+        ["Phone", unit.contact_phone || "N/A"]
+      ];
+      
+      // @ts-ignore - jspdf-autotable types
+      doc.autoTable({
+        startY: finalY4 + 15,
+        head: [["Contact", "Details"]],
+        body: contactInfo,
+        theme: 'grid',
+        headStyles: { fillColor: [0, 150, 0] }
+      });
+    }
+    
+    // Add notes if available
+    if (unit.notes) {
+      doc.setFontSize(14);
+      const finalY5 = doc.lastAutoTable?.finalY || 350;
+      doc.text("Notes", 14, finalY5 + 10);
+      doc.setFontSize(10);
+      doc.text(unit.notes, 14, finalY5 + 20);
+    }
+    
+    // Add footer with generation date
+    const generatedDate = new Date().toLocaleString();
+    doc.setFontSize(8);
+    doc.text(`Generated on: ${generatedDate}`, pageWidth - 15, doc.internal.pageSize.getHeight() - 10, { align: "right" });
+    
+    // Save the PDF
+    doc.save(`${reportType}-report-${unit.name}-${format(new Date(), 'yyyy-MM-dd')}.pdf`);
+  } catch (error) {
+    console.error("Error generating PDF:", error);
+    throw new Error("Failed to generate PDF report");
   }
-  
-  // Add footer with generation date
-  const generatedDate = new Date().toLocaleString();
-  doc.setFontSize(8);
-  doc.text(`Generated on: ${generatedDate}`, pageWidth - 15, doc.internal.pageSize.getHeight() - 10, { align: "right" });
-  
-  // Save the PDF
-  doc.save(`${reportType}-report-${unit.name}-${format(new Date(), 'yyyy-MM-dd')}.pdf`);
 }
