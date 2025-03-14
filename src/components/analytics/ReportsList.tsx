@@ -1,166 +1,92 @@
 
-import { Button } from "@/components/ui/button";
+import { useEffect, useState } from "react";
 import { Card } from "@/components/ui/card";
-import { Download, Eye } from "lucide-react";
-import { toast } from "@/components/ui/use-toast";
 import { ReportData } from "@/types/analytics";
-import { useState } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { ReportVisual } from "./ReportVisual";
-import { doc, getDoc } from "firebase/firestore";
-import { db } from "@/integrations/firebase/client";
-import { calculateMetricsFromMeasurements } from "@/utils/reportGenerator";
+import { ReportListItem } from "./reports/ReportListItem";
+import { ReportEmptyState } from "./reports/ReportEmptyState";
+import { ReportDetailDialog } from "./reports/ReportDetailDialog";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { AlertCircle } from "lucide-react";
+import { LoadingSkeleton } from "@/components/shared/LoadingSkeleton";
 
 interface ReportsListProps {
   reports: ReportData[];
+  isLoading: boolean;
+  error: Error | null;
 }
 
-export function ReportsList({ reports }: ReportsListProps) {
-  const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
+export function ReportsList({ reports, isLoading, error }: ReportsListProps) {
   const [selectedReport, setSelectedReport] = useState<ReportData | null>(null);
-  const [unitData, setUnitData] = useState<any>(null);
-  const [reportMetrics, setReportMetrics] = useState<any>(null);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
 
-  const handleDownloadReport = async (reportId: string, content: string) => {
-    try {
-      // Create a Blob from the content
-      const blob = new Blob([content], { type: 'text/plain' });
-      const url = window.URL.createObjectURL(blob);
-      
-      // Create a temporary link and trigger download
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = `report-${reportId}.txt`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      window.URL.revokeObjectURL(url);
+  // Close dialog when reports change (e.g., when unit selection changes)
+  useEffect(() => {
+    setIsViewDialogOpen(false);
+    setSelectedReport(null);
+  }, [reports]);
 
-      toast({
-        title: "Success",
-        description: "Report downloaded successfully",
-      });
-    } catch (error) {
-      console.error("Error downloading report:", error);
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Failed to download report",
-      });
-    }
+  // Handle view report
+  const handleViewReport = (report: ReportData) => {
+    setSelectedReport(report);
+    setIsViewDialogOpen(true);
   };
 
-  const handleViewReport = async (report: ReportData) => {
-    setIsLoading(true);
-    try {
-      setSelectedReport(report);
-      
-      // Fetch unit data
-      const unitDocRef = doc(db, "units", report.unit_id);
-      const unitSnapshot = await getDoc(unitDocRef);
-      
-      if (unitSnapshot.exists()) {
-        const unitDataObj = {
-          id: unitSnapshot.id,
-          ...unitSnapshot.data()
-        };
-        setUnitData(unitDataObj);
-        
-        // Calculate metrics from measurements
-        const measurements = report.measurements || [];
-        const metrics = calculateMetricsFromMeasurements(measurements);
-        setReportMetrics(metrics);
-        
-        setIsViewDialogOpen(true);
-      } else {
-        toast({
-          variant: "destructive",
-          title: "Error",
-          description: "Unit data not found",
-        });
-      }
-    } catch (error) {
-      console.error("Error loading report details:", error);
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Failed to load report details",
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  if (reports.length === 0) {
-    return null;
-  }
-
-  return (
-    <>
+  // Show loading state
+  if (isLoading) {
+    return (
       <div className="space-y-4 mt-8">
         <h2 className="text-xl font-semibold">Generated Reports</h2>
         <div className="grid gap-4">
-          {reports.map((report) => (
-            <Card key={report.id} className="p-4 bg-spotify-darker">
-              <div className="flex justify-between items-start">
-                <div>
-                  <h3 className="font-semibold text-white">
-                    {report.report_type.charAt(0).toUpperCase() + report.report_type.slice(1)} Report
-                  </h3>
-                  <p className="text-sm text-gray-400 mt-1">
-                    Generated on {new Date(report.created_at).toLocaleString()}
-                  </p>
-                  <div className="mt-2 text-sm text-gray-300 line-clamp-3 whitespace-pre-wrap">
-                    {report.content}
-                  </div>
-                </div>
-                <div className="flex space-x-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handleViewReport(report)}
-                    disabled={isLoading}
-                    className="flex items-center"
-                  >
-                    <Eye className="h-4 w-4 mr-2" />
-                    View
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handleDownloadReport(report.id, report.content)}
-                    className="flex items-center"
-                  >
-                    <Download className="h-4 w-4 mr-2" />
-                    Download
-                  </Button>
-                </div>
-              </div>
+          {[1, 2, 3].map((index) => (
+            <Card key={index} className="p-4 bg-spotify-darker">
+              <LoadingSkeleton className="h-32 w-full" />
             </Card>
           ))}
         </div>
       </div>
+    );
+  }
 
-      <Dialog open={isViewDialogOpen} onOpenChange={setIsViewDialogOpen}>
-        <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto bg-spotify-dark">
-          <DialogHeader>
-            <DialogTitle>Report Details</DialogTitle>
-          </DialogHeader>
-          
-          {selectedReport && unitData && reportMetrics ? (
-            <ReportVisual 
-              unit={unitData} 
-              reportType={selectedReport.report_type} 
-              metrics={reportMetrics} 
-            />
-          ) : (
-            <div className="flex justify-center items-center p-8">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-spotify-green"></div>
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
-    </>
+  // Show error state
+  if (error) {
+    return (
+      <div className="space-y-4 mt-8">
+        <h2 className="text-xl font-semibold">Generated Reports</h2>
+        <Alert variant="destructive">
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription>
+            Error loading reports: {error.message}
+          </AlertDescription>
+        </Alert>
+      </div>
+    );
+  }
+
+  // Show empty state
+  if (reports.length === 0) {
+    return <ReportEmptyState />;
+  }
+
+  return (
+    <div className="space-y-4 mt-8">
+      <h2 className="text-xl font-semibold">Generated Reports</h2>
+      <div className="grid gap-4">
+        {reports.map((report) => (
+          <ReportListItem 
+            key={report.id} 
+            report={report} 
+            onViewReport={handleViewReport} 
+          />
+        ))}
+      </div>
+
+      {selectedReport && (
+        <ReportDetailDialog
+          open={isViewDialogOpen}
+          onOpenChange={setIsViewDialogOpen}
+          report={selectedReport}
+        />
+      )}
+    </div>
   );
 }

@@ -4,7 +4,7 @@ import { UnitSelector } from "@/components/analytics/UnitSelector";
 import { ReportTypeSelector } from "@/components/analytics/ReportTypeSelector";
 import { Button } from "@/components/ui/button";
 import { toast } from "@/components/ui/use-toast";
-import { doc, getDoc, addDoc, collection, DocumentData } from "firebase/firestore";
+import { doc, getDoc, addDoc, collection, serverTimestamp } from "firebase/firestore";
 import { getAuth } from "firebase/auth";
 import { db } from "@/integrations/firebase/client";
 import { UnitData } from "@/types/analytics";
@@ -13,6 +13,9 @@ import {
   fetchMeasurementsForReport,
   calculateMetricsFromMeasurements
 } from "@/utils/reportGenerator";
+import { Card, CardContent } from "@/components/ui/card";
+import { FileText, AlertCircle } from "lucide-react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 interface ReportGenerationFormProps {
   selectedUnit: string;
@@ -27,6 +30,7 @@ export function ReportGenerationForm({
 }: ReportGenerationFormProps) {
   const [reportType, setReportType] = useState("");
   const [isGenerating, setIsGenerating] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const handleGenerateReport = async () => {
     if (!selectedUnit || !reportType) {
@@ -39,6 +43,8 @@ export function ReportGenerationForm({
     }
 
     setIsGenerating(true);
+    setError(null);
+    
     try {
       const auth = getAuth();
       const user = auth.currentUser;
@@ -59,7 +65,7 @@ export function ReportGenerationForm({
       const unitData: UnitData = {
         id: unitSnapshot.id,
         name: unitSnapshot.data().name || 'Unknown Unit',
-        ...unitSnapshot.data() as DocumentData
+        ...unitSnapshot.data()
       };
       
       // Fetch measurements for the report period
@@ -68,15 +74,19 @@ export function ReportGenerationForm({
       // Generate report content based on unit data and measurements
       const reportContent = generateReportContent(unitData, reportType, measurements);
 
-      // Save report to database
+      // Calculate metrics
+      const metrics = calculateMetricsFromMeasurements(measurements);
+
+      // Save report to database with server timestamp
       const reportsCollection = collection(db, "reports");
       await addDoc(reportsCollection, {
         unit_id: selectedUnit,
         report_type: reportType,
         content: reportContent,
         measurements: measurements,
+        metrics: metrics,
         generated_by: user.uid,
-        created_at: new Date().toISOString()
+        created_at: serverTimestamp()
       });
 
       // Notify parent component to refetch reports
@@ -88,6 +98,7 @@ export function ReportGenerationForm({
       });
     } catch (error: any) {
       console.error("Error generating report:", error);
+      setError(error.message || "Failed to generate report");
       toast({
         variant: "destructive",
         title: "Error",
@@ -99,26 +110,44 @@ export function ReportGenerationForm({
   };
 
   return (
-    <div className="space-y-6">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-2xl">
-        <UnitSelector 
-          value={selectedUnit} 
-          onChange={onUnitChange} 
-        />
+    <Card className="bg-spotify-darker">
+      <CardContent className="pt-6">
+        <h2 className="text-xl font-semibold mb-4">Generate New Report</h2>
         
-        <ReportTypeSelector 
-          value={reportType} 
-          onChange={setReportType} 
-        />
-      </div>
+        {error && (
+          <Alert variant="destructive" className="mb-4">
+            <AlertCircle className="h-4 w-4" />
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
+        )}
+        
+        <div className="space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-2xl">
+            <UnitSelector 
+              value={selectedUnit} 
+              onChange={onUnitChange} 
+            />
+            
+            <ReportTypeSelector 
+              value={reportType} 
+              onChange={setReportType} 
+            />
+          </div>
 
-      <Button 
-        onClick={handleGenerateReport}
-        className="bg-spotify-green hover:bg-spotify-green/90"
-        disabled={!selectedUnit || !reportType || isGenerating}
-      >
-        {isGenerating ? "Generating..." : "Generate Report"}
-      </Button>
-    </div>
+          <Button 
+            onClick={handleGenerateReport}
+            className="bg-spotify-green hover:bg-spotify-green/90"
+            disabled={!selectedUnit || !reportType || isGenerating}
+          >
+            {isGenerating ? "Generating..." : (
+              <>
+                <FileText className="mr-2 h-4 w-4" />
+                Generate Report
+              </>
+            )}
+          </Button>
+        </div>
+      </CardContent>
+    </Card>
   );
 }

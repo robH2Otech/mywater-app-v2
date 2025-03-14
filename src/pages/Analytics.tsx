@@ -3,10 +3,11 @@ import { ReportGenerationForm } from "@/components/analytics/ReportGenerationFor
 import { ReportsList } from "@/components/analytics/ReportsList";
 import { useReports } from "@/hooks/useReports";
 import { useState } from "react";
+import { PageHeader } from "@/components/shared/PageHeader";
 
 export function Analytics() {
   const [selectedUnit, setSelectedUnit] = useState("");
-  const { data: reports = [], refetch: refetchReports } = useReports(selectedUnit);
+  const { data: reports = [], isLoading, error, refetch: refetchReports } = useReports(selectedUnit);
 
   const handleReportGenerated = () => {
     refetchReports();
@@ -14,7 +15,10 @@ export function Analytics() {
 
   return (
     <div className="container mx-auto p-6 space-y-6">
-      <h1 className="text-2xl font-bold mb-6">Analytics</h1>
+      <PageHeader
+        title="Analytics & Reports"
+        description="Generate and view performance reports for your water treatment units"
+      />
       
       <ReportGenerationForm 
         selectedUnit={selectedUnit}
@@ -22,7 +26,11 @@ export function Analytics() {
         onReportGenerated={handleReportGenerated} 
       />
       
-      <ReportsList reports={reports} />
+      <ReportsList 
+        reports={reports} 
+        isLoading={isLoading} 
+        error={error} 
+      />
     </div>
   );
 }
