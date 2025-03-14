@@ -38,8 +38,10 @@ export function ReportsList({ reports, isLoading, error }: ReportsListProps) {
         <h2 className="text-xl font-semibold">Generated Reports</h2>
         <div className="grid gap-4">
           {[1, 2, 3].map((index) => (
-            <Card key={index} className="p-4">
-              <LoadingSkeleton />
+            <Card key={index} className="p-4 bg-spotify-darker">
+              <div className="h-32 w-full">
+                <LoadingSkeleton />
+              </div>
             </Card>
           ))}
         </div>

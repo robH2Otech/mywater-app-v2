@@ -40,7 +40,7 @@ export function ReportListItem({ report, onViewReport }: ReportListItemProps) {
     new Date();
 
   return (
-    <Card key={report.id} className="p-4">
+    <Card key={report.id} className="p-4 bg-spotify-darker">
       <div className="flex justify-between items-start">
         <div>
           <h3 className="font-semibold text-white">

@@ -57,7 +57,7 @@
   --spotify-darker: #090909;
   --spotify-light: #282828;
   --spotify-green: #1DB954;
-  --spotify-accent: #181818;
+  --spotify-accent: #1F1F1F;
   --spotify-accent-hover: #333333;
 }
 
@@ -91,9 +91,5 @@
   }
   .hover\:bg-spotify-green\/90:hover {
     background-color: rgba(29, 185, 84, 0.9);
-  }
-  /* Glass effect with less white */
-  .glass {
-    @apply bg-black/40 backdrop-blur-sm border border-white/5 !important;
   }
 }

@@ -1,4 +1,3 @@
-
 import { Link } from "react-router-dom";
 import { Card } from "@/components/ui/card";
 import { LucideIcon } from "lucide-react";
@@ -24,7 +23,7 @@ export const StatCard = ({
 }: StatCardProps) => {
   return (
     <Link to={link} className="block">
-      <Card className="p-6 hover:bg-spotify-accent transition-colors h-[120px] flex items-center">
+      <Card className="p-6 glass hover:bg-spotify-accent/40 transition-colors h-[120px] flex items-center">
         <div className="flex justify-between items-center w-full">
           <div>
             <p className="text-sm text-gray-400">{title}</p>
