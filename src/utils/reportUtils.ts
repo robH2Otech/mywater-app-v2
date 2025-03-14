@@ -66,10 +66,6 @@ export async function downloadReportAsPdf(report: ReportData): Promise<void> {
       endDate
     );
     
-    if (!pdfBlob) {
-      throw new Error("Failed to generate PDF blob");
-    }
-    
     // Prepare filename
     const fileName = `${unitData.name}_${report.report_type}_report_${new Date().toISOString().split('T')[0]}.pdf`;
     console.log("Prepared filename:", fileName);
@@ -77,22 +73,14 @@ export async function downloadReportAsPdf(report: ReportData): Promise<void> {
     // Create URL for the blob
     const url = URL.createObjectURL(pdfBlob);
     
-    // Create a download link and trigger download
-    const downloadLink = document.createElement('a');
-    downloadLink.href = url;
-    downloadLink.download = fileName;
-    document.body.appendChild(downloadLink);
-    
-    // Trigger the download
-    console.log("Triggering download");
-    downloadLink.click();
-    
-    // Clean up
-    setTimeout(() => {
-      document.body.removeChild(downloadLink);
-      URL.revokeObjectURL(url);
-      console.log("PDF download complete, cleaned up resources");
-    }, 100);
+    // Simple download approach
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = fileName;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
     
     toast({
       title: "Success",
