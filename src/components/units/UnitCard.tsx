@@ -80,7 +80,7 @@ export const UnitCard = ({
   return (
     <>
       <Link to={`/units/${id}`} className="block">
-        <Card className="p-6 bg-spotify-darker hover:bg-spotify-accent/40 transition-colors relative group">
+        <Card className="p-6 bg-spotify-darker hover:bg-spotify-accent/40 transition-colors relative group rounded-xl overflow-hidden">
           <Button
             variant="ghost"
             size="icon"
