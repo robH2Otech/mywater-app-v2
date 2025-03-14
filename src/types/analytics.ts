@@ -1,24 +1,26 @@
 
 import { DocumentData } from "firebase/firestore";
-import { jsPDF } from "jspdf";
 
 export interface UnitData {
   id: string;
   name?: string;
   location?: string;
-  model?: string;
   status?: string;
-  uvc_status?: string;
-  total_volume?: number;
-  current_volume?: number;
-  max_volume?: number;
+  total_volume?: number | string;
   last_maintenance?: string;
   next_maintenance?: string;
+  setup_date?: string;
+  uvc_hours?: number;
+  uvc_status?: string;
+  uvc_installation_date?: string;
   contact_name?: string;
   contact_email?: string;
   contact_phone?: string;
   notes?: string;
-  [key: string]: any;
+  created_at?: string;
+  updated_at?: string;
+  eid?: string;
+  iccid?: string;
 }
 
 export interface FilterData {
@@ -48,24 +50,14 @@ export interface AlertData {
 export interface ReportData {
   id: string;
   unit_id: string;
-  unit_name?: string;
   report_type: string;
   content: string;
-  measurements: any[];
-  metrics?: {
-    totalVolume: number;
-    avgVolume: number;
-    maxVolume: number;
-    avgTemperature: number;
-    totalUvcHours: number;
-    dailyData: any[];
-  };
+  measurements?: any[];
   generated_by: string;
   created_at: string;
-  updated_at?: string;
+  [key: string]: any;
 }
 
-// Adding the missing MeasurementData interface that's imported in UnitMeasurements.tsx
 export interface MeasurementData {
   id: string;
   timestamp: string;
@@ -73,13 +65,4 @@ export interface MeasurementData {
   temperature: number;
   cumulative_volume: number;
   uvc_hours?: number;
-  raw_timestamp?: any;
-}
-
-declare module "jspdf" {
-  interface jsPDF {
-    lastAutoTable: {
-      finalY: number;
-    };
-  }
 }

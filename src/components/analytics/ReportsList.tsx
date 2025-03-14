@@ -1,54 +1,41 @@
 
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { Download, Eye } from "lucide-react";
+import { toast } from "@/components/ui/use-toast";
+import { ReportData } from "@/types/analytics";
 import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { toast } from "@/components/ui/use-toast";
-import { ReportData, UnitData } from "@/types/analytics";
+import { ReportVisual } from "./ReportVisual";
 import { doc, getDoc } from "firebase/firestore";
 import { db } from "@/integrations/firebase/client";
-import { ReportVisual } from "./ReportVisual";
-import { ReportEmptyState } from "./ReportEmptyState";
-import { ReportListItem } from "./ReportListItem";
 import { calculateMetricsFromMeasurements } from "@/utils/reportGenerator";
-import { generateReportPDF } from "@/utils/analytics/pdfGenerator";
-import { getDateRangeForReportType } from "@/utils/reportGenerator";
-import { Button } from "@/components/ui/button";
-import { RefreshCw } from "lucide-react";
 
 interface ReportsListProps {
   reports: ReportData[];
-  isLoading: boolean;
-  onRefresh: () => void;
 }
 
-export function ReportsList({ reports, isLoading, onRefresh }: ReportsListProps) {
+export function ReportsList({ reports }: ReportsListProps) {
   const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
   const [selectedReport, setSelectedReport] = useState<ReportData | null>(null);
-  const [unitData, setUnitData] = useState<UnitData | null>(null);
+  const [unitData, setUnitData] = useState<any>(null);
   const [reportMetrics, setReportMetrics] = useState<any>(null);
-  const [isActionLoading, setIsActionLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
-  const handleDownloadReport = async (report: ReportData) => {
+  const handleDownloadReport = async (reportId: string, content: string) => {
     try {
-      setIsActionLoading(true);
-      console.log("Downloading report:", report.id);
+      // Create a Blob from the content
+      const blob = new Blob([content], { type: 'text/plain' });
+      const url = window.URL.createObjectURL(blob);
       
-      // Ensure we have unit data
-      let unitDataForPdf = await fetchUnitData(report.unit_id);
-      
-      // Generate PDF with the report data
-      const { startDate, endDate } = getDateRangeForReportType(report.report_type);
-      
-      // Use stored metrics if available, otherwise calculate them
-      const metrics = report.metrics || calculateMetricsFromMeasurements(report.measurements || []);
-      
-      // Generate and download PDF
-      generateReportPDF(
-        unitDataForPdf,
-        report.report_type,
-        metrics,
-        startDate,
-        endDate
-      );
+      // Create a temporary link and trigger download
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `report-${reportId}.txt`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
 
       toast({
         title: "Success",
@@ -61,40 +48,38 @@ export function ReportsList({ reports, isLoading, onRefresh }: ReportsListProps)
         title: "Error",
         description: "Failed to download report",
       });
-    } finally {
-      setIsActionLoading(false);
     }
   };
 
   const handleViewReport = async (report: ReportData) => {
-    setIsActionLoading(true);
+    setIsLoading(true);
     try {
-      console.log("Opening report for viewing:", report);
       setSelectedReport(report);
       
-      if (!report.unit_id) {
-        throw new Error("Report missing unit ID");
-      }
-      
       // Fetch unit data
-      const unitDataObj = await fetchUnitData(report.unit_id);
-      setUnitData(unitDataObj);
+      const unitDocRef = doc(db, "units", report.unit_id);
+      const unitSnapshot = await getDoc(unitDocRef);
       
-      // Use stored metrics if available, otherwise calculate from measurements
-      let metrics;
-      if (report.metrics) {
-        metrics = report.metrics;
-        console.log("Using stored metrics:", metrics);
-      } else {
+      if (unitSnapshot.exists()) {
+        const unitDataObj = {
+          id: unitSnapshot.id,
+          ...unitSnapshot.data()
+        };
+        setUnitData(unitDataObj);
+        
         // Calculate metrics from measurements
         const measurements = report.measurements || [];
-        console.log("Processing measurements:", measurements.length);
-        metrics = calculateMetricsFromMeasurements(measurements);
-        console.log("Calculated metrics:", metrics);
+        const metrics = calculateMetricsFromMeasurements(measurements);
+        setReportMetrics(metrics);
+        
+        setIsViewDialogOpen(true);
+      } else {
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "Unit data not found",
+        });
       }
-      
-      setReportMetrics(metrics);
-      setIsViewDialogOpen(true);
     } catch (error) {
       console.error("Error loading report details:", error);
       toast({
@@ -103,59 +88,56 @@ export function ReportsList({ reports, isLoading, onRefresh }: ReportsListProps)
         description: "Failed to load report details",
       });
     } finally {
-      setIsActionLoading(false);
-    }
-  };
-
-  // Helper function to fetch unit data
-  const fetchUnitData = async (unitId: string): Promise<UnitData> => {
-    const unitDocRef = doc(db, "units", unitId);
-    const unitSnapshot = await getDoc(unitDocRef);
-    
-    if (unitSnapshot.exists()) {
-      return {
-        id: unitSnapshot.id,
-        ...unitSnapshot.data() as any
-      };
-    } else {
-      console.warn("Unit data not found, using fallback");
-      return { 
-        id: unitId, 
-        name: selectedReport?.unit_name || "Unknown Unit" 
-      };
+      setIsLoading(false);
     }
   };
 
   if (reports.length === 0) {
-    return <ReportEmptyState />;
+    return null;
   }
 
   return (
     <>
       <div className="space-y-4 mt-8">
-        <div className="flex justify-between items-center">
-          <h2 className="text-xl font-semibold">Generated Reports</h2>
-          <Button 
-            onClick={onRefresh} 
-            disabled={isLoading}
-            size="sm"
-            variant="outline"
-            className="flex items-center gap-2"
-          >
-            <RefreshCw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
-            Refresh
-          </Button>
-        </div>
-        
+        <h2 className="text-xl font-semibold">Generated Reports</h2>
         <div className="grid gap-4">
           {reports.map((report) => (
-            <ReportListItem
-              key={report.id}
-              report={report}
-              onView={handleViewReport}
-              onDownload={handleDownloadReport}
-              isLoading={isActionLoading}
-            />
+            <Card key={report.id} className="p-4 bg-spotify-darker">
+              <div className="flex justify-between items-start">
+                <div>
+                  <h3 className="font-semibold text-white">
+                    {report.report_type.charAt(0).toUpperCase() + report.report_type.slice(1)} Report
+                  </h3>
+                  <p className="text-sm text-gray-400 mt-1">
+                    Generated on {new Date(report.created_at).toLocaleString()}
+                  </p>
+                  <div className="mt-2 text-sm text-gray-300 line-clamp-3 whitespace-pre-wrap">
+                    {report.content}
+                  </div>
+                </div>
+                <div className="flex space-x-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleViewReport(report)}
+                    disabled={isLoading}
+                    className="flex items-center"
+                  >
+                    <Eye className="h-4 w-4 mr-2" />
+                    View
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleDownloadReport(report.id, report.content)}
+                    className="flex items-center"
+                  >
+                    <Download className="h-4 w-4 mr-2" />
+                    Download
+                  </Button>
+                </div>
+              </div>
+            </Card>
           ))}
         </div>
       </div>
