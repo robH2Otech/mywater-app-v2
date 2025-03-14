@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { ReportData } from "@/types/analytics";
@@ -12,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Download } from "lucide-react";
 import { generatePDF } from "@/utils/pdfGenerator";
 import { getDateRangeForReportType } from "@/utils/reportGenerator";
+import { saveAs } from 'file-saver';
 
 interface ReportDetailDialogProps {
   report: ReportData;
@@ -99,21 +99,8 @@ export function ReportDetailDialog({ report, open, onOpenChange }: ReportDetailD
       // Create filename
       const fileName = `${unitData.name}_${report.report_type}_report_${new Date().toISOString().split('T')[0]}.pdf`;
       
-      // Create URL for download using a simpler approach
-      const url = URL.createObjectURL(pdfBlob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = fileName;
-      
-      // Append to body, click, and remove
-      document.body.appendChild(link);
-      link.click();
-      
-      // Clean up
-      setTimeout(() => {
-        document.body.removeChild(link);
-        URL.revokeObjectURL(url);
-      }, 100);
+      // Use FileSaver.js to save the file - more reliable across browsers
+      saveAs(pdfBlob, fileName);
       
       toast({
         title: "Success",

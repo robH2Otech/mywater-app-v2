@@ -6,6 +6,7 @@ import { UnitData } from "@/types/analytics";
 import { toast } from "@/hooks/use-toast";
 import { getReportTitle } from "@/utils/reportUtils";
 import { generatePDF } from "@/utils/pdfGenerator";
+import { saveAs } from 'file-saver';
 
 interface ReportActionsProps {
   unit: UnitData;
@@ -34,24 +35,11 @@ export function ReportActions({ unit, reportType, metrics, startDate, endDate }:
       
       console.log("PDF Blob created successfully, size:", pdfBlob.size, "bytes");
       
-      // Create a download link
+      // Create a filename for the PDF
       const fileName = `${unit.name}_${reportType}_report_${new Date().toISOString().split('T')[0]}.pdf`;
       
-      // Create a download link using a simpler approach
-      const url = URL.createObjectURL(pdfBlob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = fileName;
-      
-      // Append to body, click, and remove
-      document.body.appendChild(link);
-      link.click();
-      
-      // Clean up
-      setTimeout(() => {
-        document.body.removeChild(link);
-        URL.revokeObjectURL(url);
-      }, 100);
+      // Use FileSaver to save the file - this is more reliable across browsers
+      saveAs(pdfBlob, fileName);
       
       toast({
         title: "Success",
