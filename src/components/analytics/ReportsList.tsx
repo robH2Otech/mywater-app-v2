@@ -11,7 +11,7 @@ import { ReportListItem } from "./ReportListItem";
 import { calculateMetricsFromMeasurements } from "@/utils/reportGenerator";
 import { generateReportPDF } from "@/utils/analytics/pdfGenerator";
 import { getDateRangeForReportType } from "@/utils/reportGenerator";
-import { Button } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { RefreshCw } from "lucide-react";
 
 interface ReportsListProps {
