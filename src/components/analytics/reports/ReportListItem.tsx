@@ -28,10 +28,7 @@ export function ReportListItem({ report, onViewReport, onReportDeleted }: Report
     try {
       console.log("Initiating download for report:", report.id);
       await downloadReportAsPdf(report);
-      toast({
-        title: "Success",
-        description: "Report downloaded successfully",
-      });
+      // Toast is already shown in the downloadReportAsPdf function
     } catch (error) {
       console.error("Error downloading report:", error);
       toast({
