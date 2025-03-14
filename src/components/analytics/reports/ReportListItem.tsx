@@ -2,18 +2,25 @@
 import { ReportData } from "@/types/analytics";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Download, Eye } from "lucide-react";
+import { Download, Eye, Trash2 } from "lucide-react";
 import { toast } from "@/components/ui/use-toast";
 import { getReportTitle, downloadReportAsTxt } from "@/utils/reportUtils";
 import { formatDistanceToNow } from "date-fns";
+import { deleteDoc, doc } from "firebase/firestore";
+import { db } from "@/integrations/firebase/client";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { useState } from "react";
 
 interface ReportListItemProps {
   report: ReportData;
   onViewReport: (report: ReportData) => void;
+  onReportDeleted: () => void;
 }
 
-export function ReportListItem({ report, onViewReport }: ReportListItemProps) {
-  const handleDownloadTxt = async () => {
+export function ReportListItem({ report, onViewReport, onReportDeleted }: ReportListItemProps) {
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+
+  const handleDownloadReport = async () => {
     try {
       await downloadReportAsTxt(report);
       toast({
@@ -30,6 +37,25 @@ export function ReportListItem({ report, onViewReport }: ReportListItemProps) {
     }
   };
 
+  const handleDeleteReport = async () => {
+    try {
+      const reportRef = doc(db, "reports", report.id);
+      await deleteDoc(reportRef);
+      toast({
+        title: "Success",
+        description: "Report deleted successfully",
+      });
+      onReportDeleted();
+    } catch (error) {
+      console.error("Error deleting report:", error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to delete report",
+      });
+    }
+  };
+
   // Handle timestamp formatting
   const createdAt = report.created_at ? 
     (typeof report.created_at === 'string' ? 
@@ -39,12 +65,15 @@ export function ReportListItem({ report, onViewReport }: ReportListItemProps) {
     ) : 
     new Date();
 
+  // Get unit name from the report title or default
+  const unitName = report.unit_name || "Unknown Unit";
+
   return (
     <Card key={report.id} className="p-4 bg-spotify-darker">
       <div className="flex justify-between items-start">
         <div>
           <h3 className="font-semibold text-white">
-            {getReportTitle(report.report_type)}
+            {unitName} - {getReportTitle(report.report_type)}
           </h3>
           <p className="text-sm text-gray-400 mt-1">
             Generated {formatDistanceToNow(createdAt, { addSuffix: true })}
@@ -66,14 +95,43 @@ export function ReportListItem({ report, onViewReport }: ReportListItemProps) {
           <Button
             variant="outline"
             size="sm"
-            onClick={handleDownloadTxt}
+            onClick={handleDownloadReport}
             className="flex items-center"
           >
             <Download className="h-4 w-4 mr-2" />
             Download
           </Button>
+          <Button
+            variant="destructive"
+            size="sm"
+            onClick={() => setDeleteDialogOpen(true)}
+            className="flex items-center"
+          >
+            <Trash2 className="h-4 w-4 mr-2" />
+            Delete
+          </Button>
         </div>
       </div>
+
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent className="bg-spotify-darker border-spotify-accent">
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. This will permanently delete the report.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="bg-spotify-dark hover:bg-spotify-dark/90">Cancel</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={handleDeleteReport}
+              className="bg-red-600 hover:bg-red-700"
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Card>
   );
 }

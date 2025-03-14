@@ -33,6 +33,7 @@ export function ReportDetailDialog({ report, open, onOpenChange }: ReportDetailD
         if (unitSnapshot.exists()) {
           const unitDataObj = {
             id: unitSnapshot.id,
+            name: unitSnapshot.data().name || 'Unknown Unit',
             ...unitSnapshot.data()
           };
           setUnitData(unitDataObj);
@@ -70,10 +71,10 @@ export function ReportDetailDialog({ report, open, onOpenChange }: ReportDetailD
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto bg-spotify-dark">
+      <DialogContent className="max-w-[95vw] max-h-[95vh] w-[95vw] h-[95vh] overflow-y-auto bg-spotify-dark">
         <DialogHeader>
           <DialogTitle>
-            {getReportTitle(report?.report_type)} - Details
+            {unitData?.name || "Unit"} - {getReportTitle(report?.report_type)}
           </DialogTitle>
         </DialogHeader>
         

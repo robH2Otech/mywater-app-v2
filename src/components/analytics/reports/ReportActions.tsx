@@ -37,10 +37,13 @@ export function ReportActions({ unit, reportType, metrics, startDate, endDate }:
     window.print();
   };
 
+  // Create the formatted report title
+  const formattedTitle = `${unit.name} - ${getReportTitle(reportType)}`;
+
   return (
     <div className="flex justify-between items-center">
       <h2 className="text-xl font-semibold">
-        {getReportTitle(reportType)}: {unit.name}
+        {formattedTitle}
       </h2>
       <div className="flex space-x-2">
         <Button 

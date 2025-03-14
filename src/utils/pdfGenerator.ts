@@ -31,10 +31,11 @@ export async function generatePDF(
     doc.setTextColor(0, 128, 0);
     doc.text("MYWATER Technologies", pageWidth / 2, 20, { align: "center" });
     
-    // Add report title
+    // Add report title with unit name
     doc.setFontSize(16);
     doc.setTextColor(0, 0, 0);
-    doc.text(`${getReportTitle(reportType)}: ${unit.name || ""}`, pageWidth / 2, 30, { align: "center" });
+    const reportTitle = `${unit.name} - ${getReportTitle(reportType)}`;
+    doc.text(reportTitle, pageWidth / 2, 30, { align: "center" });
     
     // Add date range
     doc.setFontSize(12);
@@ -54,7 +55,7 @@ export async function generatePDF(
       ["Name", unit.name || "N/A"],
       ["Location", unit.location || "N/A"],
       ["Status", unit.status || "N/A"],
-      ["Total Capacity", `${unit.total_volume || 0} units`]
+      ["Total Capacity", `${unit.total_volume || 0} m³`]
     ];
     
     // @ts-ignore - jspdf-autotable types
@@ -72,9 +73,9 @@ export async function generatePDF(
     doc.text("Performance Metrics", 14, finalY1 + 10);
     
     const performanceMetrics = [
-      ["Total Volume Processed", `${metrics.totalVolume.toFixed(2)} units`],
-      ["Average Daily Volume", `${metrics.avgVolume.toFixed(2)} units`],
-      ["Maximum Daily Volume", `${metrics.maxVolume.toFixed(2)} units`],
+      ["Total Volume Processed", `${metrics.totalVolume.toFixed(2)} m³`],
+      ["Average Daily Volume", `${metrics.avgVolume.toFixed(2)} m³`],
+      ["Maximum Daily Volume", `${metrics.maxVolume.toFixed(2)} m³`],
       ["Average Temperature", `${metrics.avgTemperature.toFixed(2)} °C`],
       ["Total UVC Hours", `${metrics.totalUvcHours.toFixed(2)} hours`]
     ];
@@ -100,7 +101,7 @@ export async function generatePDF(
     
     const dailyData = sortedData.map(day => [
       new Date(day.date).toLocaleDateString(),
-      `${day.volume.toFixed(2)} units`,
+      `${day.volume.toFixed(2)} m³`,
       `${day.avgTemperature.toFixed(2)} °C`,
       `${day.uvcHours.toFixed(2)} hours`
     ]);
@@ -169,8 +170,8 @@ export async function generatePDF(
     doc.setFontSize(8);
     doc.text(`Generated on: ${generatedDate}`, pageWidth - 15, doc.internal.pageSize.getHeight() - 10, { align: "right" });
     
-    // Save the PDF
-    doc.save(`${reportType}-report-${unit.name}-${format(new Date(), 'yyyy-MM-dd')}.pdf`);
+    // Save the PDF with the report title
+    doc.save(`${unit.name}_${reportType}_report_${format(new Date(), 'yyyy-MM-dd')}.pdf`);
   } catch (error) {
     console.error("Error generating PDF:", error);
     throw new Error("Failed to generate PDF report");

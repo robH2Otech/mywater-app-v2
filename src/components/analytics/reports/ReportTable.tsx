@@ -31,7 +31,7 @@ export function ReportTable({ data }: ReportTableProps) {
                   {new Date(day.date).toLocaleDateString()}
                 </td>
                 <td className="px-4 py-2 whitespace-nowrap text-sm">
-                  {day.volume.toFixed(2)} units
+                  {day.volume.toFixed(2)} m³
                 </td>
                 <td className="px-4 py-2 whitespace-nowrap text-sm">
                   {day.avgTemperature.toFixed(2)} °C

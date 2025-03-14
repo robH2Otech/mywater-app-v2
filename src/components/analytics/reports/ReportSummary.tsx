@@ -21,7 +21,7 @@ export function ReportSummary({ metrics, startDate, endDate }: ReportSummaryProp
       <div className="grid grid-cols-2 gap-4">
         <div>
           <p className="text-gray-400 text-sm">Total Volume</p>
-          <p className="text-xl font-semibold">{metrics.totalVolume.toFixed(2)} units</p>
+          <p className="text-xl font-semibold">{metrics.totalVolume.toFixed(2)} m³</p>
         </div>
         <div>
           <p className="text-gray-400 text-sm">Avg. Temperature</p>

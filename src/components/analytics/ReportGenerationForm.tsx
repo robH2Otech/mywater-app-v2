@@ -88,6 +88,7 @@ export function ReportGenerationForm({
       const reportsCollection = collection(db, "reports");
       const reportDoc = await addDoc(reportsCollection, {
         unit_id: selectedUnit,
+        unit_name: unitData.name, // Add unit name to report document
         report_type: reportType,
         content: reportContent,
         measurements: measurements,

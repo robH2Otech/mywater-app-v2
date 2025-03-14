@@ -13,9 +13,10 @@ interface ReportsListProps {
   reports: ReportData[];
   isLoading: boolean;
   error: Error | null;
+  refetchReports: () => void;
 }
 
-export function ReportsList({ reports, isLoading, error }: ReportsListProps) {
+export function ReportsList({ reports, isLoading, error, refetchReports }: ReportsListProps) {
   const [selectedReport, setSelectedReport] = useState<ReportData | null>(null);
   const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
 
@@ -29,6 +30,11 @@ export function ReportsList({ reports, isLoading, error }: ReportsListProps) {
   const handleViewReport = (report: ReportData) => {
     setSelectedReport(report);
     setIsViewDialogOpen(true);
+  };
+
+  // Handle report deletion
+  const handleReportDeleted = () => {
+    refetchReports();
   };
 
   // Show loading state
@@ -70,6 +76,7 @@ export function ReportsList({ reports, isLoading, error }: ReportsListProps) {
             key={report.id} 
             report={report} 
             onViewReport={handleViewReport} 
+            onReportDeleted={handleReportDeleted}
           />
         ))}
       </div>

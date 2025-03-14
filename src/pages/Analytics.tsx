@@ -30,6 +30,7 @@ export function Analytics() {
         reports={reports} 
         isLoading={isLoading} 
         error={error} 
+        refetchReports={refetchReports}
       />
     </div>
   );

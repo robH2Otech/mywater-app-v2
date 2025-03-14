@@ -1,5 +1,9 @@
 
 import { ReportData } from "@/types/analytics";
+import { generatePDF } from "@/utils/pdfGenerator";
+import { getDateRangeForReportType } from "@/utils/reportGenerator";
+import { doc, getDoc } from "firebase/firestore";
+import { db } from "@/integrations/firebase/client";
 
 export function getReportTitle(reportType: string): string {
   if (!reportType) return "Report";
@@ -8,20 +12,35 @@ export function getReportTitle(reportType: string): string {
 }
 
 export async function downloadReportAsTxt(report: ReportData): Promise<void> {
-  if (!report || !report.content) {
-    throw new Error("Report content is empty");
+  try {
+    // Get unit data
+    const unitDocRef = doc(db, "units", report.unit_id);
+    const unitSnapshot = await getDoc(unitDocRef);
+    
+    if (!unitSnapshot.exists()) {
+      throw new Error("Unit data not found");
+    }
+    
+    const unitData = {
+      id: unitSnapshot.id,
+      name: unitSnapshot.data().name || "Unknown Unit",
+      ...unitSnapshot.data()
+    };
+    
+    // Get date range
+    const { startDate, endDate } = getDateRangeForReportType(report.report_type);
+    
+    // Generate PDF directly instead of TXT
+    await generatePDF(
+      unitData, 
+      report.report_type, 
+      report.metrics || {}, 
+      startDate, 
+      endDate
+    );
+    
+  } catch (error) {
+    console.error("Error downloading report:", error);
+    throw error;
   }
-  
-  // Create a Blob from the content
-  const blob = new Blob([report.content], { type: 'text/plain' });
-  const url = window.URL.createObjectURL(blob);
-  
-  // Create a temporary link and trigger download
-  const link = document.createElement('a');
-  link.href = url;
-  link.download = `${report.report_type}-report-${report.id}.txt`;
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
-  window.URL.revokeObjectURL(url);
 }
