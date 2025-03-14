@@ -43,15 +43,20 @@ export const UVC = () => {
           }
           
           // Get UVC hours from the unit data if available
-          const uvcHours = typeof data.uvc_hours === 'string' 
-            ? parseFloat(data.uvc_hours) 
-            : (data.uvc_hours || 0);
+          let uvcHours = data.uvc_hours;
+          if (typeof uvcHours === 'string') {
+            uvcHours = parseFloat(uvcHours);
+          } else if (uvcHours === undefined || uvcHours === null) {
+            uvcHours = 0;
+          }
           
           // Calculate the correct status based on UVC hours
           const uvcStatus = determineUVCStatus(uvcHours);
           
           // Calculate the correct filter status based on volume
           const filterStatus = determineUnitStatus(totalVolume);
+          
+          console.log(`Unit ${doc.id} UVC hours: ${uvcHours} (status: ${uvcStatus})`);
           
           return {
             id: doc.id,
@@ -88,12 +93,14 @@ export const UVC = () => {
       const numericHours = typeof updatedData.uvc_hours === 'string' ? 
         parseFloat(updatedData.uvc_hours) : updatedData.uvc_hours;
       
+      console.log(`Saving UVC hours for ${selectedUnit.id}: ${numericHours}`);
+      
       const newStatus = determineUVCStatus(numericHours);
       const oldStatus = selectedUnit.uvc_status;
       
       // Prepare data for Firestore update
       const updateData: any = {
-        uvc_hours: numericHours,
+        uvc_hours: numericHours, // Set the exact value from the form (not adding to existing)
         uvc_status: newStatus,
         updated_at: new Date().toISOString()
       };
@@ -102,6 +109,8 @@ export const UVC = () => {
       if (updatedData.uvc_installation_date) {
         updateData.uvc_installation_date = updatedData.uvc_installation_date.toISOString();
       }
+      
+      console.log("Updating unit with data:", updateData);
       
       // Update the unit document in Firestore
       const unitDocRef = doc(db, "units", selectedUnit.id);
@@ -125,6 +134,7 @@ export const UVC = () => {
       // Invalidate queries to refresh data
       await queryClient.invalidateQueries({ queryKey: ["uvc-units"] });
       await queryClient.invalidateQueries({ queryKey: ["units"] });
+      await queryClient.invalidateQueries({ queryKey: ["unit", selectedUnit.id] });
       await queryClient.invalidateQueries({ queryKey: ["alerts"] });
       
       toast({

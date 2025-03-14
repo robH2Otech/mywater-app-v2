@@ -6,6 +6,9 @@ import { FormInput } from "@/components/shared/FormInput";
 import { FormDatePicker } from "@/components/shared/FormDatePicker";
 import { useState, useEffect } from "react";
 import { MAX_UVC_HOURS, determineUVCStatus } from "@/utils/uvcStatusUtils";
+import { doc, getDoc } from "firebase/firestore";
+import { db } from "@/integrations/firebase/client";
+import { useToast } from "@/hooks/use-toast";
 
 interface UVCDetailsDialogProps {
   unit: any;
@@ -16,21 +19,74 @@ interface UVCDetailsDialogProps {
 
 export function UVCDetailsDialog({ unit, open, onOpenChange, onSave }: UVCDetailsDialogProps) {
   const [formData, setFormData] = useState<any>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const { toast } = useToast();
 
+  // Fetch the latest data when dialog opens to ensure we have the most current values
   useEffect(() => {
-    if (unit) {
-      setFormData({
-        uvc_hours: unit.uvc_hours?.toString() || "0",
-        uvc_installation_date: unit.uvc_installation_date ? new Date(unit.uvc_installation_date) : null,
-      });
+    async function fetchLatestData() {
+      if (unit && open) {
+        setIsLoading(true);
+        try {
+          // Get the latest data from Firestore
+          const unitDocRef = doc(db, "units", unit.id);
+          const unitSnapshot = await getDoc(unitDocRef);
+          
+          if (unitSnapshot.exists()) {
+            const latestData = unitSnapshot.data();
+            
+            // Parse UVC hours to ensure it's a number
+            let uvcHours = latestData.uvc_hours;
+            if (typeof uvcHours === 'string') {
+              uvcHours = parseFloat(uvcHours);
+            } else if (uvcHours === undefined || uvcHours === null) {
+              uvcHours = 0;
+            }
+            
+            setFormData({
+              uvc_hours: uvcHours.toString(),
+              uvc_installation_date: latestData.uvc_installation_date ? new Date(latestData.uvc_installation_date) : null,
+            });
+          } else {
+            // Fallback to the data passed in props
+            setFormData({
+              uvc_hours: unit.uvc_hours?.toString() || "0",
+              uvc_installation_date: unit.uvc_installation_date ? new Date(unit.uvc_installation_date) : null,
+            });
+          }
+        } catch (error) {
+          console.error("Error fetching latest UVC data:", error);
+          toast({
+            title: "Error",
+            description: "Failed to load the latest UVC data",
+            variant: "destructive",
+          });
+          
+          // Fallback to the data passed in props
+          setFormData({
+            uvc_hours: unit.uvc_hours?.toString() || "0",
+            uvc_installation_date: unit.uvc_installation_date ? new Date(unit.uvc_installation_date) : null,
+          });
+        } finally {
+          setIsLoading(false);
+        }
+      }
     }
-  }, [unit]);
+    
+    fetchLatestData();
+  }, [unit, open, toast]);
 
   const handleSave = () => {
     if (onSave && formData) {
+      // Convert uvc_hours to a number
+      const hours = formData.uvc_hours ? parseFloat(formData.uvc_hours) : 0;
+      
       onSave({
         ...formData,
-        uvc_hours: formData.uvc_hours ? parseFloat(formData.uvc_hours) : 0,
+        uvc_hours: hours,
+        // Pass the raw hours value, not accumulated
+        // The UVC page will handle setting this value directly, not adding to it
+        // This way users can set exactly what they want
       });
       onOpenChange(false);
     }
@@ -62,56 +118,62 @@ export function UVCDetailsDialog({ unit, open, onOpenChange, onSave }: UVCDetail
           </DialogTitle>
         </DialogHeader>
 
-        <div className="space-y-6 mt-4">
-          <div className="text-center mb-4">
-            <div className="text-3xl font-bold flex justify-center items-end gap-2">
-              <span className={getPercentageClass()}>{calculatePercentage()}%</span>
-              <span className="text-lg text-gray-400">used</span>
+        {isLoading ? (
+          <div className="flex justify-center py-6">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-spotify-green"></div>
+          </div>
+        ) : (
+          <div className="space-y-6 mt-4">
+            <div className="text-center mb-4">
+              <div className="text-3xl font-bold flex justify-center items-end gap-2">
+                <span className={getPercentageClass()}>{calculatePercentage()}%</span>
+                <span className="text-lg text-gray-400">used</span>
+              </div>
+              <div className="w-full bg-gray-700 rounded-full h-2.5 mt-2">
+                <div 
+                  className={`h-2.5 rounded-full ${
+                    calculatePercentage() > 90 ? 'bg-red-500' : 
+                    calculatePercentage() > 80 ? 'bg-yellow-500' : 
+                    'bg-spotify-green'
+                  }`}
+                  style={{ width: `${calculatePercentage()}%` }}
+                ></div>
+              </div>
+              <div className="text-sm text-gray-400 mt-2">
+                {formData.uvc_hours || "0"} / {MAX_UVC_HOURS.toLocaleString()} hours
+              </div>
             </div>
-            <div className="w-full bg-gray-700 rounded-full h-2.5 mt-2">
-              <div 
-                className={`h-2.5 rounded-full ${
-                  calculatePercentage() > 90 ? 'bg-red-500' : 
-                  calculatePercentage() > 80 ? 'bg-yellow-500' : 
-                  'bg-spotify-green'
-                }`}
-                style={{ width: `${calculatePercentage()}%` }}
-              ></div>
-            </div>
-            <div className="text-sm text-gray-400 mt-2">
-              {formData.uvc_hours || "0"} / {MAX_UVC_HOURS.toLocaleString()} hours
+
+            <FormInput
+              label="UVC Hours"
+              type="number"
+              value={formData.uvc_hours}
+              onChange={(value) => setFormData({ ...formData, uvc_hours: value })}
+            />
+
+            <FormDatePicker
+              label="Installation Date"
+              value={formData.uvc_installation_date}
+              onChange={(date) => setFormData({ ...formData, uvc_installation_date: date })}
+            />
+
+            <div className="flex justify-end gap-4 mt-6">
+              <Button
+                onClick={() => onOpenChange(false)}
+                variant="outline"
+                className="bg-spotify-accent hover:bg-spotify-accent-hover text-white"
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={handleSave}
+                className="bg-spotify-green hover:bg-spotify-green/90 text-white"
+              >
+                Save Changes
+              </Button>
             </div>
           </div>
-
-          <FormInput
-            label="UVC Hours"
-            type="number"
-            value={formData.uvc_hours}
-            onChange={(value) => setFormData({ ...formData, uvc_hours: value })}
-          />
-
-          <FormDatePicker
-            label="Installation Date"
-            value={formData.uvc_installation_date}
-            onChange={(date) => setFormData({ ...formData, uvc_installation_date: date })}
-          />
-
-          <div className="flex justify-end gap-4 mt-6">
-            <Button
-              onClick={() => onOpenChange(false)}
-              variant="outline"
-              className="bg-spotify-accent hover:bg-spotify-accent-hover text-white"
-            >
-              Cancel
-            </Button>
-            <Button
-              onClick={handleSave}
-              className="bg-spotify-green hover:bg-spotify-green/90 text-white"
-            >
-              Save Changes
-            </Button>
-          </div>
-        </div>
+        )}
       </DialogContent>
     </Dialog>
   );

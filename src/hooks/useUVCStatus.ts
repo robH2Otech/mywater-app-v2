@@ -15,9 +15,12 @@ export function useUVCStatus(units: any[]) {
   useEffect(() => {
     const updatedUnits = units.map(unit => {
       // Ensure UVC hours is a number
-      const uvcHours = typeof unit.uvc_hours === 'string' 
-        ? parseFloat(unit.uvc_hours) 
-        : (unit.uvc_hours || 0);
+      let uvcHours = unit.uvc_hours;
+      if (typeof uvcHours === 'string') {
+        uvcHours = parseFloat(uvcHours);
+      } else if (uvcHours === undefined || uvcHours === null) {
+        uvcHours = 0;
+      }
       
       // Ensure total_volume is a number
       let totalVolume = unit.total_volume;
@@ -31,13 +34,18 @@ export function useUVCStatus(units: any[]) {
       const uvcStatus = determineUVCStatus(uvcHours);
       const filterStatus = determineUnitStatus(totalVolume);
       
+      // Log for debugging
+      console.log(`useUVCStatus: Unit ${unit.id} - UVC hours: ${uvcHours}, status: ${uvcStatus}`);
+      
       // Update if status changed
       if (unit.uvc_status !== uvcStatus) {
+        console.log(`UVC status changed for ${unit.id}: ${unit.uvc_status} -> ${uvcStatus}`);
         updateUVCStatus(unit.id, uvcStatus, unit.name, uvcHours);
       }
       
       // Update if filter status changed
       if (unit.status !== filterStatus) {
+        console.log(`Filter status changed for ${unit.id}: ${unit.status} -> ${filterStatus}`);
         updateFilterStatus(unit.id, filterStatus, unit.name, totalVolume);
       }
       
@@ -76,6 +84,7 @@ export function useUVCStatus(units: any[]) {
 
       await queryClient.invalidateQueries({ queryKey: ['uvc-units'] });
       await queryClient.invalidateQueries({ queryKey: ['units'] });
+      await queryClient.invalidateQueries({ queryKey: ['unit', unitId] });
       await queryClient.invalidateQueries({ queryKey: ['alerts'] });
       
       toast({
@@ -111,6 +120,7 @@ export function useUVCStatus(units: any[]) {
 
       await queryClient.invalidateQueries({ queryKey: ['filter-units'] });
       await queryClient.invalidateQueries({ queryKey: ['units'] });
+      await queryClient.invalidateQueries({ queryKey: ['unit', unitId] });
       await queryClient.invalidateQueries({ queryKey: ['alerts'] });
       
       toast({

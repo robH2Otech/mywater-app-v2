@@ -1,3 +1,4 @@
+
 import { collection, doc, addDoc, getDocs, query, orderBy, limit, getDoc, updateDoc, serverTimestamp } from "firebase/firestore";
 import { db } from "@/integrations/firebase/client";
 import { Measurement } from './types';
@@ -25,6 +26,13 @@ export const addMeasurement = async (unitId: string, volume: number, temperature
         ? parseFloat(unitData.total_volume) 
         : 0;
     
+    // Parse the current UVC hours, ensuring it's a number
+    const currentUVCHours = typeof unitData.uvc_hours === 'number'
+      ? unitData.uvc_hours
+      : typeof unitData.uvc_hours === 'string'
+        ? parseFloat(unitData.uvc_hours)
+        : 0;
+    
     // Calculate new total volume by adding current volume
     const newTotalVolume = currentTotalVolume + volume;
     
@@ -49,18 +57,23 @@ export const addMeasurement = async (unitId: string, volume: number, temperature
     const measurementsCollectionRef = collection(db, collectionPath);
     const newMeasurementRef = await addDoc(measurementsCollectionRef, measurementData);
     
-    // Update the unit's total_volume
+    // Update the unit's total_volume and uvc_hours if provided
     const updateData: any = {
       total_volume: newTotalVolume,
       updated_at: formattedTimestamp
     };
     
+    // Only update UVC hours if a value was provided in the measurement
     if (uvcHours !== undefined) {
-      const currentUVCHours = typeof unitData.uvc_hours === 'number' ? unitData.uvc_hours : 0;
-      updateData.uvc_hours = currentUVCHours + uvcHours;
+      // Add the new UVC hours to the current total
+      const newUVCHours = currentUVCHours + uvcHours;
+      console.log(`Updating UVC hours for ${unitId}: ${currentUVCHours} + ${uvcHours} = ${newUVCHours}`);
+      updateData.uvc_hours = newUVCHours;
     }
     
     await updateDoc(unitDocRef, updateData);
+
+    console.log(`Measurement added for ${unitId}: volume=${volume}, total=${newTotalVolume}, uvcHours=${uvcHours}`);
     
     return newMeasurementRef.id;
   } catch (error) {

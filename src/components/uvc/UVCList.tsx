@@ -23,6 +23,7 @@ export function UVCList({ units, onUVCClick }: UVCListProps) {
 
   const handleEditClick = (e: React.MouseEvent, unit: any) => {
     e.stopPropagation();
+    console.log("Edit UVC unit:", unit);
     setSelectedUnit(unit);
     setIsEditDialogOpen(true);
   };
@@ -33,11 +34,13 @@ export function UVCList({ units, onUVCClick }: UVCListProps) {
         ? parseFloat(updatedData.uvc_hours) 
         : updatedData.uvc_hours;
       
+      console.log(`Setting UVC hours for ${selectedUnit.id} to ${numericHours}`);
+      
       const newStatus = determineUVCStatus(numericHours);
       
       const unitDocRef = doc(db, "units", selectedUnit.id);
       await updateDoc(unitDocRef, {
-        uvc_hours: numericHours,
+        uvc_hours: numericHours, // Direct set, not adding
         uvc_installation_date: updatedData.uvc_installation_date,
         uvc_status: newStatus,
         updated_at: new Date().toISOString()
@@ -58,6 +61,7 @@ export function UVCList({ units, onUVCClick }: UVCListProps) {
 
       await queryClient.invalidateQueries({ queryKey: ['uvc-units'] });
       await queryClient.invalidateQueries({ queryKey: ['units'] });
+      await queryClient.invalidateQueries({ queryKey: ['unit', selectedUnit.id] });
       await queryClient.invalidateQueries({ queryKey: ['alerts'] });
       
       toast({
