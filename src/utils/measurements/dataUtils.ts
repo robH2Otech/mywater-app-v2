@@ -1,4 +1,3 @@
-
 import { collection, doc, addDoc, getDocs, query, orderBy, limit, getDoc, updateDoc, serverTimestamp } from "firebase/firestore";
 import { db } from "@/integrations/firebase/client";
 import { Measurement } from './types';
@@ -158,7 +157,7 @@ export const recalculateCumulativeVolumes = async (unitId: string) => {
     const snapshot = await getDocs(q);
     const measurements = snapshot.docs.map(doc => ({
       id: doc.id,
-      ...doc.data()
+      ...doc.data() as Measurement // Fix: Properly type the document data
     }));
     
     // Start with 0 cumulative volume
@@ -190,4 +189,3 @@ export const recalculateCumulativeVolumes = async (unitId: string) => {
     throw error;
   }
 };
-
