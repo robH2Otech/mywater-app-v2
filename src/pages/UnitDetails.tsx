@@ -9,7 +9,7 @@ import { doc, getDoc } from "firebase/firestore";
 import { db } from "@/integrations/firebase/client";
 import { UnitData } from "@/types/analytics";
 import { UnitMeasurements } from "@/components/units/UnitMeasurements";
-import { Refresh } from "lucide-react";
+import { RefreshCw } from "lucide-react";
 import { useState } from "react";
 import { useFilterStatus } from "@/components/filters/FilterStatusUtils";
 
@@ -74,7 +74,7 @@ export const UnitDetails = () => {
               disabled={isSyncing}
               className="bg-spotify-accent hover:bg-spotify-accent-hover text-white border-none flex items-center gap-2"
             >
-              <Refresh className={`h-4 w-4 ${isSyncing ? 'animate-spin' : ''}`} />
+              <RefreshCw className={`h-4 w-4 ${isSyncing ? 'animate-spin' : ''}`} />
               {isSyncing ? 'Syncing...' : 'Sync Measurements'}
             </Button>
             <Button 
