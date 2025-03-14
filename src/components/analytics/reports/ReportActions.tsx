@@ -5,6 +5,7 @@ import { UnitData } from "@/types/analytics";
 import { generatePDF } from "@/utils/pdfGenerator";
 import { toast } from "@/components/ui/use-toast";
 import { getReportTitle } from "@/utils/reportUtils";
+import { format } from "date-fns";
 
 interface ReportActionsProps {
   unit: UnitData;

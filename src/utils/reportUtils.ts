@@ -31,13 +31,11 @@ export async function downloadReportAsTxt(report: ReportData): Promise<void> {
     // Get date range
     const { startDate, endDate } = getDateRangeForReportType(report.report_type);
     
-    // Generate PDF using the report metrics or calculate metrics if not available
-    const metrics = report.metrics || {};
-    
+    // Generate PDF
     await generatePDF(
       unitData, 
       report.report_type, 
-      metrics, 
+      report.metrics || {}, 
       startDate, 
       endDate
     );
@@ -54,5 +52,6 @@ export async function downloadReportAsTxt(report: ReportData): Promise<void> {
       title: "Error",
       description: "Failed to download report as PDF",
     });
+    throw error;
   }
 }
