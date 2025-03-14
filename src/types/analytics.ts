@@ -1,3 +1,4 @@
+
 import { DocumentData } from "firebase/firestore";
 import { jsPDF } from "jspdf";
 
@@ -53,6 +54,17 @@ export interface ReportData {
   generated_by: string;
   created_at: string;
   updated_at?: string;
+}
+
+// Adding the missing MeasurementData interface that's imported in UnitMeasurements.tsx
+export interface MeasurementData {
+  id: string;
+  timestamp: string;
+  volume: number;
+  temperature: number;
+  cumulative_volume: number;
+  uvc_hours?: number;
+  raw_timestamp?: any;
 }
 
 declare module "jspdf" {
