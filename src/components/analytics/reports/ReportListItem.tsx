@@ -27,17 +27,22 @@ export function ReportListItem({ report, onViewReport, onReportDeleted }: Report
     setIsDownloading(true);
     try {
       console.log("Initiating download for report:", report.id);
+      
+      // Try the download
       await downloadReportAsPdf(report);
-      // Toast is already shown in the downloadReportAsPdf function
+      
+      console.log("Download function completed successfully");
+      
     } catch (error) {
-      console.error("Error downloading report:", error);
+      console.error("Error in download handler:", error);
       toast({
         variant: "destructive",
         title: "Error",
         description: "Failed to download report",
       });
     } finally {
-      setIsDownloading(false);
+      // Ensure we always reset the downloading state
+      setTimeout(() => setIsDownloading(false), 1000);
     }
   };
 

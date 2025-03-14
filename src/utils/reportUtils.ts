@@ -5,7 +5,6 @@ import { getDateRangeForReportType } from "@/utils/reportGenerator";
 import { doc, getDoc } from "firebase/firestore";
 import { db } from "@/integrations/firebase/client";
 import { toast } from "@/hooks/use-toast";
-import { saveAs } from 'file-saver';
 
 export function getReportTitle(reportType: string): string {
   if (!reportType) return "Report";
@@ -74,16 +73,31 @@ export async function downloadReportAsPdf(report: ReportData): Promise<void> {
     
     console.log("PDF Blob created, size:", pdfBlob.size, "bytes");
     
-    // Prepare filename
+    // Create a blob URL and use it to trigger download
     const fileName = `${unitData.name}_${report.report_type}_report_${new Date().toISOString().split('T')[0]}.pdf`;
     console.log("Prepared filename:", fileName);
     
-    // Use FileSaver.js to save the file
-    saveAs(pdfBlob, fileName);
+    // Create a download link
+    const url = window.URL.createObjectURL(pdfBlob);
+    const a = document.createElement('a');
+    document.body.appendChild(a);
+    a.style.display = 'none';
+    a.href = url;
+    a.download = fileName;
+    
+    // Trigger the download
+    console.log("Triggering download...");
+    a.click();
+    
+    // Clean up
+    window.URL.revokeObjectURL(url);
+    document.body.removeChild(a);
+    
+    console.log("Download initiated successfully");
     
     toast({
       title: "Success",
-      description: "PDF downloaded successfully",
+      description: "Report download started",
     });
     
   } catch (error) {

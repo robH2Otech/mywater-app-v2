@@ -12,7 +12,6 @@ import { Button } from "@/components/ui/button";
 import { Download } from "lucide-react";
 import { generatePDF } from "@/utils/pdfGenerator";
 import { getDateRangeForReportType } from "@/utils/reportGenerator";
-import { saveAs } from 'file-saver';
 
 interface ReportDetailDialogProps {
   report: ReportData;
@@ -100,8 +99,18 @@ export function ReportDetailDialog({ report, open, onOpenChange }: ReportDetailD
       // Create filename
       const fileName = `${unitData.name}_${report.report_type}_report_${new Date().toISOString().split('T')[0]}.pdf`;
       
-      // Use FileSaver.js to save the file - more reliable across browsers
-      saveAs(pdfBlob, fileName);
+      // Create a download link and trigger download
+      const url = window.URL.createObjectURL(pdfBlob);
+      const a = document.createElement('a');
+      document.body.appendChild(a);
+      a.style.display = 'none';
+      a.href = url;
+      a.download = fileName;
+      a.click();
+      
+      // Clean up
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
       
       toast({
         title: "Success",
@@ -115,7 +124,7 @@ export function ReportDetailDialog({ report, open, onOpenChange }: ReportDetailD
         description: "Failed to download PDF. Please try again.",
       });
     } finally {
-      setIsDownloading(false);
+      setTimeout(() => setIsDownloading(false), 1000);
     }
   };
 

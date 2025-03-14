@@ -112,7 +112,7 @@ export async function generatePDF(
         body: dailyData,
         theme: 'grid',
         headStyles: { fillColor: [0, 150, 0] }
-    });
+      });
     }
     
     // Add maintenance information
@@ -168,8 +168,15 @@ export async function generatePDF(
     doc.setFontSize(8);
     doc.text(`Generated on: ${generatedDate}`, pageWidth - 15, doc.internal.pageSize.getHeight() - 10, { align: "right" });
     
-    // Return PDF blob using the output() method with 'blob' type
-    return doc.output('blob');
+    console.log("PDF generation completed successfully");
+    
+    // Get raw PDF data as array buffer and create a blob from it
+    const arrayBuffer = doc.output('arraybuffer');
+    const blob = new Blob([arrayBuffer], { type: 'application/pdf' });
+    
+    console.log("PDF Blob created, size:", blob.size, "bytes");
+    
+    return blob;
   } catch (error) {
     console.error("Error generating PDF:", error);
     throw new Error("Failed to generate PDF report");

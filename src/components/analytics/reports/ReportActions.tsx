@@ -6,7 +6,6 @@ import { UnitData } from "@/types/analytics";
 import { toast } from "@/hooks/use-toast";
 import { getReportTitle } from "@/utils/reportUtils";
 import { generatePDF } from "@/utils/pdfGenerator";
-import { saveAs } from 'file-saver';
 
 interface ReportActionsProps {
   unit: UnitData;
@@ -38,8 +37,18 @@ export function ReportActions({ unit, reportType, metrics, startDate, endDate }:
       // Create a filename for the PDF
       const fileName = `${unit.name}_${reportType}_report_${new Date().toISOString().split('T')[0]}.pdf`;
       
-      // Use FileSaver to save the file - this is more reliable across browsers
-      saveAs(pdfBlob, fileName);
+      // Create a download link and trigger download
+      const url = window.URL.createObjectURL(pdfBlob);
+      const a = document.createElement('a');
+      document.body.appendChild(a);
+      a.style.display = 'none';
+      a.href = url;
+      a.download = fileName;
+      a.click();
+      
+      // Clean up
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
       
       toast({
         title: "Success",
@@ -53,7 +62,7 @@ export function ReportActions({ unit, reportType, metrics, startDate, endDate }:
         description: "Failed to generate PDF. Please try again.",
       });
     } finally {
-      setIsDownloading(false);
+      setTimeout(() => setIsDownloading(false), 1000);
     }
   };
 
