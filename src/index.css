@@ -5,7 +5,7 @@
 
 @layer base {
   body {
-    @apply bg-spotify-dark text-white;
+    @apply bg-black text-white;
   }
 
   /* Print styles for reports */
@@ -53,12 +53,12 @@
 }
 
 :root {
-  --spotify-dark: #121212;
-  --spotify-darker: #090909;
-  --spotify-light: #282828;
+  --spotify-dark: #000000;
+  --spotify-darker: #121212;
+  --spotify-light: #1e1e1e;
   --spotify-green: #1DB954;
-  --spotify-accent: #1F1F1F;
-  --spotify-accent-hover: #333333;
+  --spotify-accent: #181818;
+  --spotify-accent-hover: #282828;
 }
 
 @layer utilities {

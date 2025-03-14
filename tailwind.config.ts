@@ -1,3 +1,4 @@
+
 import type { Config } from "tailwindcss";
 
 export default {
@@ -24,10 +25,10 @@ export default {
       colors: {
         spotify: {
           green: "#1DB954",
-          dark: "#121212",
-          darker: "#181818",
-          accent: "#282828",
-          "accent-hover": "#404040",
+          dark: "#000000",
+          darker: "#121212",
+          accent: "#181818",
+          "accent-hover": "#282828",
         },
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
