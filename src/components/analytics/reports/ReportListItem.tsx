@@ -1,4 +1,3 @@
-
 import { ReportData } from "@/types/analytics";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -23,10 +22,6 @@ export function ReportListItem({ report, onViewReport, onReportDeleted }: Report
   const handleDownloadReport = async () => {
     try {
       await downloadReportAsTxt(report);
-      toast({
-        title: "Success",
-        description: "Report downloaded successfully",
-      });
     } catch (error) {
       console.error("Error downloading report:", error);
       toast({
@@ -56,7 +51,6 @@ export function ReportListItem({ report, onViewReport, onReportDeleted }: Report
     }
   };
 
-  // Handle timestamp formatting
   const createdAt = report.created_at ? 
     (typeof report.created_at === 'string' ? 
       new Date(report.created_at) : 
@@ -65,7 +59,6 @@ export function ReportListItem({ report, onViewReport, onReportDeleted }: Report
     ) : 
     new Date();
 
-  // Get unit name from the report title or default
   const unitName = report.unit_name || "Unknown Unit";
 
   return (
