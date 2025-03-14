@@ -1,26 +1,23 @@
-
 import { DocumentData } from "firebase/firestore";
+import { jsPDF } from "jspdf";
 
 export interface UnitData {
   id: string;
   name?: string;
   location?: string;
+  model?: string;
   status?: string;
-  total_volume?: number | string;
+  uvc_status?: string;
+  total_volume?: number;
+  current_volume?: number;
+  max_volume?: number;
   last_maintenance?: string;
   next_maintenance?: string;
-  setup_date?: string;
-  uvc_hours?: number;
-  uvc_status?: string;
-  uvc_installation_date?: string;
   contact_name?: string;
   contact_email?: string;
   contact_phone?: string;
   notes?: string;
-  created_at?: string;
-  updated_at?: string;
-  eid?: string;
-  iccid?: string;
+  [key: string]: any;
 }
 
 export interface FilterData {
@@ -52,23 +49,13 @@ export interface ReportData {
   unit_id: string;
   report_type: string;
   content: string;
-  measurements?: any[];
+  measurements: any[];
   generated_by: string;
   created_at: string;
-  [key: string]: any;
+  updated_at?: string;
 }
 
-export interface MeasurementData {
-  id: string;
-  timestamp: string;
-  volume: number;
-  temperature: number;
-  cumulative_volume: number;
-  uvc_hours?: number;
-}
-
-// Extended jsPDF type to include lastAutoTable property from jspdf-autotable
-declare module 'jspdf' {
+declare module "jspdf" {
   interface jsPDF {
     lastAutoTable: {
       finalY: number;

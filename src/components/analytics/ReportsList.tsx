@@ -54,6 +54,7 @@ export function ReportsList({ reports }: ReportsListProps) {
   const handleViewReport = async (report: ReportData) => {
     setIsLoading(true);
     try {
+      console.log("Opening report for viewing:", report);
       setSelectedReport(report);
       
       // Fetch unit data
@@ -65,15 +66,19 @@ export function ReportsList({ reports }: ReportsListProps) {
           id: unitSnapshot.id,
           ...unitSnapshot.data()
         };
+        console.log("Fetched unit data:", unitDataObj);
         setUnitData(unitDataObj);
         
         // Calculate metrics from measurements
         const measurements = report.measurements || [];
+        console.log("Processing measurements:", measurements.length);
         const metrics = calculateMetricsFromMeasurements(measurements);
+        console.log("Calculated metrics:", metrics);
         setReportMetrics(metrics);
         
         setIsViewDialogOpen(true);
       } else {
+        console.error("Unit data not found for unit ID:", report.unit_id);
         toast({
           variant: "destructive",
           title: "Error",
@@ -93,7 +98,13 @@ export function ReportsList({ reports }: ReportsListProps) {
   };
 
   if (reports.length === 0) {
-    return null;
+    return (
+      <Card className="p-6 mt-8 bg-spotify-darker">
+        <div className="text-center text-gray-400">
+          <p>No reports generated yet. Select a unit and report type, then click "Generate Report".</p>
+        </div>
+      </Card>
+    );
   }
 
   return (
@@ -112,7 +123,7 @@ export function ReportsList({ reports }: ReportsListProps) {
                     Generated on {new Date(report.created_at).toLocaleString()}
                   </p>
                   <div className="mt-2 text-sm text-gray-300 line-clamp-3 whitespace-pre-wrap">
-                    {report.content}
+                    {report.content?.substring(0, 150)}...
                   </div>
                 </div>
                 <div className="flex space-x-2">

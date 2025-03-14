@@ -34,6 +34,8 @@ export async function handleReportGeneration(
       throw new Error("No authenticated session");
     }
 
+    console.log(`Generating ${reportType} report for unit: ${selectedUnit}`);
+
     // Fetch unit data
     const unitDocRef = doc(db, "units", selectedUnit);
     const unitSnapshot = await getDoc(unitDocRef);
@@ -49,15 +51,18 @@ export async function handleReportGeneration(
       ...unitSnapshot.data() as DocumentData
     };
     
+    console.log("Unit data:", unitData);
+    
     // Fetch measurements for the report period
     const measurements = await fetchMeasurementsForReport(selectedUnit, reportType);
+    console.log(`Retrieved ${measurements.length} measurements for report`);
     
     // Generate report content based on unit data and measurements
     const reportContent = generateReportContent(unitData, reportType, measurements);
 
     // Save report to database
     const reportsCollection = collection(db, "reports");
-    await addDoc(reportsCollection, {
+    const reportDoc = await addDoc(reportsCollection, {
       unit_id: selectedUnit,
       report_type: reportType,
       content: reportContent,
@@ -65,6 +70,8 @@ export async function handleReportGeneration(
       generated_by: user.uid,
       created_at: new Date().toISOString()
     });
+    
+    console.log("Report saved with ID:", reportDoc.id);
 
     // Notify parent component to refetch reports
     onReportGenerated();
