@@ -77,35 +77,20 @@ export async function downloadReportAsPdf(report: ReportData): Promise<void> {
     const fileName = `${unitData.name}_${report.report_type}_report_${new Date().toISOString().split('T')[0]}.pdf`;
     console.log("Prepared filename:", fileName);
     
-    // Force download using browser download API
-    const navigator = window.navigator as any;
-    if (navigator && typeof navigator.msSaveOrOpenBlob === 'function') {
-      // For IE/Edge
-      navigator.msSaveOrOpenBlob(pdfBlob, fileName);
-      console.log("Download triggered via msSaveOrOpenBlob");
-    } else {
-      // For modern browsers
-      // Create URL for the blob
-      const url = window.URL.createObjectURL(pdfBlob);
-      
-      // Create a download link and trigger download
-      const downloadLink = document.createElement('a');
-      downloadLink.href = url;
-      downloadLink.download = fileName;
-      downloadLink.style.display = 'none';
-      
-      // Add to document and trigger click
-      document.body.appendChild(downloadLink);
-      console.log("Triggering download");
-      downloadLink.click();
-      
-      // Clean up with a longer timeout to ensure the download has time to start
-      setTimeout(() => {
-        document.body.removeChild(downloadLink);
-        window.URL.revokeObjectURL(url);
-        console.log("PDF download complete, cleaned up resources");
-      }, 10000);
-    }
+    // Create download link
+    const url = window.URL.createObjectURL(pdfBlob);
+    const a = document.createElement('a');
+    document.body.appendChild(a);
+    a.style.display = 'none';
+    a.href = url;
+    a.download = fileName;
+    
+    console.log("Triggering download");
+    a.click();
+    
+    // Clean up
+    window.URL.revokeObjectURL(url);
+    document.body.removeChild(a);
     
     toast({
       title: "Success",

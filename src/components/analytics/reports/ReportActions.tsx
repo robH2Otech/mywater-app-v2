@@ -37,34 +37,20 @@ export function ReportActions({ unit, reportType, metrics, startDate, endDate }:
       // Create a download link
       const fileName = `${unit.name}_${reportType}_report_${new Date().toISOString().split('T')[0]}.pdf`;
       
-      // Force download using browser download API
-      const navigator = window.navigator as any;
-      if (navigator && typeof navigator.msSaveOrOpenBlob === 'function') {
-        // For IE/Edge
-        navigator.msSaveOrOpenBlob(pdfBlob, fileName);
-        console.log("Download triggered via msSaveOrOpenBlob");
-      } else {
-        // For modern browsers
-        const url = window.URL.createObjectURL(pdfBlob);
-        
-        // Create an anchor element for downloading
-        const a = document.createElement('a');
-        a.style.display = 'none';
-        a.href = url;
-        a.download = fileName;
-        
-        // Append to body, trigger click and remove
-        document.body.appendChild(a);
-        console.log("Triggering download for", fileName);
-        a.click();
-        
-        // Clean up
-        setTimeout(() => {
-          document.body.removeChild(a);
-          window.URL.revokeObjectURL(url);
-          console.log("Cleaned up download resources");
-        }, 10000);  // Longer timeout to ensure browser has time to process the download
-      }
+      // Create a download link and trigger download
+      const url = window.URL.createObjectURL(pdfBlob);
+      const a = document.createElement('a');
+      document.body.appendChild(a);
+      a.style.display = 'none';
+      a.href = url;
+      a.download = fileName;
+      
+      console.log("Triggering download for", fileName);
+      a.click();
+      
+      // Clean up
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
       
       toast({
         title: "Success",
