@@ -2,13 +2,14 @@
 import { ReportGenerationForm } from "@/components/analytics/ReportGenerationForm";
 import { ReportsList } from "@/components/analytics/ReportsList";
 import { useReports } from "@/hooks/useReports";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 export function Analytics() {
   const [selectedUnit, setSelectedUnit] = useState("");
-  const { data: reports = [], refetch: refetchReports } = useReports(selectedUnit);
+  const { data: reports = [], refetch: refetchReports, isLoading } = useReports(selectedUnit);
 
   const handleReportGenerated = () => {
+    console.log("Report generated, refetching reports...");
     refetchReports();
   };
 

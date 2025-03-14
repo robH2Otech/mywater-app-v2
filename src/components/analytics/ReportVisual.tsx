@@ -2,7 +2,6 @@
 import { UnitData } from "@/types/analytics";
 import { Button } from "@/components/ui/button";
 import { Download } from "lucide-react";
-import { format } from "date-fns";
 import { getDateRangeForReportType } from "@/utils/reportGenerator";
 import { generateReportPDF } from "@/utils/analytics/pdfGenerator";
 import { ReportSummaryCards } from "./ReportSummaryCards";
@@ -33,7 +32,7 @@ export function ReportVisual({ unit, reportType, metrics }: ReportVisualProps) {
   };
   
   // If no data available
-  if (!metrics || !metrics.dailyData || !metrics.dailyData.length) {
+  if (!metrics || !metrics.dailyData || metrics.dailyData.length === 0) {
     return <ReportNoData />;
   }
   

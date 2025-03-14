@@ -36,9 +36,9 @@ export function generateSampleReportData(startDate: Date, endDate: Date) {
       sampleData.push({
         id: `sample-${formattedDate}-${j}`,
         timestamp,
-        volume: volume + hourlyVariation,
-        temperature: temperature + (hourlyVariation / 2),
-        uvc_hours: (uvcHours + (hourlyVariation / 3)) / 3, // Divide by 3 as we have 3 readings per day
+        volume: Math.max(0, volume + hourlyVariation),
+        temperature: Math.max(0, temperature + (hourlyVariation / 2)),
+        uvc_hours: Math.max(0, (uvcHours + (hourlyVariation / 3)) / 3), // Divide by 3 as we have 3 readings per day
         cumulative_volume: 0 // Will be calculated in processing
       });
     }

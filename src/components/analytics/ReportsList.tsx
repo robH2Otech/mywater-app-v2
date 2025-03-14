@@ -27,17 +27,20 @@ export function ReportsList({ reports }: ReportsListProps) {
   const handleDownloadReport = async (report: ReportData) => {
     try {
       setIsLoading(true);
+      console.log("Downloading report:", report.id);
+      
       // Ensure we have unit data
-      if (!unitData && report.unit_id) {
+      let unitDataForPdf = unitData;
+      if (!unitDataForPdf) {
         const unitDocRef = doc(db, "units", report.unit_id);
         const unitSnapshot = await getDoc(unitDocRef);
         
         if (unitSnapshot.exists()) {
-          const fetchedUnitData: UnitData = {
+          unitDataForPdf = {
             id: unitSnapshot.id,
             ...unitSnapshot.data() as any
           };
-          setUnitData(fetchedUnitData);
+          setUnitData(unitDataForPdf);
         } else {
           throw new Error("Unit data not found");
         }
@@ -51,7 +54,7 @@ export function ReportsList({ reports }: ReportsListProps) {
       
       // Generate and download PDF
       generateReportPDF(
-        unitData || { id: report.unit_id, name: report.unit_name || "Unknown Unit" },
+        unitDataForPdf || { id: report.unit_id, name: report.unit_name || "Unknown Unit" },
         report.report_type,
         metrics,
         startDate,

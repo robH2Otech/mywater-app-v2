@@ -28,5 +28,8 @@ export function useReports(unitId: string) {
       return reportsList;
     },
     enabled: !!unitId,
+    refetchOnWindowFocus: false, 
+    refetchOnMount: true,
+    refetchOnReconnect: false,
   });
 }
