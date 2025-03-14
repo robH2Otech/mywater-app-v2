@@ -77,20 +77,23 @@ export async function downloadReportAsPdf(report: ReportData): Promise<void> {
     const fileName = `${unitData.name}_${report.report_type}_report_${new Date().toISOString().split('T')[0]}.pdf`;
     console.log("Prepared filename:", fileName);
     
-    // Create download link
-    const url = window.URL.createObjectURL(pdfBlob);
-    const a = document.createElement('a');
-    document.body.appendChild(a);
-    a.style.display = 'none';
-    a.href = url;
-    a.download = fileName;
+    // Create download link using URL.createObjectURL
+    const url = URL.createObjectURL(pdfBlob);
+    
+    // Create and trigger download link
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = fileName;
+    document.body.appendChild(link);
     
     console.log("Triggering download");
-    a.click();
+    link.click();
     
     // Clean up
-    window.URL.revokeObjectURL(url);
-    document.body.removeChild(a);
+    setTimeout(() => {
+      URL.revokeObjectURL(url);
+      document.body.removeChild(link);
+    }, 100);
     
     toast({
       title: "Success",

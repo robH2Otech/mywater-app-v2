@@ -23,7 +23,7 @@ export function ReportActions({ unit, reportType, metrics, startDate, endDate }:
     
     setIsDownloading(true);
     try {
-      console.log("Generating PDF from ReportActions");
+      console.log("Starting PDF download process from ReportActions");
       
       // Generate the PDF
       const pdfBlob = await generatePDF(unit, reportType, metrics, startDate, endDate);
@@ -37,20 +37,23 @@ export function ReportActions({ unit, reportType, metrics, startDate, endDate }:
       // Create a download link
       const fileName = `${unit.name}_${reportType}_report_${new Date().toISOString().split('T')[0]}.pdf`;
       
-      // Create a download link and trigger download
-      const url = window.URL.createObjectURL(pdfBlob);
-      const a = document.createElement('a');
-      document.body.appendChild(a);
-      a.style.display = 'none';
-      a.href = url;
-      a.download = fileName;
+      // Create download link using URL.createObjectURL
+      const url = URL.createObjectURL(pdfBlob);
+      
+      // Create and trigger download link
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = fileName;
+      document.body.appendChild(link);
       
       console.log("Triggering download for", fileName);
-      a.click();
+      link.click();
       
       // Clean up
-      window.URL.revokeObjectURL(url);
-      document.body.removeChild(a);
+      setTimeout(() => {
+        URL.revokeObjectURL(url);
+        document.body.removeChild(link);
+      }, 100);
       
       toast({
         title: "Success",

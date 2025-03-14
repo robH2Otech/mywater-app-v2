@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { ReportData } from "@/types/analytics";
-import { ReportVisual } from "./ReportVisual";
+import { ReportVisual } from "../ReportVisual";
 import { doc, getDoc } from "firebase/firestore";
 import { db } from "@/integrations/firebase/client";
 import { toast } from "@/hooks/use-toast";
@@ -100,21 +100,22 @@ export function ReportDetailDialog({ report, open, onOpenChange }: ReportDetailD
       const fileName = `${unitData.name}_${report.report_type}_report_${new Date().toISOString().split('T')[0]}.pdf`;
       
       // Create URL for download
-      const url = window.URL.createObjectURL(pdfBlob);
+      const url = URL.createObjectURL(pdfBlob);
       
-      // Create download link
-      const a = document.createElement('a');
-      document.body.appendChild(a);
-      a.style.display = 'none';
-      a.href = url;
-      a.download = fileName;
+      // Create and trigger download link
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = fileName;
+      document.body.appendChild(link);
       
       console.log("Triggering download from dialog");
-      a.click();
+      link.click();
       
       // Clean up
-      window.URL.revokeObjectURL(url);
-      document.body.removeChild(a);
+      setTimeout(() => {
+        URL.revokeObjectURL(url);
+        document.body.removeChild(link);
+      }, 100);
       
       toast({
         title: "Success",
