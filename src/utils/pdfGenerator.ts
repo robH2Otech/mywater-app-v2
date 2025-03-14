@@ -173,7 +173,8 @@ export async function generatePDF(
     
     // Return as a blob
     console.log("PDF generated successfully, returning blob");
-    return new Blob([doc.output('blob')], { type: 'application/pdf' });
+    const pdfOutput = doc.output('blob');
+    return new Blob([pdfOutput], { type: 'application/pdf' });
   } catch (error) {
     console.error("Error generating PDF:", error);
     throw new Error("Failed to generate PDF report");

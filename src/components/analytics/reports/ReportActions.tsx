@@ -26,7 +26,7 @@ export function ReportActions({ unit, reportType, metrics, startDate, endDate }:
       
       // Create a download link
       const fileName = `${unit.name}_${reportType}_report_${new Date().toISOString().split('T')[0]}.pdf`;
-      const url = window.URL.createObjectURL(pdfBlob);
+      const url = window.URL.createObjectURL(new Blob([pdfBlob], { type: 'application/pdf' }));
       
       // Create an anchor element for downloading
       const a = document.createElement('a');

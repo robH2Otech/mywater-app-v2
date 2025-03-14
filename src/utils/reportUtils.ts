@@ -75,12 +75,13 @@ export async function downloadReportAsPdf(report: ReportData): Promise<void> {
     console.log("Prepared filename:", fileName);
     
     // Create URL for the blob
-    const url = URL.createObjectURL(pdfBlob);
+    const url = URL.createObjectURL(new Blob([pdfBlob], { type: 'application/pdf' }));
     
     // Create a download link and trigger download
     const downloadLink = document.createElement('a');
     downloadLink.href = url;
     downloadLink.download = fileName;
+    downloadLink.style.display = 'none';
     document.body.appendChild(downloadLink);
     
     // Trigger the download
