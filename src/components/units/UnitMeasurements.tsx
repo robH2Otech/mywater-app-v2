@@ -3,7 +3,7 @@ import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { initializeSampleMeasurements } from "@/utils/measurements/sampleDataUtils";
-import { useRealtimeMeasurements } from "@/hooks/useRealtimeMeasurements";
+import { useRealtimeMeasurements } from "@/hooks/measurements/useRealtimeMeasurements";
 import { toast } from "sonner";
 import { MeasurementData } from "@/types/analytics";
 import {
