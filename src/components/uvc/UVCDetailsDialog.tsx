@@ -28,12 +28,15 @@ export function UVCDetailsDialog({ unit, open, onOpenChange, onSave }: UVCDetail
       if (unit && open) {
         setIsLoading(true);
         try {
+          console.log(`UVCDetailsDialog - Fetching latest data for unit ${unit.id}`);
+          
           // Get the latest data from Firestore for this unit
           const unitDocRef = doc(db, "units", unit.id);
           const unitSnapshot = await getDoc(unitDocRef);
           
           if (unitSnapshot.exists()) {
             const latestData = unitSnapshot.data();
+            console.log(`UVCDetailsDialog - Latest data for unit ${unit.id}:`, latestData);
             
             // Parse base UVC hours from unit document
             let baseUvcHours = latestData.uvc_hours;
@@ -42,6 +45,9 @@ export function UVCDetailsDialog({ unit, open, onOpenChange, onSave }: UVCDetail
             } else if (baseUvcHours === undefined || baseUvcHours === null) {
               baseUvcHours = 0;
             }
+            
+            console.log(`UVCDetailsDialog - Unit ${unit.id} - Base UVC hours: ${baseUvcHours}`);
+            console.log(`UVCDetailsDialog - Unit ${unit.id} - is_uvc_accumulated flag: ${latestData.is_uvc_accumulated}`);
             
             // Only fetch measurement data if this unit doesn't already use accumulated hours
             let totalUvcHours = baseUvcHours;
@@ -60,6 +66,8 @@ export function UVCDetailsDialog({ unit, open, onOpenChange, onSave }: UVCDetail
                 
                 if (!measurementsSnapshot.empty) {
                   const latestMeasurement = measurementsSnapshot.docs[0].data();
+                  console.log(`UVCDetailsDialog - Latest measurement for unit ${unit.id}:`, latestMeasurement);
+                  
                   if (latestMeasurement.uvc_hours !== undefined) {
                     const measurementUvcHours = typeof latestMeasurement.uvc_hours === 'string' 
                       ? parseFloat(latestMeasurement.uvc_hours) 
@@ -67,20 +75,29 @@ export function UVCDetailsDialog({ unit, open, onOpenChange, onSave }: UVCDetail
                     
                     // Add measurement hours to the base hours
                     totalUvcHours += measurementUvcHours;
-                    console.log(`Dialog - Unit ${unit.id}: Base UVC hours ${baseUvcHours} + Measurement ${measurementUvcHours} = Total ${totalUvcHours}`);
+                    console.log(`UVCDetailsDialog - Unit ${unit.id}: Base UVC hours ${baseUvcHours} + Measurement ${measurementUvcHours} = Total ${totalUvcHours}`);
                   }
                 }
               } catch (error) {
                 console.error("Error fetching measurement data:", error);
               }
+            } else {
+              console.log(`UVCDetailsDialog - Unit ${unit.id}: Using accumulated hours (${baseUvcHours}), not adding measurement hours`);
             }
             
             setFormData({
               uvc_hours: totalUvcHours.toString(),
               uvc_installation_date: latestData.uvc_installation_date ? new Date(latestData.uvc_installation_date) : null,
             });
+            
+            console.log(`UVCDetailsDialog - Setting form data for unit ${unit.id}:`, {
+              uvc_hours: totalUvcHours.toString(),
+              uvc_installation_date: latestData.uvc_installation_date
+            });
           } else {
             // Fallback to the data passed in props
+            console.log(`UVCDetailsDialog - Unit ${unit.id} not found in Firestore, using props data:`, unit);
+            
             setFormData({
               uvc_hours: unit.uvc_hours?.toString() || "0",
               uvc_installation_date: unit.uvc_installation_date ? new Date(unit.uvc_installation_date) : null,
@@ -112,6 +129,8 @@ export function UVCDetailsDialog({ unit, open, onOpenChange, onSave }: UVCDetail
     if (onSave && formData) {
       // Convert uvc_hours to a number
       const hours = formData.uvc_hours ? parseFloat(formData.uvc_hours) : 0;
+      
+      console.log(`UVCDetailsDialog - Saving UVC hours for unit ${unit.id}: ${hours}`);
       
       onSave({
         ...formData,

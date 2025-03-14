@@ -21,6 +21,10 @@ export function UVCList({ units, onUVCClick }: UVCListProps) {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const { processedUnits } = useUVCStatus(units);
 
+  console.log("UVCList - Processed Units:", processedUnits.map(u => 
+    `${u.id}: ${u.name}, UVC Hours: ${u.uvc_hours}, is_accumulated: ${u.is_uvc_accumulated}`
+  ));
+
   const handleEditClick = (e: React.MouseEvent, unit: any) => {
     e.stopPropagation();
     console.log("Edit UVC unit:", unit);
@@ -30,7 +34,7 @@ export function UVCList({ units, onUVCClick }: UVCListProps) {
 
   const handleSave = async (updatedData: any) => {
     try {
-      // Get the numeric hours from the form
+      // Get the numeric hours from the form - this is now the TOTAL accumulated hours
       const numericHours = typeof updatedData.uvc_hours === 'string' 
         ? parseFloat(updatedData.uvc_hours) 
         : updatedData.uvc_hours;

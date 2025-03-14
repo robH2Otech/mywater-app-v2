@@ -15,6 +15,8 @@ export function useUVCStatus(units: any[]) {
   useEffect(() => {
     const processUnitsWithLatestData = async () => {
       try {
+        console.log("Processing units in useUVCStatus:", units.length);
+        
         // Process each unit in parallel
         const updatedUnitsPromises = units.map(async unit => {
           // Process basic unit data
@@ -34,34 +36,41 @@ export function useUVCStatus(units: any[]) {
           
           // If this unit doesn't already use accumulated hours, check for latest measurement data
           let totalUvcHours = baseUvcHours;
-          if (!unit.is_uvc_accumulated) {
-            try {
-              // Get latest measurement for this unit
-              const measurementsQuery = query(
-                collection(db, "measurements"),
-                where("unit_id", "==", unit.id),
-                orderBy("timestamp", "desc"),
-                limit(1)
-              );
+          let measurementUvcHours = 0;
+          
+          try {
+            // Always get latest measurement for this unit
+            const measurementsQuery = query(
+              collection(db, "measurements"),
+              where("unit_id", "==", unit.id),
+              orderBy("timestamp", "desc"),
+              limit(1)
+            );
+            
+            const measurementsSnapshot = await getDocs(measurementsQuery);
+            
+            if (!measurementsSnapshot.empty) {
+              const latestMeasurement = measurementsSnapshot.docs[0].data();
               
-              const measurementsSnapshot = await getDocs(measurementsQuery);
-              
-              if (!measurementsSnapshot.empty) {
-                const latestMeasurement = measurementsSnapshot.docs[0].data();
+              if (latestMeasurement.uvc_hours !== undefined) {
+                measurementUvcHours = typeof latestMeasurement.uvc_hours === 'string' 
+                  ? parseFloat(latestMeasurement.uvc_hours) 
+                  : (latestMeasurement.uvc_hours || 0);
                 
-                if (latestMeasurement.uvc_hours !== undefined) {
-                  const measurementUvcHours = typeof latestMeasurement.uvc_hours === 'string' 
-                    ? parseFloat(latestMeasurement.uvc_hours) 
-                    : (latestMeasurement.uvc_hours || 0);
-                  
-                  // Add measurement hours to base hours
+                console.log(`Unit ${unit.id} - Latest measurement UVC hours: ${measurementUvcHours}`);
+                
+                // Add measurement hours to base hours, ONLY if the flag is NOT set
+                // This prevents double counting hours we've already accumulated
+                if (!unit.is_uvc_accumulated) {
                   totalUvcHours += measurementUvcHours;
                   console.log(`useUVCStatus - Unit ${unit.id}: Base ${baseUvcHours} + Measurement ${measurementUvcHours} = Total ${totalUvcHours}`);
+                } else {
+                  console.log(`useUVCStatus - Unit ${unit.id}: Using accumulated hours (${baseUvcHours}), ignoring measurement hours`);
                 }
               }
-            } catch (error) {
-              console.error(`Error fetching measurements for unit ${unit.id}:`, error);
             }
+          } catch (error) {
+            console.error(`Error fetching measurements for unit ${unit.id}:`, error);
           }
           
           // Calculate statuses
@@ -69,7 +78,7 @@ export function useUVCStatus(units: any[]) {
           const filterStatus = determineUnitStatus(totalVolume);
           
           // Log for debugging
-          console.log(`useUVCStatus: Unit ${unit.id} - UVC hours: ${totalUvcHours}, status: ${uvcStatus}`);
+          console.log(`useUVCStatus Final: Unit ${unit.id} - UVC hours: ${totalUvcHours}, Base: ${baseUvcHours}, Measurement: ${measurementUvcHours}, Status: ${uvcStatus}, Accumulated: ${unit.is_uvc_accumulated}`);
           
           // Check if UVC status changed
           if (unit.uvc_status !== uvcStatus) {

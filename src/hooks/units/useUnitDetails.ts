@@ -12,6 +12,8 @@ export function useUnitDetails(id: string | undefined) {
     queryFn: async () => {
       if (!id) throw new Error("Unit ID is required");
       
+      console.log(`Fetching unit details for ${id}`);
+      
       // 1. Get the unit base data
       const unitDocRef = doc(db, "units", id);
       const unitSnapshot = await getDoc(unitDocRef);
@@ -21,6 +23,7 @@ export function useUnitDetails(id: string | undefined) {
       }
       
       const unitData = unitSnapshot.data();
+      console.log(`Unit ${id} base data:`, unitData);
       
       // 2. Get the latest measurements data to check for additional UVC hours
       // This ensures we're getting the most up-to-date UVC hours
@@ -40,11 +43,14 @@ export function useUnitDetails(id: string | undefined) {
       // Check if we have measurement data
       if (!measurementsSnapshot.empty) {
         const latestMeasurement = measurementsSnapshot.docs[0].data();
+        console.log(`Latest measurement for unit ${id}:`, latestMeasurement);
+        
         if (latestMeasurement.uvc_hours !== undefined) {
           latestMeasurementUvcHours = typeof latestMeasurement.uvc_hours === 'string' 
             ? parseFloat(latestMeasurement.uvc_hours) 
             : (latestMeasurement.uvc_hours || 0);
           hasMeasurementData = true;
+          console.log(`Unit ${id} - Latest measurement UVC hours: ${latestMeasurementUvcHours}`);
         }
       }
       
@@ -64,22 +70,26 @@ export function useUnitDetails(id: string | undefined) {
         baseUvcHours = 0;
       }
       
-      // 5. Calculate the total UVC hours by adding base hours and measurement hours
-      // We use either the base hours (if no measurements) or the sum of both
+      console.log(`Unit ${id} - Base UVC hours: ${baseUvcHours}`);
+      console.log(`Unit ${id} - is_uvc_accumulated flag: ${unitData.is_uvc_accumulated}`);
+      
+      // 5. Calculate the total UVC hours
       let totalUvcHours = baseUvcHours;
       
       // If we have measurement data, add it to the base UVC hours, but only if the
       // unit is not already using accumulated values
       if (hasMeasurementData && !unitData.is_uvc_accumulated) {
         totalUvcHours += latestMeasurementUvcHours;
-        console.log(`Unit ${id} - Base UVC hours: ${baseUvcHours}, Measurement UVC hours: ${latestMeasurementUvcHours}, Total: ${totalUvcHours}`);
+        console.log(`Unit ${id} - Adding measurement hours: ${baseUvcHours} + ${latestMeasurementUvcHours} = ${totalUvcHours}`);
+      } else if (unitData.is_uvc_accumulated) {
+        console.log(`Unit ${id} - Using accumulated hours (${baseUvcHours}), not adding measurement hours`);
       }
       
       // 6. Recalculate statuses
       const filterStatus = determineUnitStatus(totalVolume);
       const uvcStatus = determineUVCStatus(totalUvcHours);
       
-      console.log(`useUnitDetails - Unit ${id}: UVC Hours - Base: ${baseUvcHours}, Latest: ${latestMeasurementUvcHours}, Total: ${totalUvcHours}, Status: ${uvcStatus}`);
+      console.log(`useUnitDetails - Unit ${id}: UVC Hours - Base: ${baseUvcHours}, Latest: ${latestMeasurementUvcHours}, Total: ${totalUvcHours}, Status: ${uvcStatus}, Accumulated: ${unitData.is_uvc_accumulated}`);
       
       return {
         id: unitSnapshot.id,
