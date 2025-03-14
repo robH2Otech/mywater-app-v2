@@ -1,10 +1,10 @@
 
 import { useState, useEffect } from "react";
-import { collection, onSnapshot, query, orderBy, limit, doc } from "firebase/firestore";
+import { collection, onSnapshot, query, orderBy, limit } from "firebase/firestore";
 import { db } from "@/integrations/firebase/client";
 import { Measurement } from "@/utils/measurementUtils";
 
-export function useRealtimeMeasurements(unitId: string, count: number = 10) {
+export function useRealtimeMeasurements(unitId: string, count: number = 24) {
   const [measurements, setMeasurements] = useState<(Measurement & { id: string })[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
@@ -38,10 +38,13 @@ export function useRealtimeMeasurements(unitId: string, count: number = 10) {
       unsubscribe = onSnapshot(
         q,
         (querySnapshot) => {
-          const measurementsData = querySnapshot.docs.map(doc => ({
-            id: doc.id,
-            ...doc.data()
-          })) as (Measurement & { id: string })[];
+          const measurementsData = querySnapshot.docs.map(doc => {
+            const data = doc.data();
+            return {
+              id: doc.id,
+              ...data
+            };
+          }) as (Measurement & { id: string })[];
           
           setMeasurements(measurementsData);
           setIsLoading(false);

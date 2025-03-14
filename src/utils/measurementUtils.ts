@@ -10,6 +10,22 @@ export interface Measurement {
   uvc_hours?: number;
 }
 
+// Helper to format dates consistently
+const formatTimestamp = (date: Date): string => {
+  const options: Intl.DateTimeFormatOptions = {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit',
+    second: '2-digit',
+    hour12: true,
+    timeZoneName: 'short'
+  };
+  
+  return date.toLocaleString('en-US', options);
+};
+
 /**
  * Add a new measurement to a water unit
  */
@@ -26,22 +42,9 @@ export const addMeasurement = async (unitId: string, volume: number, temperature
     const unitData = unitDoc.data();
     const currentTotalVolume = parseFloat(unitData.total_volume || "0");
     
-    // Create the new measurement with human-readable format as shown in the screenshot
+    // Create the new measurement with human-readable format
     const now = new Date();
-    
-    // Format timestamp in the style "March 13, 2025 at 11:34:56 AM UTC+1"
-    const options: Intl.DateTimeFormatOptions = {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-      hour: 'numeric',
-      minute: '2-digit',
-      second: '2-digit',
-      hour12: true,
-      timeZoneName: 'short'
-    };
-    
-    const timestamp = now.toLocaleString('en-US', options);
+    const timestamp = formatTimestamp(now);
     
     const measurementData: Measurement = {
       timestamp,
@@ -87,7 +90,7 @@ export const addMeasurement = async (unitId: string, volume: number, temperature
 /**
  * Get the latest measurements for a water unit
  */
-export const getLatestMeasurements = async (unitId: string, count: number = 10) => {
+export const getLatestMeasurements = async (unitId: string, count: number = 24) => {
   try {
     // Determine the collection path based on unit ID
     const isMyWaterUnit = unitId.startsWith('MYWATER_');
@@ -133,38 +136,24 @@ export const initializeSampleMeasurements = async (unitId: string) => {
     
     // Create sample measurements for the past 24 hours (1 per hour)
     const now = new Date();
-    let cumulativeUvcHours = unitData.uvc_hours || 0;
+    let cumulativeUvcHours = parseFloat(unitData.uvc_hours || "0");
     
     for (let i = 24; i >= 1; i--) {
       // Create timestamp for this measurement (i hours ago)
       const timestamp = new Date(now.getTime() - (i * 60 * 60 * 1000));
+      const formattedTimestamp = formatTimestamp(timestamp);
       
-      // Format timestamp in the style "March 13, 2025 at 11:34:56 AM UTC+1"
-      const options: Intl.DateTimeFormatOptions = {
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric',
-        hour: 'numeric',
-        minute: '2-digit',
-        second: '2-digit',
-        hour12: true,
-        timeZoneName: 'short'
-      };
+      // Generate random volume between 15-35 m³ per hour with two decimal places
+      const hourlyVolume = parseFloat((Math.random() * 20 + 15).toFixed(2));
       
-      const formattedTimestamp = timestamp.toLocaleString('en-US', options);
-      
-      // Generate random volume between 80-120 m³ per hour
-      const hourlyVolume = Math.floor(Math.random() * 40) + 80;
-      
-      // Generate random temperature between 18-25°C
-      const temperature = parseFloat((Math.random() * 7 + 18).toFixed(1));
+      // Generate random temperature between 18-27°C with one decimal place
+      const temperature = parseFloat((Math.random() * 9 + 18).toFixed(1));
       
       // Accumulate the volume
       cumulativeVolume += hourlyVolume;
       
-      // Add 1 hour to UVC hours (assuming it's always on)
-      // With some randomness to simulate occasional maintenance or downtime
-      const uvcActiveTime = Math.random() > 0.1 ? 1 : 0.5; // 90% chance of full hour, 10% chance of half hour
+      // Add UVC hours with some variation (usually 1 hour per hour)
+      const uvcActiveTime = parseFloat((Math.random() > 0.1 ? 1 : 0.5).toFixed(1)); // 90% chance full hour
       cumulativeUvcHours += uvcActiveTime;
       
       // Create the measurement
@@ -172,7 +161,7 @@ export const initializeSampleMeasurements = async (unitId: string) => {
         timestamp: formattedTimestamp,
         volume: hourlyVolume,
         temperature: temperature,
-        cumulative_volume: cumulativeVolume,
+        cumulative_volume: parseFloat(cumulativeVolume.toFixed(2)),
         uvc_hours: parseFloat(cumulativeUvcHours.toFixed(1))
       };
       
@@ -183,18 +172,9 @@ export const initializeSampleMeasurements = async (unitId: string) => {
     
     // Update the unit's total volume and UVC hours to match the final cumulative values
     await updateDoc(unitDocRef, {
-      total_volume: cumulativeVolume,
-      uvc_hours: cumulativeUvcHours,
-      updated_at: new Date().toLocaleString('en-US', {
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric',
-        hour: 'numeric',
-        minute: '2-digit',
-        second: '2-digit',
-        hour12: true,
-        timeZoneName: 'short'
-      })
+      total_volume: parseFloat(cumulativeVolume.toFixed(2)),
+      uvc_hours: parseFloat(cumulativeUvcHours.toFixed(1)),
+      updated_at: formatTimestamp(new Date())
     });
     
     console.log(`Sample measurements added for unit ${unitId} in ${collectionPath}`);

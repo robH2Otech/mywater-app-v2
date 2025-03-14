@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -5,6 +6,14 @@ import { initializeSampleMeasurements } from "@/utils/measurementUtils";
 import { useRealtimeMeasurements } from "@/hooks/useRealtimeMeasurements";
 import { toast } from "sonner";
 import { MeasurementData } from "@/types/analytics";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 
 interface UnitMeasurementsProps {
   unitId: string;
@@ -29,18 +38,20 @@ export function UnitMeasurements({ unitId }: UnitMeasurementsProps) {
 
   const formatDateTime = (timestamp: string) => {
     try {
-      // Check if the timestamp is in the format from the screenshot (human readable)
-      if (timestamp.includes("at")) {
+      // If it already matches our expected format (March 13, 2025 at 11:34:56 AM UTC+1)
+      if (typeof timestamp === 'string' && timestamp.includes(" at ")) {
         return timestamp;
       }
       
-      // Otherwise, it's an ISO string that needs formatting
+      // If it's a timestamp object converted to string
       const date = new Date(timestamp);
+      
       if (isNaN(date.getTime())) {
+        console.error("Invalid date format:", timestamp);
         return "Invalid date";
       }
       
-      // Format to match "March 13, 2025 at 11:34:56 AM UTC+1" style from the screenshot
+      // Format as "March 13, 2025 at 11:34:56 AM UTC+1"
       const options: Intl.DateTimeFormatOptions = {
         year: 'numeric',
         month: 'long',
@@ -54,7 +65,7 @@ export function UnitMeasurements({ unitId }: UnitMeasurementsProps) {
       
       return date.toLocaleString('en-US', options);
     } catch (error) {
-      console.error("Error formatting date:", error, timestamp);
+      console.error("Error formatting date:", error, "Original value:", timestamp);
       return "Invalid date";
     }
   };
@@ -74,20 +85,20 @@ export function UnitMeasurements({ unitId }: UnitMeasurementsProps) {
           : "N/A";
 
         return (
-          <tr key={measurement.id} className="border-b border-spotify-accent hover:bg-spotify-accent/20">
-            <td className="py-2 px-4 text-white">{timestamp}</td>
-            <td className="py-2 px-4 text-white text-right">{volume}</td>
-            <td className="py-2 px-4 text-white text-right">{temperature}</td>
-            <td className="py-2 px-4 text-white text-right">{uvcHours}</td>
-            <td className="py-2 px-4 text-white text-right">{cumulativeVolume}</td>
-          </tr>
+          <TableRow key={measurement.id} className="hover:bg-spotify-accent/20">
+            <TableCell className="text-white">{timestamp}</TableCell>
+            <TableCell className="text-white text-right">{volume}</TableCell>
+            <TableCell className="text-white text-right">{temperature}</TableCell>
+            <TableCell className="text-white text-right">{uvcHours}</TableCell>
+            <TableCell className="text-white text-right">{cumulativeVolume}</TableCell>
+          </TableRow>
         );
       } catch (err) {
         console.error("Error rendering measurement row:", err, measurement);
         return (
-          <tr key={measurement.id || 'error-row'} className="border-b border-spotify-accent hover:bg-spotify-accent/20">
-            <td colSpan={5} className="py-2 px-4 text-red-400 text-center">Error displaying measurement data</td>
-          </tr>
+          <TableRow key={measurement.id || 'error-row'}>
+            <TableCell colSpan={5} className="text-red-400 text-center">Error displaying measurement data</TableCell>
+          </TableRow>
         );
       }
     });
@@ -142,20 +153,20 @@ export function UnitMeasurements({ unitId }: UnitMeasurementsProps) {
         </div>
       ) : (
         <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead className="border-b border-spotify-accent">
-              <tr>
-                <th className="text-left py-2 px-4 text-gray-400">Timestamp</th>
-                <th className="text-right py-2 px-4 text-gray-400">Volume (m³)</th>
-                <th className="text-right py-2 px-4 text-gray-400">Temperature (°C)</th>
-                <th className="text-right py-2 px-4 text-gray-400">UVC Hours</th>
-                <th className="text-right py-2 px-4 text-gray-400">Cumulative Volume (m³)</th>
-              </tr>
-            </thead>
-            <tbody>
+          <Table>
+            <TableHeader>
+              <TableRow className="border-b border-spotify-accent">
+                <TableHead className="text-left text-gray-400">Timestamp</TableHead>
+                <TableHead className="text-right text-gray-400">Volume (m³)</TableHead>
+                <TableHead className="text-right text-gray-400">Temperature (°C)</TableHead>
+                <TableHead className="text-right text-gray-400">UVC Hours</TableHead>
+                <TableHead className="text-right text-gray-400">Cumulative Volume (m³)</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
               {safeRenderMeasurements(measurements)}
-            </tbody>
-          </table>
+            </TableBody>
+          </Table>
         </div>
       )}
     </Card>
