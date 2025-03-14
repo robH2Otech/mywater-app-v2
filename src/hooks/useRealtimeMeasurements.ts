@@ -1,14 +1,16 @@
 
 import { useState, useEffect } from "react";
-import { collection, onSnapshot, query, orderBy, limit, getDoc, doc } from "firebase/firestore";
+import { collection, onSnapshot, query, orderBy, limit, getDoc, doc, updateDoc } from "firebase/firestore";
 import { db } from "@/integrations/firebase/client";
 import { Measurement } from "@/utils/measurements/types";
 import { safeFormatTimestamp } from "@/utils/measurements/formatUtils";
+import { useQueryClient } from "@tanstack/react-query";
 
 export function useRealtimeMeasurements(unitId: string, count: number = 24) {
   const [measurements, setMeasurements] = useState<(Measurement & { id: string })[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
+  const queryClient = useQueryClient();
 
   useEffect(() => {
     if (!unitId) {
@@ -87,6 +89,21 @@ export function useRealtimeMeasurements(unitId: string, count: number = 24) {
           
           setMeasurements(measurementsData);
           setIsLoading(false);
+          
+          // Update the unit's total_volume with the latest cumulative volume
+          if (measurementsData.length > 0) {
+            const latestMeasurement = measurementsData[0]; // First item (most recent)
+            const unitDocRef = doc(db, "units", unitId);
+            await updateDoc(unitDocRef, {
+              total_volume: latestMeasurement.cumulative_volume,
+              updated_at: new Date().toISOString()
+            });
+            
+            // Invalidate queries to refresh UI
+            queryClient.invalidateQueries({ queryKey: ['units'] });
+            queryClient.invalidateQueries({ queryKey: ['filter-units'] });
+            queryClient.invalidateQueries({ queryKey: ['unit', unitId] });
+          }
         },
         (err) => {
           console.error(`Error listening to ${isMyWaterUnit ? 'data' : 'measurements'}:`, err);
@@ -105,7 +122,7 @@ export function useRealtimeMeasurements(unitId: string, count: number = 24) {
         unsubscribe();
       }
     };
-  }, [unitId, count]);
+  }, [unitId, count, queryClient]);
 
   return { measurements, isLoading, error };
 }

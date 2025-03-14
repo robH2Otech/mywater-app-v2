@@ -34,6 +34,13 @@ export function FilterCard({ unit, onEditClick, onClick }: FilterCardProps) {
     }
   };
 
+  // Format volume with thousands separators
+  const formatVolume = (volume: number | string | null | undefined) => {
+    if (volume === null || volume === undefined) return 'N/A';
+    const numVolume = typeof volume === 'string' ? parseFloat(volume) : volume;
+    return numVolume.toLocaleString(undefined, { maximumFractionDigits: 1 });
+  };
+
   return (
     <Card 
       className="bg-spotify-darker hover:bg-spotify-accent/40 transition-colors cursor-pointer relative group"
@@ -69,7 +76,7 @@ export function FilterCard({ unit, onEditClick, onClick }: FilterCardProps) {
           
           <div className="space-y-2 text-left">
             <div className="text-sm text-gray-400">
-              Total Volume: {unit.total_volume ? `${unit.total_volume} m³` : 'N/A'}
+              Total Volume: {unit.total_volume ? `${formatVolume(unit.total_volume)} m³` : 'N/A'}
             </div>
             {unit.last_maintenance && (
               <div className="flex items-center gap-2 text-sm text-gray-400">

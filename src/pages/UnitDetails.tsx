@@ -9,10 +9,15 @@ import { doc, getDoc } from "firebase/firestore";
 import { db } from "@/integrations/firebase/client";
 import { UnitData } from "@/types/analytics";
 import { UnitMeasurements } from "@/components/units/UnitMeasurements";
+import { Refresh } from "lucide-react";
+import { useState } from "react";
+import { useFilterStatus } from "@/components/filters/FilterStatusUtils";
 
 export const UnitDetails = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const [isSyncing, setIsSyncing] = useState(false);
+  const { syncUnitMeasurements } = useFilterStatus();
 
   const { data: unit, isLoading } = useQuery({
     queryKey: ["unit", id],
@@ -33,6 +38,17 @@ export const UnitDetails = () => {
     },
   });
 
+  const handleSync = async () => {
+    if (!id) return;
+    
+    setIsSyncing(true);
+    try {
+      await syncUnitMeasurements(id);
+    } finally {
+      setIsSyncing(false);
+    }
+  };
+
   if (isLoading) {
     return <div className="animate-pulse h-[400px] bg-spotify-darker rounded-lg" />;
   }
@@ -51,13 +67,24 @@ export const UnitDetails = () => {
       <Card className="bg-spotify-darker border-spotify-accent p-6">
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-2xl font-bold text-white">Water Unit Details</h1>
-          <Button 
-            onClick={() => navigate("/units")}
-            variant="outline"
-            className="bg-spotify-accent hover:bg-spotify-accent-hover text-white border-none"
-          >
-            Back to Units
-          </Button>
+          <div className="flex gap-2">
+            <Button 
+              onClick={handleSync}
+              variant="outline"
+              disabled={isSyncing}
+              className="bg-spotify-accent hover:bg-spotify-accent-hover text-white border-none flex items-center gap-2"
+            >
+              <Refresh className={`h-4 w-4 ${isSyncing ? 'animate-spin' : ''}`} />
+              {isSyncing ? 'Syncing...' : 'Sync Measurements'}
+            </Button>
+            <Button 
+              onClick={() => navigate("/units")}
+              variant="outline"
+              className="bg-spotify-accent hover:bg-spotify-accent-hover text-white border-none"
+            >
+              Back to Units
+            </Button>
+          </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
