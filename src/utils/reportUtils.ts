@@ -77,26 +77,34 @@ export async function downloadReportAsPdf(report: ReportData): Promise<void> {
     const fileName = `${unitData.name}_${report.report_type}_report_${new Date().toISOString().split('T')[0]}.pdf`;
     console.log("Prepared filename:", fileName);
     
-    // Create URL for the blob
-    const url = URL.createObjectURL(pdfBlob);
-    
-    // Create a download link and trigger download
-    const downloadLink = document.createElement('a');
-    downloadLink.href = url;
-    downloadLink.download = fileName;
-    downloadLink.style.display = 'none';
-    
-    // Add to document and trigger click
-    document.body.appendChild(downloadLink);
-    console.log("Triggering download");
-    downloadLink.click();
-    
-    // Clean up with a longer timeout to ensure the download has time to start
-    setTimeout(() => {
-      document.body.removeChild(downloadLink);
-      URL.revokeObjectURL(url);
-      console.log("PDF download complete, cleaned up resources");
-    }, 5000);
+    // Force download using browser download API
+    if (window.navigator && window.navigator.msSaveOrOpenBlob) {
+      // For IE/Edge
+      window.navigator.msSaveOrOpenBlob(pdfBlob, fileName);
+      console.log("Download triggered via msSaveOrOpenBlob");
+    } else {
+      // For modern browsers
+      // Create URL for the blob
+      const url = window.URL.createObjectURL(pdfBlob);
+      
+      // Create a download link and trigger download
+      const downloadLink = document.createElement('a');
+      downloadLink.href = url;
+      downloadLink.download = fileName;
+      downloadLink.style.display = 'none';
+      
+      // Add to document and trigger click
+      document.body.appendChild(downloadLink);
+      console.log("Triggering download");
+      downloadLink.click();
+      
+      // Clean up with a longer timeout to ensure the download has time to start
+      setTimeout(() => {
+        document.body.removeChild(downloadLink);
+        window.URL.revokeObjectURL(url);
+        console.log("PDF download complete, cleaned up resources");
+      }, 10000);
+    }
     
     toast({
       title: "Success",

@@ -168,21 +168,12 @@ export async function generatePDF(
     doc.setFontSize(8);
     doc.text(`Generated on: ${generatedDate}`, pageWidth - 15, doc.internal.pageSize.getHeight() - 10, { align: "right" });
     
-    // Output as PDF using saveAs method to force download
-    try {
-      // Return blob directly for better browser compatibility
-      const pdfOutput = doc.output('blob');
-      console.log("PDF blob generated successfully:", pdfOutput.size, "bytes");
-      return pdfOutput;
-    } catch (blobError) {
-      console.error("Error creating blob directly:", blobError);
-      
-      // Fallback to ArrayBuffer method if direct blob fails
-      const pdfArrayBuffer = doc.output('arraybuffer');
-      const blob = new Blob([pdfArrayBuffer], { type: 'application/pdf' });
-      console.log("PDF blob generated via ArrayBuffer fallback:", blob.size, "bytes");
-      return blob;
-    }
+    // First try to get an arraybuffer, then convert to blob (most reliable cross-browser)
+    const pdfArrayBuffer = doc.output('arraybuffer');
+    const pdfBlob = new Blob([pdfArrayBuffer], { type: 'application/pdf' });
+    console.log("PDF blob generated successfully:", pdfBlob.size, "bytes, type:", pdfBlob.type);
+    
+    return pdfBlob;
   } catch (error) {
     console.error("Error generating PDF:", error);
     throw new Error("Failed to generate PDF report");

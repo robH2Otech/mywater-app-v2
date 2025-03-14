@@ -36,25 +36,34 @@ export function ReportActions({ unit, reportType, metrics, startDate, endDate }:
       
       // Create a download link
       const fileName = `${unit.name}_${reportType}_report_${new Date().toISOString().split('T')[0]}.pdf`;
-      const url = URL.createObjectURL(pdfBlob);
       
-      // Create an anchor element for downloading
-      const a = document.createElement('a');
-      a.style.display = 'none';
-      a.href = url;
-      a.download = fileName;
-      
-      // Append to body, trigger click and remove
-      document.body.appendChild(a);
-      console.log("Triggering download for", fileName);
-      a.click();
-      
-      // Clean up
-      window.setTimeout(() => {
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
-        console.log("Cleaned up download resources");
-      }, 5000);  // Increase timeout to ensure browser has time to process the download
+      // Force download using browser download API
+      if (window.navigator && window.navigator.msSaveOrOpenBlob) {
+        // For IE/Edge
+        window.navigator.msSaveOrOpenBlob(pdfBlob, fileName);
+        console.log("Download triggered via msSaveOrOpenBlob");
+      } else {
+        // For modern browsers
+        const url = window.URL.createObjectURL(pdfBlob);
+        
+        // Create an anchor element for downloading
+        const a = document.createElement('a');
+        a.style.display = 'none';
+        a.href = url;
+        a.download = fileName;
+        
+        // Append to body, trigger click and remove
+        document.body.appendChild(a);
+        console.log("Triggering download for", fileName);
+        a.click();
+        
+        // Clean up
+        setTimeout(() => {
+          document.body.removeChild(a);
+          window.URL.revokeObjectURL(url);
+          console.log("Cleaned up download resources");
+        }, 10000);  // Longer timeout to ensure browser has time to process the download
+      }
       
       toast({
         title: "Success",

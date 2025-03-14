@@ -99,26 +99,34 @@ export function ReportDetailDialog({ report, open, onOpenChange }: ReportDetailD
       // Create filename
       const fileName = `${unitData.name}_${report.report_type}_report_${new Date().toISOString().split('T')[0]}.pdf`;
       
-      // Create URL for download
-      const url = URL.createObjectURL(pdfBlob);
-      
-      // Force download using a hidden anchor element
-      const a = document.createElement('a');
-      a.style.display = 'none';
-      a.href = url;
-      a.download = fileName;
-      
-      // Trigger download
-      document.body.appendChild(a);
-      console.log("Triggering download from dialog");
-      a.click();
-      
-      // Clean up with extended timeout
-      setTimeout(() => {
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
-        console.log("Download cleanup completed");
-      }, 5000);
+      // Force download using browser download API
+      if (window.navigator && window.navigator.msSaveOrOpenBlob) {
+        // For IE/Edge
+        window.navigator.msSaveOrOpenBlob(pdfBlob, fileName);
+        console.log("Download triggered via msSaveOrOpenBlob");
+      } else {
+        // For modern browsers
+        // Create URL for download
+        const url = window.URL.createObjectURL(pdfBlob);
+        
+        // Force download using a hidden anchor element
+        const a = document.createElement('a');
+        a.style.display = 'none';
+        a.href = url;
+        a.download = fileName;
+        
+        // Trigger download
+        document.body.appendChild(a);
+        console.log("Triggering download from dialog");
+        a.click();
+        
+        // Clean up with extended timeout
+        setTimeout(() => {
+          document.body.removeChild(a);
+          window.URL.revokeObjectURL(url);
+          console.log("Download cleanup completed");
+        }, 10000);
+      }
       
       toast({
         title: "Success",
