@@ -1,9 +1,8 @@
 
-import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Download, Printer } from "lucide-react";
 import { UnitData } from "@/types/analytics";
-import { toast } from "@/hooks/use-toast";
+import { toast } from "@/components/ui/use-toast";
 import { getReportTitle } from "@/utils/reportUtils";
 import { generatePDF } from "@/utils/pdfGenerator";
 
@@ -16,41 +15,30 @@ interface ReportActionsProps {
 }
 
 export function ReportActions({ unit, reportType, metrics, startDate, endDate }: ReportActionsProps) {
-  const [isDownloading, setIsDownloading] = useState(false);
-
   const handleGeneratePDF = async () => {
-    if (isDownloading) return;
-    
-    setIsDownloading(true);
     try {
       console.log("Generating PDF from ReportActions");
-      
-      // Generate the PDF
       const pdfBlob = await generatePDF(unit, reportType, metrics, startDate, endDate);
       
-      if (!pdfBlob) {
-        throw new Error("Failed to generate PDF blob");
-      }
-      
-      console.log("PDF Blob created successfully, size:", pdfBlob.size, "bytes");
-      
       // Create a download link
+      const url = URL.createObjectURL(pdfBlob);
       const fileName = `${unit.name}_${reportType}_report_${new Date().toISOString().split('T')[0]}.pdf`;
       
-      // Create a download link and trigger download
-      const url = window.URL.createObjectURL(pdfBlob);
+      // Create an anchor element for downloading
       const a = document.createElement('a');
-      document.body.appendChild(a);
-      a.style.display = 'none';
       a.href = url;
       a.download = fileName;
+      document.body.appendChild(a);
       
+      // Trigger download and clean up
       console.log("Triggering download for", fileName);
       a.click();
       
       // Clean up
-      window.URL.revokeObjectURL(url);
-      document.body.removeChild(a);
+      setTimeout(() => {
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+      }, 100);
       
       toast({
         title: "Success",
@@ -63,8 +51,6 @@ export function ReportActions({ unit, reportType, metrics, startDate, endDate }:
         title: "Error",
         description: "Failed to generate PDF. Please try again.",
       });
-    } finally {
-      setIsDownloading(false);
     }
   };
 
@@ -85,11 +71,10 @@ export function ReportActions({ unit, reportType, metrics, startDate, endDate }:
           variant="outline" 
           size="sm" 
           onClick={handleGeneratePDF}
-          disabled={isDownloading}
           className="flex items-center"
         >
           <Download className="h-4 w-4 mr-2" />
-          {isDownloading ? "Downloading..." : "Download PDF"}
+          Download PDF
         </Button>
         <Button 
           variant="outline" 
