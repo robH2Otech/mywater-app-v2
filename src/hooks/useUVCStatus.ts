@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
-import { doc, updateDoc, collection, addDoc } from "firebase/firestore";
+import { doc, updateDoc, collection, addDoc, query, where, orderBy, limit, getDocs } from "firebase/firestore";
 import { db } from "@/integrations/firebase/client";
 import { determineUVCStatus, createUVCAlertMessage } from "@/utils/uvcStatusUtils";
 import { determineUnitStatus } from "@/utils/unitStatusUtils";
@@ -13,53 +13,127 @@ export function useUVCStatus(units: any[]) {
   const [processedUnits, setProcessedUnits] = useState<any[]>([]);
 
   useEffect(() => {
-    const updatedUnits = units.map(unit => {
-      // Ensure UVC hours is a number
-      let uvcHours = unit.uvc_hours;
-      if (typeof uvcHours === 'string') {
-        uvcHours = parseFloat(uvcHours);
-      } else if (uvcHours === undefined || uvcHours === null) {
-        uvcHours = 0;
+    const processUnitsWithLatestData = async () => {
+      try {
+        // Process each unit in parallel
+        const updatedUnitsPromises = units.map(async unit => {
+          // Process basic unit data
+          let baseUvcHours = unit.uvc_hours;
+          if (typeof baseUvcHours === 'string') {
+            baseUvcHours = parseFloat(baseUvcHours);
+          } else if (baseUvcHours === undefined || baseUvcHours === null) {
+            baseUvcHours = 0;
+          }
+          
+          let totalVolume = unit.total_volume;
+          if (typeof totalVolume === 'string') {
+            totalVolume = parseFloat(totalVolume);
+          } else if (totalVolume === undefined || totalVolume === null) {
+            totalVolume = 0;
+          }
+          
+          // If this unit doesn't already use accumulated hours, check for latest measurement data
+          let totalUvcHours = baseUvcHours;
+          if (!unit.is_uvc_accumulated) {
+            try {
+              // Get latest measurement for this unit
+              const measurementsQuery = query(
+                collection(db, "measurements"),
+                where("unit_id", "==", unit.id),
+                orderBy("timestamp", "desc"),
+                limit(1)
+              );
+              
+              const measurementsSnapshot = await getDocs(measurementsQuery);
+              
+              if (!measurementsSnapshot.empty) {
+                const latestMeasurement = measurementsSnapshot.docs[0].data();
+                
+                if (latestMeasurement.uvc_hours !== undefined) {
+                  const measurementUvcHours = typeof latestMeasurement.uvc_hours === 'string' 
+                    ? parseFloat(latestMeasurement.uvc_hours) 
+                    : (latestMeasurement.uvc_hours || 0);
+                  
+                  // Add measurement hours to base hours
+                  totalUvcHours += measurementUvcHours;
+                  console.log(`useUVCStatus - Unit ${unit.id}: Base ${baseUvcHours} + Measurement ${measurementUvcHours} = Total ${totalUvcHours}`);
+                }
+              }
+            } catch (error) {
+              console.error(`Error fetching measurements for unit ${unit.id}:`, error);
+            }
+          }
+          
+          // Calculate statuses
+          const uvcStatus = determineUVCStatus(totalUvcHours);
+          const filterStatus = determineUnitStatus(totalVolume);
+          
+          // Log for debugging
+          console.log(`useUVCStatus: Unit ${unit.id} - UVC hours: ${totalUvcHours}, status: ${uvcStatus}`);
+          
+          // Check if UVC status changed
+          if (unit.uvc_status !== uvcStatus) {
+            console.log(`UVC status changed for ${unit.id}: ${unit.uvc_status} -> ${uvcStatus}`);
+            await updateUVCStatus(unit.id, uvcStatus, unit.name, totalUvcHours);
+          }
+          
+          // Check if filter status changed
+          if (unit.status !== filterStatus) {
+            console.log(`Filter status changed for ${unit.id}: ${unit.status} -> ${filterStatus}`);
+            await updateFilterStatus(unit.id, filterStatus, unit.name, totalVolume);
+          }
+          
+          // Return the updated unit data
+          return {
+            ...unit,
+            uvc_status: uvcStatus,
+            uvc_hours: totalUvcHours,
+            status: filterStatus,
+            total_volume: totalVolume
+          };
+        });
+        
+        const resolvedUnits = await Promise.all(updatedUnitsPromises);
+        setProcessedUnits(resolvedUnits);
+      } catch (error) {
+        console.error("Error processing units in useUVCStatus:", error);
+        // Fallback to basic processing if there's an error
+        const basicProcessedUnits = units.map(unit => {
+          // Ensure UVC hours is a number
+          let uvcHours = unit.uvc_hours;
+          if (typeof uvcHours === 'string') {
+            uvcHours = parseFloat(uvcHours);
+          } else if (uvcHours === undefined || uvcHours === null) {
+            uvcHours = 0;
+          }
+          
+          // Ensure total_volume is a number
+          let totalVolume = unit.total_volume;
+          if (typeof totalVolume === 'string') {
+            totalVolume = parseFloat(totalVolume);
+          } else if (totalVolume === undefined || totalVolume === null) {
+            totalVolume = 0;
+          }
+          
+          // Calculate statuses
+          const uvcStatus = determineUVCStatus(uvcHours);
+          const filterStatus = determineUnitStatus(totalVolume);
+          
+          return {
+            ...unit,
+            uvc_status: uvcStatus,
+            uvc_hours: uvcHours,
+            status: filterStatus,
+            total_volume: totalVolume
+          };
+        });
+        
+        setProcessedUnits(basicProcessedUnits);
       }
-      
-      // Ensure total_volume is a number
-      let totalVolume = unit.total_volume;
-      if (typeof totalVolume === 'string') {
-        totalVolume = parseFloat(totalVolume);
-      } else if (totalVolume === undefined || totalVolume === null) {
-        totalVolume = 0;
-      }
-      
-      // Calculate statuses
-      const uvcStatus = determineUVCStatus(uvcHours);
-      const filterStatus = determineUnitStatus(totalVolume);
-      
-      // Log for debugging
-      console.log(`useUVCStatus: Unit ${unit.id} - UVC hours: ${uvcHours}, status: ${uvcStatus}`);
-      
-      // Update if status changed
-      if (unit.uvc_status !== uvcStatus) {
-        console.log(`UVC status changed for ${unit.id}: ${unit.uvc_status} -> ${uvcStatus}`);
-        updateUVCStatus(unit.id, uvcStatus, unit.name, uvcHours);
-      }
-      
-      // Update if filter status changed
-      if (unit.status !== filterStatus) {
-        console.log(`Filter status changed for ${unit.id}: ${unit.status} -> ${filterStatus}`);
-        updateFilterStatus(unit.id, filterStatus, unit.name, totalVolume);
-      }
-      
-      return {
-        ...unit,
-        uvc_status: uvcStatus,
-        uvc_hours: uvcHours,
-        status: filterStatus,
-        total_volume: totalVolume
-      };
-    });
+    };
     
-    setProcessedUnits(updatedUnits);
-  }, [units]);
+    processUnitsWithLatestData();
+  }, [units, queryClient, toast]);
 
   const updateUVCStatus = async (unitId: string, newStatus: string, unitName: string, hours: number) => {
     try {

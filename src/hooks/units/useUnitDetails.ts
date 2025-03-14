@@ -1,6 +1,6 @@
 
 import { useQuery } from "@tanstack/react-query";
-import { doc, getDoc } from "firebase/firestore";
+import { doc, getDoc, collection, getDocs, query, where, orderBy, limit } from "firebase/firestore";
 import { db } from "@/integrations/firebase/client";
 import { UnitData } from "@/types/analytics";
 import { determineUnitStatus } from "@/utils/unitStatusUtils";
@@ -12,6 +12,7 @@ export function useUnitDetails(id: string | undefined) {
     queryFn: async () => {
       if (!id) throw new Error("Unit ID is required");
       
+      // 1. Get the unit base data
       const unitDocRef = doc(db, "units", id);
       const unitSnapshot = await getDoc(unitDocRef);
       
@@ -21,7 +22,33 @@ export function useUnitDetails(id: string | undefined) {
       
       const unitData = unitSnapshot.data();
       
-      // Ensure total_volume is a number for consistent handling
+      // 2. Get the latest measurements data to check for additional UVC hours
+      // This ensures we're getting the most up-to-date UVC hours
+      const measurementsQuery = query(
+        collection(db, "measurements"),
+        where("unit_id", "==", id),
+        orderBy("timestamp", "desc"),
+        limit(1)
+      );
+      
+      const measurementsSnapshot = await getDocs(measurementsQuery);
+      
+      // Initialize values that we'll potentially update from measurements
+      let latestMeasurementUvcHours = 0;
+      let hasMeasurementData = false;
+      
+      // Check if we have measurement data
+      if (!measurementsSnapshot.empty) {
+        const latestMeasurement = measurementsSnapshot.docs[0].data();
+        if (latestMeasurement.uvc_hours !== undefined) {
+          latestMeasurementUvcHours = typeof latestMeasurement.uvc_hours === 'string' 
+            ? parseFloat(latestMeasurement.uvc_hours) 
+            : (latestMeasurement.uvc_hours || 0);
+          hasMeasurementData = true;
+        }
+      }
+      
+      // 3. Process the total volume
       let totalVolume = unitData.total_volume;
       if (typeof totalVolume === 'string') {
         totalVolume = parseFloat(totalVolume);
@@ -29,31 +56,42 @@ export function useUnitDetails(id: string | undefined) {
         totalVolume = 0;
       }
       
-      // Ensure uvc_hours is a number for consistent handling
-      let uvcHours = unitData.uvc_hours;
-      if (typeof uvcHours === 'string') {
-        uvcHours = parseFloat(uvcHours);
-      } else if (uvcHours === undefined || uvcHours === null) {
-        uvcHours = 0;
+      // 4. Process the UVC hours from the unit document
+      let baseUvcHours = unitData.uvc_hours;
+      if (typeof baseUvcHours === 'string') {
+        baseUvcHours = parseFloat(baseUvcHours);
+      } else if (baseUvcHours === undefined || baseUvcHours === null) {
+        baseUvcHours = 0;
       }
       
-      // Recalculate status based on current volume
-      const status = determineUnitStatus(totalVolume);
+      // 5. Calculate the total UVC hours by adding base hours and measurement hours
+      // We use either the base hours (if no measurements) or the sum of both
+      let totalUvcHours = baseUvcHours;
       
-      // Recalculate UVC status based on hours
-      const uvcStatus = determineUVCStatus(uvcHours);
+      // If we have measurement data, add it to the base UVC hours, but only if the
+      // unit is not already using accumulated values
+      if (hasMeasurementData && !unitData.is_uvc_accumulated) {
+        totalUvcHours += latestMeasurementUvcHours;
+        console.log(`Unit ${id} - Base UVC hours: ${baseUvcHours}, Measurement UVC hours: ${latestMeasurementUvcHours}, Total: ${totalUvcHours}`);
+      }
+      
+      // 6. Recalculate statuses
+      const filterStatus = determineUnitStatus(totalVolume);
+      const uvcStatus = determineUVCStatus(totalUvcHours);
+      
+      console.log(`useUnitDetails - Unit ${id}: UVC Hours - Base: ${baseUvcHours}, Latest: ${latestMeasurementUvcHours}, Total: ${totalUvcHours}, Status: ${uvcStatus}`);
       
       return {
         id: unitSnapshot.id,
         ...unitData,
-        // Always return total_volume as a number
+        // Return numeric values for consistency
         total_volume: totalVolume,
-        // Always return uvc_hours as a number
-        uvc_hours: uvcHours,
-        // Ensure status is based on current volume
-        status: status,
-        // Ensure uvc_status is based on current hours
-        uvc_status: uvcStatus
+        uvc_hours: totalUvcHours,
+        // Ensure statuses are calculated based on current values
+        status: filterStatus,
+        uvc_status: uvcStatus,
+        // Add flag to track whether UVC hours are already accumulated
+        is_uvc_accumulated: unitData.is_uvc_accumulated || false
       } as UnitData;
     },
     enabled: !!id,

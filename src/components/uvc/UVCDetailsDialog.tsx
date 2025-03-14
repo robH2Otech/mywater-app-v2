@@ -6,7 +6,7 @@ import { FormInput } from "@/components/shared/FormInput";
 import { FormDatePicker } from "@/components/shared/FormDatePicker";
 import { useState, useEffect } from "react";
 import { MAX_UVC_HOURS, determineUVCStatus } from "@/utils/uvcStatusUtils";
-import { doc, getDoc } from "firebase/firestore";
+import { doc, getDoc, collection, query, where, orderBy, limit, getDocs } from "firebase/firestore";
 import { db } from "@/integrations/firebase/client";
 import { useToast } from "@/hooks/use-toast";
 
@@ -28,23 +28,55 @@ export function UVCDetailsDialog({ unit, open, onOpenChange, onSave }: UVCDetail
       if (unit && open) {
         setIsLoading(true);
         try {
-          // Get the latest data from Firestore
+          // Get the latest data from Firestore for this unit
           const unitDocRef = doc(db, "units", unit.id);
           const unitSnapshot = await getDoc(unitDocRef);
           
           if (unitSnapshot.exists()) {
             const latestData = unitSnapshot.data();
             
-            // Parse UVC hours to ensure it's a number
-            let uvcHours = latestData.uvc_hours;
-            if (typeof uvcHours === 'string') {
-              uvcHours = parseFloat(uvcHours);
-            } else if (uvcHours === undefined || uvcHours === null) {
-              uvcHours = 0;
+            // Parse base UVC hours from unit document
+            let baseUvcHours = latestData.uvc_hours;
+            if (typeof baseUvcHours === 'string') {
+              baseUvcHours = parseFloat(baseUvcHours);
+            } else if (baseUvcHours === undefined || baseUvcHours === null) {
+              baseUvcHours = 0;
+            }
+            
+            // Only fetch measurement data if this unit doesn't already use accumulated hours
+            let totalUvcHours = baseUvcHours;
+            
+            if (!latestData.is_uvc_accumulated) {
+              // Get latest measurement data for this unit to add to the base hours
+              try {
+                const measurementsQuery = query(
+                  collection(db, "measurements"),
+                  where("unit_id", "==", unit.id),
+                  orderBy("timestamp", "desc"),
+                  limit(1)
+                );
+                
+                const measurementsSnapshot = await getDocs(measurementsQuery);
+                
+                if (!measurementsSnapshot.empty) {
+                  const latestMeasurement = measurementsSnapshot.docs[0].data();
+                  if (latestMeasurement.uvc_hours !== undefined) {
+                    const measurementUvcHours = typeof latestMeasurement.uvc_hours === 'string' 
+                      ? parseFloat(latestMeasurement.uvc_hours) 
+                      : (latestMeasurement.uvc_hours || 0);
+                    
+                    // Add measurement hours to the base hours
+                    totalUvcHours += measurementUvcHours;
+                    console.log(`Dialog - Unit ${unit.id}: Base UVC hours ${baseUvcHours} + Measurement ${measurementUvcHours} = Total ${totalUvcHours}`);
+                  }
+                }
+              } catch (error) {
+                console.error("Error fetching measurement data:", error);
+              }
             }
             
             setFormData({
-              uvc_hours: uvcHours.toString(),
+              uvc_hours: totalUvcHours.toString(),
               uvc_installation_date: latestData.uvc_installation_date ? new Date(latestData.uvc_installation_date) : null,
             });
           } else {
@@ -84,9 +116,7 @@ export function UVCDetailsDialog({ unit, open, onOpenChange, onSave }: UVCDetail
       onSave({
         ...formData,
         uvc_hours: hours,
-        // Pass the raw hours value, not accumulated
-        // The UVC page will handle setting this value directly, not adding to it
-        // This way users can set exactly what they want
+        // When saving, the value is now considered accumulated (total)
       });
       onOpenChange(false);
     }
@@ -144,12 +174,17 @@ export function UVCDetailsDialog({ unit, open, onOpenChange, onSave }: UVCDetail
               </div>
             </div>
 
-            <FormInput
-              label="UVC Hours"
-              type="number"
-              value={formData.uvc_hours}
-              onChange={(value) => setFormData({ ...formData, uvc_hours: value })}
-            />
+            <div>
+              <p className="text-sm text-gray-400 mb-2">
+                Enter the total accumulated UVC hours for this unit.
+              </p>
+              <FormInput
+                label="UVC Hours"
+                type="number"
+                value={formData.uvc_hours}
+                onChange={(value) => setFormData({ ...formData, uvc_hours: value })}
+              />
+            </div>
 
             <FormDatePicker
               label="Installation Date"

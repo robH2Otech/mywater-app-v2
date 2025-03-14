@@ -2,7 +2,7 @@
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
-import { doc, updateDoc, collection, addDoc } from "firebase/firestore";
+import { doc, updateDoc, collection, addDoc, query, where, orderBy, limit, getDocs } from "firebase/firestore";
 import { db } from "@/integrations/firebase/client";
 import { determineUVCStatus, createUVCAlertMessage } from "@/utils/uvcStatusUtils";
 import { UVCDetailsDialog } from "./UVCDetailsDialog";
@@ -30,22 +30,28 @@ export function UVCList({ units, onUVCClick }: UVCListProps) {
 
   const handleSave = async (updatedData: any) => {
     try {
+      // Get the numeric hours from the form
       const numericHours = typeof updatedData.uvc_hours === 'string' 
         ? parseFloat(updatedData.uvc_hours) 
         : updatedData.uvc_hours;
       
-      console.log(`Setting UVC hours for ${selectedUnit.id} to ${numericHours}`);
+      console.log(`Setting UVC hours for ${selectedUnit.id} to ${numericHours} (accumulated total)`);
       
+      // Determine the new UVC status based on total hours
       const newStatus = determineUVCStatus(numericHours);
       
+      // Update Firestore with the new total hours and mark as accumulated
       const unitDocRef = doc(db, "units", selectedUnit.id);
       await updateDoc(unitDocRef, {
-        uvc_hours: numericHours, // Direct set, not adding
+        uvc_hours: numericHours,
         uvc_installation_date: updatedData.uvc_installation_date,
         uvc_status: newStatus,
+        // Mark this unit as using accumulated hours
+        is_uvc_accumulated: true,
         updated_at: new Date().toISOString()
       });
 
+      // Create alert if status is warning or urgent
       if (newStatus === 'warning' || newStatus === 'urgent') {
         const alertMessage = createUVCAlertMessage(selectedUnit.name, numericHours, newStatus);
         
@@ -59,6 +65,7 @@ export function UVCList({ units, onUVCClick }: UVCListProps) {
         });
       }
 
+      // Invalidate relevant queries to refresh data
       await queryClient.invalidateQueries({ queryKey: ['uvc-units'] });
       await queryClient.invalidateQueries({ queryKey: ['units'] });
       await queryClient.invalidateQueries({ queryKey: ['unit', selectedUnit.id] });

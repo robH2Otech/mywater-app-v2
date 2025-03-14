@@ -6,7 +6,7 @@ import { UVCDetailsDialog } from "@/components/uvc/UVCDetailsDialog";
 import { PageHeader } from "@/components/shared/PageHeader";
 import { LoadingSkeleton } from "@/components/shared/LoadingSkeleton";
 import { UVCList } from "@/components/uvc/UVCList";
-import { collection, getDocs, doc, updateDoc, addDoc } from "firebase/firestore";
+import { collection, getDocs, doc, updateDoc, addDoc, query, where, orderBy, limit } from "firebase/firestore";
 import { db } from "@/integrations/firebase/client";
 import { UnitData } from "@/types/analytics";
 import { determineUVCStatus, createUVCAlertMessage } from "@/utils/uvcStatusUtils";
@@ -16,6 +16,7 @@ interface UnitWithUVC extends UnitData {
   uvc_hours?: number;
   uvc_installation_date?: string;
   uvc_status?: 'active' | 'warning' | 'urgent';
+  is_uvc_accumulated?: boolean;
 }
 
 export const UVC = () => {
@@ -28,50 +29,92 @@ export const UVC = () => {
     queryFn: async () => {
       console.log("Fetching UVC units data...");
       try {
-        // Get units
+        // Get all units
         const unitsCollection = collection(db, "units");
         const unitsSnapshot = await getDocs(unitsCollection);
-        const unitsData = unitsSnapshot.docs.map(doc => {
-          const data = doc.data();
+        
+        // Process each unit and accumulate UVC hours from measurements
+        const unitsPromises = unitsSnapshot.docs.map(async (unitDoc) => {
+          const unitData = unitDoc.data();
+          const unitId = unitDoc.id;
+          
+          // Get base UVC hours from unit document
+          let baseUvcHours = unitData.uvc_hours;
+          if (typeof baseUvcHours === 'string') {
+            baseUvcHours = parseFloat(baseUvcHours);
+          } else if (baseUvcHours === undefined || baseUvcHours === null) {
+            baseUvcHours = 0;
+          }
+          
+          // Get latest measurement data for this unit
+          let latestMeasurementUvcHours = 0;
+          let hasMeasurementData = false;
+          
+          try {
+            const measurementsQuery = query(
+              collection(db, "measurements"),
+              where("unit_id", "==", unitId),
+              orderBy("timestamp", "desc"),
+              limit(1)
+            );
+            
+            const measurementsSnapshot = await getDocs(measurementsQuery);
+            
+            if (!measurementsSnapshot.empty) {
+              const latestMeasurement = measurementsSnapshot.docs[0].data();
+              if (latestMeasurement.uvc_hours !== undefined) {
+                latestMeasurementUvcHours = typeof latestMeasurement.uvc_hours === 'string' 
+                  ? parseFloat(latestMeasurement.uvc_hours) 
+                  : (latestMeasurement.uvc_hours || 0);
+                hasMeasurementData = true;
+              }
+            }
+          } catch (measurementError) {
+            console.error(`Error fetching measurements for unit ${unitId}:`, measurementError);
+          }
+          
+          // Calculate total UVC hours
+          let totalUvcHours = baseUvcHours;
+          
+          // If we have measurement data, add it to the base UVC hours, but only if the
+          // unit is not already using accumulated values
+          if (hasMeasurementData && !unitData.is_uvc_accumulated) {
+            totalUvcHours += latestMeasurementUvcHours;
+          }
+          
+          // Calculate the correct status based on total UVC hours
+          const uvcStatus = determineUVCStatus(totalUvcHours);
           
           // Ensure total_volume is a number
-          let totalVolume = data.total_volume;
+          let totalVolume = unitData.total_volume;
           if (typeof totalVolume === 'string') {
             totalVolume = parseFloat(totalVolume);
           } else if (totalVolume === undefined || totalVolume === null) {
             totalVolume = 0;
           }
           
-          // Get UVC hours from the unit data if available
-          let uvcHours = data.uvc_hours;
-          if (typeof uvcHours === 'string') {
-            uvcHours = parseFloat(uvcHours);
-          } else if (uvcHours === undefined || uvcHours === null) {
-            uvcHours = 0;
-          }
-          
-          // Calculate the correct status based on UVC hours
-          const uvcStatus = determineUVCStatus(uvcHours);
-          
           // Calculate the correct filter status based on volume
           const filterStatus = determineUnitStatus(totalVolume);
           
-          console.log(`Unit ${doc.id} UVC hours: ${uvcHours} (status: ${uvcStatus})`);
+          console.log(`Unit ${unitId} UVC hours: Base ${baseUvcHours} + Latest ${latestMeasurementUvcHours} = Total ${totalUvcHours} (status: ${uvcStatus})`);
           
           return {
-            id: doc.id,
-            ...data,
+            id: unitId,
+            ...unitData,
             // Always use calculated statuses
             status: filterStatus,
             uvc_status: uvcStatus,
-            // Ensure UVC hours is a number
-            uvc_hours: uvcHours,
+            // Use total UVC hours
+            uvc_hours: totalUvcHours,
+            // Add flag to track whether hours are accumulated
+            is_uvc_accumulated: unitData.is_uvc_accumulated || false,
             // Ensure total_volume is a number
             total_volume: totalVolume
           };
-        }) as UnitWithUVC[];
+        });
         
-        console.log("UVC units data:", unitsData);
+        const unitsData = await Promise.all(unitsPromises) as UnitWithUVC[];
+        console.log("UVC units data processed:", unitsData);
         return unitsData;
       } catch (error) {
         console.error("Error fetching UVC units:", error);
@@ -100,8 +143,10 @@ export const UVC = () => {
       
       // Prepare data for Firestore update
       const updateData: any = {
-        uvc_hours: numericHours, // Set the exact value from the form (not adding to existing)
+        uvc_hours: numericHours,
         uvc_status: newStatus,
+        // Mark this unit as having manually accumulated UVC hours
+        is_uvc_accumulated: true,
         updated_at: new Date().toISOString()
       };
       
