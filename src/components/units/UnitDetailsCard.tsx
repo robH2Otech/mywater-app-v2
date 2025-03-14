@@ -23,6 +23,7 @@ export const UnitDetailsCard = ({ unit }: UnitDetailsCardProps) => {
   const formatVolume = (volume: number | string | undefined | null) => {
     if (volume === undefined || volume === null) return "0";
     const numericVolume = typeof volume === 'string' ? parseFloat(volume) : volume;
+    if (isNaN(numericVolume)) return "0";
     return numericVolume.toLocaleString(undefined, { maximumFractionDigits: 2 });
   };
 
@@ -150,4 +151,4 @@ export const UnitDetailsCard = ({ unit }: UnitDetailsCardProps) => {
       </div>
     </Card>
   );
-};
+}

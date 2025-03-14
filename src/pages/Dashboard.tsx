@@ -7,6 +7,7 @@ import { RecentAlerts } from "@/components/dashboard/RecentAlerts";
 import { collection, query, where, getDocs } from "firebase/firestore";
 import { db } from "@/integrations/firebase/client";
 import { UnitData } from "@/types/analytics";
+import { determineUnitStatus } from "@/utils/unitStatusUtils";
 
 export const Dashboard = () => {
   const { data: units = [], isLoading: isLoadingUnits } = useQuery({
@@ -15,7 +16,7 @@ export const Dashboard = () => {
       const unitsCollection = collection(db, "units");
       const unitsSnapshot = await getDocs(unitsCollection);
       
-      return unitsSnapshot.docs.map(doc => {
+      const processedUnits = unitsSnapshot.docs.map(doc => {
         const data = doc.data();
         
         // Ensure total_volume is a number
@@ -26,12 +27,18 @@ export const Dashboard = () => {
           totalVolume = 0;
         }
         
+        // Recalculate status based on current volume
+        const status = determineUnitStatus(totalVolume);
+        
         return {
           id: doc.id,
           ...data,
-          total_volume: totalVolume
+          total_volume: totalVolume,
+          status: status // Override with calculated status
         };
       }) as UnitData[];
+      
+      return processedUnits;
     },
   });
 
@@ -52,6 +59,7 @@ export const Dashboard = () => {
     },
   });
 
+  // Calculate based on live data from processed units
   const activeUnits = units.filter((unit) => unit.status === "active").length;
   const warningUnits = units.filter((unit) => unit.status === "warning").length;
   const errorUnits = units.filter((unit) => unit.status === "urgent").length;

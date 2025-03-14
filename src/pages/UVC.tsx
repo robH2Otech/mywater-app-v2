@@ -10,6 +10,7 @@ import { collection, getDocs, doc, updateDoc, addDoc } from "firebase/firestore"
 import { db } from "@/integrations/firebase/client";
 import { UnitData } from "@/types/analytics";
 import { determineUVCStatus, createUVCAlertMessage } from "@/utils/uvcStatusUtils";
+import { determineUnitStatus } from "@/utils/unitStatusUtils";
 
 interface UnitWithUVC extends UnitData {
   uvc_hours?: number;
@@ -47,13 +48,17 @@ export const UVC = () => {
             : (data.uvc_hours || 0);
           
           // Calculate the correct status based on UVC hours
-          const calculatedStatus = determineUVCStatus(uvcHours);
+          const uvcStatus = determineUVCStatus(uvcHours);
+          
+          // Calculate the correct filter status based on volume
+          const filterStatus = determineUnitStatus(totalVolume);
           
           return {
             id: doc.id,
             ...data,
-            // Use calculated status for UVC
-            uvc_status: calculatedStatus,
+            // Always use calculated statuses
+            status: filterStatus,
+            uvc_status: uvcStatus,
             // Ensure UVC hours is a number
             uvc_hours: uvcHours,
             // Ensure total_volume is a number

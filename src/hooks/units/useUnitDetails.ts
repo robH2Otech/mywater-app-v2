@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { doc, getDoc } from "firebase/firestore";
 import { db } from "@/integrations/firebase/client";
 import { UnitData } from "@/types/analytics";
+import { determineUnitStatus } from "@/utils/unitStatusUtils";
 
 export function useUnitDetails(id: string | undefined) {
   return useQuery({
@@ -27,11 +28,16 @@ export function useUnitDetails(id: string | undefined) {
         totalVolume = 0;
       }
       
+      // Recalculate status based on current volume
+      const status = determineUnitStatus(totalVolume);
+      
       return {
         id: unitSnapshot.id,
         ...unitData,
         // Always return total_volume as a number
-        total_volume: totalVolume
+        total_volume: totalVolume,
+        // Ensure status is based on current volume
+        status: status
       } as UnitData;
     },
     enabled: !!id,

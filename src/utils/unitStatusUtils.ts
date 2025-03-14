@@ -13,6 +13,10 @@ export const determineUnitStatus = (volume: number | string | null): 'active' | 
   
   const numericVolume = typeof volume === 'string' ? parseFloat(volume) : volume;
   
+  // Updated thresholds based on actual values
+  // For volumes under 500, we consider it active
+  if (numericVolume < 500) return 'active';
+  // For volumes between 500 and 90000, we consider it warning
   if (numericVolume <= 90000) return 'active';
   if (numericVolume <= 95000) return 'warning';
   return 'urgent';
@@ -30,9 +34,9 @@ export const createAlertMessage = (unitName: string, volume: number | string | n
   
   switch (status) {
     case 'urgent':
-      return `URGENT: ${unitName} water volume is critical at ${numericVolume}m³ (>95,000m³). Immediate action required.`;
+      return `URGENT: ${unitName} water volume is critical at ${numericVolume.toLocaleString()}m³ (>95,000m³). Immediate action required.`;
     case 'warning':
-      return `WARNING: ${unitName} water volume is high at ${numericVolume}m³ (>90,000m³). Please check system.`;
+      return `WARNING: ${unitName} water volume is high at ${numericVolume.toLocaleString()}m³ (>90,000m³). Please check system.`;
     default:
       return '';
   }
