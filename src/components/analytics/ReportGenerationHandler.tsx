@@ -57,6 +57,10 @@ export async function handleReportGeneration(
     const measurements = await fetchMeasurementsForReport(selectedUnit, reportType);
     console.log(`Retrieved ${measurements.length} measurements for report`);
     
+    // Calculate metrics
+    const metrics = calculateMetricsFromMeasurements(measurements);
+    console.log("Calculated metrics:", metrics);
+    
     // Generate report content based on unit data and measurements
     const reportContent = generateReportContent(unitData, reportType, measurements);
 
