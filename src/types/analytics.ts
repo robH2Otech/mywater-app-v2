@@ -66,3 +66,12 @@ export interface MeasurementData {
   cumulative_volume: number;
   uvc_hours?: number;
 }
+
+// Extended jsPDF type to include lastAutoTable property from jspdf-autotable
+declare module 'jspdf' {
+  interface jsPDF {
+    lastAutoTable: {
+      finalY: number;
+    };
+  }
+}
