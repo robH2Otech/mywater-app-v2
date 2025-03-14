@@ -5,9 +5,13 @@ import { ReportData } from "@/types/analytics";
 import { ReportVisual } from "./ReportVisual";
 import { doc, getDoc } from "firebase/firestore";
 import { db } from "@/integrations/firebase/client";
-import { toast } from "@/components/ui/use-toast";
+import { toast } from "@/hooks/use-toast";
 import { calculateMetricsFromMeasurements } from "@/utils/reportGenerator";
 import { getReportTitle } from "@/utils/reportUtils";
+import { Button } from "@/components/ui/button";
+import { Download } from "lucide-react";
+import { generatePDF } from "@/utils/pdfGenerator";
+import { getDateRangeForReportType } from "@/utils/reportGenerator";
 
 interface ReportDetailDialogProps {
   report: ReportData;
@@ -19,6 +23,7 @@ export function ReportDetailDialog({ report, open, onOpenChange }: ReportDetailD
   const [unitData, setUnitData] = useState<any>(null);
   const [reportMetrics, setReportMetrics] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [isDownloading, setIsDownloading] = useState(false);
 
   useEffect(() => {
     async function loadReportDetails() {
@@ -69,13 +74,79 @@ export function ReportDetailDialog({ report, open, onOpenChange }: ReportDetailD
     loadReportDetails();
   }, [open, report]);
 
+  const handleDownloadPDF = async () => {
+    if (!unitData || !reportMetrics || isDownloading) return;
+    
+    setIsDownloading(true);
+    try {
+      const { startDate, endDate } = getDateRangeForReportType(report.report_type);
+      
+      console.log("Generating detailed PDF from dialog view");
+      const pdfBlob = await generatePDF(
+        unitData,
+        report.report_type,
+        reportMetrics,
+        startDate,
+        endDate
+      );
+      
+      if (!pdfBlob) {
+        throw new Error("Failed to generate PDF blob");
+      }
+      
+      console.log("PDF Blob created, size:", pdfBlob.size, "bytes");
+      
+      // Create filename
+      const fileName = `${unitData.name}_${report.report_type}_report_${new Date().toISOString().split('T')[0]}.pdf`;
+      
+      // Create URL for download
+      const url = window.URL.createObjectURL(pdfBlob);
+      
+      // Create download link
+      const a = document.createElement('a');
+      document.body.appendChild(a);
+      a.style.display = 'none';
+      a.href = url;
+      a.download = fileName;
+      
+      console.log("Triggering download from dialog");
+      a.click();
+      
+      // Clean up
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+      
+      toast({
+        title: "Success",
+        description: "PDF downloaded successfully",
+      });
+    } catch (error) {
+      console.error("Error downloading PDF:", error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to download PDF. Please try again.",
+      });
+    } finally {
+      setIsDownloading(false);
+    }
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-[95vw] max-h-[95vh] w-[95vw] h-[95vh] overflow-y-auto bg-spotify-dark">
-        <DialogHeader>
+        <DialogHeader className="flex flex-row justify-between items-center">
           <DialogTitle>
             {unitData?.name || "Unit"} - {getReportTitle(report?.report_type)}
           </DialogTitle>
+          <Button
+            onClick={handleDownloadPDF}
+            disabled={isLoading || isDownloading || !unitData}
+            className="bg-spotify-green hover:bg-spotify-green/90 text-white"
+          >
+            <Download className="h-4 w-4 mr-2" />
+            {isDownloading ? "Downloading..." : "Download PDF"}
+          </Button>
         </DialogHeader>
         
         {isLoading ? (

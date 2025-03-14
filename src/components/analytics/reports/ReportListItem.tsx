@@ -1,15 +1,14 @@
-
+import { useState } from "react";
 import { ReportData } from "@/types/analytics";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Download, Eye, Trash2 } from "lucide-react";
-import { toast } from "@/components/ui/use-toast";
+import { toast } from "@/hooks/use-toast";
 import { getReportTitle, downloadReportAsPdf } from "@/utils/reportUtils";
 import { formatDistanceToNow } from "date-fns";
 import { deleteDoc, doc } from "firebase/firestore";
 import { db } from "@/integrations/firebase/client";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import { useState } from "react";
 
 interface ReportListItemProps {
   report: ReportData;
@@ -19,8 +18,12 @@ interface ReportListItemProps {
 
 export function ReportListItem({ report, onViewReport, onReportDeleted }: ReportListItemProps) {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [isDownloading, setIsDownloading] = useState(false);
 
   const handleDownloadReport = async () => {
+    if (isDownloading) return;
+    
+    setIsDownloading(true);
     try {
       console.log("Initiating download for report:", report.id);
       await downloadReportAsPdf(report);
@@ -35,6 +38,8 @@ export function ReportListItem({ report, onViewReport, onReportDeleted }: Report
         title: "Error",
         description: "Failed to download report",
       });
+    } finally {
+      setIsDownloading(false);
     }
   };
 
@@ -97,10 +102,11 @@ export function ReportListItem({ report, onViewReport, onReportDeleted }: Report
             variant="outline"
             size="sm"
             onClick={handleDownloadReport}
+            disabled={isDownloading}
             className="flex items-center"
           >
             <Download className="h-4 w-4 mr-2" />
-            Download
+            {isDownloading ? "Downloading..." : "Download"}
           </Button>
           <Button
             variant="destructive"

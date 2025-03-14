@@ -4,7 +4,7 @@ import { generatePDF } from "@/utils/pdfGenerator";
 import { getDateRangeForReportType } from "@/utils/reportGenerator";
 import { doc, getDoc } from "firebase/firestore";
 import { db } from "@/integrations/firebase/client";
-import { toast } from "@/components/ui/use-toast";
+import { toast } from "@/hooks/use-toast";
 
 export function getReportTitle(reportType: string): string {
   if (!reportType) return "Report";
@@ -66,21 +66,31 @@ export async function downloadReportAsPdf(report: ReportData): Promise<void> {
       endDate
     );
     
+    if (!pdfBlob) {
+      console.error("PDF generation failed - blob is null or undefined");
+      throw new Error("Failed to generate PDF blob");
+    }
+    
+    console.log("PDF Blob created, size:", pdfBlob.size, "bytes");
+    
     // Prepare filename
     const fileName = `${unitData.name}_${report.report_type}_report_${new Date().toISOString().split('T')[0]}.pdf`;
     console.log("Prepared filename:", fileName);
     
-    // Create URL for the blob
-    const url = URL.createObjectURL(pdfBlob);
+    // Create download link
+    const url = window.URL.createObjectURL(pdfBlob);
+    const a = document.createElement('a');
+    document.body.appendChild(a);
+    a.style.display = 'none';
+    a.href = url;
+    a.download = fileName;
     
-    // Simple download approach
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = fileName;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
+    console.log("Triggering download");
+    a.click();
+    
+    // Clean up
+    window.URL.revokeObjectURL(url);
+    document.body.removeChild(a);
     
     toast({
       title: "Success",
