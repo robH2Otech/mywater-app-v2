@@ -1,50 +1,39 @@
 
-import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
-import { Download, Eye, FileText } from "lucide-react";
-import { toast } from "@/components/ui/use-toast";
-import { ReportData, UnitData } from "@/types/analytics";
 import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { ReportVisual } from "./ReportVisual";
+import { toast } from "@/components/ui/use-toast";
+import { ReportData, UnitData } from "@/types/analytics";
 import { doc, getDoc } from "firebase/firestore";
 import { db } from "@/integrations/firebase/client";
+import { ReportVisual } from "./ReportVisual";
+import { ReportEmptyState } from "./ReportEmptyState";
+import { ReportListItem } from "./ReportListItem";
 import { calculateMetricsFromMeasurements } from "@/utils/reportGenerator";
 import { generateReportPDF } from "@/utils/analytics/pdfGenerator";
 import { getDateRangeForReportType } from "@/utils/reportGenerator";
+import { Button } from "@/components/ui/card";
+import { RefreshCw } from "lucide-react";
 
 interface ReportsListProps {
   reports: ReportData[];
+  isLoading: boolean;
+  onRefresh: () => void;
 }
 
-export function ReportsList({ reports }: ReportsListProps) {
+export function ReportsList({ reports, isLoading, onRefresh }: ReportsListProps) {
   const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
   const [selectedReport, setSelectedReport] = useState<ReportData | null>(null);
   const [unitData, setUnitData] = useState<UnitData | null>(null);
   const [reportMetrics, setReportMetrics] = useState<any>(null);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isActionLoading, setIsActionLoading] = useState(false);
 
   const handleDownloadReport = async (report: ReportData) => {
     try {
-      setIsLoading(true);
+      setIsActionLoading(true);
       console.log("Downloading report:", report.id);
       
       // Ensure we have unit data
-      let unitDataForPdf = unitData;
-      if (!unitDataForPdf) {
-        const unitDocRef = doc(db, "units", report.unit_id);
-        const unitSnapshot = await getDoc(unitDocRef);
-        
-        if (unitSnapshot.exists()) {
-          unitDataForPdf = {
-            id: unitSnapshot.id,
-            ...unitSnapshot.data() as any
-          };
-          setUnitData(unitDataForPdf);
-        } else {
-          throw new Error("Unit data not found");
-        }
-      }
+      let unitDataForPdf = await fetchUnitData(report.unit_id);
       
       // Generate PDF with the report data
       const { startDate, endDate } = getDateRangeForReportType(report.report_type);
@@ -54,7 +43,7 @@ export function ReportsList({ reports }: ReportsListProps) {
       
       // Generate and download PDF
       generateReportPDF(
-        unitDataForPdf || { id: report.unit_id, name: report.unit_name || "Unknown Unit" },
+        unitDataForPdf,
         report.report_type,
         metrics,
         startDate,
@@ -73,56 +62,39 @@ export function ReportsList({ reports }: ReportsListProps) {
         description: "Failed to download report",
       });
     } finally {
-      setIsLoading(false);
+      setIsActionLoading(false);
     }
   };
 
   const handleViewReport = async (report: ReportData) => {
-    setIsLoading(true);
+    setIsActionLoading(true);
     try {
       console.log("Opening report for viewing:", report);
       setSelectedReport(report);
       
-      // Fetch unit data if not already available
       if (!report.unit_id) {
         throw new Error("Report missing unit ID");
       }
       
       // Fetch unit data
-      const unitDocRef = doc(db, "units", report.unit_id);
-      const unitSnapshot = await getDoc(unitDocRef);
+      const unitDataObj = await fetchUnitData(report.unit_id);
+      setUnitData(unitDataObj);
       
-      if (unitSnapshot.exists()) {
-        const unitDataObj: UnitData = {
-          id: unitSnapshot.id,
-          ...unitSnapshot.data() as any
-        };
-        console.log("Fetched unit data:", unitDataObj);
-        setUnitData(unitDataObj);
-        
-        // Use stored metrics if available, otherwise calculate from measurements
-        let metrics;
-        if (report.metrics) {
-          metrics = report.metrics;
-          console.log("Using stored metrics:", metrics);
-        } else {
-          // Calculate metrics from measurements
-          const measurements = report.measurements || [];
-          console.log("Processing measurements:", measurements.length);
-          metrics = calculateMetricsFromMeasurements(measurements);
-          console.log("Calculated metrics:", metrics);
-        }
-        
-        setReportMetrics(metrics);
-        setIsViewDialogOpen(true);
+      // Use stored metrics if available, otherwise calculate from measurements
+      let metrics;
+      if (report.metrics) {
+        metrics = report.metrics;
+        console.log("Using stored metrics:", metrics);
       } else {
-        console.error("Unit data not found for unit ID:", report.unit_id);
-        toast({
-          variant: "destructive",
-          title: "Error",
-          description: "Unit data not found",
-        });
+        // Calculate metrics from measurements
+        const measurements = report.measurements || [];
+        console.log("Processing measurements:", measurements.length);
+        metrics = calculateMetricsFromMeasurements(measurements);
+        console.log("Calculated metrics:", metrics);
       }
+      
+      setReportMetrics(metrics);
+      setIsViewDialogOpen(true);
     } catch (error) {
       console.error("Error loading report details:", error);
       toast({
@@ -131,69 +103,59 @@ export function ReportsList({ reports }: ReportsListProps) {
         description: "Failed to load report details",
       });
     } finally {
-      setIsLoading(false);
+      setIsActionLoading(false);
+    }
+  };
+
+  // Helper function to fetch unit data
+  const fetchUnitData = async (unitId: string): Promise<UnitData> => {
+    const unitDocRef = doc(db, "units", unitId);
+    const unitSnapshot = await getDoc(unitDocRef);
+    
+    if (unitSnapshot.exists()) {
+      return {
+        id: unitSnapshot.id,
+        ...unitSnapshot.data() as any
+      };
+    } else {
+      console.warn("Unit data not found, using fallback");
+      return { 
+        id: unitId, 
+        name: selectedReport?.unit_name || "Unknown Unit" 
+      };
     }
   };
 
   if (reports.length === 0) {
-    return (
-      <Card className="p-6 mt-8 bg-spotify-darker">
-        <div className="text-center text-gray-400">
-          <p>No reports generated yet. Select a unit and report type, then click "Generate Report".</p>
-        </div>
-      </Card>
-    );
+    return <ReportEmptyState />;
   }
 
   return (
     <>
       <div className="space-y-4 mt-8">
-        <h2 className="text-xl font-semibold">Generated Reports</h2>
+        <div className="flex justify-between items-center">
+          <h2 className="text-xl font-semibold">Generated Reports</h2>
+          <Button 
+            onClick={onRefresh} 
+            disabled={isLoading}
+            size="sm"
+            variant="outline"
+            className="flex items-center gap-2"
+          >
+            <RefreshCw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
+            Refresh
+          </Button>
+        </div>
+        
         <div className="grid gap-4">
           {reports.map((report) => (
-            <Card key={report.id} className="p-4 bg-spotify-darker">
-              <div className="flex justify-between items-start">
-                <div className="flex items-start space-x-3">
-                  <div className="bg-spotify-accent p-2 rounded-md">
-                    <FileText className="h-5 w-5" />
-                  </div>
-                  <div>
-                    <h3 className="font-semibold text-white">
-                      {report.report_type.charAt(0).toUpperCase() + report.report_type.slice(1)} Report
-                      {report.unit_name ? ` - ${report.unit_name}` : ''}
-                    </h3>
-                    <p className="text-sm text-gray-400 mt-1">
-                      Generated on {new Date(report.created_at).toLocaleString()}
-                    </p>
-                    <div className="mt-2 text-sm text-gray-300 line-clamp-2 whitespace-pre-wrap">
-                      {report.content?.substring(0, 100)}...
-                    </div>
-                  </div>
-                </div>
-                <div className="flex space-x-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handleViewReport(report)}
-                    disabled={isLoading}
-                    className="flex items-center"
-                  >
-                    <Eye className="h-4 w-4 mr-2" />
-                    View
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handleDownloadReport(report)}
-                    disabled={isLoading}
-                    className="flex items-center"
-                  >
-                    <Download className="h-4 w-4 mr-2" />
-                    Download PDF
-                  </Button>
-                </div>
-              </div>
-            </Card>
+            <ReportListItem
+              key={report.id}
+              report={report}
+              onView={handleViewReport}
+              onDownload={handleDownloadReport}
+              isLoading={isActionLoading}
+            />
           ))}
         </div>
       </div>

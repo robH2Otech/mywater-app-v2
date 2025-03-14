@@ -1,6 +1,6 @@
 
 import { toast } from "@/components/ui/use-toast";
-import { doc, getDoc, addDoc, collection, DocumentData } from "firebase/firestore";
+import { doc, getDoc, addDoc, collection, DocumentData, serverTimestamp } from "firebase/firestore";
 import { getAuth } from "firebase/auth";
 import { db } from "@/integrations/firebase/client";
 import { UnitData } from "@/types/analytics";
@@ -64,7 +64,7 @@ export async function handleReportGeneration(
     // Generate report content based on unit data and measurements
     const reportContent = generateReportContent(unitData, reportType, measurements);
 
-    // Save report to database
+    // Save report to database with serverTimestamp for better sorting
     const reportsCollection = collection(db, "reports");
     const reportDoc = await addDoc(reportsCollection, {
       unit_id: selectedUnit,
@@ -74,18 +74,22 @@ export async function handleReportGeneration(
       measurements: measurements,
       metrics: metrics,
       generated_by: user.uid,
-      created_at: new Date().toISOString()
+      created_at: serverTimestamp()
     });
     
     console.log("Report saved with ID:", reportDoc.id);
 
-    // Notify parent component to refetch reports
-    onReportGenerated();
-
+    // Show success toast
     toast({
       title: "Success",
       description: `Generated ${reportType} report for ${unitData.name || 'selected unit'}`,
     });
+
+    // Wait a moment before triggering the refetch to ensure Firestore has processed the write
+    setTimeout(() => {
+      onReportGenerated();
+    }, 1000);
+
   } catch (error: any) {
     console.error("Error generating report:", error);
     toast({

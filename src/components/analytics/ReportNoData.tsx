@@ -8,7 +8,7 @@ export function ReportNoData() {
       <AlertCircle className="h-4 w-4" />
       <AlertTitle>No data available</AlertTitle>
       <AlertDescription>
-        There is no measurement data available for this report period. Try selecting a different time range or unit.
+        There is no measurement data available for this report period. Sample data will be generated for demonstration purposes.
       </AlertDescription>
     </Alert>
   );

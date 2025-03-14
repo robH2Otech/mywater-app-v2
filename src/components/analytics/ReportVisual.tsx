@@ -9,6 +9,7 @@ import { ReportChartsSection } from "./ReportChartsSection";
 import { ReportMeasurementsTable } from "./ReportMeasurementsTable";
 import { ReportNoData } from "./ReportNoData";
 import { formatDateRange } from "@/utils/reportGenerator";
+import { toast } from "@/components/ui/use-toast";
 
 interface ReportVisualProps {
   unit: UnitData;
@@ -27,8 +28,21 @@ export function ReportVisual({ unit, reportType, metrics }: ReportVisualProps) {
   const { startDate, endDate } = getDateRangeForReportType(reportType);
   
   const handleGeneratePDF = () => {
-    console.log("Generating PDF with data:", { unit, reportType, metrics });
-    generateReportPDF(unit, reportType, metrics, startDate, endDate);
+    try {
+      console.log("Generating PDF with data:", { unit, reportType, metrics });
+      generateReportPDF(unit, reportType, metrics, startDate, endDate);
+      toast({
+        title: "Success",
+        description: "PDF downloaded successfully",
+      });
+    } catch (error) {
+      console.error("Error generating PDF:", error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to generate PDF",
+      });
+    }
   };
   
   // If no data available
