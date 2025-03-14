@@ -171,10 +171,10 @@ export async function generatePDF(
     doc.setFontSize(8);
     doc.text(`Generated on: ${generatedDate}`, pageWidth - 15, doc.internal.pageSize.getHeight() - 10, { align: "right" });
     
-    // Return as a blob
-    console.log("PDF generated successfully, returning blob");
-    const pdfOutput = doc.output('blob');
-    return new Blob([pdfOutput], { type: 'application/pdf' });
+    // Return blob using ArrayBuffer - this is more reliable than using the built-in blob output
+    console.log("PDF generation complete, creating blob from arraybuffer");
+    const pdfArrayBuffer = doc.output('arraybuffer');
+    return new Blob([pdfArrayBuffer], { type: 'application/pdf' });
   } catch (error) {
     console.error("Error generating PDF:", error);
     throw new Error("Failed to generate PDF report");

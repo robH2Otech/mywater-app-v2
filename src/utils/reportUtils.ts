@@ -4,7 +4,7 @@ import { generatePDF } from "@/utils/pdfGenerator";
 import { getDateRangeForReportType } from "@/utils/reportGenerator";
 import { doc, getDoc } from "firebase/firestore";
 import { db } from "@/integrations/firebase/client";
-import { toast } from "@/components/ui/use-toast";
+import { toast } from "@/hooks/use-toast";
 
 export function getReportTitle(reportType: string): string {
   if (!reportType) return "Report";
@@ -70,12 +70,14 @@ export async function downloadReportAsPdf(report: ReportData): Promise<void> {
       throw new Error("Failed to generate PDF blob");
     }
     
+    console.log("PDF Blob created, size:", pdfBlob.size, "bytes");
+    
     // Prepare filename
     const fileName = `${unitData.name}_${report.report_type}_report_${new Date().toISOString().split('T')[0]}.pdf`;
     console.log("Prepared filename:", fileName);
     
     // Create URL for the blob
-    const url = URL.createObjectURL(new Blob([pdfBlob], { type: 'application/pdf' }));
+    const url = URL.createObjectURL(pdfBlob);
     
     // Create a download link and trigger download
     const downloadLink = document.createElement('a');
@@ -93,7 +95,7 @@ export async function downloadReportAsPdf(report: ReportData): Promise<void> {
       document.body.removeChild(downloadLink);
       URL.revokeObjectURL(url);
       console.log("PDF download complete, cleaned up resources");
-    }, 100);
+    }, 1000);
     
     toast({
       title: "Success",
