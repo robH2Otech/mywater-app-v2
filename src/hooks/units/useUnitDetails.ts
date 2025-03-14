@@ -17,9 +17,21 @@ export function useUnitDetails(id: string | undefined) {
         throw new Error("Unit not found");
       }
       
+      const unitData = unitSnapshot.data();
+      
+      // Ensure total_volume is a number for consistent handling
+      let totalVolume = unitData.total_volume;
+      if (typeof totalVolume === 'string') {
+        totalVolume = parseFloat(totalVolume);
+      } else if (totalVolume === undefined || totalVolume === null) {
+        totalVolume = 0;
+      }
+      
       return {
         id: unitSnapshot.id,
-        ...unitSnapshot.data()
+        ...unitData,
+        // Always return total_volume as a number
+        total_volume: totalVolume
       } as UnitData;
     },
     enabled: !!id,

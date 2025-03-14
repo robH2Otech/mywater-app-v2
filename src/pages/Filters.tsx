@@ -31,14 +31,25 @@ export const Filters = () => {
         const unitsSnapshot = await getDocs(unitsCollection);
         const unitsData = unitsSnapshot.docs.map(doc => {
           const data = doc.data();
+          
+          // Ensure total_volume is a number
+          let totalVolume = data.total_volume;
+          if (typeof totalVolume === 'string') {
+            totalVolume = parseFloat(totalVolume);
+          } else if (totalVolume === undefined || totalVolume === null) {
+            totalVolume = 0;
+          }
+          
           // Calculate the correct status based on volume
-          const calculatedStatus = determineUnitStatus(data.total_volume);
+          const calculatedStatus = determineUnitStatus(totalVolume);
           
           return {
             id: doc.id,
             ...data,
             // Use calculated status
             status: calculatedStatus,
+            // Ensure total_volume is a number
+            total_volume: totalVolume,
             filters: [] // Will be populated with filters below
           };
         }) as UnitWithFilters[];

@@ -15,10 +15,23 @@ export const Dashboard = () => {
       const unitsCollection = collection(db, "units");
       const unitsSnapshot = await getDocs(unitsCollection);
       
-      return unitsSnapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      })) as UnitData[];
+      return unitsSnapshot.docs.map(doc => {
+        const data = doc.data();
+        
+        // Ensure total_volume is a number
+        let totalVolume = data.total_volume;
+        if (typeof totalVolume === 'string') {
+          totalVolume = parseFloat(totalVolume);
+        } else if (totalVolume === undefined || totalVolume === null) {
+          totalVolume = 0;
+        }
+        
+        return {
+          id: doc.id,
+          ...data,
+          total_volume: totalVolume
+        };
+      }) as UnitData[];
     },
   });
 
@@ -87,12 +100,24 @@ export const Dashboard = () => {
   );
 };
 
-// Helper function to calculate total volume from all units
+// Enhanced helper function to calculate total volume from all units
 function calculateTotalVolume(units: UnitData[]): string {
   const total = units.reduce((sum, unit) => {
-    const volume = unit.total_volume ? parseFloat(unit.total_volume.toString()) : 0;
+    // Ensure we're working with numbers
+    let volume = 0;
+    
+    if (unit.total_volume !== undefined && unit.total_volume !== null) {
+      volume = typeof unit.total_volume === 'string' 
+        ? parseFloat(unit.total_volume) 
+        : unit.total_volume;
+    }
+    
+    // Skip NaN values
+    if (isNaN(volume)) return sum;
+    
     return sum + volume;
   }, 0);
   
-  return total.toFixed(1);
+  // Format with thousands separators and 1 decimal place
+  return total.toLocaleString(undefined, { maximumFractionDigits: 1 });
 }

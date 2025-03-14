@@ -11,7 +11,19 @@ interface UnitDetailsCardProps {
 export const UnitDetailsCard = ({ unit }: UnitDetailsCardProps) => {
   const formatDate = (date: string | null) => {
     if (!date) return "Not available";
-    return format(new Date(date), "PPP");
+    try {
+      return format(new Date(date), "PPP");
+    } catch (err) {
+      console.error("Invalid date format:", date, err);
+      return "Invalid date";
+    }
+  };
+
+  // Format volume with thousands separators and fixed decimal places
+  const formatVolume = (volume: number | string | undefined | null) => {
+    if (volume === undefined || volume === null) return "0";
+    const numericVolume = typeof volume === 'string' ? parseFloat(volume) : volume;
+    return numericVolume.toLocaleString(undefined, { maximumFractionDigits: 2 });
   };
 
   return (
@@ -56,7 +68,7 @@ export const UnitDetailsCard = ({ unit }: UnitDetailsCardProps) => {
         <div className="space-y-2">
           <label className="text-sm text-gray-400">Total Volume (m³)</label>
           <Input
-            value={unit?.total_volume?.toString() || "0"}
+            value={formatVolume(unit?.total_volume)}
             readOnly
             className="bg-spotify-accent border-spotify-accent-hover text-white cursor-default"
           />
@@ -101,7 +113,7 @@ export const UnitDetailsCard = ({ unit }: UnitDetailsCardProps) => {
         <div className="space-y-2">
           <label className="text-sm text-gray-400">UVC Hours</label>
           <Input
-            value={unit?.uvc_hours?.toString() || "Not specified"}
+            value={unit?.uvc_hours ? formatVolume(unit.uvc_hours) : "Not specified"}
             readOnly
             className="bg-spotify-accent border-spotify-accent-hover text-white cursor-default"
           />

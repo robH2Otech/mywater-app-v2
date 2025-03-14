@@ -45,6 +45,20 @@ export function AlertsList({ units, onAlertClick }: AlertsListProps) {
     }
   };
 
+  // Enhanced function to format volume with thousands separators and fixed decimal places
+  const formatVolume = (volume: number | string | null | undefined) => {
+    if (volume === null || volume === undefined) return 'N/A';
+    
+    try {
+      const numVolume = typeof volume === 'string' ? parseFloat(volume) : volume;
+      if (isNaN(numVolume)) return 'N/A';
+      return numVolume.toLocaleString(undefined, { maximumFractionDigits: 1 });
+    } catch (err) {
+      console.error("Error formatting volume:", volume, err);
+      return 'N/A';
+    }
+  };
+
   const handleEditClick = (e: React.MouseEvent, unit: any) => {
     e.stopPropagation();
     setSelectedUnit(unit);
@@ -151,7 +165,7 @@ export function AlertsList({ units, onAlertClick }: AlertsListProps) {
                 
                 <div className="space-y-2 text-left">
                   <div className="text-sm text-gray-400">
-                    Total Volume: {unit.total_volume ? `${unit.total_volume} m³` : 'N/A'}
+                    Total Volume: {formatVolume(unit.total_volume)} m³
                   </div>
                 </div>
               </div>

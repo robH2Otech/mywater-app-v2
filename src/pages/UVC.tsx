@@ -33,8 +33,18 @@ export const UVC = () => {
         const unitsData = unitsSnapshot.docs.map(doc => {
           const data = doc.data();
           
+          // Ensure total_volume is a number
+          let totalVolume = data.total_volume;
+          if (typeof totalVolume === 'string') {
+            totalVolume = parseFloat(totalVolume);
+          } else if (totalVolume === undefined || totalVolume === null) {
+            totalVolume = 0;
+          }
+          
           // Get UVC hours from the unit data if available
-          const uvcHours = data.uvc_hours || 0;
+          const uvcHours = typeof data.uvc_hours === 'string' 
+            ? parseFloat(data.uvc_hours) 
+            : (data.uvc_hours || 0);
           
           // Calculate the correct status based on UVC hours
           const calculatedStatus = determineUVCStatus(uvcHours);
@@ -44,7 +54,10 @@ export const UVC = () => {
             ...data,
             // Use calculated status for UVC
             uvc_status: calculatedStatus,
+            // Ensure UVC hours is a number
             uvc_hours: uvcHours,
+            // Ensure total_volume is a number
+            total_volume: totalVolume
           };
         }) as UnitWithUVC[];
         

@@ -34,11 +34,18 @@ export function FilterCard({ unit, onEditClick, onClick }: FilterCardProps) {
     }
   };
 
-  // Format volume with thousands separators
+  // Enhanced function to format volume with thousands separators and fixed decimal places
   const formatVolume = (volume: number | string | null | undefined) => {
     if (volume === null || volume === undefined) return 'N/A';
-    const numVolume = typeof volume === 'string' ? parseFloat(volume) : volume;
-    return numVolume.toLocaleString(undefined, { maximumFractionDigits: 1 });
+    
+    try {
+      const numVolume = typeof volume === 'string' ? parseFloat(volume) : volume;
+      if (isNaN(numVolume)) return 'N/A';
+      return numVolume.toLocaleString(undefined, { maximumFractionDigits: 1 });
+    } catch (err) {
+      console.error("Error formatting volume:", volume, err);
+      return 'N/A';
+    }
   };
 
   return (
