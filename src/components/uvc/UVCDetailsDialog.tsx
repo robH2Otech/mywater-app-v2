@@ -1,14 +1,14 @@
 
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
 import { Lightbulb } from "lucide-react";
-import { FormInput } from "@/components/shared/FormInput";
-import { FormDatePicker } from "@/components/shared/FormDatePicker";
 import { useState, useEffect } from "react";
-import { MAX_UVC_HOURS, determineUVCStatus } from "@/utils/uvcStatusUtils";
 import { doc, getDoc, collection, query, where, orderBy, limit, getDocs } from "firebase/firestore";
 import { db } from "@/integrations/firebase/client";
 import { useToast } from "@/hooks/use-toast";
+import { UVCProgressBar } from "./UVCProgressBar";
+import { UVCDialogForm } from "./UVCDialogForm";
+import { UVCDialogActions } from "./UVCDialogActions";
+import { UVCDialogLoader } from "./UVCDialogLoader";
 
 interface UVCDetailsDialogProps {
   unit: any;
@@ -135,7 +135,6 @@ export function UVCDetailsDialog({ unit, open, onOpenChange, onSave }: UVCDetail
       onSave({
         ...formData,
         uvc_hours: hours,
-        // When saving, the value is now considered accumulated (total)
       });
       onOpenChange(false);
     }
@@ -144,18 +143,6 @@ export function UVCDetailsDialog({ unit, open, onOpenChange, onSave }: UVCDetail
   if (!unit || !formData) {
     return null;
   }
-
-  const calculatePercentage = () => {
-    const hours = parseFloat(formData.uvc_hours || "0");
-    return Math.min(Math.round((hours / MAX_UVC_HOURS) * 100), 100);
-  };
-
-  const getPercentageClass = () => {
-    const percentage = calculatePercentage();
-    if (percentage > 90) return "text-red-500";
-    if (percentage > 80) return "text-yellow-500";
-    return "text-spotify-green";
-  };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -168,64 +155,15 @@ export function UVCDetailsDialog({ unit, open, onOpenChange, onSave }: UVCDetail
         </DialogHeader>
 
         {isLoading ? (
-          <div className="flex justify-center py-6">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-spotify-green"></div>
-          </div>
+          <UVCDialogLoader />
         ) : (
           <div className="space-y-6 mt-4">
-            <div className="text-center mb-4">
-              <div className="text-3xl font-bold flex justify-center items-end gap-2">
-                <span className={getPercentageClass()}>{calculatePercentage()}%</span>
-                <span className="text-lg text-gray-400">used</span>
-              </div>
-              <div className="w-full bg-gray-700 rounded-full h-2.5 mt-2">
-                <div 
-                  className={`h-2.5 rounded-full ${
-                    calculatePercentage() > 90 ? 'bg-red-500' : 
-                    calculatePercentage() > 80 ? 'bg-yellow-500' : 
-                    'bg-spotify-green'
-                  }`}
-                  style={{ width: `${calculatePercentage()}%` }}
-                ></div>
-              </div>
-              <div className="text-sm text-gray-400 mt-2">
-                {formData.uvc_hours || "0"} / {MAX_UVC_HOURS.toLocaleString()} hours
-              </div>
-            </div>
-
-            <div>
-              <p className="text-sm text-gray-400 mb-2">
-                Enter the total accumulated UVC hours for this unit.
-              </p>
-              <FormInput
-                label="UVC Hours"
-                type="number"
-                value={formData.uvc_hours}
-                onChange={(value) => setFormData({ ...formData, uvc_hours: value })}
-              />
-            </div>
-
-            <FormDatePicker
-              label="Installation Date"
-              value={formData.uvc_installation_date}
-              onChange={(date) => setFormData({ ...formData, uvc_installation_date: date })}
+            <UVCProgressBar hours={formData.uvc_hours} />
+            <UVCDialogForm formData={formData} setFormData={setFormData} />
+            <UVCDialogActions 
+              onCancel={() => onOpenChange(false)} 
+              onSave={handleSave} 
             />
-
-            <div className="flex justify-end gap-4 mt-6">
-              <Button
-                onClick={() => onOpenChange(false)}
-                variant="outline"
-                className="bg-spotify-accent hover:bg-spotify-accent-hover text-white"
-              >
-                Cancel
-              </Button>
-              <Button
-                onClick={handleSave}
-                className="bg-spotify-green hover:bg-spotify-green/90 text-white"
-              >
-                Save Changes
-              </Button>
-            </div>
           </div>
         )}
       </DialogContent>
