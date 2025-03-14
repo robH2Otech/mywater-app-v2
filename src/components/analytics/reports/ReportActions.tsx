@@ -18,15 +18,22 @@ export function ReportActions({ unit, reportType, metrics, startDate, endDate }:
   const handleGeneratePDF = async () => {
     try {
       console.log("Generating PDF from ReportActions");
+      toast({
+        title: "Processing",
+        description: "Generating PDF, please wait...",
+      });
+      
       const pdfBlob = await generatePDF(unit, reportType, metrics, startDate, endDate);
       
       if (!pdfBlob) {
         throw new Error("Failed to generate PDF blob");
       }
       
+      console.log("PDF blob created:", pdfBlob.size, "bytes", pdfBlob.type);
+      
       // Create a download link
       const fileName = `${unit.name}_${reportType}_report_${new Date().toISOString().split('T')[0]}.pdf`;
-      const url = window.URL.createObjectURL(new Blob([pdfBlob], { type: 'application/pdf' }));
+      const url = URL.createObjectURL(pdfBlob);
       
       // Create an anchor element for downloading
       const a = document.createElement('a');
@@ -40,11 +47,11 @@ export function ReportActions({ unit, reportType, metrics, startDate, endDate }:
       a.click();
       
       // Clean up
-      window.setTimeout(() => {
+      setTimeout(() => {
         document.body.removeChild(a);
-        window.URL.revokeObjectURL(url);
+        URL.revokeObjectURL(url);
         console.log("Cleaned up download resources");
-      }, 200);
+      }, 1000);
       
       toast({
         title: "Success",

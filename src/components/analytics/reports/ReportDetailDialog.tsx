@@ -1,53 +1,45 @@
 
-import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { ReportData } from "@/types/analytics";
-import { ReportVisual } from "./ReportVisual";
+import { Button } from "@/components/ui/button";
+import { Download, X } from "lucide-react";
+import { useState, useEffect } from "react";
+import { ReportData, UnitData } from "@/types/analytics";
 import { doc, getDoc } from "firebase/firestore";
 import { db } from "@/integrations/firebase/client";
+import { downloadReportAsPdf } from "@/utils/reportUtils";
 import { toast } from "@/components/ui/use-toast";
-import { calculateMetricsFromMeasurements } from "@/utils/reportGenerator";
 import { getReportTitle } from "@/utils/reportUtils";
+import { ReportVisual } from "../ReportVisual";
+import { calculateMetricsFromMeasurements } from "@/utils/reportGenerator";
 
 interface ReportDetailDialogProps {
-  report: ReportData;
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  report: ReportData;
 }
 
-export function ReportDetailDialog({ report, open, onOpenChange }: ReportDetailDialogProps) {
-  const [unitData, setUnitData] = useState<any>(null);
-  const [reportMetrics, setReportMetrics] = useState<any>(null);
-  const [isLoading, setIsLoading] = useState(false);
-
+export function ReportDetailDialog({ open, onOpenChange, report }: ReportDetailDialogProps) {
+  const [unit, setUnit] = useState<UnitData | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isDownloading, setIsDownloading] = useState(false);
+  
+  // Fetch unit data when report changes
   useEffect(() => {
-    async function loadReportDetails() {
-      if (!open || !report) return;
+    const fetchUnitData = async () => {
+      if (!report) return;
       
-      setIsLoading(true);
       try {
-        // Fetch unit data
-        const unitDocRef = doc(db, "units", report.unit_id);
-        const unitSnapshot = await getDoc(unitDocRef);
+        setIsLoading(true);
+        const unitRef = doc(db, "units", report.unit_id);
+        const unitSnap = await getDoc(unitRef);
         
-        if (unitSnapshot.exists()) {
-          const unitDataObj = {
-            id: unitSnapshot.id,
-            name: unitSnapshot.data().name || 'Unknown Unit',
-            ...unitSnapshot.data()
-          };
-          setUnitData(unitDataObj);
-          
-          // Use pre-calculated metrics if available, otherwise calculate from measurements
-          if (report.metrics) {
-            setReportMetrics(report.metrics);
-          } else {
-            // Calculate metrics from measurements
-            const measurements = report.measurements || [];
-            const metrics = calculateMetricsFromMeasurements(measurements);
-            setReportMetrics(metrics);
-          }
+        if (unitSnap.exists()) {
+          setUnit({
+            id: unitSnap.id,
+            ...unitSnap.data()
+          } as UnitData);
         } else {
+          console.error("Unit not found");
           toast({
             variant: "destructive",
             title: "Error",
@@ -55,42 +47,101 @@ export function ReportDetailDialog({ report, open, onOpenChange }: ReportDetailD
           });
         }
       } catch (error) {
-        console.error("Error loading report details:", error);
+        console.error("Error fetching unit data:", error);
         toast({
           variant: "destructive",
           title: "Error",
-          description: "Failed to load report details",
+          description: "Failed to load unit data",
         });
       } finally {
         setIsLoading(false);
       }
+    };
+    
+    if (open && report) {
+      fetchUnitData();
     }
-
-    loadReportDetails();
-  }, [open, report]);
-
+  }, [report, open]);
+  
+  const handleDownload = async () => {
+    if (!report || isDownloading) return;
+    
+    try {
+      setIsDownloading(true);
+      await downloadReportAsPdf(report);
+    } catch (error) {
+      console.error("Error downloading report:", error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to download report",
+      });
+    } finally {
+      setIsDownloading(false);
+    }
+  };
+  
+  // Calculate metrics from report measurements
+  let metrics = report?.metrics || {
+    totalVolume: 0,
+    avgVolume: 0,
+    maxVolume: 0,
+    avgTemperature: 0,
+    totalUvcHours: 0,
+    dailyData: []
+  };
+  
+  // If report has measurements but no calculated metrics, calculate them
+  if (report?.measurements && report.measurements.length > 0 && !report.metrics) {
+    metrics = calculateMetricsFromMeasurements(report.measurements);
+  }
+  
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-[95vw] max-h-[95vh] w-[95vw] h-[95vh] overflow-y-auto bg-spotify-dark">
-        <DialogHeader>
-          <DialogTitle>
-            {unitData?.name || "Unit"} - {getReportTitle(report?.report_type)}
-          </DialogTitle>
+      <DialogContent className="bg-spotify-darker text-white border-spotify-accent max-w-4xl max-h-[90vh] overflow-y-auto">
+        <DialogHeader className="mb-4">
+          <DialogTitle>Report Details</DialogTitle>
+          <Button 
+            variant="ghost" 
+            size="icon"
+            onClick={() => onOpenChange(false)}
+            className="absolute right-4 top-4"
+          >
+            <X className="h-4 w-4" />
+          </Button>
         </DialogHeader>
         
         {isLoading ? (
-          <div className="flex justify-center items-center p-8">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-spotify-green"></div>
+          <div className="p-8 text-center">
+            <div className="animate-pulse">Loading report details...</div>
           </div>
-        ) : unitData && reportMetrics ? (
-          <ReportVisual 
-            unit={unitData} 
-            reportType={report.report_type} 
-            metrics={reportMetrics} 
-          />
+        ) : unit ? (
+          <div className="space-y-6">
+            <div className="flex justify-between items-center">
+              <h2 className="text-xl font-semibold">
+                {unit.name} - {getReportTitle(report.report_type)}
+              </h2>
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={handleDownload}
+                disabled={isDownloading}
+                className="flex items-center"
+              >
+                <Download className="h-4 w-4 mr-2" />
+                {isDownloading ? "Downloading..." : "Download PDF"}
+              </Button>
+            </div>
+            
+            <ReportVisual 
+              unit={unit}
+              reportType={report.report_type}
+              metrics={metrics}
+            />
+          </div>
         ) : (
-          <div className="p-4 text-center text-red-400">
-            Unable to load report details. Please try again.
+          <div className="p-8 text-center">
+            <p>Failed to load report details.</p>
           </div>
         )}
       </DialogContent>

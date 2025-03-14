@@ -19,15 +19,15 @@ interface ReportListItemProps {
 
 export function ReportListItem({ report, onViewReport, onReportDeleted }: ReportListItemProps) {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [isDownloading, setIsDownloading] = useState(false);
 
   const handleDownloadReport = async () => {
+    if (isDownloading) return;
+    
     try {
+      setIsDownloading(true);
       console.log("Initiating download for report:", report.id);
       await downloadReportAsPdf(report);
-      toast({
-        title: "Success",
-        description: "Report downloaded successfully",
-      });
     } catch (error) {
       console.error("Error downloading report:", error);
       toast({
@@ -35,6 +35,8 @@ export function ReportListItem({ report, onViewReport, onReportDeleted }: Report
         title: "Error",
         description: "Failed to download report",
       });
+    } finally {
+      setIsDownloading(false);
     }
   };
 
@@ -97,10 +99,11 @@ export function ReportListItem({ report, onViewReport, onReportDeleted }: Report
             variant="outline"
             size="sm"
             onClick={handleDownloadReport}
+            disabled={isDownloading}
             className="flex items-center"
           >
             <Download className="h-4 w-4 mr-2" />
-            Download
+            {isDownloading ? "Downloading..." : "Download"}
           </Button>
           <Button
             variant="destructive"
