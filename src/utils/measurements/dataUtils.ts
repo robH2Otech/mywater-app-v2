@@ -18,7 +18,16 @@ export const addMeasurement = async (unitId: string, volume: number, temperature
     }
     
     const unitData = unitDoc.data();
-    const currentTotalVolume = parseFloat(unitData.total_volume || "0");
+    
+    // Parse the current total volume, ensuring it's a number
+    const currentTotalVolume = typeof unitData.total_volume === 'number' 
+      ? unitData.total_volume 
+      : typeof unitData.total_volume === 'string' 
+        ? parseFloat(unitData.total_volume) 
+        : 0;
+    
+    // Calculate new cumulative volume
+    const newCumulativeVolume = currentTotalVolume + volume;
     
     // Create the new measurement
     // Include both server timestamp and formatted human-readable timestamp
@@ -34,7 +43,7 @@ export const addMeasurement = async (unitId: string, volume: number, temperature
       
       volume,
       temperature,
-      cumulative_volume: currentTotalVolume + volume,
+      cumulative_volume: newCumulativeVolume,
       ...(uvcHours !== undefined && { uvc_hours: uvcHours })
     };
     
@@ -51,14 +60,14 @@ export const addMeasurement = async (unitId: string, volume: number, temperature
     // Update the unit's total_volume with the new cumulative value
     // Also update the UVC hours if provided
     const updateData: any = {
-      total_volume: measurementData.cumulative_volume,
+      total_volume: newCumulativeVolume,
       updated_at: formattedTimestamp
     };
     
     // Update UVC hours if provided
     if (uvcHours !== undefined) {
       // Get current UVC hours and add the new hours
-      const currentUVCHours = unitData.uvc_hours || 0;
+      const currentUVCHours = typeof unitData.uvc_hours === 'number' ? unitData.uvc_hours : 0;
       updateData.uvc_hours = currentUVCHours + uvcHours;
     }
     
@@ -76,6 +85,12 @@ export const addMeasurement = async (unitId: string, volume: number, temperature
  */
 export const getLatestMeasurements = async (unitId: string, count: number = 24) => {
   try {
+    // Get the unit document to read the current total_volume (for reference)
+    const unitDocRef = doc(db, "units", unitId);
+    const unitDoc = await getDoc(unitDocRef);
+    const unitData = unitDoc.exists() ? unitDoc.data() : null;
+    const unitTotalVolume = unitData?.total_volume || 0;
+    
     // Determine the collection path based on unit ID
     const isMyWaterUnit = unitId.startsWith('MYWATER_');
     const collectionPath = isMyWaterUnit ? `units/${unitId}/data` : `units/${unitId}/measurements`;
@@ -88,6 +103,8 @@ export const getLatestMeasurements = async (unitId: string, count: number = 24) 
     );
     
     const snapshot = await getDocs(q);
+    
+    // Process measurements and ensure cumulative volume is set
     return snapshot.docs.map(doc => {
       const data = doc.data();
       
@@ -105,6 +122,12 @@ export const getLatestMeasurements = async (unitId: string, count: number = 24) 
         }
       }
       
+      // Ensure cumulative_volume is populated
+      if (data.cumulative_volume === undefined || data.cumulative_volume === null) {
+        // If missing, use unit's current total - this should be improved with proper calculations 
+        data.cumulative_volume = unitTotalVolume;
+      }
+      
       return {
         id: doc.id,
         ...data
@@ -115,3 +138,56 @@ export const getLatestMeasurements = async (unitId: string, count: number = 24) 
     throw error;
   }
 };
+
+/**
+ * Calculate proper cumulative volume for a unit's measurements
+ * This function recalculates the unit's measurements to ensure consistent cumulative volumes
+ */
+export const recalculateCumulativeVolumes = async (unitId: string) => {
+  try {
+    // Determine the collection path based on unit ID
+    const isMyWaterUnit = unitId.startsWith('MYWATER_');
+    const collectionPath = isMyWaterUnit ? `units/${unitId}/data` : `units/${unitId}/measurements`;
+    
+    const measurementsCollectionRef = collection(db, collectionPath);
+    const q = query(
+      measurementsCollectionRef,
+      orderBy("timestamp", "asc") // Important: Process in chronological order
+    );
+    
+    const snapshot = await getDocs(q);
+    const measurements = snapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data()
+    }));
+    
+    // Start with 0 cumulative volume
+    let cumulativeVolume = 0;
+    
+    // Update each measurement with the proper cumulative volume
+    for (const measurement of measurements) {
+      const volume = typeof measurement.volume === 'number' ? measurement.volume : 0;
+      cumulativeVolume += volume;
+      
+      // Update the measurement document with the correct cumulative_volume
+      const measurementDocRef = doc(db, collectionPath, measurement.id);
+      await updateDoc(measurementDocRef, {
+        cumulative_volume: cumulativeVolume
+      });
+    }
+    
+    // Update the unit's total_volume to match the final cumulative value
+    const unitDocRef = doc(db, "units", unitId);
+    await updateDoc(unitDocRef, {
+      total_volume: cumulativeVolume,
+      updated_at: new Date().toISOString()
+    });
+    
+    console.log(`Recalculated cumulative volumes for unit ${unitId}. Final total: ${cumulativeVolume}`);
+    return cumulativeVolume;
+  } catch (error) {
+    console.error("Error recalculating cumulative volumes:", error);
+    throw error;
+  }
+};
+

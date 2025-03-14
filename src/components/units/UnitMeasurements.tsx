@@ -54,6 +54,7 @@ export function UnitMeasurements({ unitId }: UnitMeasurementsProps) {
           ? measurement.uvc_hours.toLocaleString(undefined, { maximumFractionDigits: 1 })
           : "N/A";
           
+        // Format cumulative volume, ensure it's displayed properly
         const cumulativeVolume = typeof measurement.cumulative_volume === 'number'
           ? measurement.cumulative_volume.toLocaleString(undefined, { maximumFractionDigits: 2 })
           : "N/A";
