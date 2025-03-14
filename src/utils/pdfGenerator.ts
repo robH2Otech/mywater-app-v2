@@ -19,8 +19,10 @@ export async function generatePDF(
   metrics: any,
   startDate: Date,
   endDate: Date
-): Promise<void> {
+): Promise<Blob> {
   try {
+    console.log("Generating PDF for:", unit.name, reportType);
+    
     // Create a new jsPDF instance
     const doc = new jsPDF() as ExtendedJsPDF;
     const pageWidth = doc.internal.pageSize.getWidth();
@@ -169,8 +171,9 @@ export async function generatePDF(
     doc.setFontSize(8);
     doc.text(`Generated on: ${generatedDate}`, pageWidth - 15, doc.internal.pageSize.getHeight() - 10, { align: "right" });
     
-    // Save the PDF with the report title
-    doc.save(`${unit.name}_${reportType}_report_${format(new Date(), 'yyyy-MM-dd')}.pdf`);
+    // Return the PDF as a blob rather than saving directly
+    console.log("PDF generated successfully");
+    return doc.output('blob');
   } catch (error) {
     console.error("Error generating PDF:", error);
     throw new Error("Failed to generate PDF report");

@@ -2,10 +2,9 @@
 import { Button } from "@/components/ui/button";
 import { Download, Printer } from "lucide-react";
 import { UnitData } from "@/types/analytics";
-import { generatePDF } from "@/utils/pdfGenerator";
 import { toast } from "@/components/ui/use-toast";
 import { getReportTitle } from "@/utils/reportUtils";
-import { format } from "date-fns";
+import { generatePDF } from "@/utils/pdfGenerator";
 
 interface ReportActionsProps {
   unit: UnitData;
@@ -18,7 +17,23 @@ interface ReportActionsProps {
 export function ReportActions({ unit, reportType, metrics, startDate, endDate }: ReportActionsProps) {
   const handleGeneratePDF = async () => {
     try {
-      await generatePDF(unit, reportType, metrics, startDate, endDate);
+      console.log("Generating PDF from ReportActions");
+      const pdfBlob = await generatePDF(unit, reportType, metrics, startDate, endDate);
+      
+      // Create a download link and trigger download
+      const downloadLink = document.createElement('a');
+      const url = URL.createObjectURL(pdfBlob);
+      downloadLink.href = url;
+      downloadLink.download = `${unit.name}_${reportType}_report_${new Date().toISOString().split('T')[0]}.pdf`;
+      document.body.appendChild(downloadLink);
+      downloadLink.click();
+      
+      // Clean up
+      setTimeout(() => {
+        document.body.removeChild(downloadLink);
+        URL.revokeObjectURL(url);
+      }, 100);
+      
       toast({
         title: "Success",
         description: "PDF generated and downloaded successfully",

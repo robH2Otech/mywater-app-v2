@@ -95,6 +95,18 @@
   }
   
   .glass {
-    @apply bg-spotify-darker bg-opacity-60 backdrop-blur-sm border border-white/5;
+    @apply bg-spotify-darker bg-opacity-60 backdrop-blur-sm border-0 shadow-md;
+  }
+  
+  /* Card styling without white borders */
+  .card, 
+  .rounded-xl,
+  .dialog-content {
+    @apply border-0 bg-spotify-darker;
+  }
+  
+  /* Dialog content styling */
+  .dialog-content {
+    @apply bg-spotify-darker border-0;
   }
 }
