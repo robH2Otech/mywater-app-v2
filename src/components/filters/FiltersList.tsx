@@ -1,14 +1,12 @@
 
 import { useState, useEffect } from "react";
-import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Check, AlertTriangle, AlertOctagon, MapPin, Edit, Calendar } from "lucide-react";
 import { FilterDetailsDialog } from "./FilterDetailsDialog";
-import { useToast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
-import { doc, updateDoc, collection, addDoc } from "firebase/firestore";
+import { doc, updateDoc } from "firebase/firestore";
 import { db } from "@/integrations/firebase/client";
-import { determineUnitStatus, createAlertMessage } from "@/utils/unitStatusUtils";
+import { useToast } from "@/hooks/use-toast";
+import { FilterCard } from "./FilterCard";
+import { useFilterStatus } from "./FilterStatusUtils";
 
 interface FiltersListProps {
   units: any[];
@@ -21,88 +19,13 @@ export function FiltersList({ units, onFilterClick }: FiltersListProps) {
   const [selectedUnit, setSelectedUnit] = useState<any>(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [processedUnits, setProcessedUnits] = useState<any[]>([]);
+  const { processUnitsWithStatus } = useFilterStatus();
 
   // Process units to ensure correct status based on volume
   useEffect(() => {
-    const updatedUnits = units.map(unit => {
-      // Calculate status based on volume
-      const calculatedStatus = determineUnitStatus(unit.total_volume);
-      
-      // If status needs updating, trigger update
-      if (unit.status !== calculatedStatus) {
-        updateUnitStatus(unit.id, calculatedStatus, unit.name, unit.total_volume);
-      }
-      
-      return {
-        ...unit,
-        status: calculatedStatus // Show the correct status immediately in UI
-      };
-    });
-    
+    const updatedUnits = processUnitsWithStatus(units);
     setProcessedUnits(updatedUnits);
   }, [units]);
-
-  const updateUnitStatus = async (unitId: string, newStatus: string, unitName: string, volume: number) => {
-    try {
-      // Update the unit document
-      const unitDocRef = doc(db, "units", unitId);
-      await updateDoc(unitDocRef, {
-        status: newStatus,
-        updated_at: new Date().toISOString()
-      });
-
-      // If status is warning or urgent, create an alert
-      if (newStatus === 'warning' || newStatus === 'urgent') {
-        const alertMessage = createAlertMessage(unitName, volume, newStatus);
-        
-        // Add a new alert to the alerts collection
-        const alertsCollection = collection(db, "alerts");
-        await addDoc(alertsCollection, {
-          unit_id: unitId,
-          message: alertMessage,
-          status: newStatus,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-        });
-      }
-
-      // Refresh data
-      await queryClient.invalidateQueries({ queryKey: ['filter-units'] });
-      await queryClient.invalidateQueries({ queryKey: ['units'] });
-      await queryClient.invalidateQueries({ queryKey: ['alerts'] });
-      
-      toast({
-        title: "Status updated",
-        description: `${unitName} status updated to ${newStatus}`,
-      });
-    } catch (error) {
-      console.error('Error updating unit status:', error);
-    }
-  };
-
-  const getStatusIcon = (status: string) => {
-    switch (status) {
-      case "urgent":
-        return <AlertOctagon className="h-5 w-5 text-red-500" />;
-      case "warning":
-        return <AlertTriangle className="h-5 w-5 text-yellow-500" />;
-      case "active":
-      default:
-        return <Check className="h-5 w-5 text-spotify-green" />;
-    }
-  };
-
-  const getStatusText = (status: string) => {
-    switch (status) {
-      case "urgent":
-        return "Urgent Change";
-      case "warning":
-        return "Attention";
-      case "active":
-      default:
-        return "Active";
-    }
-  };
 
   const handleEditClick = (e: React.MouseEvent, unit: any) => {
     e.stopPropagation();
@@ -116,6 +39,8 @@ export function FiltersList({ units, onFilterClick }: FiltersListProps) {
         ? parseFloat(updatedData.total_volume) 
         : updatedData.total_volume;
         
+      const { determineUnitStatus, createAlertMessage } = await import('@/utils/unitStatusUtils');
+      
       // Determine status based on volume
       const newStatus = determineUnitStatus(numericVolume);
       
@@ -137,6 +62,7 @@ export function FiltersList({ units, onFilterClick }: FiltersListProps) {
         const alertMessage = createAlertMessage(updatedData.name, numericVolume, newStatus);
         
         // Add a new alert to the alerts collection
+        const { collection, addDoc } = await import('firebase/firestore');
         const alertsCollection = collection(db, "alerts");
         await addDoc(alertsCollection, {
           unit_id: selectedUnit.id,
@@ -171,59 +97,12 @@ export function FiltersList({ units, onFilterClick }: FiltersListProps) {
     <>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
         {processedUnits.map((unit) => (
-          <Card 
-            key={unit.id} 
-            className="bg-spotify-darker hover:bg-spotify-accent/40 transition-colors cursor-pointer relative group"
+          <FilterCard
+            key={unit.id}
+            unit={unit}
+            onEditClick={handleEditClick}
             onClick={() => onFilterClick(unit)}
-          >
-            <Button
-              variant="ghost"
-              size="icon"
-              className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity z-10"
-              onClick={(e) => handleEditClick(e, unit)}
-            >
-              <Edit className="h-4 w-4 text-white" />
-            </Button>
-            <CardContent className="p-6">
-              <div className="space-y-4">
-                <div className="flex justify-between items-start">
-                  <div className="text-left">
-                    <h3 className="text-xl font-semibold text-white">{unit.name}</h3>
-                    {unit.location && (
-                      <div className="flex items-center gap-1 text-sm text-gray-400 mt-1">
-                        <MapPin className="h-4 w-4" />
-                        {unit.location}
-                      </div>
-                    )}
-                  </div>
-                  <div className="flex items-center gap-2">
-                    {getStatusIcon(unit.status)}
-                    <span className="text-sm font-medium">
-                      {getStatusText(unit.status)}
-                    </span>
-                  </div>
-                </div>
-                
-                <div className="space-y-2 text-left">
-                  <div className="text-sm text-gray-400">
-                    Total Volume: {unit.total_volume ? `${unit.total_volume} m³` : 'N/A'}
-                  </div>
-                  {unit.last_maintenance && (
-                    <div className="flex items-center gap-2 text-sm text-gray-400">
-                      <Calendar className="h-4 w-4" />
-                      Last: {new Date(unit.last_maintenance).toLocaleDateString()}
-                    </div>
-                  )}
-                  {unit.next_maintenance && (
-                    <div className="flex items-center gap-2 text-sm text-gray-400">
-                      <Calendar className="h-4 w-4" />
-                      Next: {new Date(unit.next_maintenance).toLocaleDateString()}
-                    </div>
-                  )}
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+          />
         ))}
       </div>
 
