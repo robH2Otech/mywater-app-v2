@@ -24,6 +24,7 @@ interface EditUnitDialogProps {
     setup_date?: string | null;
     uvc_hours?: number | string | null;
     uvc_status?: string | null;
+    uvc_installation_date?: string | null;
     eid?: string | null;
     iccid?: string | null;
   };

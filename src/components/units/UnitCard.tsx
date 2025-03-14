@@ -17,6 +17,12 @@ interface UnitCardProps {
   contact_email?: string | null;
   contact_phone?: string | null;
   next_maintenance?: string | null;
+  setup_date?: string | null;
+  uvc_hours?: number | string | null;
+  uvc_status?: string | null;
+  uvc_installation_date?: string | null;
+  eid?: string | null;
+  iccid?: string | null;
 }
 
 export const UnitCard = ({
@@ -30,6 +36,12 @@ export const UnitCard = ({
   contact_email,
   contact_phone,
   next_maintenance,
+  setup_date,
+  uvc_hours,
+  uvc_status,
+  uvc_installation_date,
+  eid,
+  iccid,
 }: UnitCardProps) => {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
 
@@ -111,6 +123,12 @@ export const UnitCard = ({
           contact_email,
           contact_phone,
           next_maintenance,
+          setup_date,
+          uvc_hours,
+          uvc_status,
+          uvc_installation_date,
+          eid,
+          iccid,
         }}
         open={isEditDialogOpen}
         onOpenChange={setIsEditDialogOpen}
