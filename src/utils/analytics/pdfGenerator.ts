@@ -3,6 +3,7 @@ import { jsPDF } from "jspdf";
 import 'jspdf-autotable';
 import { format } from "date-fns";
 import { UnitData } from "@/types/analytics";
+import { formatDateRange } from "./dateRangeUtils";
 
 export function generateReportPDF(unit: UnitData, reportType: string, metrics: any, startDate: Date, endDate: Date) {
   try {
@@ -25,7 +26,7 @@ export function generateReportPDF(unit: UnitData, reportType: string, metrics: a
     // Add date range
     doc.setFontSize(12);
     doc.text(
-      `Period: ${format(startDate, 'MMM dd, yyyy')} to ${format(endDate, 'MMM dd, yyyy')}`,
+      `Period: ${formatDateRange(startDate, endDate)}`,
       pageWidth / 2, 
       40, 
       { align: "center" }
