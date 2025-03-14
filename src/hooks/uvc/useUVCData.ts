@@ -39,7 +39,13 @@ export function useUVCData() {
         });
         
         const unitsData = await Promise.all(unitsPromises) as UnitWithUVC[];
-        console.log("UVC units data processed:", unitsData.map(u => `${u.id}: ${u.name}, UVC Hours: ${u.uvc_hours}, Accumulated: ${u.is_uvc_accumulated}`));
+        console.log("UVC units data processed successfully:", unitsData.length);
+        
+        // Log detailed info for debugging each unit
+        unitsData.forEach(unit => {
+          console.log(`Unit ${unit.id}: ${unit.name}, UVC Hours: ${unit.uvc_hours}, Accumulated: ${unit.is_uvc_accumulated}, Status: ${unit.uvc_status}`);
+        });
+        
         return unitsData;
       } catch (error) {
         console.error("Error fetching UVC units:", error);

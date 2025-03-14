@@ -5,6 +5,7 @@ import { db } from "@/integrations/firebase/client";
 import { UnitData } from "@/types/analytics";
 import { determineUnitStatus } from "@/utils/unitStatusUtils";
 import { determineUVCStatus } from "@/utils/uvcStatusUtils";
+import { getMeasurementsCollectionPath } from "@/hooks/measurements/useMeasurementCollection";
 
 export function useUnitDetails(id: string | undefined) {
   return useQuery({
@@ -25,11 +26,12 @@ export function useUnitDetails(id: string | undefined) {
       const unitData = unitSnapshot.data();
       console.log(`Unit ${id} base data:`, unitData);
       
-      // 2. Get the latest measurements data to check for additional UVC hours
-      // This ensures we're getting the most up-to-date UVC hours
+      // 2. Get the latest measurements data using the correct collection path
+      const collectionPath = getMeasurementsCollectionPath(id);
+      console.log(`Unit ${id} - Using measurements path: ${collectionPath}`);
+      
       const measurementsQuery = query(
-        collection(db, "measurements"),
-        where("unit_id", "==", id),
+        collection(db, collectionPath),
         orderBy("timestamp", "desc"),
         limit(1)
       );
@@ -52,6 +54,8 @@ export function useUnitDetails(id: string | undefined) {
           hasMeasurementData = true;
           console.log(`Unit ${id} - Latest measurement UVC hours: ${latestMeasurementUvcHours}`);
         }
+      } else {
+        console.log(`Unit ${id} - No measurements found in collection: ${collectionPath}`);
       }
       
       // 3. Process the total volume
@@ -105,5 +109,6 @@ export function useUnitDetails(id: string | undefined) {
       } as UnitData;
     },
     enabled: !!id,
+    retry: 1, // Only retry once to avoid excessive error messages
   });
 }
