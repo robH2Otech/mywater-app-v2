@@ -1,3 +1,4 @@
+
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { format } from "date-fns";
@@ -18,6 +19,7 @@ export const UnitDetailsCard = ({ unit }: UnitDetailsCardProps) => {
     }
   };
 
+  // Format volume with thousands separators and fixed decimal places
   const formatVolume = (volume: number | string | undefined | null) => {
     if (volume === undefined || volume === null) return "0";
     const numericVolume = typeof volume === 'string' ? parseFloat(volume) : volume;
@@ -26,14 +28,14 @@ export const UnitDetailsCard = ({ unit }: UnitDetailsCardProps) => {
   };
 
   return (
-    <Card className="bg-spotify-darker border-spotify-accent p-6 rounded-xl">
+    <Card className="bg-spotify-darker border-spotify-accent p-6">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div className="space-y-2">
           <label className="text-sm text-gray-400">Unit Name</label>
           <Input
             value={unit?.name || ""}
             readOnly
-            className="bg-spotify-accent border-spotify-accent-hover text-white cursor-default rounded-lg"
+            className="bg-spotify-accent border-spotify-accent-hover text-white cursor-default"
           />
         </div>
 
@@ -42,7 +44,7 @@ export const UnitDetailsCard = ({ unit }: UnitDetailsCardProps) => {
           <Input
             value={unit?.contact_name || "Not specified"}
             readOnly
-            className="bg-spotify-accent border-spotify-accent-hover text-white cursor-default rounded-lg"
+            className="bg-spotify-accent border-spotify-accent-hover text-white cursor-default"
           />
         </div>
 

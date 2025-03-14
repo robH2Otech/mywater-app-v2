@@ -52,9 +52,9 @@ const Index = () => {
   }
 
   return (
-    <div className="min-h-screen bg-black p-6">
+    <div className="min-h-screen bg-spotify-darker p-6">
       <div className="max-w-7xl mx-auto space-y-6">
-        <Card className="p-8 bg-spotify-darker">
+        <Card className="p-8 glass">
           <div className="text-center space-y-4">
             <h1 className="text-4xl font-bold text-white">MYWATER Technologies</h1>
             <div className="flex items-center justify-center gap-2 text-2xl">

@@ -17,7 +17,7 @@ export const Sidebar = () => {
   const location = useLocation();
 
   return (
-    <div className="fixed top-0 left-0 h-screen w-64 bg-spotify-darker border-r border-white/10 p-4 animate-slideIn overflow-hidden rounded-r-xl">
+    <div className="fixed top-0 left-0 h-screen w-64 bg-spotify-darker border-r border-white/10 p-4 animate-slideIn">
       <div className="flex items-center gap-2 mb-8">
         <Droplets className="h-8 w-8 text-spotify-green" />
         <div className="flex flex-col">
@@ -33,7 +33,7 @@ export const Sidebar = () => {
             <Link
               key={item.name}
               to={item.path}
-              className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
+              className={`flex items-center gap-3 px-4 py-3 rounded-md transition-colors ${
                 isActive
                   ? "bg-spotify-green text-white"
                   : "text-gray-400 hover:text-white hover:bg-spotify-accent"

@@ -8,7 +8,7 @@ interface LayoutProps {
 
 export const Layout = ({ children }: LayoutProps) => {
   return (
-    <div className="min-h-screen bg-black flex">
+    <div className="min-h-screen bg-spotify-dark flex">
       <div className="fixed">
         <Sidebar />
       </div>
