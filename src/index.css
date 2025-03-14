@@ -5,7 +5,7 @@
 
 @layer base {
   body {
-    @apply bg-spotify-dark text-white;
+    @apply bg-black text-white;
   }
 
   /* Print styles for reports */
@@ -54,7 +54,7 @@
 
 :root {
   --spotify-dark: #121212;
-  --spotify-darker: #090909;
+  --spotify-darker: #181818;
   --spotify-light: #282828;
   --spotify-green: #1DB954;
   --spotify-accent: #1F1F1F;
@@ -91,5 +91,9 @@
   }
   .hover\:bg-spotify-green\/90:hover {
     background-color: rgba(29, 185, 84, 0.9);
+  }
+  
+  .glass {
+    @apply bg-spotify-darker bg-opacity-60 backdrop-blur-sm border border-white/5;
   }
 }

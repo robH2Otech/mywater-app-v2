@@ -28,14 +28,14 @@ export const UnitDetailsCard = ({ unit }: UnitDetailsCardProps) => {
   };
 
   return (
-    <Card className="bg-spotify-darker border-spotify-accent p-6">
+    <Card className="bg-spotify-darker border-spotify-accent p-6 rounded-xl overflow-hidden">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div className="space-y-2">
           <label className="text-sm text-gray-400">Unit Name</label>
           <Input
             value={unit?.name || ""}
             readOnly
-            className="bg-spotify-accent border-spotify-accent-hover text-white cursor-default"
+            className="bg-spotify-accent border-spotify-accent-hover text-white cursor-default rounded-lg"
           />
         </div>
 
@@ -44,7 +44,7 @@ export const UnitDetailsCard = ({ unit }: UnitDetailsCardProps) => {
           <Input
             value={unit?.contact_name || "Not specified"}
             readOnly
-            className="bg-spotify-accent border-spotify-accent-hover text-white cursor-default"
+            className="bg-spotify-accent border-spotify-accent-hover text-white cursor-default rounded-lg"
           />
         </div>
 
@@ -53,7 +53,7 @@ export const UnitDetailsCard = ({ unit }: UnitDetailsCardProps) => {
           <Input
             value={unit?.location || "Not specified"}
             readOnly
-            className="bg-spotify-accent border-spotify-accent-hover text-white cursor-default"
+            className="bg-spotify-accent border-spotify-accent-hover text-white cursor-default rounded-lg"
           />
         </div>
 
@@ -62,7 +62,7 @@ export const UnitDetailsCard = ({ unit }: UnitDetailsCardProps) => {
           <Input
             value={unit?.contact_email || "Not specified"}
             readOnly
-            className="bg-spotify-accent border-spotify-accent-hover text-white cursor-default"
+            className="bg-spotify-accent border-spotify-accent-hover text-white cursor-default rounded-lg"
           />
         </div>
 
@@ -71,7 +71,7 @@ export const UnitDetailsCard = ({ unit }: UnitDetailsCardProps) => {
           <Input
             value={formatVolume(unit?.total_volume)}
             readOnly
-            className="bg-spotify-accent border-spotify-accent-hover text-white cursor-default"
+            className="bg-spotify-accent border-spotify-accent-hover text-white cursor-default rounded-lg"
           />
         </div>
 
@@ -80,7 +80,7 @@ export const UnitDetailsCard = ({ unit }: UnitDetailsCardProps) => {
           <Input
             value={unit?.contact_phone || "Not specified"}
             readOnly
-            className="bg-spotify-accent border-spotify-accent-hover text-white cursor-default"
+            className="bg-spotify-accent border-spotify-accent-hover text-white cursor-default rounded-lg"
           />
         </div>
 
@@ -89,7 +89,7 @@ export const UnitDetailsCard = ({ unit }: UnitDetailsCardProps) => {
           <Input
             value={unit?.status || ""}
             readOnly
-            className="bg-spotify-accent border-spotify-accent-hover text-white cursor-default"
+            className="bg-spotify-accent border-spotify-accent-hover text-white cursor-default rounded-lg"
           />
         </div>
 
@@ -98,7 +98,7 @@ export const UnitDetailsCard = ({ unit }: UnitDetailsCardProps) => {
           <Input
             value={formatDate(unit?.next_maintenance || null)}
             readOnly
-            className="bg-spotify-accent border-spotify-accent-hover text-white cursor-default"
+            className="bg-spotify-accent border-spotify-accent-hover text-white cursor-default rounded-lg"
           />
         </div>
 
@@ -107,7 +107,7 @@ export const UnitDetailsCard = ({ unit }: UnitDetailsCardProps) => {
           <Input
             value={formatDate(unit?.setup_date || null)}
             readOnly
-            className="bg-spotify-accent border-spotify-accent-hover text-white cursor-default"
+            className="bg-spotify-accent border-spotify-accent-hover text-white cursor-default rounded-lg"
           />
         </div>
 
@@ -116,7 +116,7 @@ export const UnitDetailsCard = ({ unit }: UnitDetailsCardProps) => {
           <Input
             value={unit?.uvc_hours ? formatVolume(unit.uvc_hours) : "Not specified"}
             readOnly
-            className="bg-spotify-accent border-spotify-accent-hover text-white cursor-default"
+            className="bg-spotify-accent border-spotify-accent-hover text-white cursor-default rounded-lg"
           />
         </div>
 
@@ -125,7 +125,7 @@ export const UnitDetailsCard = ({ unit }: UnitDetailsCardProps) => {
           <Input
             value={unit?.eid || "Not specified"}
             readOnly
-            className="bg-spotify-accent border-spotify-accent-hover text-white cursor-default"
+            className="bg-spotify-accent border-spotify-accent-hover text-white cursor-default rounded-lg"
           />
         </div>
 
@@ -134,7 +134,7 @@ export const UnitDetailsCard = ({ unit }: UnitDetailsCardProps) => {
           <Input
             value={unit?.iccid || "Not specified"}
             readOnly
-            className="bg-spotify-accent border-spotify-accent-hover text-white cursor-default"
+            className="bg-spotify-accent border-spotify-accent-hover text-white cursor-default rounded-lg"
           />
         </div>
 
@@ -144,7 +144,7 @@ export const UnitDetailsCard = ({ unit }: UnitDetailsCardProps) => {
             <Input
               value={unit.notes}
               readOnly
-              className="bg-spotify-accent border-spotify-accent-hover text-white cursor-default"
+              className="bg-spotify-accent border-spotify-accent-hover text-white cursor-default rounded-lg"
             />
           </div>
         )}

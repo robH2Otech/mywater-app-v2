@@ -108,7 +108,7 @@ export const RecentAlerts = () => {
 
   return (
     <Card 
-      className="p-6 glass cursor-pointer hover:bg-white/5 transition-colors"
+      className="p-6 glass cursor-pointer hover:bg-white/5 transition-colors rounded-xl overflow-hidden"
       onClick={() => navigate('/alerts')}
     >
       <div className="flex items-center justify-between mb-4">
