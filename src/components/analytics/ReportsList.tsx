@@ -34,17 +34,9 @@ export function ReportsList({ reports, isLoading, error }: ReportsListProps) {
   // Show loading state
   if (isLoading) {
     return (
-      <div className="space-y-4 mt-8">
+      <div className="space-y-3 mt-4">
         <h2 className="text-xl font-semibold">Generated Reports</h2>
-        <div className="grid gap-4">
-          {[1, 2, 3].map((index) => (
-            <Card key={index} className="p-4 bg-spotify-darker">
-              <div className="h-32 w-full">
-                <LoadingSkeleton />
-              </div>
-            </Card>
-          ))}
-        </div>
+        <LoadingSkeleton />
       </div>
     );
   }
@@ -52,7 +44,7 @@ export function ReportsList({ reports, isLoading, error }: ReportsListProps) {
   // Show error state
   if (error) {
     return (
-      <div className="space-y-4 mt-8">
+      <div className="space-y-3 mt-4">
         <h2 className="text-xl font-semibold">Generated Reports</h2>
         <Alert variant="destructive">
           <AlertCircle className="h-4 w-4" />
@@ -70,9 +62,9 @@ export function ReportsList({ reports, isLoading, error }: ReportsListProps) {
   }
 
   return (
-    <div className="space-y-4 mt-8">
+    <div className="space-y-3 mt-4">
       <h2 className="text-xl font-semibold">Generated Reports</h2>
-      <div className="grid gap-4">
+      <div className="grid gap-3">
         {reports.map((report) => (
           <ReportListItem 
             key={report.id} 
