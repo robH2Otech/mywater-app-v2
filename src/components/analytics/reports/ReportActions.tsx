@@ -22,14 +22,14 @@ export function ReportActions({ unit, reportType, metrics, startDate, endDate }:
       await generatePDF(unit, reportType, metrics, startDate, endDate);
       toast({
         title: "Success",
-        description: "PDF generated and downloaded successfully",
+        description: "PDF downloaded successfully",
       });
     } catch (error) {
       console.error("Error generating PDF:", error);
       toast({
         variant: "destructive",
         title: "Error",
-        description: "Failed to generate PDF",
+        description: "Failed to download PDF: " + (error instanceof Error ? error.message : String(error)),
       });
     }
   };

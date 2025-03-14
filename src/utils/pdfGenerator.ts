@@ -113,7 +113,7 @@ export async function generatePDF(
         body: dailyData,
         theme: 'grid',
         headStyles: { fillColor: [0, 150, 0] }
-      });
+    });
     }
     
     // Add maintenance information
@@ -171,11 +171,12 @@ export async function generatePDF(
     
     console.log("PDF prepared, saving...");
     
-    // Save the PDF with the report title
+    // Save the PDF with the report title - this is the critical line that triggers the download
     const filename = `${unit.name}_${reportType}_report_${format(new Date(), 'yyyy-MM-dd')}.pdf`;
     doc.save(filename);
     
     console.log("PDF saved with filename:", filename);
+    return Promise.resolve();
   } catch (error) {
     console.error("Error generating PDF:", error);
     throw new Error("Failed to generate PDF report");

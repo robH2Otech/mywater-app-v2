@@ -49,7 +49,7 @@ export async function downloadReportAsPdf(report: ReportData): Promise<void> {
       dailyData: []
     };
     
-    // Generate PDF
+    // Generate and directly download PDF
     await generatePDF(
       unitData, 
       report.report_type, 
@@ -70,7 +70,7 @@ export async function downloadReportAsPdf(report: ReportData): Promise<void> {
     toast({
       variant: "destructive",
       title: "Error",
-      description: "Failed to download report as PDF",
+      description: "Failed to download report as PDF: " + (error instanceof Error ? error.message : String(error)),
     });
   }
 }

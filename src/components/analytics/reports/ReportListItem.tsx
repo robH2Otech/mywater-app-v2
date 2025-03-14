@@ -24,16 +24,12 @@ export function ReportListItem({ report, onViewReport, onReportDeleted }: Report
     try {
       console.log("Downloading report:", report.id);
       await downloadReportAsPdf(report);
-      toast({
-        title: "Success",
-        description: "Report downloaded successfully",
-      });
     } catch (error) {
       console.error("Error downloading report:", error);
       toast({
         variant: "destructive",
         title: "Error",
-        description: "Failed to download report",
+        description: "Failed to download report: " + (error instanceof Error ? error.message : String(error)),
       });
     }
   };
@@ -70,7 +66,7 @@ export function ReportListItem({ report, onViewReport, onReportDeleted }: Report
   const unitName = report.unit_name || "Unknown Unit";
 
   return (
-    <Card key={report.id} className="p-4 bg-spotify-darker rounded-xl overflow-hidden">
+    <Card key={report.id} className="p-4 bg-spotify-darker rounded-xl border-spotify-accent overflow-hidden">
       <div className="flex justify-between items-start">
         <div>
           <h3 className="font-semibold text-white">
