@@ -20,25 +20,31 @@ export function ReportActions({ unit, reportType, metrics, startDate, endDate }:
       console.log("Generating PDF from ReportActions");
       const pdfBlob = await generatePDF(unit, reportType, metrics, startDate, endDate);
       
+      if (!pdfBlob) {
+        throw new Error("Failed to generate PDF blob");
+      }
+      
       // Create a download link
-      const url = URL.createObjectURL(pdfBlob);
       const fileName = `${unit.name}_${reportType}_report_${new Date().toISOString().split('T')[0]}.pdf`;
+      const url = window.URL.createObjectURL(pdfBlob);
       
       // Create an anchor element for downloading
       const a = document.createElement('a');
+      a.style.display = 'none';
       a.href = url;
       a.download = fileName;
-      document.body.appendChild(a);
       
-      // Trigger download and clean up
+      // Append to body, trigger click and remove
+      document.body.appendChild(a);
       console.log("Triggering download for", fileName);
       a.click();
       
       // Clean up
-      setTimeout(() => {
+      window.setTimeout(() => {
         document.body.removeChild(a);
-        URL.revokeObjectURL(url);
-      }, 100);
+        window.URL.revokeObjectURL(url);
+        console.log("Cleaned up download resources");
+      }, 200);
       
       toast({
         title: "Success",
