@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import { collection, onSnapshot, query, orderBy, limit } from "firebase/firestore";
 import { db } from "@/integrations/firebase/client";
 import { Measurement } from "@/utils/measurements/types";
+import { safeFormatTimestamp } from "@/utils/measurements/formatUtils";
 
 export function useRealtimeMeasurements(unitId: string, count: number = 24) {
   const [measurements, setMeasurements] = useState<(Measurement & { id: string })[]>([]);
@@ -40,6 +41,16 @@ export function useRealtimeMeasurements(unitId: string, count: number = 24) {
         (querySnapshot) => {
           const measurementsData = querySnapshot.docs.map(doc => {
             const data = doc.data();
+            
+            // Ensure timestamp is in the correct format
+            if (data.timestamp) {
+              try {
+                data.timestamp = safeFormatTimestamp(data.timestamp);
+              } catch (err) {
+                console.error("Failed to format timestamp:", err);
+              }
+            }
+            
             return {
               id: doc.id,
               ...data

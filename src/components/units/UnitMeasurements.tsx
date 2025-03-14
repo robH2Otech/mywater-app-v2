@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -6,6 +5,7 @@ import { initializeSampleMeasurements } from "@/utils/measurements/sampleDataUti
 import { useRealtimeMeasurements } from "@/hooks/useRealtimeMeasurements";
 import { toast } from "sonner";
 import { MeasurementData } from "@/types/analytics";
+import { safeFormatTimestamp } from "@/utils/measurements/formatUtils";
 import {
   Table,
   TableBody,
@@ -36,52 +36,28 @@ export function UnitMeasurements({ unitId }: UnitMeasurementsProps) {
     }
   };
 
-  const formatDateTime = (timestamp: string) => {
-    try {
-      // If it already matches our expected format (March 13, 2025 at 11:34:56 AM UTC+1)
-      if (typeof timestamp === 'string' && timestamp.includes(" at ")) {
-        return timestamp;
-      }
-      
-      // If it's a timestamp object converted to string
-      const date = new Date(timestamp);
-      
-      if (isNaN(date.getTime())) {
-        console.error("Invalid date format:", timestamp);
-        return "Invalid date";
-      }
-      
-      // Format as "March 13, 2025 at 11:34:56 AM UTC+1"
-      const options: Intl.DateTimeFormatOptions = {
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric',
-        hour: 'numeric',
-        minute: '2-digit',
-        second: '2-digit',
-        hour12: true,
-        timeZoneName: 'short'
-      };
-      
-      return date.toLocaleString('en-US', options);
-    } catch (error) {
-      console.error("Error formatting date:", error, "Original value:", timestamp);
-      return "Invalid date";
-    }
-  };
-
   const safeRenderMeasurements = (measurements: MeasurementData[]) => {
     return measurements.map((measurement) => {
       try {
         // Safely access and format all fields with fallbacks
-        const timestamp = measurement.timestamp ? formatDateTime(measurement.timestamp) : "Invalid date";
-        const volume = typeof measurement.volume === 'number' ? measurement.volume.toLocaleString() : "N/A";
-        const temperature = typeof measurement.temperature === 'number' ? measurement.temperature.toFixed(1) : "N/A";
+        const timestamp = measurement.timestamp 
+          ? safeFormatTimestamp(measurement.timestamp)
+          : "Invalid date";
+          
+        const volume = typeof measurement.volume === 'number' 
+          ? measurement.volume.toLocaleString(undefined, { maximumFractionDigits: 2 }) 
+          : "N/A";
+          
+        const temperature = typeof measurement.temperature === 'number' 
+          ? measurement.temperature.toFixed(1) 
+          : "N/A";
+          
         const uvcHours = measurement.uvc_hours !== undefined && typeof measurement.uvc_hours === 'number'
           ? measurement.uvc_hours.toLocaleString(undefined, { maximumFractionDigits: 1 })
           : "N/A";
+          
         const cumulativeVolume = typeof measurement.cumulative_volume === 'number'
-          ? measurement.cumulative_volume.toLocaleString()
+          ? measurement.cumulative_volume.toLocaleString(undefined, { maximumFractionDigits: 2 })
           : "N/A";
 
         return (
