@@ -18,6 +18,7 @@ interface ReportActionsProps {
 export function ReportActions({ unit, reportType, metrics, startDate, endDate }: ReportActionsProps) {
   const handleGeneratePDF = async () => {
     try {
+      console.log("Generating PDF for unit:", unit.name);
       await generatePDF(unit, reportType, metrics, startDate, endDate);
       toast({
         title: "Success",

@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Download, Eye, Trash2 } from "lucide-react";
 import { toast } from "@/components/ui/use-toast";
-import { getReportTitle, downloadReportAsTxt } from "@/utils/reportUtils";
+import { getReportTitle, downloadReportAsPdf } from "@/utils/reportUtils";
 import { formatDistanceToNow } from "date-fns";
 import { deleteDoc, doc } from "firebase/firestore";
 import { db } from "@/integrations/firebase/client";
@@ -22,7 +22,8 @@ export function ReportListItem({ report, onViewReport, onReportDeleted }: Report
 
   const handleDownloadReport = async () => {
     try {
-      await downloadReportAsTxt(report);
+      console.log("Downloading report:", report.id);
+      await downloadReportAsPdf(report);
       toast({
         title: "Success",
         description: "Report downloaded successfully",

@@ -21,6 +21,8 @@ export async function generatePDF(
   endDate: Date
 ): Promise<void> {
   try {
+    console.log("Starting PDF generation...");
+    
     // Create a new jsPDF instance
     const doc = new jsPDF() as ExtendedJsPDF;
     const pageWidth = doc.internal.pageSize.getWidth();
@@ -57,7 +59,6 @@ export async function generatePDF(
       ["Total Capacity", `${unit.total_volume || 0} m³`]
     ];
     
-    // @ts-ignore - jspdf-autotable types
     doc.autoTable({
       startY: 55,
       head: [["Property", "Value"]],
@@ -72,14 +73,13 @@ export async function generatePDF(
     doc.text("Performance Metrics", 14, finalY1 + 10);
     
     const performanceMetrics = [
-      ["Total Volume Processed", `${metrics.totalVolume.toFixed(2)} m³`],
-      ["Average Daily Volume", `${metrics.avgVolume.toFixed(2)} m³`],
-      ["Maximum Daily Volume", `${metrics.maxVolume.toFixed(2)} m³`],
-      ["Average Temperature", `${metrics.avgTemperature.toFixed(2)} °C`],
-      ["Total UVC Hours", `${metrics.totalUvcHours.toFixed(2)} hours`]
+      ["Total Volume Processed", `${metrics.totalVolume?.toFixed(2) || 0} m³`],
+      ["Average Daily Volume", `${metrics.avgVolume?.toFixed(2) || 0} m³`],
+      ["Maximum Daily Volume", `${metrics.maxVolume?.toFixed(2) || 0} m³`],
+      ["Average Temperature", `${metrics.avgTemperature?.toFixed(2) || 0} °C`],
+      ["Total UVC Hours", `${metrics.totalUvcHours?.toFixed(2) || 0} hours`]
     ];
     
-    // @ts-ignore - jspdf-autotable types
     doc.autoTable({
       startY: finalY1 + 15,
       head: [["Metric", "Value"]],
@@ -88,31 +88,33 @@ export async function generatePDF(
       headStyles: { fillColor: [0, 150, 0] }
     });
     
-    // Add daily data table
-    doc.setFontSize(14);
-    const finalY2 = doc.lastAutoTable?.finalY || 200;
-    doc.text("Daily Measurements", 14, finalY2 + 10);
-    
-    // Sort data by date (ascending)
-    const sortedData = [...(metrics.dailyData || [])].sort((a, b) => 
-      new Date(a.date).getTime() - new Date(b.date).getTime()
-    );
-    
-    const dailyData = sortedData.map(day => [
-      new Date(day.date).toLocaleDateString(),
-      `${day.volume.toFixed(2)} m³`,
-      `${day.avgTemperature.toFixed(2)} °C`,
-      `${day.uvcHours.toFixed(2)} hours`
-    ]);
-    
-    // @ts-ignore - jspdf-autotable types
-    doc.autoTable({
-      startY: finalY2 + 15,
-      head: [["Date", "Volume", "Avg. Temperature", "UVC Hours"]],
-      body: dailyData,
-      theme: 'grid',
-      headStyles: { fillColor: [0, 150, 0] }
-    });
+    // Process and add daily data if available
+    if (metrics.dailyData && metrics.dailyData.length > 0) {
+      // Add daily data table
+      doc.setFontSize(14);
+      const finalY2 = doc.lastAutoTable?.finalY || 200;
+      doc.text("Daily Measurements", 14, finalY2 + 10);
+      
+      // Sort data by date (ascending)
+      const sortedData = [...(metrics.dailyData || [])].sort((a, b) => 
+        new Date(a.date).getTime() - new Date(b.date).getTime()
+      );
+      
+      const dailyData = sortedData.map(day => [
+        new Date(day.date).toLocaleDateString(),
+        `${(day.volume || 0).toFixed(2)} m³`,
+        `${(day.avgTemperature || 0).toFixed(2)} °C`,
+        `${(day.uvcHours || 0).toFixed(2)} hours`
+      ]);
+      
+      doc.autoTable({
+        startY: finalY2 + 15,
+        head: [["Date", "Volume", "Avg. Temperature", "UVC Hours"]],
+        body: dailyData,
+        theme: 'grid',
+        headStyles: { fillColor: [0, 150, 0] }
+      });
+    }
     
     // Add maintenance information
     doc.setFontSize(14);
@@ -124,7 +126,6 @@ export async function generatePDF(
       ["Next Maintenance", unit.next_maintenance ? new Date(unit.next_maintenance).toLocaleDateString() : "N/A"]
     ];
     
-    // @ts-ignore - jspdf-autotable types
     doc.autoTable({
       startY: finalY3 + 15,
       head: [["Maintenance", "Date"]],
@@ -145,7 +146,6 @@ export async function generatePDF(
         ["Phone", unit.contact_phone || "N/A"]
       ];
       
-      // @ts-ignore - jspdf-autotable types
       doc.autoTable({
         startY: finalY4 + 15,
         head: [["Contact", "Details"]],
@@ -169,8 +169,13 @@ export async function generatePDF(
     doc.setFontSize(8);
     doc.text(`Generated on: ${generatedDate}`, pageWidth - 15, doc.internal.pageSize.getHeight() - 10, { align: "right" });
     
+    console.log("PDF prepared, saving...");
+    
     // Save the PDF with the report title
-    doc.save(`${unit.name}_${reportType}_report_${format(new Date(), 'yyyy-MM-dd')}.pdf`);
+    const filename = `${unit.name}_${reportType}_report_${format(new Date(), 'yyyy-MM-dd')}.pdf`;
+    doc.save(filename);
+    
+    console.log("PDF saved with filename:", filename);
   } catch (error) {
     console.error("Error generating PDF:", error);
     throw new Error("Failed to generate PDF report");
