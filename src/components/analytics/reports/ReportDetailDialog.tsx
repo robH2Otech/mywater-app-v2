@@ -99,22 +99,21 @@ export function ReportDetailDialog({ report, open, onOpenChange }: ReportDetailD
       // Create filename
       const fileName = `${unitData.name}_${report.report_type}_report_${new Date().toISOString().split('T')[0]}.pdf`;
       
-      // Create URL for download
-      const url = window.URL.createObjectURL(pdfBlob);
+      // Create URL for download using a simpler approach
+      const url = URL.createObjectURL(pdfBlob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = fileName;
       
-      // Create download link
-      const a = document.createElement('a');
-      document.body.appendChild(a);
-      a.style.display = 'none';
-      a.href = url;
-      a.download = fileName;
-      
-      console.log("Triggering download from dialog");
-      a.click();
+      // Append to body, click, and remove
+      document.body.appendChild(link);
+      link.click();
       
       // Clean up
-      window.URL.revokeObjectURL(url);
-      document.body.removeChild(a);
+      setTimeout(() => {
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+      }, 100);
       
       toast({
         title: "Success",

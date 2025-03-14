@@ -37,20 +37,21 @@ export function ReportActions({ unit, reportType, metrics, startDate, endDate }:
       // Create a download link
       const fileName = `${unit.name}_${reportType}_report_${new Date().toISOString().split('T')[0]}.pdf`;
       
-      // Create a download link and trigger download
-      const url = window.URL.createObjectURL(pdfBlob);
-      const a = document.createElement('a');
-      document.body.appendChild(a);
-      a.style.display = 'none';
-      a.href = url;
-      a.download = fileName;
+      // Create a download link using a simpler approach
+      const url = URL.createObjectURL(pdfBlob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = fileName;
       
-      console.log("Triggering download for", fileName);
-      a.click();
+      // Append to body, click, and remove
+      document.body.appendChild(link);
+      link.click();
       
       // Clean up
-      window.URL.revokeObjectURL(url);
-      document.body.removeChild(a);
+      setTimeout(() => {
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+      }, 100);
       
       toast({
         title: "Success",
