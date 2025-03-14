@@ -1,4 +1,5 @@
 
+
 // Formatting utilities for measurements
 
 /**
@@ -38,24 +39,6 @@ export const parseTimestamp = (timestamp: string): Date => {
     } catch (err) {
       console.error("Error parsing formatted timestamp:", err, timestamp);
       throw new Error(`Failed to parse timestamp: ${timestamp}`);
-    }
-  }
-  
-  // Handle Firestore timestamp objects that might be serialized differently
-  if (typeof timestamp === 'object' && timestamp !== null) {
-    // If it's a Firestore Timestamp object with seconds and nanoseconds
-    if ('seconds' in timestamp && 'nanoseconds' in timestamp) {
-      try {
-        return new Date(timestamp.seconds * 1000);
-      } catch (err) {
-        console.error("Error parsing Firestore timestamp:", err, timestamp);
-        throw new Error(`Failed to parse Firestore timestamp object`);
-      }
-    }
-    
-    // If it's already a Date object
-    if (timestamp instanceof Date) {
-      return timestamp;
     }
   }
   

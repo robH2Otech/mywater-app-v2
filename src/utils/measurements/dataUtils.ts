@@ -1,3 +1,4 @@
+
 import { collection, doc, addDoc, getDocs, query, orderBy, limit, getDoc, updateDoc, serverTimestamp } from "firebase/firestore";
 import { db } from "@/integrations/firebase/client";
 import { Measurement } from './types';
@@ -25,11 +26,10 @@ export const addMeasurement = async (unitId: string, volume: number, temperature
     const formattedTimestamp = formatTimestamp(now);
     
     const measurementData: Measurement = {
-      // Use the server timestamp for proper ordering but will be converted to string format
-      // by the Firestore SDK when retrieved
+      // Set the formatted timestamp
       timestamp: formattedTimestamp,
       
-      // Include raw timestamp for backup
+      // Include raw timestamp for Firestore ordering
       raw_timestamp: serverTimestamp(),
       
       volume,
