@@ -175,39 +175,20 @@ export function ReportVisual({ unit, reportType, metrics, reportId }: ReportVisu
       pdfDoc.setFontSize(8);
       pdfDoc.text(`Generated on: ${generatedDate}`, pageWidth - 15, pdfDoc.internal.pageSize.getHeight() - 10, { align: "right" });
       
-      // Generate the PDF as a blob and trigger download
-      try {
-        // Generate the PDF as a blob
-        const pdfBlob = pdfDoc.output('blob');
-        const fileName = `${reportType}-report-${unit.name || 'unit'}-${format(new Date(), 'yyyy-MM-dd')}.pdf`;
-        
-        // Create URL object from the blob
-        const blobUrl = URL.createObjectURL(pdfBlob);
-        
-        // Create and trigger download link
-        const downloadLink = document.createElement('a');
-        downloadLink.href = blobUrl;
-        downloadLink.download = fileName;
-        downloadLink.style.display = 'none';
-        document.body.appendChild(downloadLink);
-        downloadLink.click();
-        
-        // Clean up
-        setTimeout(() => {
-          document.body.removeChild(downloadLink);
-          URL.revokeObjectURL(blobUrl);
-        }, 100);
-        
-        toast({
-          title: "Success",
-          description: "PDF report downloaded successfully",
-        });
-      } catch (downloadError) {
-        console.error("Error during PDF download:", downloadError);
-        throw new Error("Download failed: " + (downloadError as Error).message);
-      }
+      // Critical fix: Changed the approach for PDF download
+      const fileName = `${reportType}-report-${unit.name || 'unit'}-${format(new Date(), 'yyyy-MM-dd')}.pdf`;
       
-      console.log("PDF generated and download triggered successfully");
+      console.log("About to create PDF download");
+      
+      // Save the PDF directly using the jsPDF save method (more reliable than blob approach)
+      pdfDoc.save(fileName);
+      
+      toast({
+        title: "Success",
+        description: "PDF report downloaded successfully",
+      });
+      
+      console.log("PDF generated and downloaded successfully");
     } catch (error) {
       console.error("Error generating PDF:", error);
       toast({

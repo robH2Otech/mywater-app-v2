@@ -67,7 +67,7 @@ export function ReportsList({ reports, onDeleteReport, isDeletingReport = false 
       const measurements = report.measurements || [];
       const metrics = calculateMetricsFromMeasurements(measurements);
       
-      // Create PDF document
+      // We'll create a visual PDF instead of just text
       const pdfDoc = new jsPDF() as JsPDFWithAutoTable;
       const pageWidth = pdfDoc.internal.pageSize.getWidth();
       
@@ -85,43 +85,77 @@ export function ReportsList({ reports, onDeleteReport, isDeletingReport = false 
       pdfDoc.setFontSize(12);
       pdfDoc.text(`Generated on: ${new Date(report.created_at).toLocaleDateString()}`, pageWidth / 2, 40, { align: "center" });
       
-      // Add report content
-      pdfDoc.setFontSize(10);
-      pdfDoc.text("Report Summary:", 14, 50);
+      // Add unit information
+      pdfDoc.setFontSize(14);
+      pdfDoc.text("Unit Information", 14, 50);
       
-      // Format report content for PDF - replace units with m³
-      const formattedContent = report.content.replace(/units/g, 'm³');
+      const unitInfo = [
+        ["Name", unitDataObj.name || "N/A"],
+        ["Location", unitDataObj.location || "N/A"],
+        ["Status", unitDataObj.status || "N/A"],
+        ["Total Capacity", `${unitDataObj.total_volume || 0} m³`]
+      ];
       
-      // Split the content by line and add to PDF
-      const contentLines = formattedContent.split('\n');
-      let yPos = 55;
-      const lineHeight = 5;
-      
-      contentLines.forEach(line => {
-        pdfDoc.text(line, 14, yPos);
-        yPos += lineHeight;
+      pdfDoc.autoTable({
+        startY: 55,
+        head: [["Property", "Value"]],
+        body: unitInfo,
+        theme: 'grid',
+        headStyles: { fillColor: [0, 150, 0] }
       });
       
-      // Generate the PDF as a blob and download it
-      const pdfBlob = pdfDoc.output('blob');
-      const fileName = `${report.report_type}-report-${unitDataObj.name || 'unit'}-${new Date().toISOString().split('T')[0]}.pdf`;
+      // Add performance metrics
+      let startY = pdfDoc.lastAutoTable?.finalY + 10 || 100;
+      pdfDoc.setFontSize(14);
+      pdfDoc.text("Performance Metrics", 14, startY);
       
-      // Create URL object from the blob
-      const blobUrl = URL.createObjectURL(pdfBlob);
+      const performanceMetrics = [
+        ["Total Volume Processed", `${metrics.totalVolume.toFixed(2)} m³`],
+        ["Average Daily Volume", `${metrics.avgVolume.toFixed(2)} m³`],
+        ["Maximum Daily Volume", `${metrics.maxVolume.toFixed(2)} m³`],
+        ["Average Temperature", `${metrics.avgTemperature.toFixed(2)} °C`],
+        ["Total UVC Hours", `${metrics.totalUvcHours.toFixed(2)} hours`]
+      ];
       
-      // Create and trigger download link
-      const downloadLink = document.createElement('a');
-      downloadLink.href = blobUrl;
-      downloadLink.download = fileName;
-      document.body.appendChild(downloadLink);
-      downloadLink.click();
+      pdfDoc.autoTable({
+        startY: startY + 5,
+        head: [["Metric", "Value"]],
+        body: performanceMetrics,
+        theme: 'grid',
+        headStyles: { fillColor: [0, 150, 0] }
+      });
       
-      // Clean up
-      setTimeout(() => {
-        document.body.removeChild(downloadLink);
-        URL.revokeObjectURL(blobUrl);
-      }, 100);
-
+      // Add daily data table if available
+      if (metrics.dailyData && metrics.dailyData.length > 0) {
+        startY = pdfDoc.lastAutoTable?.finalY + 10 || 150;
+        pdfDoc.setFontSize(14);
+        pdfDoc.text("Daily Measurements", 14, startY);
+        
+        const dailyData = metrics.dailyData.map(day => [
+          day.date,
+          `${day.volume.toFixed(2)} m³`,
+          `${day.avgTemperature.toFixed(2)} °C`,
+          `${day.uvcHours.toFixed(2)} hours`
+        ]);
+        
+        pdfDoc.autoTable({
+          startY: startY + 5,
+          head: [["Date", "Volume", "Avg. Temperature", "UVC Hours"]],
+          body: dailyData,
+          theme: 'grid',
+          headStyles: { fillColor: [0, 150, 0] }
+        });
+      }
+      
+      // Add footer with generation date
+      const generatedDate = new Date().toLocaleString();
+      pdfDoc.setFontSize(8);
+      pdfDoc.text(`Generated on: ${generatedDate}`, pageWidth - 15, pdfDoc.internal.pageSize.getHeight() - 10, { align: "right" });
+      
+      // Critical fix: Using direct save method instead of blob approach
+      const fileName = `${report.report_type}-report-${unitDataObj.name || 'unit'}-${new Date().toLocaleDateString().replace(/\//g, '-')}.pdf`;
+      pdfDoc.save(fileName);
+      
       toast({
         title: "Success",
         description: "PDF report downloaded successfully",
