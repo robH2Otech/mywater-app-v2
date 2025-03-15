@@ -1,3 +1,4 @@
+
 import { UnitData } from "@/types/analytics";
 import { ReportChart } from "./ReportChart";
 import { Card } from "@/components/ui/card";
@@ -19,6 +20,7 @@ interface JsPDFWithAutoTable extends jsPDF {
 interface ReportVisualProps {
   unit: UnitData;
   reportType: string;
+  reportId?: string;
   metrics: {
     totalVolume: number;
     avgVolume: number;
@@ -29,11 +31,13 @@ interface ReportVisualProps {
   };
 }
 
-export function ReportVisual({ unit, reportType, metrics }: ReportVisualProps) {
+export function ReportVisual({ unit, reportType, metrics, reportId }: ReportVisualProps) {
   const { startDate, endDate } = getDateRangeForReportType(reportType);
   
   const generatePDF = () => {
     try {
+      console.log("Starting visual PDF generation for report");
+      
       // Create a new jsPDF instance
       const pdfDoc = new jsPDF() as JsPDFWithAutoTable;
       const pageWidth = pdfDoc.internal.pageSize.getWidth();
@@ -78,7 +82,7 @@ export function ReportVisual({ unit, reportType, metrics }: ReportVisualProps) {
       });
       
       // Add performance metrics section
-      let startY = pdfDoc.lastAutoTable.finalY + 10;
+      let startY = pdfDoc.lastAutoTable?.finalY + 10 || 100;
       pdfDoc.setFontSize(14);
       pdfDoc.text("Performance Metrics", 14, startY);
       
@@ -99,7 +103,7 @@ export function ReportVisual({ unit, reportType, metrics }: ReportVisualProps) {
       });
       
       // Add daily data table
-      startY = pdfDoc.lastAutoTable.finalY + 10;
+      startY = pdfDoc.lastAutoTable?.finalY + 10 || 150;
       pdfDoc.setFontSize(14);
       pdfDoc.text("Daily Measurements", 14, startY);
       
@@ -119,7 +123,7 @@ export function ReportVisual({ unit, reportType, metrics }: ReportVisualProps) {
       });
       
       // Add maintenance information
-      startY = pdfDoc.lastAutoTable.finalY + 10;
+      startY = pdfDoc.lastAutoTable?.finalY + 10 || 200;
       pdfDoc.setFontSize(14);
       pdfDoc.text("Maintenance Information", 14, startY);
       
@@ -138,7 +142,7 @@ export function ReportVisual({ unit, reportType, metrics }: ReportVisualProps) {
       
       // Add contact information
       if (unit.contact_name || unit.contact_email || unit.contact_phone) {
-        startY = pdfDoc.lastAutoTable.finalY + 10;
+        startY = pdfDoc.lastAutoTable?.finalY + 10 || 250;
         pdfDoc.setFontSize(14);
         pdfDoc.text("Contact Information", 14, startY);
         
@@ -159,7 +163,7 @@ export function ReportVisual({ unit, reportType, metrics }: ReportVisualProps) {
       
       // Add notes if available
       if (unit.notes) {
-        startY = pdfDoc.lastAutoTable.finalY + 10;
+        startY = pdfDoc.lastAutoTable?.finalY + 10 || 270;
         pdfDoc.setFontSize(14);
         pdfDoc.text("Notes", 14, startY);
         pdfDoc.setFontSize(10);
@@ -171,30 +175,37 @@ export function ReportVisual({ unit, reportType, metrics }: ReportVisualProps) {
       pdfDoc.setFontSize(8);
       pdfDoc.text(`Generated on: ${generatedDate}`, pageWidth - 15, pdfDoc.internal.pageSize.getHeight() - 10, { align: "right" });
       
-      // Generate the PDF as a blob and download it
-      const pdfBlob = pdfDoc.output('blob');
-      const fileName = `${reportType}-report-${unit.name}-${format(new Date(), 'yyyy-MM-dd')}.pdf`;
-      
-      // Create URL object from the blob
-      const blobUrl = URL.createObjectURL(pdfBlob);
-      
-      // Create and trigger download link
-      const downloadLink = document.createElement('a');
-      downloadLink.href = blobUrl;
-      downloadLink.download = fileName;
-      document.body.appendChild(downloadLink);
-      downloadLink.click();
-      
-      // Clean up
-      setTimeout(() => {
-        document.body.removeChild(downloadLink);
-        URL.revokeObjectURL(blobUrl);
-      }, 100);
-      
-      toast({
-        title: "Success",
-        description: "PDF report downloaded successfully",
-      });
+      // Generate the PDF as a blob and trigger download
+      try {
+        // Generate the PDF as a blob
+        const pdfBlob = pdfDoc.output('blob');
+        const fileName = `${reportType}-report-${unit.name || 'unit'}-${format(new Date(), 'yyyy-MM-dd')}.pdf`;
+        
+        // Create URL object from the blob
+        const blobUrl = URL.createObjectURL(pdfBlob);
+        
+        // Create and trigger download link
+        const downloadLink = document.createElement('a');
+        downloadLink.href = blobUrl;
+        downloadLink.download = fileName;
+        downloadLink.style.display = 'none';
+        document.body.appendChild(downloadLink);
+        downloadLink.click();
+        
+        // Clean up
+        setTimeout(() => {
+          document.body.removeChild(downloadLink);
+          URL.revokeObjectURL(blobUrl);
+        }, 100);
+        
+        toast({
+          title: "Success",
+          description: "PDF report downloaded successfully",
+        });
+      } catch (downloadError) {
+        console.error("Error during PDF download:", downloadError);
+        throw new Error("Download failed: " + (downloadError as Error).message);
+      }
       
       console.log("PDF generated and download triggered successfully");
     } catch (error) {

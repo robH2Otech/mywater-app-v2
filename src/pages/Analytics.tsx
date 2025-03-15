@@ -11,12 +11,18 @@ export function Analytics() {
   const { 
     data: reports = [], 
     refetch: refetchReports,
-    isLoading: isLoadingReports 
+    isLoading: isLoadingReports,
+    deleteReport,
+    isDeletingReport
   } = useReports(selectedUnit);
 
   const handleReportGenerated = () => {
     console.log("Report generated, refreshing reports list");
     refetchReports();
+  };
+
+  const handleDeleteReport = (reportId: string) => {
+    deleteReport(reportId);
   };
 
   return (
@@ -49,7 +55,11 @@ export function Analytics() {
               No reports available for the selected unit
             </p>
           ) : (
-            <ReportsList reports={reports} />
+            <ReportsList 
+              reports={reports} 
+              onDeleteReport={handleDeleteReport}
+              isDeletingReport={isDeletingReport}
+            />
           )}
         </div>
       )}

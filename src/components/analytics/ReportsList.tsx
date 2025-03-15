@@ -1,7 +1,7 @@
 
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Download, Eye } from "lucide-react";
+import { Download, Eye, Trash2 } from "lucide-react";
 import { toast } from "@/components/ui/use-toast";
 import { ReportData } from "@/types/analytics";
 import { useState } from "react";
@@ -12,6 +12,16 @@ import { db } from "@/integrations/firebase/client";
 import { calculateMetricsFromMeasurements } from "@/utils/reportGenerator";
 import { jsPDF } from "jspdf";
 import 'jspdf-autotable';
+import { 
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 // Add type declaration for jsPDF with autoTable method
 interface JsPDFWithAutoTable extends jsPDF {
@@ -23,14 +33,17 @@ interface JsPDFWithAutoTable extends jsPDF {
 
 interface ReportsListProps {
   reports: ReportData[];
+  onDeleteReport?: (reportId: string) => void;
+  isDeletingReport?: boolean;
 }
 
-export function ReportsList({ reports }: ReportsListProps) {
-  const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
+export function ReportsList({ reports, onDeleteReport, isDeletingReport = false }: ReportsListProps) {
+  const [isPreviewDialogOpen, setIsPreviewDialogOpen] = useState(false);
   const [selectedReport, setSelectedReport] = useState<ReportData | null>(null);
   const [unitData, setUnitData] = useState<any>(null);
   const [reportMetrics, setReportMetrics] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [reportToDelete, setReportToDelete] = useState<string | null>(null);
 
   const handleDownloadReport = async (report: ReportData) => {
     try {
@@ -125,7 +138,7 @@ export function ReportsList({ reports }: ReportsListProps) {
     }
   };
 
-  const handleViewReport = async (report: ReportData) => {
+  const handlePreviewReport = async (report: ReportData) => {
     setIsLoading(true);
     try {
       console.log("Loading report details for:", report.id);
@@ -147,7 +160,7 @@ export function ReportsList({ reports }: ReportsListProps) {
         const metrics = calculateMetricsFromMeasurements(measurements);
         setReportMetrics(metrics);
         
-        setIsViewDialogOpen(true);
+        setIsPreviewDialogOpen(true);
       } else {
         toast({
           variant: "destructive",
@@ -165,6 +178,21 @@ export function ReportsList({ reports }: ReportsListProps) {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleDeleteClick = (reportId: string) => {
+    setReportToDelete(reportId);
+  };
+
+  const confirmDelete = () => {
+    if (reportToDelete && onDeleteReport) {
+      onDeleteReport(reportToDelete);
+      setReportToDelete(null);
+    }
+  };
+
+  const cancelDelete = () => {
+    setReportToDelete(null);
   };
 
   if (reports.length === 0) {
@@ -194,12 +222,12 @@ export function ReportsList({ reports }: ReportsListProps) {
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => handleViewReport(report)}
+                    onClick={() => handlePreviewReport(report)}
                     disabled={isLoading}
                     className="flex items-center"
                   >
                     <Eye className="h-4 w-4 mr-2" />
-                    View
+                    Preview
                   </Button>
                   <Button
                     variant="outline"
@@ -211,6 +239,16 @@ export function ReportsList({ reports }: ReportsListProps) {
                     <Download className="h-4 w-4 mr-2" />
                     Download PDF
                   </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleDeleteClick(report.id)}
+                    disabled={isLoading || isDeletingReport}
+                    className="flex items-center text-red-500 hover:text-red-700 hover:bg-red-100/10"
+                  >
+                    <Trash2 className="h-4 w-4 mr-2" />
+                    Delete
+                  </Button>
                 </div>
               </div>
             </Card>
@@ -218,7 +256,7 @@ export function ReportsList({ reports }: ReportsListProps) {
         </div>
       </div>
 
-      <Dialog open={isViewDialogOpen} onOpenChange={setIsViewDialogOpen}>
+      <Dialog open={isPreviewDialogOpen} onOpenChange={setIsPreviewDialogOpen}>
         <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto bg-spotify-dark">
           <DialogHeader>
             <DialogTitle>Report Details</DialogTitle>
@@ -229,6 +267,7 @@ export function ReportsList({ reports }: ReportsListProps) {
               unit={unitData} 
               reportType={selectedReport.report_type} 
               metrics={reportMetrics} 
+              reportId={selectedReport.id}
             />
           ) : (
             <div className="flex justify-center items-center p-8">
@@ -237,6 +276,29 @@ export function ReportsList({ reports }: ReportsListProps) {
           )}
         </DialogContent>
       </Dialog>
+
+      <AlertDialog open={!!reportToDelete} onOpenChange={(open) => !open && setReportToDelete(null)}>
+        <AlertDialogContent className="bg-spotify-dark border-spotify-accent">
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Report</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete this report? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={cancelDelete} className="bg-spotify-darker text-white border-spotify-accent hover:bg-spotify-darker/80">
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={confirmDelete} 
+              className="bg-red-600 text-white hover:bg-red-700"
+              disabled={isDeletingReport}
+            >
+              {isDeletingReport ? "Deleting..." : "Delete"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 }
