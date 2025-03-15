@@ -163,10 +163,10 @@ export const generatePDF = async (
     pdfDoc.setFontSize(8);
     pdfDoc.text(`Generated on: ${generatedDate}`, pageWidth - 15, pdfDoc.internal.pageSize.getHeight() - 10, { align: "right" });
     
-    // Force download without relying on browser dialog
-    pdfDoc.output('dataurlnewwindow', { filename: fileName });
+    // Use direct save method which works more reliably across browsers
+    pdfDoc.save(fileName);
     
-    console.log("PDF generated and opened successfully");
+    console.log("PDF generated and downloaded successfully");
     return true;
   } catch (error) {
     console.error("Error in PDF generation:", error);

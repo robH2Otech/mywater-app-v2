@@ -57,20 +57,23 @@ export function ReportsList({ reports, onDeleteReport, isDeletingReport = false 
       const measurements = report.measurements || [];
       const metrics = calculateMetricsFromMeasurements(measurements);
       
-      // Generate PDF using the utility function with a unique filename
-      const fileName = `${report.report_type}-report-${unitDataObj.name || 'unit'}-${new Date().toISOString().slice(0,10)}.pdf`;
+      // Clean up unit name for filename and use ISO date format
+      const sanitizedUnitName = unitDataObj.name?.replace(/\s+/g, '-').toLowerCase() || 'unit';
+      const fileName = `${report.report_type}-report-${sanitizedUnitName}-${format(new Date(), 'yyyy-MM-dd')}.pdf`;
+      
+      // Generate and download the PDF
       await generatePDF(report, unitDataObj, metrics, fileName);
       
       toast({
         title: "Success",
-        description: "PDF report generated successfully",
+        description: "PDF report downloaded successfully",
       });
     } catch (error) {
       console.error("Error downloading report:", error);
       toast({
         variant: "destructive",
         title: "Error",
-        description: "Failed to generate report. Please try again.",
+        description: "Failed to download PDF. Please try again.",
       });
     } finally {
       setIsLoading(false);
@@ -176,7 +179,7 @@ export function ReportsList({ reports, onDeleteReport, isDeletingReport = false 
                     className="flex items-center"
                   >
                     <Download className="h-4 w-4 mr-2" />
-                    Generate PDF
+                    Download PDF
                   </Button>
                   <Button
                     variant="outline"

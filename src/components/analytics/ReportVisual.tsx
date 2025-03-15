@@ -1,4 +1,3 @@
-
 import { UnitData } from "@/types/analytics";
 import { ReportChart } from "./ReportChart";
 import { Card } from "@/components/ui/card";
@@ -28,13 +27,12 @@ export function ReportVisual({ unit, reportType, metrics, reportId }: ReportVisu
   
   const handleGeneratePDF = async () => {
     try {
-      console.log("Starting visual PDF generation for report preview");
+      console.log("Starting PDF generation for report preview");
       
-      // Generate the filename
-      const fileName = `${reportType}-report-${unit.name || 'unit'}-${format(new Date(), 'yyyy-MM-dd')}.pdf`;
+      // Generate a clean filename with ISO date format
+      const fileName = `${reportType}-report-${unit.name?.replace(/\s+/g, '-').toLowerCase() || 'unit'}-${format(new Date(), 'yyyy-MM-dd')}.pdf`;
       
       // Create a mock report data object for the PDF generator
-      // Added the required generated_by property to fix the TypeScript error
       const reportData = {
         id: reportId || 'preview',
         unit_id: unit.id,
@@ -49,14 +47,14 @@ export function ReportVisual({ unit, reportType, metrics, reportId }: ReportVisu
       
       toast({
         title: "Success",
-        description: "PDF report generated successfully",
+        description: "PDF report downloaded successfully",
       });
     } catch (error) {
       console.error("Error generating PDF:", error);
       toast({
         variant: "destructive",
         title: "Error",
-        description: "Failed to generate report. Please try again.",
+        description: "Failed to generate PDF. Please try again.",
       });
     }
   };
