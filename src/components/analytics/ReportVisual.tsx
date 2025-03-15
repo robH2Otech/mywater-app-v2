@@ -1,3 +1,4 @@
+
 import { UnitData } from "@/types/analytics";
 import { ReportChart } from "./ReportChart";
 import { Card } from "@/components/ui/card";
@@ -7,14 +8,14 @@ import { jsPDF } from "jspdf";
 import 'jspdf-autotable';
 import { format } from "date-fns";
 import { getDateRangeForReportType } from "@/utils/reportGenerator";
+import { toast } from "@/components/ui/use-toast";
 
-declare module 'jspdf' {
-  interface jsPDF {
-    autoTable: any;
-    lastAutoTable: {
-      finalY: number;
-    };
-  }
+// Add type declaration for jsPDF with autoTable method
+interface JsPDFWithAutoTable extends jsPDF {
+  autoTable: any;
+  lastAutoTable: {
+    finalY: number;
+  };
 }
 
 interface ReportVisualProps {
@@ -36,7 +37,7 @@ export function ReportVisual({ unit, reportType, metrics }: ReportVisualProps) {
   const generatePDF = () => {
     try {
       // Create a new jsPDF instance
-      const doc = new jsPDF();
+      const doc = new jsPDF() as JsPDFWithAutoTable;
       const pageWidth = doc.internal.pageSize.getWidth();
       
       // Add company logo/header
@@ -67,7 +68,7 @@ export function ReportVisual({ unit, reportType, metrics }: ReportVisualProps) {
         ["Name", unit.name || "N/A"],
         ["Location", unit.location || "N/A"],
         ["Status", unit.status || "N/A"],
-        ["Total Capacity", `${unit.total_volume || 0} units`]
+        ["Total Capacity", `${unit.total_volume || 0} m³`]
       ];
       
       doc.autoTable({
@@ -84,9 +85,9 @@ export function ReportVisual({ unit, reportType, metrics }: ReportVisualProps) {
       doc.text("Performance Metrics", 14, startY);
       
       const performanceMetrics = [
-        ["Total Volume Processed", `${metrics.totalVolume.toFixed(2)} units`],
-        ["Average Daily Volume", `${metrics.avgVolume.toFixed(2)} units`],
-        ["Maximum Daily Volume", `${metrics.maxVolume.toFixed(2)} units`],
+        ["Total Volume Processed", `${metrics.totalVolume.toFixed(2)} m³`],
+        ["Average Daily Volume", `${metrics.avgVolume.toFixed(2)} m³`],
+        ["Maximum Daily Volume", `${metrics.maxVolume.toFixed(2)} m³`],
         ["Average Temperature", `${metrics.avgTemperature.toFixed(2)} °C`],
         ["Total UVC Hours", `${metrics.totalUvcHours.toFixed(2)} hours`]
       ];
@@ -106,7 +107,7 @@ export function ReportVisual({ unit, reportType, metrics }: ReportVisualProps) {
       
       const dailyData = metrics.dailyData.map(day => [
         day.date,
-        `${day.volume.toFixed(2)} units`,
+        `${day.volume.toFixed(2)} m³`,
         `${day.avgTemperature.toFixed(2)} °C`,
         `${day.uvcHours.toFixed(2)} hours`
       ]);
@@ -172,29 +173,39 @@ export function ReportVisual({ unit, reportType, metrics }: ReportVisualProps) {
       doc.setFontSize(8);
       doc.text(`Generated on: ${generatedDate}`, pageWidth - 15, doc.internal.pageSize.getHeight() - 10, { align: "right" });
       
-      // Generate blob from PDF
+      // Generate the PDF as a blob and download it
       const pdfBlob = doc.output('blob');
+      const fileName = `${reportType}-report-${unit.name}-${format(new Date(), 'yyyy-MM-dd')}.pdf`;
       
-      // Create download link
+      // Create URL object from the blob
       const blobUrl = URL.createObjectURL(pdfBlob);
+      
+      // Create and trigger download link
       const downloadLink = document.createElement('a');
       downloadLink.href = blobUrl;
-      downloadLink.download = `${reportType}-report-${unit.name}-${format(new Date(), 'yyyy-MM-dd')}.pdf`;
-      
-      // Append to body, click, and clean up
+      downloadLink.download = fileName;
       document.body.appendChild(downloadLink);
       downloadLink.click();
       
-      // Clean up after a short delay to ensure download starts
+      // Clean up
       setTimeout(() => {
         document.body.removeChild(downloadLink);
         URL.revokeObjectURL(blobUrl);
       }, 100);
       
+      toast({
+        title: "Success",
+        description: "PDF report downloaded successfully",
+      });
+      
       console.log("PDF generated and download triggered successfully");
     } catch (error) {
       console.error("Error generating PDF:", error);
-      alert("Failed to download report. Please try again.");
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to download report. Please try again.",
+      });
     }
   };
   
@@ -238,7 +249,7 @@ export function ReportVisual({ unit, reportType, metrics }: ReportVisualProps) {
           <div className="grid grid-cols-2 gap-4">
             <div>
               <p className="text-gray-400 text-sm">Total Volume</p>
-              <p className="text-xl font-semibold">{metrics.totalVolume.toFixed(2)} units</p>
+              <p className="text-xl font-semibold">{metrics.totalVolume.toFixed(2)} m³</p>
             </div>
             <div>
               <p className="text-gray-400 text-sm">Avg. Temperature</p>
@@ -335,7 +346,7 @@ export function ReportVisual({ unit, reportType, metrics }: ReportVisualProps) {
                     {new Date(day.date).toLocaleDateString()}
                   </td>
                   <td className="px-4 py-2 whitespace-nowrap text-sm">
-                    {day.volume.toFixed(2)} units
+                    {day.volume.toFixed(2)} m³
                   </td>
                   <td className="px-4 py-2 whitespace-nowrap text-sm">
                     {day.avgTemperature.toFixed(2)} °C

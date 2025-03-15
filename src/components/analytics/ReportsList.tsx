@@ -1,3 +1,4 @@
+
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Download, Eye } from "lucide-react";
@@ -9,6 +10,16 @@ import { ReportVisual } from "./ReportVisual";
 import { doc, getDoc } from "firebase/firestore";
 import { db } from "@/integrations/firebase/client";
 import { calculateMetricsFromMeasurements } from "@/utils/reportGenerator";
+import { jsPDF } from "jspdf";
+import 'jspdf-autotable';
+
+// Add type declaration for jsPDF with autoTable method
+interface JsPDFWithAutoTable extends jsPDF {
+  autoTable: any;
+  lastAutoTable: {
+    finalY: number;
+  };
+}
 
 interface ReportsListProps {
   reports: ReportData[];
@@ -21,35 +32,86 @@ export function ReportsList({ reports }: ReportsListProps) {
   const [reportMetrics, setReportMetrics] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(false);
 
-  const handleDownloadReport = async (reportId: string, content: string) => {
+  const handleDownloadReport = async (report: ReportData) => {
     try {
-      console.log("Starting download for report:", reportId);
+      console.log("Starting download for report:", report.id);
+      setIsLoading(true);
       
-      // Create a Blob from the content
-      const blob = new Blob([content], { type: 'text/plain' });
+      // Fetch unit data
+      const unitDocRef = doc(db, "units", report.unit_id);
+      const unitSnapshot = await getDoc(unitDocRef);
       
-      // Create URL for the blob
-      const blobUrl = URL.createObjectURL(blob);
+      if (!unitSnapshot.exists()) {
+        throw new Error("Unit data not found");
+      }
       
-      // Create a download link
+      const unitDataObj = {
+        id: unitSnapshot.id,
+        ...unitSnapshot.data()
+      };
+      
+      // Calculate metrics from measurements
+      const measurements = report.measurements || [];
+      const metrics = calculateMetricsFromMeasurements(measurements);
+      
+      // Create PDF document
+      const doc = new jsPDF() as JsPDFWithAutoTable;
+      const pageWidth = doc.internal.pageSize.getWidth();
+      
+      // Add company logo/header
+      doc.setFontSize(20);
+      doc.setTextColor(0, 128, 0);
+      doc.text("MYWATER Technologies", pageWidth / 2, 20, { align: "center" });
+      
+      // Add report title
+      doc.setFontSize(16);
+      doc.setTextColor(0, 0, 0);
+      doc.text(`${report.report_type.toUpperCase()} REPORT: ${unitDataObj.name || ""}`, pageWidth / 2, 30, { align: "center" });
+      
+      // Add generation date
+      doc.setFontSize(12);
+      doc.text(`Generated on: ${new Date(report.created_at).toLocaleDateString()}`, pageWidth / 2, 40, { align: "center" });
+      
+      // Add report content
+      doc.setFontSize(10);
+      doc.text("Report Summary:", 14, 50);
+      
+      // Format report content for PDF - replace units with m³
+      const formattedContent = report.content.replace(/units/g, 'm³');
+      
+      // Split the content by line and add to PDF
+      const contentLines = formattedContent.split('\n');
+      let yPos = 55;
+      const lineHeight = 5;
+      
+      contentLines.forEach(line => {
+        doc.text(line, 14, yPos);
+        yPos += lineHeight;
+      });
+      
+      // Generate the PDF as a blob and download it
+      const pdfBlob = doc.output('blob');
+      const fileName = `${report.report_type}-report-${unitDataObj.name || 'unit'}-${new Date().toISOString().split('T')[0]}.pdf`;
+      
+      // Create URL object from the blob
+      const blobUrl = URL.createObjectURL(pdfBlob);
+      
+      // Create and trigger download link
       const downloadLink = document.createElement('a');
       downloadLink.href = blobUrl;
-      downloadLink.download = `report-${reportId}.txt`;
-      
-      // Append to body, click, and clean up
+      downloadLink.download = fileName;
       document.body.appendChild(downloadLink);
       downloadLink.click();
       
-      // Clean up after a short delay to ensure download starts
+      // Clean up
       setTimeout(() => {
         document.body.removeChild(downloadLink);
         URL.revokeObjectURL(blobUrl);
-        console.log("Download link cleanup completed");
       }, 100);
 
       toast({
         title: "Success",
-        description: "Report downloaded successfully",
+        description: "PDF report downloaded successfully",
       });
     } catch (error) {
       console.error("Error downloading report:", error);
@@ -58,6 +120,8 @@ export function ReportsList({ reports }: ReportsListProps) {
         title: "Error",
         description: "Failed to download report",
       });
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -123,7 +187,7 @@ export function ReportsList({ reports }: ReportsListProps) {
                     Generated on {new Date(report.created_at).toLocaleString()}
                   </p>
                   <div className="mt-2 text-sm text-gray-300 line-clamp-3 whitespace-pre-wrap">
-                    {report.content}
+                    {report.content.replace(/units/g, 'm³')}
                   </div>
                 </div>
                 <div className="flex space-x-2">
@@ -140,11 +204,12 @@ export function ReportsList({ reports }: ReportsListProps) {
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => handleDownloadReport(report.id, report.content)}
+                    onClick={() => handleDownloadReport(report)}
+                    disabled={isLoading}
                     className="flex items-center"
                   >
                     <Download className="h-4 w-4 mr-2" />
-                    Download
+                    Download PDF
                   </Button>
                 </div>
               </div>
