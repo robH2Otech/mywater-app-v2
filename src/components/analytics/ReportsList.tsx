@@ -10,8 +10,7 @@ import { ReportVisual } from "./ReportVisual";
 import { doc, getDoc } from "firebase/firestore";
 import { db } from "@/integrations/firebase/client";
 import { calculateMetricsFromMeasurements } from "@/utils/reportGenerator";
-import { jsPDF } from "jspdf";
-import 'jspdf-autotable';
+import { generatePDF } from "@/utils/pdfGenerator";
 import { 
   AlertDialog,
   AlertDialogAction,
@@ -22,14 +21,6 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-
-// Add type declaration for jsPDF with autoTable method
-interface JsPDFWithAutoTable extends jsPDF {
-  autoTable: (options: any) => void;
-  lastAutoTable: {
-    finalY: number;
-  };
-}
 
 interface ReportsListProps {
   reports: ReportData[];
@@ -67,94 +58,9 @@ export function ReportsList({ reports, onDeleteReport, isDeletingReport = false 
       const measurements = report.measurements || [];
       const metrics = calculateMetricsFromMeasurements(measurements);
       
-      // We'll create a visual PDF instead of just text
-      const pdfDoc = new jsPDF() as JsPDFWithAutoTable;
-      const pageWidth = pdfDoc.internal.pageSize.getWidth();
-      
-      // Add company logo/header
-      pdfDoc.setFontSize(20);
-      pdfDoc.setTextColor(0, 128, 0);
-      pdfDoc.text("MYWATER Technologies", pageWidth / 2, 20, { align: "center" });
-      
-      // Add report title
-      pdfDoc.setFontSize(16);
-      pdfDoc.setTextColor(0, 0, 0);
-      pdfDoc.text(`${report.report_type.toUpperCase()} REPORT: ${unitDataObj.name || ""}`, pageWidth / 2, 30, { align: "center" });
-      
-      // Add generation date
-      pdfDoc.setFontSize(12);
-      pdfDoc.text(`Generated on: ${new Date(report.created_at).toLocaleDateString()}`, pageWidth / 2, 40, { align: "center" });
-      
-      // Add unit information
-      pdfDoc.setFontSize(14);
-      pdfDoc.text("Unit Information", 14, 50);
-      
-      const unitInfo = [
-        ["Name", unitDataObj.name || "N/A"],
-        ["Location", unitDataObj.location || "N/A"],
-        ["Status", unitDataObj.status || "N/A"],
-        ["Total Capacity", `${unitDataObj.total_volume || 0} m³`]
-      ];
-      
-      pdfDoc.autoTable({
-        startY: 55,
-        head: [["Property", "Value"]],
-        body: unitInfo,
-        theme: 'grid',
-        headStyles: { fillColor: [0, 150, 0] }
-      });
-      
-      // Add performance metrics
-      let startY = pdfDoc.lastAutoTable?.finalY + 10 || 100;
-      pdfDoc.setFontSize(14);
-      pdfDoc.text("Performance Metrics", 14, startY);
-      
-      const performanceMetrics = [
-        ["Total Volume Processed", `${metrics.totalVolume.toFixed(2)} m³`],
-        ["Average Daily Volume", `${metrics.avgVolume.toFixed(2)} m³`],
-        ["Maximum Daily Volume", `${metrics.maxVolume.toFixed(2)} m³`],
-        ["Average Temperature", `${metrics.avgTemperature.toFixed(2)} °C`],
-        ["Total UVC Hours", `${metrics.totalUvcHours.toFixed(2)} hours`]
-      ];
-      
-      pdfDoc.autoTable({
-        startY: startY + 5,
-        head: [["Metric", "Value"]],
-        body: performanceMetrics,
-        theme: 'grid',
-        headStyles: { fillColor: [0, 150, 0] }
-      });
-      
-      // Add daily data table if available
-      if (metrics.dailyData && metrics.dailyData.length > 0) {
-        startY = pdfDoc.lastAutoTable?.finalY + 10 || 150;
-        pdfDoc.setFontSize(14);
-        pdfDoc.text("Daily Measurements", 14, startY);
-        
-        const dailyData = metrics.dailyData.map(day => [
-          day.date,
-          `${day.volume.toFixed(2)} m³`,
-          `${day.avgTemperature.toFixed(2)} °C`,
-          `${day.uvcHours.toFixed(2)} hours`
-        ]);
-        
-        pdfDoc.autoTable({
-          startY: startY + 5,
-          head: [["Date", "Volume", "Avg. Temperature", "UVC Hours"]],
-          body: dailyData,
-          theme: 'grid',
-          headStyles: { fillColor: [0, 150, 0] }
-        });
-      }
-      
-      // Add footer with generation date
-      const generatedDate = new Date().toLocaleString();
-      pdfDoc.setFontSize(8);
-      pdfDoc.text(`Generated on: ${generatedDate}`, pageWidth - 15, pdfDoc.internal.pageSize.getHeight() - 10, { align: "right" });
-      
-      // Critical fix: Using direct save method instead of blob approach
+      // Generate PDF using the utility function
       const fileName = `${report.report_type}-report-${unitDataObj.name || 'unit'}-${new Date().toLocaleDateString().replace(/\//g, '-')}.pdf`;
-      pdfDoc.save(fileName);
+      await generatePDF(report, unitDataObj, metrics, fileName);
       
       toast({
         title: "Success",
@@ -165,7 +71,7 @@ export function ReportsList({ reports, onDeleteReport, isDeletingReport = false 
       toast({
         variant: "destructive",
         title: "Error",
-        description: "Failed to download report",
+        description: "Failed to download report. Please try again.",
       });
     } finally {
       setIsLoading(false);
