@@ -1,4 +1,3 @@
-
 import { UnitData } from "@/types/analytics";
 import { ReportChart } from "./ReportChart";
 import { Card } from "@/components/ui/card";
@@ -8,6 +7,15 @@ import { jsPDF } from "jspdf";
 import 'jspdf-autotable';
 import { format } from "date-fns";
 import { getDateRangeForReportType } from "@/utils/reportGenerator";
+
+declare module 'jspdf' {
+  interface jsPDF {
+    autoTable: any;
+    lastAutoTable: {
+      finalY: number;
+    };
+  }
+}
 
 interface ReportVisualProps {
   unit: UnitData;
@@ -62,7 +70,6 @@ export function ReportVisual({ unit, reportType, metrics }: ReportVisualProps) {
         ["Total Capacity", `${unit.total_volume || 0} units`]
       ];
       
-      // @ts-ignore - jspdf-autotable types
       doc.autoTable({
         startY: 55,
         head: [["Property", "Value"]],
@@ -72,8 +79,9 @@ export function ReportVisual({ unit, reportType, metrics }: ReportVisualProps) {
       });
       
       // Add performance metrics section
+      let startY = doc.lastAutoTable.finalY + 10;
       doc.setFontSize(14);
-      doc.text("Performance Metrics", 14, doc.lastAutoTable.finalY + 10);
+      doc.text("Performance Metrics", 14, startY);
       
       const performanceMetrics = [
         ["Total Volume Processed", `${metrics.totalVolume.toFixed(2)} units`],
@@ -83,9 +91,8 @@ export function ReportVisual({ unit, reportType, metrics }: ReportVisualProps) {
         ["Total UVC Hours", `${metrics.totalUvcHours.toFixed(2)} hours`]
       ];
       
-      // @ts-ignore - jspdf-autotable types
       doc.autoTable({
-        startY: doc.lastAutoTable.finalY + 15,
+        startY: startY + 5,
         head: [["Metric", "Value"]],
         body: performanceMetrics,
         theme: 'grid',
@@ -93,8 +100,9 @@ export function ReportVisual({ unit, reportType, metrics }: ReportVisualProps) {
       });
       
       // Add daily data table
+      startY = doc.lastAutoTable.finalY + 10;
       doc.setFontSize(14);
-      doc.text("Daily Measurements", 14, doc.lastAutoTable.finalY + 10);
+      doc.text("Daily Measurements", 14, startY);
       
       const dailyData = metrics.dailyData.map(day => [
         day.date,
@@ -103,9 +111,8 @@ export function ReportVisual({ unit, reportType, metrics }: ReportVisualProps) {
         `${day.uvcHours.toFixed(2)} hours`
       ]);
       
-      // @ts-ignore - jspdf-autotable types
       doc.autoTable({
-        startY: doc.lastAutoTable.finalY + 15,
+        startY: startY + 5,
         head: [["Date", "Volume", "Avg. Temperature", "UVC Hours"]],
         body: dailyData,
         theme: 'grid',
@@ -113,17 +120,17 @@ export function ReportVisual({ unit, reportType, metrics }: ReportVisualProps) {
       });
       
       // Add maintenance information
+      startY = doc.lastAutoTable.finalY + 10;
       doc.setFontSize(14);
-      doc.text("Maintenance Information", 14, doc.lastAutoTable.finalY + 10);
+      doc.text("Maintenance Information", 14, startY);
       
       const maintenanceInfo = [
         ["Last Maintenance", unit.last_maintenance ? new Date(unit.last_maintenance).toLocaleDateString() : "N/A"],
         ["Next Maintenance", unit.next_maintenance ? new Date(unit.next_maintenance).toLocaleDateString() : "N/A"]
       ];
       
-      // @ts-ignore - jspdf-autotable types
       doc.autoTable({
-        startY: doc.lastAutoTable.finalY + 15,
+        startY: startY + 5,
         head: [["Maintenance", "Date"]],
         body: maintenanceInfo,
         theme: 'grid',
@@ -132,8 +139,9 @@ export function ReportVisual({ unit, reportType, metrics }: ReportVisualProps) {
       
       // Add contact information
       if (unit.contact_name || unit.contact_email || unit.contact_phone) {
+        startY = doc.lastAutoTable.finalY + 10;
         doc.setFontSize(14);
-        doc.text("Contact Information", 14, doc.lastAutoTable.finalY + 10);
+        doc.text("Contact Information", 14, startY);
         
         const contactInfo = [
           ["Name", unit.contact_name || "N/A"],
@@ -141,9 +149,8 @@ export function ReportVisual({ unit, reportType, metrics }: ReportVisualProps) {
           ["Phone", unit.contact_phone || "N/A"]
         ];
         
-        // @ts-ignore - jspdf-autotable types
         doc.autoTable({
-          startY: doc.lastAutoTable.finalY + 15,
+          startY: startY + 5,
           head: [["Contact", "Details"]],
           body: contactInfo,
           theme: 'grid',
@@ -153,10 +160,11 @@ export function ReportVisual({ unit, reportType, metrics }: ReportVisualProps) {
       
       // Add notes if available
       if (unit.notes) {
+        startY = doc.lastAutoTable.finalY + 10;
         doc.setFontSize(14);
-        doc.text("Notes", 14, doc.lastAutoTable.finalY + 10);
+        doc.text("Notes", 14, startY);
         doc.setFontSize(10);
-        doc.text(unit.notes, 14, doc.lastAutoTable.finalY + 20);
+        doc.text(unit.notes, 14, startY + 10);
       }
       
       // Add footer with generation date

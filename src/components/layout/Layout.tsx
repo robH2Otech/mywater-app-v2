@@ -2,14 +2,14 @@
 import { Sidebar } from "./Sidebar";
 import { Header } from "./Header";
 import { useState, useEffect } from "react";
-import { useMobile } from "@/hooks/use-mobile";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface LayoutProps {
   children: React.ReactNode;
 }
 
 export const Layout = ({ children }: LayoutProps) => {
-  const isMobile = useMobile();
+  const isMobile = useIsMobile();
   const [isSidebarOpen, setIsSidebarOpen] = useState(!isMobile);
   
   // Close sidebar on mobile by default
