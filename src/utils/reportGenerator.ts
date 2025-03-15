@@ -49,14 +49,25 @@ export const fetchMeasurementsForReport = async (unitId: string, reportType: str
     );
     
     const querySnapshot = await getDocs(q);
-    const measurements = querySnapshot.docs.map(doc => ({
-      id: doc.id,
-      ...doc.data(),
-      // Convert Firestore timestamp to string for easier processing
-      timestamp: doc.data().timestamp instanceof Timestamp 
-        ? doc.data().timestamp.toDate().toISOString() 
-        : doc.data().timestamp
-    }));
+    const measurements = querySnapshot.docs.map(doc => {
+      const data = doc.data();
+      
+      // Ensure we convert Firestore timestamp to a format we can serialize
+      let timestamp;
+      if (data.timestamp instanceof Timestamp) {
+        timestamp = data.timestamp.toDate().toISOString();
+      } else if (typeof data.timestamp === 'string') {
+        timestamp = data.timestamp;
+      } else {
+        timestamp = new Date().toISOString(); // Fallback
+      }
+      
+      return {
+        id: doc.id,
+        ...data,
+        timestamp
+      };
+    });
     
     console.log(`Retrieved ${measurements.length} measurements for report`);
     return measurements;
@@ -68,7 +79,8 @@ export const fetchMeasurementsForReport = async (unitId: string, reportType: str
 
 // Calculate aggregated metrics from measurements
 export const calculateMetricsFromMeasurements = (measurements: any[]) => {
-  if (!measurements.length) {
+  if (!measurements || !measurements.length) {
+    console.log("No measurements provided to calculate metrics");
     return {
       totalVolume: 0,
       avgVolume: 0,
@@ -78,6 +90,8 @@ export const calculateMetricsFromMeasurements = (measurements: any[]) => {
       dailyData: []
     };
   }
+  
+  console.log(`Calculating metrics from ${measurements.length} measurements`);
   
   let totalVolume = 0;
   let totalTemperature = 0;
@@ -102,25 +116,36 @@ export const calculateMetricsFromMeasurements = (measurements: any[]) => {
     
     // Group by day for chart data
     if (measurement.timestamp) {
-      const day = typeof measurement.timestamp === 'string' 
-        ? measurement.timestamp.split('T')[0] 
-        : format(measurement.timestamp, 'yyyy-MM-dd');
+      let day;
+      try {
+        // Safely extract the date portion
+        if (typeof measurement.timestamp === 'string') {
+          day = measurement.timestamp.split('T')[0];
+        } else if (measurement.timestamp instanceof Date) {
+          day = format(measurement.timestamp, 'yyyy-MM-dd');
+        } else {
+          console.warn("Unexpected timestamp format:", measurement.timestamp);
+          day = format(new Date(), 'yyyy-MM-dd');
+        }
         
-      if (!dailyMap.has(day)) {
-        dailyMap.set(day, { 
-          date: day, 
-          volume: 0, 
-          temperature: 0,
-          uvcHours: 0,
-          count: 0 
-        });
+        if (!dailyMap.has(day)) {
+          dailyMap.set(day, { 
+            date: day, 
+            volume: 0, 
+            temperature: 0,
+            uvcHours: 0,
+            count: 0 
+          });
+        }
+        
+        const dayData = dailyMap.get(day);
+        dayData.volume += volume;
+        dayData.temperature += temperature;
+        dayData.uvcHours += uvcHours;
+        dayData.count += 1;
+      } catch (error) {
+        console.error("Error processing measurement day:", error, measurement);
       }
-      
-      const dayData = dailyMap.get(day);
-      dayData.volume += volume;
-      dayData.temperature += temperature;
-      dayData.uvcHours += uvcHours;
-      dayData.count += 1;
     }
   });
   
@@ -128,19 +153,21 @@ export const calculateMetricsFromMeasurements = (measurements: any[]) => {
   const dailyData = Array.from(dailyMap.values()).map(day => ({
     date: day.date,
     volume: day.volume,
-    avgVolume: day.volume / day.count,
-    avgTemperature: day.temperature / day.count,
+    avgVolume: day.count > 0 ? day.volume / day.count : 0,
+    avgTemperature: day.count > 0 ? day.temperature / day.count : 0,
     uvcHours: day.uvcHours
   }));
   
   // Sort by date
   dailyData.sort((a, b) => a.date.localeCompare(b.date));
   
+  const measCount = measurements.length || 1; // Avoid division by zero
+  
   return {
     totalVolume,
-    avgVolume: totalVolume / measurements.length,
+    avgVolume: totalVolume / measCount,
     maxVolume,
-    avgTemperature: totalTemperature / measurements.length,
+    avgTemperature: totalTemperature / measCount,
     totalUvcHours,
     dailyData
   };

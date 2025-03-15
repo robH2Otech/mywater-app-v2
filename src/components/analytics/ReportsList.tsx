@@ -24,18 +24,29 @@ export function ReportsList({ reports }: ReportsListProps) {
 
   const handleDownloadReport = async (reportId: string, content: string) => {
     try {
+      console.log("Starting download for report:", reportId);
+      
       // Create a Blob from the content
       const blob = new Blob([content], { type: 'text/plain' });
-      const url = window.URL.createObjectURL(blob);
       
-      // Create a temporary link and trigger download
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = `report-${reportId}.txt`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      window.URL.revokeObjectURL(url);
+      // Create URL for the blob
+      const blobUrl = URL.createObjectURL(blob);
+      
+      // Create a download link
+      const downloadLink = document.createElement('a');
+      downloadLink.href = blobUrl;
+      downloadLink.download = `report-${reportId}.txt`;
+      
+      // Append to body, click, and clean up
+      document.body.appendChild(downloadLink);
+      downloadLink.click();
+      
+      // Clean up after a short delay to ensure download starts
+      setTimeout(() => {
+        document.body.removeChild(downloadLink);
+        URL.revokeObjectURL(blobUrl);
+        console.log("Download link cleanup completed");
+      }, 100);
 
       toast({
         title: "Success",
@@ -54,6 +65,7 @@ export function ReportsList({ reports }: ReportsListProps) {
   const handleViewReport = async (report: ReportData) => {
     setIsLoading(true);
     try {
+      console.log("Loading report details for:", report.id);
       setSelectedReport(report);
       
       // Fetch unit data
