@@ -107,7 +107,7 @@ export const generatePDF = async (
         body: dailyData,
         theme: 'grid',
         headStyles: { fillColor: [0, 150, 0] }
-      });
+    });
     }
     
     // Add maintenance information
