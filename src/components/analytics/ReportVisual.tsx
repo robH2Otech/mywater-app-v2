@@ -42,21 +42,21 @@ export function ReportVisual({ unit, reportType, metrics, reportId }: ReportVisu
         content: "",
         measurements: [],
         created_at: new Date().toISOString(),
-        generated_by: "preview" // Adding the missing property
+        generated_by: "system" // Required by ReportData type
       };
       
       await generatePDF(reportData, unit, metrics, fileName);
       
       toast({
         title: "Success",
-        description: "PDF report downloaded successfully",
+        description: "PDF report generated successfully",
       });
     } catch (error) {
       console.error("Error generating PDF:", error);
       toast({
         variant: "destructive",
         title: "Error",
-        description: "Failed to download report. Please try again.",
+        description: "Failed to generate report. Please try again.",
       });
     }
   };

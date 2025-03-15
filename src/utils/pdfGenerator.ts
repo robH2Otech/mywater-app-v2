@@ -107,7 +107,7 @@ export const generatePDF = async (
         body: dailyData,
         theme: 'grid',
         headStyles: { fillColor: [0, 150, 0] }
-    });
+      });
     }
     
     // Add maintenance information
@@ -163,10 +163,10 @@ export const generatePDF = async (
     pdfDoc.setFontSize(8);
     pdfDoc.text(`Generated on: ${generatedDate}`, pageWidth - 15, pdfDoc.internal.pageSize.getHeight() - 10, { align: "right" });
     
-    // Use the reliable direct save method
-    pdfDoc.save(fileName);
+    // Force download without relying on browser dialog
+    pdfDoc.output('dataurlnewwindow', { filename: fileName });
     
-    console.log("PDF generated and downloaded successfully");
+    console.log("PDF generated and opened successfully");
     return true;
   } catch (error) {
     console.error("Error in PDF generation:", error);

@@ -1,4 +1,3 @@
-
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Download, Eye, Trash2 } from "lucide-react";
@@ -58,20 +57,20 @@ export function ReportsList({ reports, onDeleteReport, isDeletingReport = false 
       const measurements = report.measurements || [];
       const metrics = calculateMetricsFromMeasurements(measurements);
       
-      // Generate PDF using the utility function
-      const fileName = `${report.report_type}-report-${unitDataObj.name || 'unit'}-${new Date().toLocaleDateString().replace(/\//g, '-')}.pdf`;
+      // Generate PDF using the utility function with a unique filename
+      const fileName = `${report.report_type}-report-${unitDataObj.name || 'unit'}-${new Date().toISOString().slice(0,10)}.pdf`;
       await generatePDF(report, unitDataObj, metrics, fileName);
       
       toast({
         title: "Success",
-        description: "PDF report downloaded successfully",
+        description: "PDF report generated successfully",
       });
     } catch (error) {
       console.error("Error downloading report:", error);
       toast({
         variant: "destructive",
         title: "Error",
-        description: "Failed to download report. Please try again.",
+        description: "Failed to generate report. Please try again.",
       });
     } finally {
       setIsLoading(false);
@@ -177,7 +176,7 @@ export function ReportsList({ reports, onDeleteReport, isDeletingReport = false 
                     className="flex items-center"
                   >
                     <Download className="h-4 w-4 mr-2" />
-                    Download PDF
+                    Generate PDF
                   </Button>
                   <Button
                     variant="outline"
