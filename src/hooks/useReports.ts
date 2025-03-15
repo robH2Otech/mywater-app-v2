@@ -19,19 +19,10 @@ export function useReports(unitId: string) {
       );
       
       const reportsSnapshot = await getDocs(q);
-      const reportsList = reportsSnapshot.docs.map(doc => {
-        const data = doc.data();
-        
-        // Convert units to m³ in report content if needed
-        if (data.content && typeof data.content === 'string') {
-          data.content = data.content.replace(/units/g, 'm³');
-        }
-        
-        return {
-          id: doc.id,
-          ...data
-        } as ReportData;
-      });
+      const reportsList = reportsSnapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      })) as ReportData[];
       
       console.log("Reports data:", reportsList);
       return reportsList;
