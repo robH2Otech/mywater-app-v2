@@ -3,14 +3,23 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Download, Eye } from "lucide-react";
 import { toast } from "@/components/ui/use-toast";
-import { ReportData, UnitData } from "@/types/analytics";
+import { ReportData } from "@/types/analytics";
 import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { ReportVisual } from "./ReportVisual";
 import { doc, getDoc } from "firebase/firestore";
 import { db } from "@/integrations/firebase/client";
 import { calculateMetricsFromMeasurements } from "@/utils/reportGenerator";
-import { generateTextPDF } from "@/utils/pdfUtils";
+import { jsPDF } from "jspdf";
+import 'jspdf-autotable';
+
+// Add type declaration for jsPDF with autoTable method
+interface JsPDFWithAutoTable extends jsPDF {
+  autoTable: (options: any) => void;
+  lastAutoTable: {
+    finalY: number;
+  };
+}
 
 interface ReportsListProps {
   reports: ReportData[];
@@ -19,7 +28,7 @@ interface ReportsListProps {
 export function ReportsList({ reports }: ReportsListProps) {
   const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
   const [selectedReport, setSelectedReport] = useState<ReportData | null>(null);
-  const [unitData, setUnitData] = useState<UnitData | null>(null);
+  const [unitData, setUnitData] = useState<any>(null);
   const [reportMetrics, setReportMetrics] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -39,19 +48,71 @@ export function ReportsList({ reports }: ReportsListProps) {
       const unitDataObj = {
         id: unitSnapshot.id,
         ...unitSnapshot.data()
-      } as UnitData;
+      };
       
-      // Generate and download PDF using the utility function
-      const success = await generateTextPDF(report, unitDataObj);
+      // Calculate metrics from measurements
+      const measurements = report.measurements || [];
+      const metrics = calculateMetricsFromMeasurements(measurements);
       
-      if (success) {
-        toast({
-          title: "Success",
-          description: "PDF report downloaded successfully",
-        });
-      } else {
-        throw new Error("Failed to generate PDF");
-      }
+      // Create PDF document
+      const pdfDoc = new jsPDF() as JsPDFWithAutoTable;
+      const pageWidth = pdfDoc.internal.pageSize.getWidth();
+      
+      // Add company logo/header
+      pdfDoc.setFontSize(20);
+      pdfDoc.setTextColor(0, 128, 0);
+      pdfDoc.text("MYWATER Technologies", pageWidth / 2, 20, { align: "center" });
+      
+      // Add report title
+      pdfDoc.setFontSize(16);
+      pdfDoc.setTextColor(0, 0, 0);
+      pdfDoc.text(`${report.report_type.toUpperCase()} REPORT: ${unitDataObj.name || ""}`, pageWidth / 2, 30, { align: "center" });
+      
+      // Add generation date
+      pdfDoc.setFontSize(12);
+      pdfDoc.text(`Generated on: ${new Date(report.created_at).toLocaleDateString()}`, pageWidth / 2, 40, { align: "center" });
+      
+      // Add report content
+      pdfDoc.setFontSize(10);
+      pdfDoc.text("Report Summary:", 14, 50);
+      
+      // Format report content for PDF - replace units with m³
+      const formattedContent = report.content.replace(/units/g, 'm³');
+      
+      // Split the content by line and add to PDF
+      const contentLines = formattedContent.split('\n');
+      let yPos = 55;
+      const lineHeight = 5;
+      
+      contentLines.forEach(line => {
+        pdfDoc.text(line, 14, yPos);
+        yPos += lineHeight;
+      });
+      
+      // Generate the PDF as a blob and download it
+      const pdfBlob = pdfDoc.output('blob');
+      const fileName = `${report.report_type}-report-${unitDataObj.name || 'unit'}-${new Date().toISOString().split('T')[0]}.pdf`;
+      
+      // Create URL object from the blob
+      const blobUrl = URL.createObjectURL(pdfBlob);
+      
+      // Create and trigger download link
+      const downloadLink = document.createElement('a');
+      downloadLink.href = blobUrl;
+      downloadLink.download = fileName;
+      document.body.appendChild(downloadLink);
+      downloadLink.click();
+      
+      // Clean up
+      setTimeout(() => {
+        document.body.removeChild(downloadLink);
+        URL.revokeObjectURL(blobUrl);
+      }, 100);
+
+      toast({
+        title: "Success",
+        description: "PDF report downloaded successfully",
+      });
     } catch (error) {
       console.error("Error downloading report:", error);
       toast({
@@ -78,7 +139,7 @@ export function ReportsList({ reports }: ReportsListProps) {
         const unitDataObj = {
           id: unitSnapshot.id,
           ...unitSnapshot.data()
-        } as UnitData;
+        };
         setUnitData(unitDataObj);
         
         // Calculate metrics from measurements
