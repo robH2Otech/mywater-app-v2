@@ -18,14 +18,33 @@ export function useReports(unitId: string) {
         orderBy("created_at", "desc")
       );
       
-      const reportsSnapshot = await getDocs(q);
-      const reportsList = reportsSnapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      })) as ReportData[];
-      
-      console.log("Reports data:", reportsList);
-      return reportsList;
+      try {
+        const reportsSnapshot = await getDocs(q);
+        
+        if (reportsSnapshot.empty) {
+          console.log("No reports found for this unit");
+          return [];
+        }
+        
+        const reportsList = reportsSnapshot.docs.map(doc => {
+          const data = doc.data();
+          
+          // Ensure measurements data is properly structured
+          const measurements = data.measurements || [];
+          
+          return {
+            id: doc.id,
+            ...data,
+            measurements
+          } as ReportData;
+        });
+        
+        console.log("Reports data:", reportsList);
+        return reportsList;
+      } catch (error) {
+        console.error("Error fetching reports:", error);
+        throw error;
+      }
     },
     enabled: !!unitId,
   });
