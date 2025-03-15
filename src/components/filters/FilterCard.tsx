@@ -50,7 +50,7 @@ export function FilterCard({ unit, onEditClick, onClick }: FilterCardProps) {
 
   return (
     <Card 
-      className="bg-spotify-darker hover:bg-spotify-accent/40 transition-colors cursor-pointer relative group rounded-xl overflow-hidden"
+      className="bg-spotify-darker hover:bg-spotify-accent/40 transition-colors cursor-pointer relative group"
       onClick={onClick}
     >
       <Button

@@ -48,38 +48,27 @@ export const fetchMeasurementsForReport = async (unitId: string, reportType: str
       orderBy("timestamp", "asc")
     );
     
-    try {
-      const querySnapshot = await getDocs(q);
-      const measurements = querySnapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data(),
-        // Convert Firestore timestamp to string for easier processing
-        timestamp: doc.data().timestamp instanceof Timestamp 
-          ? doc.data().timestamp.toDate().toISOString() 
-          : doc.data().timestamp
-      }));
-      
-      console.log(`Retrieved ${measurements.length} measurements for report`);
-      return measurements;
-    } catch (error: any) {
-      console.error("Error in Firebase query:", error);
-      // If this is an index error, still return empty array but log the specific issue
-      if (error.message && error.message.includes("requires an index")) {
-        console.warn("Firebase index required for measurements query");
-        return [];
-      }
-      throw new Error(`Failed to fetch measurements: ${error.message}`);
-    }
+    const querySnapshot = await getDocs(q);
+    const measurements = querySnapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data(),
+      // Convert Firestore timestamp to string for easier processing
+      timestamp: doc.data().timestamp instanceof Timestamp 
+        ? doc.data().timestamp.toDate().toISOString() 
+        : doc.data().timestamp
+    }));
+    
+    console.log(`Retrieved ${measurements.length} measurements for report`);
+    return measurements;
   } catch (error) {
     console.error("Error fetching measurements for report:", error);
-    // Return empty array instead of throwing to allow report generation with no data
-    return [];
+    throw error;
   }
 };
 
 // Calculate aggregated metrics from measurements
-export const calculateMetricsFromMeasurements = (measurements: any[] = []) => {
-  if (!measurements || !measurements.length) {
+export const calculateMetricsFromMeasurements = (measurements: any[]) => {
+  if (!measurements.length) {
     return {
       totalVolume: 0,
       avgVolume: 0,
@@ -149,9 +138,9 @@ export const calculateMetricsFromMeasurements = (measurements: any[] = []) => {
   
   return {
     totalVolume,
-    avgVolume: measurements.length > 0 ? totalVolume / measurements.length : 0,
+    avgVolume: totalVolume / measurements.length,
     maxVolume,
-    avgTemperature: measurements.length > 0 ? totalTemperature / measurements.length : 0,
+    avgTemperature: totalTemperature / measurements.length,
     totalUvcHours,
     dailyData
   };
@@ -163,7 +152,7 @@ export function generateReportContent(unitData: UnitData, reportType: string, me
   const { startDate, endDate } = getDateRangeForReportType(reportType);
   const metrics = calculateMetricsFromMeasurements(measurements);
   
-  return `${unitData.name} - ${reportType.toUpperCase()} REPORT
+  return `${reportType.toUpperCase()} REPORT
 Generated: ${timestamp}
 Period: ${format(startDate, 'MMM dd, yyyy')} to ${format(endDate, 'MMM dd, yyyy')}
 
@@ -171,12 +160,12 @@ Unit Information:
 Name: ${unitData.name || 'N/A'}
 Location: ${unitData.location || 'N/A'}
 Status: ${unitData.status || 'N/A'}
-Total Volume: ${unitData.total_volume || 0} m³
+Total Volume: ${unitData.total_volume || 0} units
 
 Performance Metrics:
-Total Volume Processed: ${metrics.totalVolume.toFixed(2)} m³
-Average Daily Volume: ${metrics.avgVolume.toFixed(2)} m³
-Maximum Daily Volume: ${metrics.maxVolume.toFixed(2)} m³
+Total Volume Processed: ${metrics.totalVolume.toFixed(2)} units
+Average Daily Volume: ${metrics.avgVolume.toFixed(2)} units
+Maximum Daily Volume: ${metrics.maxVolume.toFixed(2)} units
 Average Temperature: ${metrics.avgTemperature.toFixed(2)} °C
 Total UVC Hours: ${metrics.totalUvcHours.toFixed(2)} hours
 

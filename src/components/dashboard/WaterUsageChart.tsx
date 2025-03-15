@@ -57,7 +57,7 @@ export const WaterUsageChart = ({ units = [] }: WaterUsageChartProps) => {
   }, [units]);
 
   return (
-    <Card className="p-6 glass lg:col-span-2 rounded-xl overflow-hidden">
+    <Card className="p-6 glass lg:col-span-2">
       <h2 className="text-lg font-semibold mb-4">Water Usage</h2>
       <div className="h-[300px]">
         <ResponsiveContainer width="100%" height="100%">

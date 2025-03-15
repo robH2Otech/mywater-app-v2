@@ -1,4 +1,3 @@
-
 import type { Config } from "tailwindcss";
 
 export default {
@@ -23,7 +22,6 @@ export default {
         inter: ['Inter', 'sans-serif'],
       },
       colors: {
-        black: "#000000",
         spotify: {
           green: "#1DB954",
           dark: "#121212",

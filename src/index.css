@@ -1,112 +1,44 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 @layer base {
+  :root {
+    --background: 240 10% 3.9%;
+    --foreground: 0 0% 98%;
+    --card: 240 10% 3.9%;
+    --card-foreground: 0 0% 98%;
+    --popover: 240 10% 3.9%;
+    --popover-foreground: 0 0% 98%;
+    --primary: 142 72% 42%;
+    --primary-foreground: 0 0% 98%;
+    --secondary: 240 3.7% 15.9%;
+    --secondary-foreground: 0 0% 98%;
+    --muted: 240 3.7% 15.9%;
+    --muted-foreground: 240 5% 64.9%;
+    --accent: 240 3.7% 15.9%;
+    --accent-foreground: 0 0% 98%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 240 3.7% 15.9%;
+    --input: 240 3.7% 15.9%;
+    --ring: 142 72% 42%;
+    --radius: 0.5rem;
+  }
+
+  * {
+    @apply border-border;
+  }
+
   body {
-    @apply bg-black text-white;
+    @apply bg-spotify-dark text-foreground font-inter antialiased;
   }
-
-  /* Print styles for reports */
-  @media print {
-    body {
-      background-color: white !important;
-      color: black !important;
-    }
-
-    .print\:hidden {
-      display: none !important;
-    }
-
-    * {
-      color: black !important;
-      background-color: transparent !important;
-      border-color: #ddd !important;
-    }
-
-    button {
-      display: none !important;
-    }
-
-    /* Expanded page content */
-    .max-w-5xl {
-      max-width: 100% !important;
-    }
-
-    /* Ensure charts and tables are visible */
-    .recharts-surface {
-      overflow: visible !important;
-    }
-
-    .max-h-\[90vh\] {
-      max-height: none !important;
-    }
-
-    /* Ensure dialog content prints full width */
-    .DialogContent {
-      position: relative !important;
-      transform: none !important;
-      max-width: 100% !important;
-      width: 100% !important;
-    }
-  }
-}
-
-:root {
-  --spotify-dark: #121212;
-  --spotify-darker: #181818;
-  --spotify-light: #282828;
-  --spotify-green: #1DB954;
-  --spotify-accent: #1F1F1F;
-  --spotify-accent-hover: #333333;
 }
 
 @layer utilities {
-  .bg-spotify-dark {
-    background-color: var(--spotify-dark);
-  }
-  .bg-spotify-darker {
-    background-color: var(--spotify-darker);
-  }
-  .bg-spotify-light {
-    background-color: var(--spotify-light);
-  }
-  .bg-spotify-green {
-    background-color: var(--spotify-green);
-  }
-  .text-spotify-green {
-    color: var(--spotify-green);
-  }
-  .bg-spotify-accent {
-    background-color: var(--spotify-accent);
-  }
-  .bg-spotify-accent-hover {
-    background-color: var(--spotify-accent-hover);
-  }
-  .border-spotify-accent {
-    border-color: var(--spotify-accent);
-  }
-  .border-spotify-accent-hover {
-    border-color: var(--spotify-accent-hover);
-  }
-  .hover\:bg-spotify-green\/90:hover {
-    background-color: rgba(29, 185, 84, 0.9);
-  }
-  
   .glass {
-    @apply bg-spotify-darker bg-opacity-60 backdrop-blur-sm border-0 shadow-md;
-  }
-  
-  /* Card styling without white borders */
-  .card, 
-  .rounded-xl,
-  .dialog-content {
-    @apply border-0 bg-spotify-darker;
-  }
-  
-  /* Dialog content styling */
-  .dialog-content {
-    @apply bg-spotify-darker border-0;
+    @apply bg-spotify-accent/30 backdrop-blur-lg border border-white/10;
   }
 }
