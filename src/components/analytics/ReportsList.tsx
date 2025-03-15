@@ -1,3 +1,4 @@
+
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Download, Eye, Trash2 } from "lucide-react";
@@ -10,6 +11,7 @@ import { doc, getDoc } from "firebase/firestore";
 import { db } from "@/integrations/firebase/client";
 import { calculateMetricsFromMeasurements } from "@/utils/reportGenerator";
 import { generatePDF } from "@/utils/pdfGenerator";
+import { format } from "date-fns";
 import { 
   AlertDialog,
   AlertDialogAction,
