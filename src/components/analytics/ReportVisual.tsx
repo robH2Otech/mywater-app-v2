@@ -1,3 +1,4 @@
+
 import { UnitData } from "@/types/analytics";
 import { ReportChart } from "./ReportChart";
 import { Card } from "@/components/ui/card";
@@ -33,13 +34,15 @@ export function ReportVisual({ unit, reportType, metrics, reportId }: ReportVisu
       const fileName = `${reportType}-report-${unit.name || 'unit'}-${format(new Date(), 'yyyy-MM-dd')}.pdf`;
       
       // Create a mock report data object for the PDF generator
+      // Added the required generated_by property to fix the TypeScript error
       const reportData = {
         id: reportId || 'preview',
         unit_id: unit.id,
         report_type: reportType,
         content: "",
         measurements: [],
-        created_at: new Date().toISOString()
+        created_at: new Date().toISOString(),
+        generated_by: "preview" // Adding the missing property
       };
       
       await generatePDF(reportData, unit, metrics, fileName);
