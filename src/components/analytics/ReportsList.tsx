@@ -15,7 +15,7 @@ import 'jspdf-autotable';
 
 // Add type declaration for jsPDF with autoTable method
 interface JsPDFWithAutoTable extends jsPDF {
-  autoTable: any;
+  autoTable: (options: any) => void;
   lastAutoTable: {
     finalY: number;
   };
@@ -55,26 +55,26 @@ export function ReportsList({ reports }: ReportsListProps) {
       const metrics = calculateMetricsFromMeasurements(measurements);
       
       // Create PDF document
-      const doc = new jsPDF() as JsPDFWithAutoTable;
-      const pageWidth = doc.internal.pageSize.getWidth();
+      const pdfDoc = new jsPDF() as JsPDFWithAutoTable;
+      const pageWidth = pdfDoc.internal.pageSize.getWidth();
       
       // Add company logo/header
-      doc.setFontSize(20);
-      doc.setTextColor(0, 128, 0);
-      doc.text("MYWATER Technologies", pageWidth / 2, 20, { align: "center" });
+      pdfDoc.setFontSize(20);
+      pdfDoc.setTextColor(0, 128, 0);
+      pdfDoc.text("MYWATER Technologies", pageWidth / 2, 20, { align: "center" });
       
       // Add report title
-      doc.setFontSize(16);
-      doc.setTextColor(0, 0, 0);
-      doc.text(`${report.report_type.toUpperCase()} REPORT: ${unitDataObj.name || ""}`, pageWidth / 2, 30, { align: "center" });
+      pdfDoc.setFontSize(16);
+      pdfDoc.setTextColor(0, 0, 0);
+      pdfDoc.text(`${report.report_type.toUpperCase()} REPORT: ${unitDataObj.name || ""}`, pageWidth / 2, 30, { align: "center" });
       
       // Add generation date
-      doc.setFontSize(12);
-      doc.text(`Generated on: ${new Date(report.created_at).toLocaleDateString()}`, pageWidth / 2, 40, { align: "center" });
+      pdfDoc.setFontSize(12);
+      pdfDoc.text(`Generated on: ${new Date(report.created_at).toLocaleDateString()}`, pageWidth / 2, 40, { align: "center" });
       
       // Add report content
-      doc.setFontSize(10);
-      doc.text("Report Summary:", 14, 50);
+      pdfDoc.setFontSize(10);
+      pdfDoc.text("Report Summary:", 14, 50);
       
       // Format report content for PDF - replace units with m³
       const formattedContent = report.content.replace(/units/g, 'm³');
@@ -85,12 +85,12 @@ export function ReportsList({ reports }: ReportsListProps) {
       const lineHeight = 5;
       
       contentLines.forEach(line => {
-        doc.text(line, 14, yPos);
+        pdfDoc.text(line, 14, yPos);
         yPos += lineHeight;
       });
       
       // Generate the PDF as a blob and download it
-      const pdfBlob = doc.output('blob');
+      const pdfBlob = pdfDoc.output('blob');
       const fileName = `${report.report_type}-report-${unitDataObj.name || 'unit'}-${new Date().toISOString().split('T')[0]}.pdf`;
       
       // Create URL object from the blob

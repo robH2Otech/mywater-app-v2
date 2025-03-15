@@ -1,4 +1,3 @@
-
 import { UnitData } from "@/types/analytics";
 import { ReportChart } from "./ReportChart";
 import { Card } from "@/components/ui/card";
@@ -10,9 +9,8 @@ import { format } from "date-fns";
 import { getDateRangeForReportType } from "@/utils/reportGenerator";
 import { toast } from "@/components/ui/use-toast";
 
-// Add type declaration for jsPDF with autoTable method
 interface JsPDFWithAutoTable extends jsPDF {
-  autoTable: any;
+  autoTable: (options: any) => void;
   lastAutoTable: {
     finalY: number;
   };
@@ -37,22 +35,22 @@ export function ReportVisual({ unit, reportType, metrics }: ReportVisualProps) {
   const generatePDF = () => {
     try {
       // Create a new jsPDF instance
-      const doc = new jsPDF() as JsPDFWithAutoTable;
-      const pageWidth = doc.internal.pageSize.getWidth();
+      const pdfDoc = new jsPDF() as JsPDFWithAutoTable;
+      const pageWidth = pdfDoc.internal.pageSize.getWidth();
       
       // Add company logo/header
-      doc.setFontSize(20);
-      doc.setTextColor(0, 128, 0);
-      doc.text("MYWATER Technologies", pageWidth / 2, 20, { align: "center" });
+      pdfDoc.setFontSize(20);
+      pdfDoc.setTextColor(0, 128, 0);
+      pdfDoc.text("MYWATER Technologies", pageWidth / 2, 20, { align: "center" });
       
       // Add report title
-      doc.setFontSize(16);
-      doc.setTextColor(0, 0, 0);
-      doc.text(`${reportType.toUpperCase()} REPORT: ${unit.name || ""}`, pageWidth / 2, 30, { align: "center" });
+      pdfDoc.setFontSize(16);
+      pdfDoc.setTextColor(0, 0, 0);
+      pdfDoc.text(`${reportType.toUpperCase()} REPORT: ${unit.name || ""}`, pageWidth / 2, 30, { align: "center" });
       
       // Add date range
-      doc.setFontSize(12);
-      doc.text(
+      pdfDoc.setFontSize(12);
+      pdfDoc.text(
         `Period: ${format(startDate, 'MMM dd, yyyy')} to ${format(endDate, 'MMM dd, yyyy')}`,
         pageWidth / 2, 
         40, 
@@ -60,9 +58,9 @@ export function ReportVisual({ unit, reportType, metrics }: ReportVisualProps) {
       );
       
       // Add unit information section
-      doc.setFontSize(14);
-      doc.text("Unit Information", 14, 50);
-      doc.setFontSize(10);
+      pdfDoc.setFontSize(14);
+      pdfDoc.text("Unit Information", 14, 50);
+      pdfDoc.setFontSize(10);
       
       const unitInfo = [
         ["Name", unit.name || "N/A"],
@@ -71,7 +69,7 @@ export function ReportVisual({ unit, reportType, metrics }: ReportVisualProps) {
         ["Total Capacity", `${unit.total_volume || 0} m³`]
       ];
       
-      doc.autoTable({
+      pdfDoc.autoTable({
         startY: 55,
         head: [["Property", "Value"]],
         body: unitInfo,
@@ -80,9 +78,9 @@ export function ReportVisual({ unit, reportType, metrics }: ReportVisualProps) {
       });
       
       // Add performance metrics section
-      let startY = doc.lastAutoTable.finalY + 10;
-      doc.setFontSize(14);
-      doc.text("Performance Metrics", 14, startY);
+      let startY = pdfDoc.lastAutoTable.finalY + 10;
+      pdfDoc.setFontSize(14);
+      pdfDoc.text("Performance Metrics", 14, startY);
       
       const performanceMetrics = [
         ["Total Volume Processed", `${metrics.totalVolume.toFixed(2)} m³`],
@@ -92,7 +90,7 @@ export function ReportVisual({ unit, reportType, metrics }: ReportVisualProps) {
         ["Total UVC Hours", `${metrics.totalUvcHours.toFixed(2)} hours`]
       ];
       
-      doc.autoTable({
+      pdfDoc.autoTable({
         startY: startY + 5,
         head: [["Metric", "Value"]],
         body: performanceMetrics,
@@ -101,9 +99,9 @@ export function ReportVisual({ unit, reportType, metrics }: ReportVisualProps) {
       });
       
       // Add daily data table
-      startY = doc.lastAutoTable.finalY + 10;
-      doc.setFontSize(14);
-      doc.text("Daily Measurements", 14, startY);
+      startY = pdfDoc.lastAutoTable.finalY + 10;
+      pdfDoc.setFontSize(14);
+      pdfDoc.text("Daily Measurements", 14, startY);
       
       const dailyData = metrics.dailyData.map(day => [
         day.date,
@@ -112,7 +110,7 @@ export function ReportVisual({ unit, reportType, metrics }: ReportVisualProps) {
         `${day.uvcHours.toFixed(2)} hours`
       ]);
       
-      doc.autoTable({
+      pdfDoc.autoTable({
         startY: startY + 5,
         head: [["Date", "Volume", "Avg. Temperature", "UVC Hours"]],
         body: dailyData,
@@ -121,16 +119,16 @@ export function ReportVisual({ unit, reportType, metrics }: ReportVisualProps) {
       });
       
       // Add maintenance information
-      startY = doc.lastAutoTable.finalY + 10;
-      doc.setFontSize(14);
-      doc.text("Maintenance Information", 14, startY);
+      startY = pdfDoc.lastAutoTable.finalY + 10;
+      pdfDoc.setFontSize(14);
+      pdfDoc.text("Maintenance Information", 14, startY);
       
       const maintenanceInfo = [
         ["Last Maintenance", unit.last_maintenance ? new Date(unit.last_maintenance).toLocaleDateString() : "N/A"],
         ["Next Maintenance", unit.next_maintenance ? new Date(unit.next_maintenance).toLocaleDateString() : "N/A"]
       ];
       
-      doc.autoTable({
+      pdfDoc.autoTable({
         startY: startY + 5,
         head: [["Maintenance", "Date"]],
         body: maintenanceInfo,
@@ -140,9 +138,9 @@ export function ReportVisual({ unit, reportType, metrics }: ReportVisualProps) {
       
       // Add contact information
       if (unit.contact_name || unit.contact_email || unit.contact_phone) {
-        startY = doc.lastAutoTable.finalY + 10;
-        doc.setFontSize(14);
-        doc.text("Contact Information", 14, startY);
+        startY = pdfDoc.lastAutoTable.finalY + 10;
+        pdfDoc.setFontSize(14);
+        pdfDoc.text("Contact Information", 14, startY);
         
         const contactInfo = [
           ["Name", unit.contact_name || "N/A"],
@@ -150,7 +148,7 @@ export function ReportVisual({ unit, reportType, metrics }: ReportVisualProps) {
           ["Phone", unit.contact_phone || "N/A"]
         ];
         
-        doc.autoTable({
+        pdfDoc.autoTable({
           startY: startY + 5,
           head: [["Contact", "Details"]],
           body: contactInfo,
@@ -161,20 +159,20 @@ export function ReportVisual({ unit, reportType, metrics }: ReportVisualProps) {
       
       // Add notes if available
       if (unit.notes) {
-        startY = doc.lastAutoTable.finalY + 10;
-        doc.setFontSize(14);
-        doc.text("Notes", 14, startY);
-        doc.setFontSize(10);
-        doc.text(unit.notes, 14, startY + 10);
+        startY = pdfDoc.lastAutoTable.finalY + 10;
+        pdfDoc.setFontSize(14);
+        pdfDoc.text("Notes", 14, startY);
+        pdfDoc.setFontSize(10);
+        pdfDoc.text(unit.notes, 14, startY + 10);
       }
       
       // Add footer with generation date
       const generatedDate = new Date().toLocaleString();
-      doc.setFontSize(8);
-      doc.text(`Generated on: ${generatedDate}`, pageWidth - 15, doc.internal.pageSize.getHeight() - 10, { align: "right" });
+      pdfDoc.setFontSize(8);
+      pdfDoc.text(`Generated on: ${generatedDate}`, pageWidth - 15, pdfDoc.internal.pageSize.getHeight() - 10, { align: "right" });
       
       // Generate the PDF as a blob and download it
-      const pdfBlob = doc.output('blob');
+      const pdfBlob = pdfDoc.output('blob');
       const fileName = `${reportType}-report-${unit.name}-${format(new Date(), 'yyyy-MM-dd')}.pdf`;
       
       // Create URL object from the blob
