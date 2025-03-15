@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Download, Eye } from "lucide-react";
 import { toast } from "@/components/ui/use-toast";
-import { ReportData } from "@/types/analytics";
+import { ReportData, UnitData } from "@/types/analytics";
 import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { ReportVisual } from "./ReportVisual";
@@ -28,7 +28,7 @@ interface ReportsListProps {
 export function ReportsList({ reports }: ReportsListProps) {
   const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
   const [selectedReport, setSelectedReport] = useState<ReportData | null>(null);
-  const [unitData, setUnitData] = useState<any>(null);
+  const [unitData, setUnitData] = useState<UnitData | null>(null);
   const [reportMetrics, setReportMetrics] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -45,10 +45,10 @@ export function ReportsList({ reports }: ReportsListProps) {
         throw new Error("Unit data not found");
       }
       
-      const unitDataObj = {
+      const unitDataObj: UnitData = {
         id: unitSnapshot.id,
         ...unitSnapshot.data()
-      };
+      } as UnitData;
       
       // Calculate metrics from measurements
       const measurements = report.measurements || [];
@@ -136,10 +136,10 @@ export function ReportsList({ reports }: ReportsListProps) {
       const unitSnapshot = await getDoc(unitDocRef);
       
       if (unitSnapshot.exists()) {
-        const unitDataObj = {
+        const unitDataObj: UnitData = {
           id: unitSnapshot.id,
           ...unitSnapshot.data()
-        };
+        } as UnitData;
         setUnitData(unitDataObj);
         
         // Calculate metrics from measurements
