@@ -45,7 +45,7 @@ export function ReportVisual({ unit, reportType, metrics }: ReportVisualProps) {
     
     try {
       const pageWidth = doc.internal.pageSize.getWidth();
-      const marginSize = 14; // Define margin variable
+      const marginSize = 14; // Define margin variable here
       const usablePageWidth = pageWidth - (marginSize * 2);
       const colWidth = usablePageWidth / headers.length;
       const rowHeight = 10;
