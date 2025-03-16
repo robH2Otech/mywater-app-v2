@@ -44,25 +44,25 @@ export function ReportVisual({ unit, reportType, metrics }: ReportVisualProps) {
     
     try {
       const pageWidth = doc.internal.pageSize.getWidth();
-      const margin = 14;
-      const usablePageWidth = pageWidth - (margin * 2);
+      const marginSize = 14; // Define margin variable
+      const usablePageWidth = pageWidth - (marginSize * 2);
       const colWidth = usablePageWidth / headers.length;
       const rowHeight = 10;
       
       // Draw title
       doc.setFontSize(12);
       doc.setFont("helvetica", "bold");
-      doc.text(title, margin, startY);
+      doc.text(title, marginSize, startY);
       startY += 6;
       
       // Draw header row
       doc.setFillColor(0, 150, 0);
-      doc.rect(margin, startY, usablePageWidth, rowHeight, 'F');
+      doc.rect(marginSize, startY, usablePageWidth, rowHeight, 'F');
       
       // Draw header text
       doc.setTextColor(255, 255, 255);
       headers.forEach((header, i) => {
-        doc.text(header, margin + (i * colWidth) + 2, startY + 7);
+        doc.text(header, marginSize + (i * colWidth) + 2, startY + 7);
       });
       
       startY += rowHeight;
@@ -82,7 +82,7 @@ export function ReportVisual({ unit, reportType, metrics }: ReportVisualProps) {
           
           // Add page header if necessary
           doc.setFontSize(10);
-          doc.text(`${title} (continued)`, margin, startY);
+          doc.text(`${title} (continued)`, marginSize, startY);
           startY += 10;
         }
         
@@ -96,11 +96,11 @@ export function ReportVisual({ unit, reportType, metrics }: ReportVisualProps) {
           } else {
             doc.setFillColor(255, 255, 255);
           }
-          doc.rect(margin, startY, usablePageWidth, rowHeight, 'F');
+          doc.rect(marginSize, startY, usablePageWidth, rowHeight, 'F');
           
           // Add row border
           doc.setDrawColor(200, 200, 200);
-          doc.rect(margin, startY, usablePageWidth, rowHeight, 'S');
+          doc.rect(marginSize, startY, usablePageWidth, rowHeight, 'S');
           
           // Add cell text
           data[i].forEach((cell: any, j: number) => {
@@ -112,7 +112,7 @@ export function ReportVisual({ unit, reportType, metrics }: ReportVisualProps) {
             const displayText = cellText.length > maxChars ? 
                                cellText.substring(0, maxChars - 3) + '...' : cellText;
             
-            doc.text(displayText, margin + (j * colWidth) + 2, startY + 7);
+            doc.text(displayText, marginSize + (j * colWidth) + 2, startY + 7);
           });
           
           startY += rowHeight;
@@ -129,7 +129,7 @@ export function ReportVisual({ unit, reportType, metrics }: ReportVisualProps) {
     } catch (error) {
       console.error("Error in manual table drawing:", error);
       doc.setTextColor(255, 0, 0);
-      doc.text(`Error drawing table: ${error instanceof Error ? error.message : String(error)}`, margin, startY + 10);
+      doc.text(`Error drawing table: ${error instanceof Error ? error.message : String(error)}`, marginSize, startY + 10);
       return startY + 20;
     }
   };
