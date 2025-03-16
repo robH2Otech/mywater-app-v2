@@ -17,7 +17,7 @@ declare module 'jspdf' {
     autoTable: (options: any) => jsPDF;
     lastAutoTable: {
       finalY: number;
-    };
+    } | undefined;
   }
 }
 
@@ -37,6 +37,102 @@ interface ReportVisualProps {
 export function ReportVisual({ unit, reportType, metrics }: ReportVisualProps) {
   const isMobile = useIsMobile();
   const { startDate, endDate } = getDateRangeForReportType(reportType);
+  
+  // Manual table drawing function as a fallback
+  const drawTableManually = (doc: jsPDF, data: any[], headers: string[], startY: number, title: string) => {
+    console.log(`Drawing table manually: ${title} with ${data.length} rows`);
+    
+    try {
+      const pageWidth = doc.internal.pageSize.getWidth();
+      const margin = 14;
+      const usablePageWidth = pageWidth - (margin * 2);
+      const colWidth = usablePageWidth / headers.length;
+      const rowHeight = 10;
+      
+      // Draw title
+      doc.setFontSize(12);
+      doc.setFont("helvetica", "bold");
+      doc.text(title, margin, startY);
+      startY += 6;
+      
+      // Draw header row
+      doc.setFillColor(0, 150, 0);
+      doc.rect(margin, startY, usablePageWidth, rowHeight, 'F');
+      
+      // Draw header text
+      doc.setTextColor(255, 255, 255);
+      headers.forEach((header, i) => {
+        doc.text(header, margin + (i * colWidth) + 2, startY + 7);
+      });
+      
+      startY += rowHeight;
+      
+      // Draw data rows
+      doc.setFont("helvetica", "normal");
+      doc.setTextColor(0, 0, 0);
+      
+      // Use pagination for large data sets
+      const rowsPerPage = 25;
+      const totalPages = Math.ceil(data.length / rowsPerPage);
+      
+      for (let p = 0; p < totalPages; p++) {
+        if (p > 0) {
+          doc.addPage();
+          startY = 20; // Reset Y position for new page
+          
+          // Add page header if necessary
+          doc.setFontSize(10);
+          doc.text(`${title} (continued)`, margin, startY);
+          startY += 10;
+        }
+        
+        const startIdx = p * rowsPerPage;
+        const endIdx = Math.min(startIdx + rowsPerPage, data.length);
+        
+        for (let i = startIdx; i < endIdx; i++) {
+          // Add row background (alternating)
+          if (i % 2 === 0) {
+            doc.setFillColor(240, 240, 240);
+          } else {
+            doc.setFillColor(255, 255, 255);
+          }
+          doc.rect(margin, startY, usablePageWidth, rowHeight, 'F');
+          
+          // Add row border
+          doc.setDrawColor(200, 200, 200);
+          doc.rect(margin, startY, usablePageWidth, rowHeight, 'S');
+          
+          // Add cell text
+          data[i].forEach((cell: any, j: number) => {
+            // Handle different data types
+            const cellText = (cell !== null && cell !== undefined) ? String(cell) : 'N/A';
+            
+            // Truncate text if too long for cell
+            const maxChars = colWidth / 2; // Approximate chars that fit in column
+            const displayText = cellText.length > maxChars ? 
+                               cellText.substring(0, maxChars - 3) + '...' : cellText;
+            
+            doc.text(displayText, margin + (j * colWidth) + 2, startY + 7);
+          });
+          
+          startY += rowHeight;
+          
+          // Check if we need a new page
+          if (startY > doc.internal.pageSize.getHeight() - 20) {
+            doc.addPage();
+            startY = 20;
+          }
+        }
+      }
+      
+      return startY + 10; // Return the new Y position
+    } catch (error) {
+      console.error("Error in manual table drawing:", error);
+      doc.setTextColor(255, 0, 0);
+      doc.text(`Error drawing table: ${error instanceof Error ? error.message : String(error)}`, margin, startY + 10);
+      return startY + 20;
+    }
+  };
   
   const generatePDF = () => {
     try {
@@ -86,25 +182,31 @@ export function ReportVisual({ unit, reportType, metrics }: ReportVisualProps) {
         ["Total Capacity", `${unit.total_volume || 0} units`]
       ];
       
+      // First try with autoTable
+      let currentY = 55;
       console.log("Creating unit info table...");
       try {
         doc.autoTable({
-          startY: 55,
+          startY: currentY,
           head: [["Property", "Value"]],
           body: unitInfo,
           theme: 'grid',
           headStyles: { fillColor: [0, 150, 0] }
         });
         console.log("Unit info table created successfully");
+        currentY = doc.lastAutoTable?.finalY ? doc.lastAutoTable.finalY + 10 : 120;
       } catch (tableError) {
-        console.error("Error creating unit info table:", tableError);
-        throw new Error(`Failed to create unit info table: ${tableError}`);
+        // Fallback to manual table drawing
+        console.error("Error creating unit info table with autoTable:", tableError);
+        console.log("Falling back to manual table drawing...");
+        
+        const unitInfoHeaders = ["Property", "Value"];
+        currentY = drawTableManually(doc, unitInfo, unitInfoHeaders, currentY, "Unit Information");
       }
       
       // Add performance metrics section
       console.log("Adding performance metrics...");
       doc.setFontSize(14);
-      let currentY = doc.lastAutoTable ? doc.lastAutoTable.finalY + 10 : 120;
       doc.text("Performance Metrics", 14, currentY);
       
       const performanceMetrics = [
@@ -125,19 +227,21 @@ export function ReportVisual({ unit, reportType, metrics }: ReportVisualProps) {
           headStyles: { fillColor: [0, 150, 0] }
         });
         console.log("Performance metrics table created successfully");
+        currentY = doc.lastAutoTable?.finalY ? doc.lastAutoTable.finalY + 10 : 200;
       } catch (tableError) {
+        // Fallback to manual table drawing
         console.error("Error creating performance metrics table:", tableError);
-        throw new Error(`Failed to create performance metrics table: ${tableError}`);
+        const metricsHeaders = ["Metric", "Value"];
+        currentY = drawTableManually(doc, performanceMetrics, metricsHeaders, currentY + 5, "Performance Metrics");
       }
       
       // Add daily data table
       console.log("Adding daily measurements...");
       doc.setFontSize(14);
-      currentY = doc.lastAutoTable ? doc.lastAutoTable.finalY + 10 : 200;
       doc.text("Daily Measurements", 14, currentY);
       
       const dailyData = metrics.dailyData.map(day => [
-        day.date,
+        new Date(day.date).toLocaleDateString(),
         `${day.volume.toFixed(2)} units`,
         `${day.avgTemperature.toFixed(2)} °C`,
         `${day.uvcHours.toFixed(2)} hours`
@@ -150,18 +254,25 @@ export function ReportVisual({ unit, reportType, metrics }: ReportVisualProps) {
           head: [["Date", "Volume", "Avg. Temperature", "UVC Hours"]],
           body: dailyData,
           theme: 'grid',
-          headStyles: { fillColor: [0, 150, 0] }
+          headStyles: { fillColor: [0, 150, 0] },
+          didDrawPage: (data) => {
+            // Add header to each page
+            doc.setFontSize(8);
+            doc.text(`${reportType.toUpperCase()} REPORT - ${unit.name || ""}`, pageWidth / 2, 10, { align: "center" });
+          }
         });
         console.log("Daily measurements table created successfully");
+        currentY = doc.lastAutoTable?.finalY ? doc.lastAutoTable.finalY + 10 : 280;
       } catch (tableError) {
+        // Fallback to manual table drawing
         console.error("Error creating daily measurements table:", tableError);
-        throw new Error(`Failed to create daily measurements table: ${tableError}`);
+        const dailyHeaders = ["Date", "Volume", "Avg. Temperature", "UVC Hours"];
+        currentY = drawTableManually(doc, dailyData, dailyHeaders, currentY + 5, "Daily Measurements");
       }
       
       // Add maintenance information
       console.log("Adding maintenance information...");
       doc.setFontSize(14);
-      currentY = doc.lastAutoTable ? doc.lastAutoTable.finalY + 10 : 280;
       doc.text("Maintenance Information", 14, currentY);
       
       const maintenanceInfo = [
@@ -179,16 +290,18 @@ export function ReportVisual({ unit, reportType, metrics }: ReportVisualProps) {
           headStyles: { fillColor: [0, 150, 0] }
         });
         console.log("Maintenance info table created successfully");
+        currentY = doc.lastAutoTable?.finalY ? doc.lastAutoTable.finalY + 10 : 320;
       } catch (tableError) {
+        // Fallback to manual table drawing
         console.error("Error creating maintenance info table:", tableError);
-        throw new Error(`Failed to create maintenance info table: ${tableError}`);
+        const maintenanceHeaders = ["Maintenance", "Date"];
+        currentY = drawTableManually(doc, maintenanceInfo, maintenanceHeaders, currentY + 5, "Maintenance Information");
       }
       
       // Add contact information
       console.log("Adding contact information...");
       if (unit.contact_name || unit.contact_email || unit.contact_phone) {
         doc.setFontSize(14);
-        currentY = doc.lastAutoTable ? doc.lastAutoTable.finalY + 10 : 320;
         doc.text("Contact Information", 14, currentY);
         
         const contactInfo = [
@@ -207,9 +320,12 @@ export function ReportVisual({ unit, reportType, metrics }: ReportVisualProps) {
             headStyles: { fillColor: [0, 150, 0] }
           });
           console.log("Contact info table created successfully");
+          currentY = doc.lastAutoTable?.finalY ? doc.lastAutoTable.finalY + 10 : 350;
         } catch (tableError) {
+          // Fallback to manual table drawing
           console.error("Error creating contact info table:", tableError);
-          throw new Error(`Failed to create contact info table: ${tableError}`);
+          const contactHeaders = ["Contact", "Details"];
+          currentY = drawTableManually(doc, contactInfo, contactHeaders, currentY + 5, "Contact Information");
         }
       }
       
@@ -217,10 +333,13 @@ export function ReportVisual({ unit, reportType, metrics }: ReportVisualProps) {
       console.log("Adding notes...");
       if (unit.notes) {
         doc.setFontSize(14);
-        currentY = doc.lastAutoTable ? doc.lastAutoTable.finalY + 10 : 350;
+        currentY = doc.lastAutoTable?.finalY ? doc.lastAutoTable.finalY + 10 : 350;
         doc.text("Notes", 14, currentY);
         doc.setFontSize(10);
-        doc.text(unit.notes, 14, currentY + 10);
+        
+        // Split notes into multiple lines if needed
+        const notesLines = doc.splitTextToSize(unit.notes, pageWidth - 28);
+        doc.text(notesLines, 14, currentY + 10);
       }
       
       // Add footer with generation date
