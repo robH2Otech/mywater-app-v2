@@ -7,7 +7,7 @@ import { ReportData } from "@/types/analytics";
 import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { ReportVisual } from "./ReportVisual";
-import { doc, getDoc, deleteDoc } from "firebase/firestore";
+import { doc, getDoc } from "firebase/firestore";
 import { db } from "@/integrations/firebase/client";
 import { calculateMetricsFromMeasurements } from "@/utils/reportGenerator";
 import { 
@@ -34,35 +34,6 @@ export function ReportsList({ reports, onDeleteReport }: ReportsListProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [reportToDelete, setReportToDelete] = useState<string | null>(null);
-
-  const handleDownloadReport = async (reportId: string, content: string) => {
-    try {
-      // Create a Blob from the content
-      const blob = new Blob([content], { type: 'text/plain' });
-      const url = window.URL.createObjectURL(blob);
-      
-      // Create a temporary link and trigger download
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = `report-${reportId}.txt`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      window.URL.revokeObjectURL(url);
-
-      toast({
-        title: "Success",
-        description: "Report downloaded successfully",
-      });
-    } catch (error) {
-      console.error("Error downloading report:", error);
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Failed to download report",
-      });
-    }
-  };
 
   const handleViewReport = async (report: ReportData) => {
     setIsLoading(true);
@@ -175,7 +146,7 @@ export function ReportsList({ reports, onDeleteReport }: ReportsListProps) {
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => handleDownloadReport(report.id, report.content)}
+                    onClick={() => handleViewReport(report)}
                     className="flex items-center"
                   >
                     <Download className="h-4 w-4 mr-2" />

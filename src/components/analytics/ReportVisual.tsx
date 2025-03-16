@@ -3,7 +3,7 @@ import { UnitData } from "@/types/analytics";
 import { ReportChart } from "./ReportChart";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Download, FileText, Printer, Trash2 } from "lucide-react";
+import { Download, FileText, Printer } from "lucide-react";
 import { jsPDF } from "jspdf";
 import 'jspdf-autotable';
 import { format } from "date-fns";
@@ -250,7 +250,7 @@ export function ReportVisual({ unit, reportType, metrics }: ReportVisualProps) {
         ["Name", unit.name || "N/A"],
         ["Location", unit.location || "N/A"],
         ["Status", unit.status || "N/A"],
-        ["Total Capacity", `${unit.total_volume || 0} units`]
+        ["Total Capacity", `${unit.total_volume || 0} m³`]
       ];
       
       // First try with autoTable
@@ -281,9 +281,9 @@ export function ReportVisual({ unit, reportType, metrics }: ReportVisualProps) {
       doc.text("Performance Metrics", 14, currentY);
       
       const performanceMetrics = [
-        ["Total Volume Processed", `${metrics.totalVolume.toFixed(2)} units`],
-        ["Average Daily Volume", `${metrics.avgVolume.toFixed(2)} units`],
-        ["Maximum Daily Volume", `${metrics.maxVolume.toFixed(2)} units`],
+        ["Total Volume Processed", `${metrics.totalVolume.toFixed(2)} m³`],
+        ["Average Daily Volume", `${metrics.avgVolume.toFixed(2)} m³`],
+        ["Maximum Daily Volume", `${metrics.maxVolume.toFixed(2)} m³`],
         ["Average Temperature", `${metrics.avgTemperature.toFixed(2)} °C`],
         ["Total UVC Hours", `${metrics.totalUvcHours.toFixed(2)} hours`]
       ];
@@ -313,7 +313,7 @@ export function ReportVisual({ unit, reportType, metrics }: ReportVisualProps) {
       
       const dailyData = metrics.dailyData.map(day => [
         new Date(day.date).toLocaleDateString(),
-        `${day.volume.toFixed(2)} units`,
+        `${day.volume.toFixed(2)} m³`,
         `${day.avgTemperature.toFixed(2)} °C`,
         `${day.uvcHours.toFixed(2)} hours`
       ]);
@@ -501,7 +501,7 @@ export function ReportVisual({ unit, reportType, metrics }: ReportVisualProps) {
           <div className="grid grid-cols-2 gap-4">
             <div>
               <p className="text-gray-400 text-sm">Total Volume</p>
-              <p className="text-xl font-semibold">{metrics.totalVolume.toFixed(2)} units</p>
+              <p className="text-xl font-semibold">{metrics.totalVolume.toFixed(2)} m³</p>
             </div>
             <div>
               <p className="text-gray-400 text-sm">Avg. Temperature</p>
@@ -564,6 +564,7 @@ export function ReportVisual({ unit, reportType, metrics }: ReportVisualProps) {
           data={metrics.dailyData} 
           title="Daily Water Volume" 
           type="volume" 
+          unit="m³"
         />
         
         <ReportChart 
@@ -598,7 +599,7 @@ export function ReportVisual({ unit, reportType, metrics }: ReportVisualProps) {
                     {new Date(day.date).toLocaleDateString()}
                   </td>
                   <td className="px-4 py-2 whitespace-nowrap text-sm">
-                    {day.volume.toFixed(2)} units
+                    {day.volume.toFixed(2)} m³
                   </td>
                   <td className="px-4 py-2 whitespace-nowrap text-sm">
                     {day.avgTemperature.toFixed(2)} °C

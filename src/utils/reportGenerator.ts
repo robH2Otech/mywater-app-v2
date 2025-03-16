@@ -160,12 +160,12 @@ Unit Information:
 Name: ${unitData.name || 'N/A'}
 Location: ${unitData.location || 'N/A'}
 Status: ${unitData.status || 'N/A'}
-Total Volume: ${unitData.total_volume || 0} units
+Total Volume: ${unitData.total_volume || 0} m³
 
 Performance Metrics:
-Total Volume Processed: ${metrics.totalVolume.toFixed(2)} units
-Average Daily Volume: ${metrics.avgVolume.toFixed(2)} units
-Maximum Daily Volume: ${metrics.maxVolume.toFixed(2)} units
+Total Volume Processed: ${metrics.totalVolume.toFixed(2)} m³
+Average Daily Volume: ${metrics.avgVolume.toFixed(2)} m³
+Maximum Daily Volume: ${metrics.maxVolume.toFixed(2)} m³
 Average Temperature: ${metrics.avgTemperature.toFixed(2)} °C
 Total UVC Hours: ${metrics.totalUvcHours.toFixed(2)} hours
 

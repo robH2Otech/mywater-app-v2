@@ -14,9 +14,10 @@ interface ReportChartProps {
   data: ChartData[];
   title: string;
   type: 'volume' | 'temperature' | 'uvc';
+  unit?: string;
 }
 
-export function ReportChart({ data, title, type }: ReportChartProps) {
+export function ReportChart({ data, title, type, unit }: ReportChartProps) {
   // Format date for display
   const formattedData = data.map(item => ({
     ...item,
@@ -36,9 +37,10 @@ export function ReportChart({ data, title, type }: ReportChartProps) {
               <Tooltip 
                 contentStyle={{ backgroundColor: '#222', border: '1px solid #444' }} 
                 labelStyle={{ color: '#fff' }}
+                formatter={(value: number) => [`${value.toFixed(2)} ${unit || ''}`, type === 'volume' ? 'Volume' : '']}
               />
               <Legend />
-              <Bar dataKey="volume" name="Volume" fill="#4CAF50" />
+              <Bar dataKey="volume" name={`Volume${unit ? ` (${unit})` : ''}`} fill="#4CAF50" />
             </BarChart>
           ) : type === 'temperature' ? (
             <LineChart data={formattedData}>
