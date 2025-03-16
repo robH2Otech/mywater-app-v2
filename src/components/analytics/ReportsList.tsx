@@ -23,9 +23,10 @@ import {
 
 interface ReportsListProps {
   reports: ReportData[];
+  onDeleteReport: (reportId: string) => Promise<void>;
 }
 
-export function ReportsList({ reports }: ReportsListProps) {
+export function ReportsList({ reports, onDeleteReport }: ReportsListProps) {
   const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
   const [selectedReport, setSelectedReport] = useState<ReportData | null>(null);
   const [unitData, setUnitData] = useState<any>(null);
@@ -113,20 +114,16 @@ export function ReportsList({ reports }: ReportsListProps) {
     if (!reportToDelete) return;
     
     try {
-      // Delete the report document from Firestore
-      const reportDocRef = doc(db, "reports", reportToDelete);
-      await deleteDoc(reportDocRef);
+      await onDeleteReport(reportToDelete);
       
       toast({
         title: "Success",
         description: "Report deleted successfully",
       });
       
-      // Close dialog and refresh data
+      // Close dialog
       setIsDeleteDialogOpen(false);
       setReportToDelete(null);
-      
-      // Note: The list will refresh automatically on the next query due to React Query's refetch
     } catch (error) {
       console.error("Error deleting report:", error);
       toast({
@@ -138,7 +135,11 @@ export function ReportsList({ reports }: ReportsListProps) {
   };
 
   if (reports.length === 0) {
-    return null;
+    return (
+      <div className="text-center py-8">
+        <p className="text-gray-400">No reports available for the selected unit.</p>
+      </div>
+    );
   }
 
   return (
@@ -157,7 +158,7 @@ export function ReportsList({ reports }: ReportsListProps) {
                     Generated on {new Date(report.created_at).toLocaleString()}
                   </p>
                   <div className="mt-2 text-sm text-gray-300 line-clamp-3 whitespace-pre-wrap">
-                    {report.content}
+                    {report.content.substring(0, 150)}...
                   </div>
                 </div>
                 <div className="flex space-x-2">

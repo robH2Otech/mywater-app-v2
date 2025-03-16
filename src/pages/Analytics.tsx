@@ -3,6 +3,9 @@ import { ReportGenerationForm } from "@/components/analytics/ReportGenerationFor
 import { ReportsList } from "@/components/analytics/ReportsList";
 import { useReports } from "@/hooks/useReports";
 import { useState } from "react";
+import { deleteDoc, doc } from "firebase/firestore";
+import { db } from "@/integrations/firebase/client";
+import { toast } from "@/components/ui/use-toast";
 
 export function Analytics() {
   const [selectedUnit, setSelectedUnit] = useState("");
@@ -10,6 +13,25 @@ export function Analytics() {
 
   const handleReportGenerated = () => {
     refetchReports();
+  };
+
+  const handleDeleteReport = async (reportId: string) => {
+    try {
+      // Delete the report document from Firestore
+      const reportDocRef = doc(db, "reports", reportId);
+      await deleteDoc(reportDocRef);
+      
+      // Refresh the reports list
+      refetchReports();
+    } catch (error) {
+      console.error("Error deleting report:", error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to delete report",
+      });
+      throw error; // Rethrow to be handled by the component
+    }
   };
 
   return (
@@ -23,7 +45,8 @@ export function Analytics() {
       />
       
       <ReportsList 
-        reports={reports} 
+        reports={reports}
+        onDeleteReport={handleDeleteReport}
       />
     </div>
   );
