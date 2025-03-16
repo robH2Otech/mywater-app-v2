@@ -9,6 +9,17 @@ import 'jspdf-autotable';
 import { format } from "date-fns";
 import { getDateRangeForReportType } from "@/utils/reportGenerator";
 import { toast } from "@/components/ui/use-toast";
+import { useIsMobile } from "@/hooks/use-mobile";
+
+// Fix for TypeScript integration with jsPDF-AutoTable
+declare module 'jspdf' {
+  interface jsPDF {
+    autoTable: (options: any) => jsPDF;
+    lastAutoTable: {
+      finalY: number;
+    };
+  }
+}
 
 interface ReportVisualProps {
   unit: UnitData;
@@ -24,6 +35,7 @@ interface ReportVisualProps {
 }
 
 export function ReportVisual({ unit, reportType, metrics }: ReportVisualProps) {
+  const isMobile = useIsMobile();
   const { startDate, endDate } = getDateRangeForReportType(reportType);
   
   const generatePDF = () => {
@@ -34,9 +46,6 @@ export function ReportVisual({ unit, reportType, metrics }: ReportVisualProps) {
       // Create a new jsPDF instance
       console.log("Initializing jsPDF...");
       const doc = new jsPDF();
-      if (!doc) {
-        throw new Error("Failed to initialize jsPDF instance");
-      }
       console.log("jsPDF initialized successfully");
       
       const pageWidth = doc.internal.pageSize.getWidth();
@@ -79,7 +88,6 @@ export function ReportVisual({ unit, reportType, metrics }: ReportVisualProps) {
       
       console.log("Creating unit info table...");
       try {
-        // @ts-ignore - jspdf-autotable types
         doc.autoTable({
           startY: 55,
           head: [["Property", "Value"]],
@@ -96,7 +104,8 @@ export function ReportVisual({ unit, reportType, metrics }: ReportVisualProps) {
       // Add performance metrics section
       console.log("Adding performance metrics...");
       doc.setFontSize(14);
-      doc.text("Performance Metrics", 14, doc.lastAutoTable.finalY + 10);
+      let currentY = doc.lastAutoTable ? doc.lastAutoTable.finalY + 10 : 120;
+      doc.text("Performance Metrics", 14, currentY);
       
       const performanceMetrics = [
         ["Total Volume Processed", `${metrics.totalVolume.toFixed(2)} units`],
@@ -108,9 +117,8 @@ export function ReportVisual({ unit, reportType, metrics }: ReportVisualProps) {
       
       console.log("Creating performance metrics table...");
       try {
-        // @ts-ignore - jspdf-autotable types
         doc.autoTable({
-          startY: doc.lastAutoTable.finalY + 15,
+          startY: currentY + 5,
           head: [["Metric", "Value"]],
           body: performanceMetrics,
           theme: 'grid',
@@ -125,7 +133,8 @@ export function ReportVisual({ unit, reportType, metrics }: ReportVisualProps) {
       // Add daily data table
       console.log("Adding daily measurements...");
       doc.setFontSize(14);
-      doc.text("Daily Measurements", 14, doc.lastAutoTable.finalY + 10);
+      currentY = doc.lastAutoTable ? doc.lastAutoTable.finalY + 10 : 200;
+      doc.text("Daily Measurements", 14, currentY);
       
       const dailyData = metrics.dailyData.map(day => [
         day.date,
@@ -136,9 +145,8 @@ export function ReportVisual({ unit, reportType, metrics }: ReportVisualProps) {
       
       console.log("Creating daily measurements table...");
       try {
-        // @ts-ignore - jspdf-autotable types
         doc.autoTable({
-          startY: doc.lastAutoTable.finalY + 15,
+          startY: currentY + 5,
           head: [["Date", "Volume", "Avg. Temperature", "UVC Hours"]],
           body: dailyData,
           theme: 'grid',
@@ -153,7 +161,8 @@ export function ReportVisual({ unit, reportType, metrics }: ReportVisualProps) {
       // Add maintenance information
       console.log("Adding maintenance information...");
       doc.setFontSize(14);
-      doc.text("Maintenance Information", 14, doc.lastAutoTable.finalY + 10);
+      currentY = doc.lastAutoTable ? doc.lastAutoTable.finalY + 10 : 280;
+      doc.text("Maintenance Information", 14, currentY);
       
       const maintenanceInfo = [
         ["Last Maintenance", unit.last_maintenance ? new Date(unit.last_maintenance).toLocaleDateString() : "N/A"],
@@ -162,9 +171,8 @@ export function ReportVisual({ unit, reportType, metrics }: ReportVisualProps) {
       
       console.log("Creating maintenance info table...");
       try {
-        // @ts-ignore - jspdf-autotable types
         doc.autoTable({
-          startY: doc.lastAutoTable.finalY + 15,
+          startY: currentY + 5,
           head: [["Maintenance", "Date"]],
           body: maintenanceInfo,
           theme: 'grid',
@@ -180,7 +188,8 @@ export function ReportVisual({ unit, reportType, metrics }: ReportVisualProps) {
       console.log("Adding contact information...");
       if (unit.contact_name || unit.contact_email || unit.contact_phone) {
         doc.setFontSize(14);
-        doc.text("Contact Information", 14, doc.lastAutoTable.finalY + 10);
+        currentY = doc.lastAutoTable ? doc.lastAutoTable.finalY + 10 : 320;
+        doc.text("Contact Information", 14, currentY);
         
         const contactInfo = [
           ["Name", unit.contact_name || "N/A"],
@@ -190,9 +199,8 @@ export function ReportVisual({ unit, reportType, metrics }: ReportVisualProps) {
         
         console.log("Creating contact info table...");
         try {
-          // @ts-ignore - jspdf-autotable types
           doc.autoTable({
-            startY: doc.lastAutoTable.finalY + 15,
+            startY: currentY + 5,
             head: [["Contact", "Details"]],
             body: contactInfo,
             theme: 'grid',
@@ -209,9 +217,10 @@ export function ReportVisual({ unit, reportType, metrics }: ReportVisualProps) {
       console.log("Adding notes...");
       if (unit.notes) {
         doc.setFontSize(14);
-        doc.text("Notes", 14, doc.lastAutoTable.finalY + 10);
+        currentY = doc.lastAutoTable ? doc.lastAutoTable.finalY + 10 : 350;
+        doc.text("Notes", 14, currentY);
         doc.setFontSize(10);
-        doc.text(unit.notes, 14, doc.lastAutoTable.finalY + 20);
+        doc.text(unit.notes, 14, currentY + 10);
       }
       
       // Add footer with generation date
@@ -279,14 +288,14 @@ export function ReportVisual({ unit, reportType, metrics }: ReportVisualProps) {
   
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <h2 className="text-xl font-semibold">
           {reportType.charAt(0).toUpperCase() + reportType.slice(1)} Report: {unit.name}
         </h2>
         <div className="flex space-x-2">
           <Button 
             variant="outline" 
-            size="sm" 
+            size={isMobile ? "sm" : "default"}
             onClick={generatePDF}
             className="flex items-center"
           >
