@@ -22,7 +22,9 @@ export function Analytics() {
         onReportGenerated={handleReportGenerated} 
       />
       
-      <ReportsList reports={reports} />
+      <ReportsList 
+        reports={reports} 
+      />
     </div>
   );
 }

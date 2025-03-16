@@ -28,5 +28,7 @@ export function useReports(unitId: string) {
       return reportsList;
     },
     enabled: !!unitId,
+    refetchOnWindowFocus: true, // Refetch when window gets focus
+    refetchOnMount: true, // Refetch when component mounts
   });
 }

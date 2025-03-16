@@ -1,15 +1,25 @@
 
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Download, Eye } from "lucide-react";
+import { Download, Eye, Trash2 } from "lucide-react";
 import { toast } from "@/components/ui/use-toast";
 import { ReportData } from "@/types/analytics";
 import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { ReportVisual } from "./ReportVisual";
-import { doc, getDoc } from "firebase/firestore";
+import { doc, getDoc, deleteDoc } from "firebase/firestore";
 import { db } from "@/integrations/firebase/client";
 import { calculateMetricsFromMeasurements } from "@/utils/reportGenerator";
+import { 
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 interface ReportsListProps {
   reports: ReportData[];
@@ -21,6 +31,8 @@ export function ReportsList({ reports }: ReportsListProps) {
   const [unitData, setUnitData] = useState<any>(null);
   const [reportMetrics, setReportMetrics] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [reportToDelete, setReportToDelete] = useState<string | null>(null);
 
   const handleDownloadReport = async (reportId: string, content: string) => {
     try {
@@ -92,6 +104,39 @@ export function ReportsList({ reports }: ReportsListProps) {
     }
   };
 
+  const confirmDeleteReport = (reportId: string) => {
+    setReportToDelete(reportId);
+    setIsDeleteDialogOpen(true);
+  };
+
+  const handleDeleteReport = async () => {
+    if (!reportToDelete) return;
+    
+    try {
+      // Delete the report document from Firestore
+      const reportDocRef = doc(db, "reports", reportToDelete);
+      await deleteDoc(reportDocRef);
+      
+      toast({
+        title: "Success",
+        description: "Report deleted successfully",
+      });
+      
+      // Close dialog and refresh data
+      setIsDeleteDialogOpen(false);
+      setReportToDelete(null);
+      
+      // Note: The list will refresh automatically on the next query due to React Query's refetch
+    } catch (error) {
+      console.error("Error deleting report:", error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to delete report",
+      });
+    }
+  };
+
   if (reports.length === 0) {
     return null;
   }
@@ -135,6 +180,15 @@ export function ReportsList({ reports }: ReportsListProps) {
                     <Download className="h-4 w-4 mr-2" />
                     Download
                   </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => confirmDeleteReport(report.id)}
+                    className="flex items-center text-red-500 hover:text-red-600"
+                  >
+                    <Trash2 className="h-4 w-4 mr-2" />
+                    Delete
+                  </Button>
                 </div>
               </div>
             </Card>
@@ -161,6 +215,23 @@ export function ReportsList({ reports }: ReportsListProps) {
           )}
         </DialogContent>
       </Dialog>
+      
+      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Report</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete this report? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteReport} className="bg-red-500 hover:bg-red-600">
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 }
