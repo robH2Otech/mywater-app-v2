@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { UserAvatar } from "./UserAvatar";
 import { WelcomeMessage } from "./WelcomeMessage";
@@ -6,13 +5,8 @@ import { NotificationsMenu } from "./NotificationsMenu";
 import { collection, query, where, getDocs } from "firebase/firestore";
 import { onAuthStateChanged } from "firebase/auth";
 import { db, auth } from "@/integrations/firebase/client";
-import { Menu } from "lucide-react";
 
-interface HeaderProps {
-  onMenuClick?: () => void;
-}
-
-export const Header = ({ onMenuClick }: HeaderProps = {}) => {
+export const Header = () => {
   const [firstName, setFirstName] = useState<string>("");
   const [lastName, setLastName] = useState<string>("");
 
@@ -57,18 +51,7 @@ export const Header = ({ onMenuClick }: HeaderProps = {}) => {
 
   return (
     <header className="h-16 bg-spotify-darker border-b border-white/10 flex items-center justify-between px-6">
-      <div className="flex items-center">
-        {onMenuClick && (
-          <button 
-            onClick={onMenuClick} 
-            className="mr-4 text-white/70 hover:text-white focus:outline-none"
-            aria-label="Toggle sidebar"
-          >
-            <Menu className="h-6 w-6" />
-          </button>
-        )}
-        <WelcomeMessage firstName={firstName} />
-      </div>
+      <WelcomeMessage firstName={firstName} />
       <div className="flex items-center gap-4">
         <NotificationsMenu />
         <UserAvatar firstName={firstName} lastName={lastName} />

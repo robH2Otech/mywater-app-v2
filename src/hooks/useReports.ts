@@ -1,14 +1,11 @@
 
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { collection, query, where, getDocs, orderBy, doc, deleteDoc } from "firebase/firestore";
+import { useQuery } from "@tanstack/react-query";
+import { collection, query, where, getDocs, orderBy } from "firebase/firestore";
 import { db } from "@/integrations/firebase/client";
 import { ReportData } from "@/types/analytics";
-import { toast } from "@/components/ui/use-toast";
 
 export function useReports(unitId: string) {
-  const queryClient = useQueryClient();
-  
-  const reportsQuery = useQuery({
+  return useQuery({
     queryKey: ["reports", unitId],
     queryFn: async () => {
       if (!unitId) return [];
@@ -32,35 +29,4 @@ export function useReports(unitId: string) {
     },
     enabled: !!unitId,
   });
-
-  const deleteReportMutation = useMutation({
-    mutationFn: async (reportId: string) => {
-      console.log("Deleting report:", reportId);
-      const reportRef = doc(db, "reports", reportId);
-      await deleteDoc(reportRef);
-      return reportId;
-    },
-    onSuccess: (reportId) => {
-      // Invalidate and refetch reports after deletion
-      queryClient.invalidateQueries({ queryKey: ["reports", unitId] });
-      toast({
-        title: "Success",
-        description: "Report deleted successfully",
-      });
-    },
-    onError: (error) => {
-      console.error("Error deleting report:", error);
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Failed to delete report. Please try again.",
-      });
-    }
-  });
-
-  return {
-    ...reportsQuery,
-    deleteReport: deleteReportMutation.mutate,
-    isDeletingReport: deleteReportMutation.isPending
-  };
 }
