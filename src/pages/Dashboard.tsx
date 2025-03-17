@@ -23,12 +23,18 @@ export const Dashboard = () => {
       const processedUnits = unitsSnapshot.docs.map(doc => {
         const data = doc.data();
         
-        // Ensure total_volume is a number
+        // Ensure total_volume is a number (this is the last 24h volume)
         let totalVolume = data.total_volume;
         if (typeof totalVolume === 'string') {
           totalVolume = parseFloat(totalVolume);
         } else if (totalVolume === undefined || totalVolume === null) {
           totalVolume = 0;
+        }
+        
+        // Ensure last_24h_volume is set
+        let last24hVolume = data.last_24h_volume || totalVolume;
+        if (typeof last24hVolume === 'string') {
+          last24hVolume = parseFloat(last24hVolume);
         }
         
         // Recalculate status based on current volume
@@ -38,6 +44,7 @@ export const Dashboard = () => {
           id: doc.id,
           ...data,
           total_volume: totalVolume,
+          last_24h_volume: last24hVolume,
           status: status // Override with calculated status
         };
       }) as UnitData[];
@@ -113,13 +120,17 @@ export const Dashboard = () => {
   );
 };
 
-// Enhanced helper function to calculate total volume from all units
+// Enhanced helper function to calculate total volume from all units (last 24h)
 function calculateTotalVolume(units: UnitData[]): string {
   const total = units.reduce((sum, unit) => {
-    // Ensure we're working with numbers
+    // Prefer last_24h_volume if available, otherwise fall back to total_volume
     let volume = 0;
     
-    if (unit.total_volume !== undefined && unit.total_volume !== null) {
+    if (unit.last_24h_volume !== undefined && unit.last_24h_volume !== null) {
+      volume = typeof unit.last_24h_volume === 'string' 
+        ? parseFloat(unit.last_24h_volume) 
+        : unit.last_24h_volume;
+    } else if (unit.total_volume !== undefined && unit.total_volume !== null) {
       volume = typeof unit.total_volume === 'string' 
         ? parseFloat(unit.total_volume) 
         : unit.total_volume;

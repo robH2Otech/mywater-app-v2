@@ -7,6 +7,7 @@ export interface UnitData {
   location?: string;
   status?: string;
   total_volume?: number | string;
+  last_24h_volume?: number | string; // Added for explicitly tracking 24h volume
   last_maintenance?: string;
   next_maintenance?: string;
   setup_date?: string;

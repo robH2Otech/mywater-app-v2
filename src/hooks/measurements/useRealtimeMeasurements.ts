@@ -1,16 +1,16 @@
 
 import { useState, useEffect } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { onSnapshot } from "firebase/firestore";
+import { onSnapshot, query, collection, orderBy, limit, where, Timestamp } from "firebase/firestore";
 import { Measurement } from "@/utils/measurements/types";
 import { 
   fetchUnitStartingVolume, 
   updateUnitTotalVolume 
 } from "./useUnitVolume";
 import { 
-  createMeasurementsQuery,
-  processMeasurementDocuments
+  getMeasurementsCollectionPath
 } from "./useMeasurementCollection";
+import { db } from "@/integrations/firebase/client";
 
 export function useRealtimeMeasurements(unitId: string, count: number = 24) {
   const [measurements, setMeasurements] = useState<(Measurement & { id: string })[]>([]);
@@ -31,28 +31,62 @@ export function useRealtimeMeasurements(unitId: string, count: number = 24) {
     let unsubscribe: () => void;
 
     try {
-      const measurementsQuery = createMeasurementsQuery(unitId, count);
+      // Calculate timestamp for 24 hours ago
+      const twentyFourHoursAgo = new Date();
+      twentyFourHoursAgo.setHours(twentyFourHoursAgo.getHours() - 24);
+      const timestamp24HoursAgo = Timestamp.fromDate(twentyFourHoursAgo);
+      
+      // Get the collection path
+      const collectionPath = getMeasurementsCollectionPath(unitId);
+      const measurementsCollectionRef = collection(db, collectionPath);
+      
+      // Create query that filters for only the last 24 hours of data
+      const measurementsQuery = query(
+        measurementsCollectionRef,
+        where("raw_timestamp", ">=", timestamp24HoursAgo),
+        orderBy("raw_timestamp", "desc"),
+        limit(count)
+      );
       
       unsubscribe = onSnapshot(
         measurementsQuery,
         async (querySnapshot) => {
           try {
-            const startingVolume = await fetchUnitStartingVolume(unitId);
+            // Process the documents to create measurement objects
+            const measurementsData = querySnapshot.docs.map(doc => {
+              const data = doc.data();
+              
+              // Format timestamp if needed
+              if (data.timestamp) {
+                if (typeof data.timestamp === 'object' && data.timestamp.toDate) {
+                  const date = data.timestamp.toDate();
+                  data.timestamp = date.toLocaleString();
+                }
+              }
+              
+              return {
+                id: doc.id,
+                ...data
+              } as Measurement & { id: string };
+            });
             
-            // Process docs and ensure we get the most recent measurements (last 24 hours)
-            // The query already sorts by timestamp desc and limits to count (24)
-            const measurementsData = processMeasurementDocuments(
-              querySnapshot.docs,
-              startingVolume
-            );
+            // Sort by timestamp (newest first)
+            measurementsData.sort((a, b) => {
+              if (!a.timestamp || !b.timestamp) return 0;
+              return b.timestamp.localeCompare(a.timestamp);
+            });
             
             setMeasurements(measurementsData);
             setIsLoading(false);
             
-            // Update the unit's total_volume with the latest cumulative volume
+            // Calculate total volume in the last 24 hours
+            const last24hVolume = measurementsData.reduce((total, measurement) => {
+              return total + (typeof measurement.volume === 'number' ? measurement.volume : 0);
+            }, 0);
+            
+            // Update the unit's total_volume with the last 24h volume
             if (measurementsData.length > 0) {
-              const latestMeasurement = measurementsData[0]; // First item (most recent)
-              await updateUnitTotalVolume(unitId, latestMeasurement.cumulative_volume);
+              await updateUnitTotalVolume(unitId, last24hVolume);
               
               // Invalidate queries to refresh UI
               queryClient.invalidateQueries({ queryKey: ['units'] });
