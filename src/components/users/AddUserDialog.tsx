@@ -1,6 +1,6 @@
 
 import { useState } from "react";
-import { Dialog, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { FormInput } from "@/components/shared/FormInput";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -8,7 +8,6 @@ import { useToast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
 import { collection, addDoc } from "firebase/firestore";
 import { db } from "@/integrations/firebase/client";
-import { ScrollableDialogContent } from "@/components/shared/ScrollableDialogContent";
 
 type UserRole = "admin" | "technician" | "user";
 type UserStatus = "active" | "inactive" | "pending";
@@ -98,11 +97,11 @@ export function AddUserDialog({ open, onOpenChange }: AddUserDialogProps) {
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <ScrollableDialogContent className="sm:max-w-[600px] bg-spotify-darker border-spotify-accent">
+      <DialogContent className="sm:max-w-[600px] bg-spotify-darker border-spotify-accent">
         <DialogHeader>
           <DialogTitle className="text-xl font-semibold text-white">Add New User</DialogTitle>
         </DialogHeader>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 py-4">
+        <div className="grid grid-cols-2 gap-4 py-4">
           <FormInput
             label="First Name"
             value={formData.first_name}
@@ -185,7 +184,7 @@ export function AddUserDialog({ open, onOpenChange }: AddUserDialogProps) {
             Add User
           </Button>
         </div>
-      </ScrollableDialogContent>
+      </DialogContent>
     </Dialog>
   );
 }

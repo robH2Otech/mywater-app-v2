@@ -1,6 +1,6 @@
 
 import { useState } from "react";
-import { Dialog, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { UnitFormFields } from "./UnitFormFields";
 import { UnitFormActions } from "./UnitFormActions";
@@ -9,7 +9,6 @@ import { doc, updateDoc, collection, addDoc } from "firebase/firestore";
 import { db } from "@/integrations/firebase/client";
 import { determineUnitStatus, createAlertMessage } from "@/utils/unitStatusUtils";
 import { determineUVCStatus, createUVCAlertMessage } from "@/utils/uvcStatusUtils";
-import { ScrollableDialogContent } from "@/components/shared/ScrollableDialogContent";
 
 interface EditUnitDialogProps {
   unit: {
@@ -171,7 +170,7 @@ export function EditUnitDialog({ unit, open, onOpenChange }: EditUnitDialogProps
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <ScrollableDialogContent className="sm:max-w-[600px] bg-spotify-darker border-spotify-accent">
+      <DialogContent className="sm:max-w-[600px] bg-spotify-darker border-spotify-accent">
         <DialogHeader>
           <DialogTitle className="text-xl font-semibold text-white">Edit Water Unit</DialogTitle>
         </DialogHeader>
@@ -179,7 +178,7 @@ export function EditUnitDialog({ unit, open, onOpenChange }: EditUnitDialogProps
           <UnitFormFields formData={formData} setFormData={setFormData} />
           <UnitFormActions onCancel={() => onOpenChange(false)} isSubmitting={isSubmitting} />
         </form>
-      </ScrollableDialogContent>
+      </DialogContent>
     </Dialog>
   );
 }

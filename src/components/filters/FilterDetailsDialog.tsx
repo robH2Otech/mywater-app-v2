@@ -1,11 +1,10 @@
 
-import { Dialog, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Filter } from "lucide-react";
 import { FormInput } from "@/components/shared/FormInput";
 import { FormDatePicker } from "@/components/shared/FormDatePicker";
 import { useState, useEffect } from "react";
-import { ScrollableDialogContent } from "@/components/shared/ScrollableDialogContent";
 
 interface FilterDetailsDialogProps {
   filter: any;
@@ -47,7 +46,7 @@ export function FilterDetailsDialog({ filter, open, onOpenChange, onSave }: Filt
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <ScrollableDialogContent className="sm:max-w-[600px] w-[95vw] bg-spotify-darker border-spotify-accent">
+      <DialogContent className="sm:max-w-[600px] w-[95vw] max-h-[90vh] overflow-y-auto bg-spotify-darker border-spotify-accent">
         <DialogHeader>
           <DialogTitle className="text-xl font-semibold text-white flex items-center gap-2">
             <Filter className="h-5 w-5" />
@@ -116,7 +115,7 @@ export function FilterDetailsDialog({ filter, open, onOpenChange, onSave }: Filt
             Save
           </Button>
         </div>
-      </ScrollableDialogContent>
+      </DialogContent>
     </Dialog>
   );
 }

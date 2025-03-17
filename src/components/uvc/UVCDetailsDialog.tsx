@@ -1,5 +1,5 @@
 
-import { Dialog, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Lightbulb } from "lucide-react";
 import { useState, useEffect } from "react";
 import { doc, getDoc, collection, query, where, orderBy, limit, getDocs } from "firebase/firestore";
@@ -9,7 +9,6 @@ import { UVCProgressBar } from "./UVCProgressBar";
 import { UVCDialogForm } from "./UVCDialogForm";
 import { UVCDialogActions } from "./UVCDialogActions";
 import { UVCDialogLoader } from "./UVCDialogLoader";
-import { ScrollableDialogContent } from "@/components/shared/ScrollableDialogContent";
 
 interface UVCDetailsDialogProps {
   unit: any;
@@ -147,7 +146,7 @@ export function UVCDetailsDialog({ unit, open, onOpenChange, onSave }: UVCDetail
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <ScrollableDialogContent className="sm:max-w-[500px] w-[95vw] bg-spotify-darker border-spotify-accent">
+      <DialogContent className="sm:max-w-[500px] w-[95vw] max-h-[90vh] overflow-y-auto bg-spotify-darker border-spotify-accent">
         <DialogHeader>
           <DialogTitle className="text-lg md:text-xl font-semibold text-white flex items-center gap-2">
             <Lightbulb className="h-5 w-5" />
@@ -167,7 +166,7 @@ export function UVCDetailsDialog({ unit, open, onOpenChange, onSave }: UVCDetail
             />
           </div>
         )}
-      </ScrollableDialogContent>
+      </DialogContent>
     </Dialog>
   );
 }
