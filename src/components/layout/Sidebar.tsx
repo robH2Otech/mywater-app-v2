@@ -1,6 +1,8 @@
 
-import { Home, Droplets, Filter, Bell, BarChart2, Users, Settings, Lightbulb } from "lucide-react";
+import { Home, Droplets, Filter, Bell, BarChart2, Users, Settings, Lightbulb, X } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { Button } from "@/components/ui/button";
 
 const navigation = [
   { name: "Dashboard", icon: Home, path: "/" },
@@ -15,9 +17,10 @@ const navigation = [
 
 export const Sidebar = () => {
   const location = useLocation();
+  const isMobile = useIsMobile();
 
   return (
-    <div className="fixed top-0 left-0 h-screen w-64 bg-spotify-darker border-r border-white/10 p-4 animate-slideIn">
+    <div className={`h-screen w-64 bg-spotify-darker border-r border-white/10 p-4 flex flex-col ${isMobile ? "animate-slideInLeft" : "animate-slideIn"}`}>
       <div className="flex items-center gap-2 mb-8">
         <Droplets className="h-8 w-8 text-spotify-green" />
         <div className="flex flex-col">
@@ -26,7 +29,7 @@ export const Sidebar = () => {
         </div>
       </div>
       
-      <nav className="space-y-1">
+      <nav className="space-y-1 flex-grow overflow-y-auto">
         {navigation.map((item) => {
           const isActive = location.pathname === item.path;
           return (
@@ -47,4 +50,4 @@ export const Sidebar = () => {
       </nav>
     </div>
   );
-}
+};
