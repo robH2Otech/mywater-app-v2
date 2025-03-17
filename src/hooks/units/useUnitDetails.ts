@@ -40,6 +40,7 @@ export function useUnitDetails(id: string | undefined) {
       
       // Initialize values that we'll potentially update from measurements
       let latestMeasurementUvcHours = 0;
+      let latestVolume = 0;
       let hasMeasurementData = false;
       
       // Check if we have measurement data
@@ -47,23 +48,34 @@ export function useUnitDetails(id: string | undefined) {
         const latestMeasurement = measurementsSnapshot.docs[0].data();
         console.log(`Latest measurement for unit ${id}:`, latestMeasurement);
         
+        if (latestMeasurement.volume !== undefined) {
+          latestVolume = typeof latestMeasurement.volume === 'string' 
+            ? parseFloat(latestMeasurement.volume) 
+            : (latestMeasurement.volume || 0);
+          hasMeasurementData = true;
+          console.log(`Unit ${id} - Latest measurement volume: ${latestVolume}`);
+        }
+        
         if (latestMeasurement.uvc_hours !== undefined) {
           latestMeasurementUvcHours = typeof latestMeasurement.uvc_hours === 'string' 
             ? parseFloat(latestMeasurement.uvc_hours) 
             : (latestMeasurement.uvc_hours || 0);
-          hasMeasurementData = true;
           console.log(`Unit ${id} - Latest measurement UVC hours: ${latestMeasurementUvcHours}`);
         }
       } else {
         console.log(`Unit ${id} - No measurements found in collection: ${collectionPath}`);
       }
       
-      // 3. Process the total volume
-      let totalVolume = unitData.total_volume;
-      if (typeof totalVolume === 'string') {
-        totalVolume = parseFloat(totalVolume);
-      } else if (totalVolume === undefined || totalVolume === null) {
-        totalVolume = 0;
+      // 3. Use the latest volume as the total_volume
+      let totalVolume = latestVolume;
+      if (!hasMeasurementData) {
+        // Fallback to the unit's stored total_volume if no measurements exist
+        totalVolume = unitData.total_volume;
+        if (typeof totalVolume === 'string') {
+          totalVolume = parseFloat(totalVolume);
+        } else if (totalVolume === undefined || totalVolume === null) {
+          totalVolume = 0;
+        }
       }
       
       // 4. Process the UVC hours from the unit document
@@ -93,7 +105,7 @@ export function useUnitDetails(id: string | undefined) {
       const filterStatus = determineUnitStatus(totalVolume);
       const uvcStatus = determineUVCStatus(totalUvcHours);
       
-      console.log(`useUnitDetails - Unit ${id}: UVC Hours - Base: ${baseUvcHours}, Latest: ${latestMeasurementUvcHours}, Total: ${totalUvcHours}, Status: ${uvcStatus}, Accumulated: ${unitData.is_uvc_accumulated}`);
+      console.log(`useUnitDetails - Unit ${id}: Volume - ${totalVolume}, UVC Hours - Base: ${baseUvcHours}, Latest: ${latestMeasurementUvcHours}, Total: ${totalUvcHours}, Status: ${uvcStatus}, Accumulated: ${unitData.is_uvc_accumulated}`);
       
       return {
         id: unitSnapshot.id,

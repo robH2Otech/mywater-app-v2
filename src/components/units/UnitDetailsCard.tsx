@@ -70,7 +70,7 @@ export const UnitDetailsCard = ({ unit }: UnitDetailsCardProps) => {
         </div>
 
         <div className="space-y-1 md:space-y-2">
-          <label className="text-sm text-gray-400">Total Volume (m³)</label>
+          <label className="text-sm text-gray-400">Volume (m³)</label>
           <Input
             value={formatVolume(unit?.total_volume)}
             readOnly

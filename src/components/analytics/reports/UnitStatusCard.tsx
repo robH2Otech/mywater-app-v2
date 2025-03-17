@@ -10,6 +10,14 @@ interface UnitStatusCardProps {
 export function UnitStatusCard({ unit }: UnitStatusCardProps) {
   const isMobile = useIsMobile();
   
+  // Format volume with 2 decimal places
+  const formatVolume = (volume: number | string | undefined | null) => {
+    if (volume === undefined || volume === null) return "0";
+    const numericVolume = typeof volume === 'string' ? parseFloat(volume) : volume;
+    if (isNaN(numericVolume)) return "0";
+    return numericVolume.toLocaleString(undefined, { maximumFractionDigits: 2 });
+  };
+  
   return (
     <Card className="p-4 bg-spotify-darker border-spotify-accent">
       <h3 className="text-lg font-semibold mb-4">Unit Status</h3>
@@ -33,6 +41,14 @@ export function UnitStatusCard({ unit }: UnitStatusCardProps) {
           }`}>
             {unit.uvc_status || 'N/A'}
           </p>
+        </div>
+        <div>
+          <p className="text-gray-400 text-sm">Volume (m³)</p>
+          <p className="text-lg font-medium">{formatVolume(unit.total_volume)}</p>
+        </div>
+        <div>
+          <p className="text-gray-400 text-sm">UVC Hours</p>
+          <p className="text-lg font-medium">{formatVolume(unit.uvc_hours)}</p>
         </div>
         <div>
           <p className="text-gray-400 text-sm">Last Maintenance</p>

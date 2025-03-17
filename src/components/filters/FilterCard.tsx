@@ -83,7 +83,7 @@ export function FilterCard({ unit, onEditClick, onClick }: FilterCardProps) {
           
           <div className="space-y-2 text-left">
             <div className="text-sm text-gray-400">
-              Total Volume: {formatVolume(unit.total_volume)} m³
+              Volume: {formatVolume(unit.total_volume)} m³
             </div>
             {unit.last_maintenance && (
               <div className="flex items-center gap-2 text-sm text-gray-400">
