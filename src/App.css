@@ -67,6 +67,25 @@
   }
 }
 
+/* Form dialog styles */
+.form-dialog-content {
+  max-height: 80vh;
+  overflow-y: auto;
+  padding-bottom: 60px; /* Space for slider */
+}
+
+.form-slider-container {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 12px 24px;
+  background-color: rgba(18, 18, 18, 0.8);
+  backdrop-filter: blur(8px);
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  z-index: 50;
+}
+
 /* Mobile input adjustments */
 @media (max-width: 640px) {
   input, select, textarea {
@@ -84,5 +103,10 @@
   /* Ensure elements have enough touch target size */
   button {
     min-height: 44px;
+  }
+
+  /* Slider adjustments for mobile */
+  .form-slider-container {
+    padding: 10px 16px;
   }
 }

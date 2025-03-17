@@ -1,7 +1,8 @@
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { Slider } from "@/components/ui/slider";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { FormDatePicker } from "../shared/FormDatePicker";
@@ -13,6 +14,8 @@ import { db } from "@/integrations/firebase/client";
 export function AddFilterDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (open: boolean) => void }) {
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [scrollPosition, setScrollPosition] = useState(0);
+  const contentRef = useRef<HTMLDivElement>(null);
   const [formData, setFormData] = useState({
     unit_id: "",
     installation_date: null as Date | null,
@@ -38,6 +41,23 @@ export function AddFilterDialog({ open, onOpenChange }: { open: boolean; onOpenC
       }));
     },
   });
+
+  const handleScroll = () => {
+    if (contentRef.current) {
+      const { scrollTop, scrollHeight, clientHeight } = contentRef.current;
+      const maxScrollTop = scrollHeight - clientHeight;
+      const currentPosition = maxScrollTop > 0 ? scrollTop / maxScrollTop : 0;
+      setScrollPosition(currentPosition * 100);
+    }
+  };
+
+  const handleSliderChange = (value: number[]) => {
+    if (contentRef.current) {
+      const { scrollHeight, clientHeight } = contentRef.current;
+      const maxScrollTop = scrollHeight - clientHeight;
+      contentRef.current.scrollTop = (maxScrollTop * value[0]) / 100;
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -78,109 +98,126 @@ export function AddFilterDialog({ open, onOpenChange }: { open: boolean; onOpenC
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[600px] w-[95vw] max-h-[90vh] overflow-y-auto bg-spotify-darker border-spotify-accent">
-        <DialogHeader>
-          <DialogTitle className="text-xl font-semibold text-white">Add New Filter</DialogTitle>
-        </DialogHeader>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <label className="text-sm text-gray-400">Water Unit</label>
-              <Select
-                value={formData.unit_id}
-                onValueChange={(value) => setFormData({ ...formData, unit_id: value })}
-              >
-                <SelectTrigger className="bg-spotify-accent border-spotify-accent-hover text-white h-10">
-                  <SelectValue placeholder="Select a unit" />
-                </SelectTrigger>
-                <SelectContent className="bg-spotify-darker border-spotify-accent">
-                  {units.map((unit) => (
-                    <SelectItem key={unit.id} value={unit.id}>
-                      {unit.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+      <DialogContent className="sm:max-w-[600px] w-[95vw] max-h-[90vh] bg-spotify-darker border-spotify-accent relative p-0">
+        <div 
+          ref={contentRef} 
+          className="form-dialog-content p-6 overflow-y-auto"
+          onScroll={handleScroll}
+        >
+          <DialogHeader>
+            <DialogTitle className="text-xl font-semibold text-white">Add New Filter</DialogTitle>
+          </DialogHeader>
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <label className="text-sm text-gray-400">Water Unit</label>
+                <Select
+                  value={formData.unit_id}
+                  onValueChange={(value) => setFormData({ ...formData, unit_id: value })}
+                >
+                  <SelectTrigger className="bg-spotify-accent border-spotify-accent-hover text-white h-10">
+                    <SelectValue placeholder="Select a unit" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-spotify-darker border-spotify-accent">
+                    {units.map((unit) => (
+                      <SelectItem key={unit.id} value={unit.id}>
+                        {unit.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <FormDatePicker
+                label="Installation Date"
+                value={formData.installation_date}
+                onChange={(date) => setFormData({ ...formData, installation_date: date })}
+              />
+
+              <FormDatePicker
+                label="Last Change"
+                value={formData.last_change}
+                onChange={(date) => setFormData({ ...formData, last_change: date })}
+              />
+
+              <FormDatePicker
+                label="Next Change"
+                value={formData.next_change}
+                onChange={(date) => setFormData({ ...formData, next_change: date })}
+              />
+
+              <FormInput
+                label="Volume Processed (m³)"
+                type="number"
+                value={formData.volume_processed}
+                onChange={(value) => setFormData({ ...formData, volume_processed: value })}
+                placeholder="0"
+              />
+
+              <FormInput
+                label="Contact Name"
+                value={formData.contact_name}
+                onChange={(value) => setFormData({ ...formData, contact_name: value })}
+                placeholder="Enter contact name"
+              />
+
+              <FormInput
+                label="Email"
+                type="email"
+                value={formData.email}
+                onChange={(value) => setFormData({ ...formData, email: value })}
+                placeholder="Enter email"
+              />
+
+              <FormInput
+                label="Phone"
+                type="tel"
+                value={formData.phone}
+                onChange={(value) => setFormData({ ...formData, phone: value })}
+                placeholder="Enter phone number"
+              />
             </div>
 
-            <FormDatePicker
-              label="Installation Date"
-              value={formData.installation_date}
-              onChange={(date) => setFormData({ ...formData, installation_date: date })}
-            />
+            <div className="space-y-2">
+              <label className="text-sm text-gray-400">Notes</label>
+              <textarea
+                value={formData.notes}
+                onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+                placeholder="Additional Notes"
+                className="w-full h-20 px-3 py-2 bg-spotify-accent border-spotify-accent-hover text-white rounded-md resize-none"
+              />
+            </div>
 
-            <FormDatePicker
-              label="Last Change"
-              value={formData.last_change}
-              onChange={(date) => setFormData({ ...formData, last_change: date })}
-            />
-
-            <FormDatePicker
-              label="Next Change"
-              value={formData.next_change}
-              onChange={(date) => setFormData({ ...formData, next_change: date })}
-            />
-
-            <FormInput
-              label="Volume Processed (m³)"
-              type="number"
-              value={formData.volume_processed}
-              onChange={(value) => setFormData({ ...formData, volume_processed: value })}
-              placeholder="0"
-            />
-
-            <FormInput
-              label="Contact Name"
-              value={formData.contact_name}
-              onChange={(value) => setFormData({ ...formData, contact_name: value })}
-              placeholder="Enter contact name"
-            />
-
-            <FormInput
-              label="Email"
-              type="email"
-              value={formData.email}
-              onChange={(value) => setFormData({ ...formData, email: value })}
-              placeholder="Enter email"
-            />
-
-            <FormInput
-              label="Phone"
-              type="tel"
-              value={formData.phone}
-              onChange={(value) => setFormData({ ...formData, phone: value })}
-              placeholder="Enter phone number"
-            />
-          </div>
-
-          <div className="space-y-2">
-            <label className="text-sm text-gray-400">Notes</label>
-            <textarea
-              value={formData.notes}
-              onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-              placeholder="Additional Notes"
-              className="w-full h-20 px-3 py-2 bg-spotify-accent border-spotify-accent-hover text-white rounded-md resize-none"
-            />
-          </div>
-
-          <div className="flex justify-end gap-3">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => onOpenChange(false)}
-              className="bg-spotify-accent hover:bg-spotify-accent-hover text-white border-none"
-            >
-              Cancel
-            </Button>
-            <Button
-              type="submit"
-              disabled={isSubmitting}
-              className="bg-spotify-green hover:bg-spotify-green/90 text-white"
-            >
-              Add Filter
-            </Button>
-          </div>
-        </form>
+            <div className="flex justify-end gap-3">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => onOpenChange(false)}
+                className="bg-spotify-accent hover:bg-spotify-accent-hover text-white border-none"
+              >
+                Cancel
+              </Button>
+              <Button
+                type="submit"
+                disabled={isSubmitting}
+                className="bg-spotify-green hover:bg-spotify-green/90 text-white"
+              >
+                Add Filter
+              </Button>
+            </div>
+          </form>
+        </div>
+        
+        {/* Form Navigation Slider */}
+        <div className="form-slider-container">
+          <Slider
+            value={[scrollPosition]} 
+            onValueChange={handleSliderChange}
+            max={100}
+            step={1}
+            className="w-full"
+          />
+        </div>
       </DialogContent>
     </Dialog>
   );

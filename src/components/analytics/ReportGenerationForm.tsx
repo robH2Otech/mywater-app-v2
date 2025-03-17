@@ -1,8 +1,9 @@
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { UnitSelector } from "@/components/analytics/UnitSelector";
 import { ReportTypeSelector } from "@/components/analytics/ReportTypeSelector";
 import { Button } from "@/components/ui/button";
+import { Slider } from "@/components/ui/slider";
 import { toast } from "@/components/ui/use-toast";
 import { doc, getDoc, addDoc, collection, DocumentData } from "firebase/firestore";
 import { getAuth } from "firebase/auth";
@@ -27,6 +28,25 @@ export function ReportGenerationForm({
 }: ReportGenerationFormProps) {
   const [reportType, setReportType] = useState("");
   const [isGenerating, setIsGenerating] = useState(false);
+  const [scrollPosition, setScrollPosition] = useState(0);
+  const contentRef = useRef<HTMLDivElement>(null);
+
+  const handleScroll = () => {
+    if (contentRef.current) {
+      const { scrollTop, scrollHeight, clientHeight } = contentRef.current;
+      const maxScrollTop = scrollHeight - clientHeight;
+      const currentPosition = maxScrollTop > 0 ? scrollTop / maxScrollTop : 0;
+      setScrollPosition(currentPosition * 100);
+    }
+  };
+
+  const handleSliderChange = (value: number[]) => {
+    if (contentRef.current) {
+      const { scrollHeight, clientHeight } = contentRef.current;
+      const maxScrollTop = scrollHeight - clientHeight;
+      contentRef.current.scrollTop = (maxScrollTop * value[0]) / 100;
+    }
+  };
 
   const handleGenerateReport = async () => {
     if (!selectedUnit || !reportType) {
@@ -99,26 +119,43 @@ export function ReportGenerationForm({
   };
 
   return (
-    <div className="space-y-6">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-2xl">
-        <UnitSelector 
-          value={selectedUnit} 
-          onChange={onUnitChange} 
-        />
-        
-        <ReportTypeSelector 
-          value={reportType} 
-          onChange={setReportType} 
+    <div className="relative max-h-[90vh] space-y-6 border border-spotify-accent rounded-md p-6 bg-spotify-darker">
+      <div 
+        ref={contentRef} 
+        className="form-dialog-content py-2 overflow-y-auto"
+        onScroll={handleScroll}
+      >
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-2xl">
+          <UnitSelector 
+            value={selectedUnit} 
+            onChange={onUnitChange} 
+          />
+          
+          <ReportTypeSelector 
+            value={reportType} 
+            onChange={setReportType} 
+          />
+        </div>
+
+        <Button 
+          onClick={handleGenerateReport}
+          className="bg-spotify-green hover:bg-spotify-green/90 mt-6"
+          disabled={!selectedUnit || !reportType || isGenerating}
+        >
+          {isGenerating ? "Generating..." : "Generate Report"}
+        </Button>
+      </div>
+      
+      {/* Form Navigation Slider */}
+      <div className="form-slider-container absolute bottom-0 left-0 right-0">
+        <Slider
+          value={[scrollPosition]} 
+          onValueChange={handleSliderChange}
+          max={100}
+          step={1}
+          className="w-full"
         />
       </div>
-
-      <Button 
-        onClick={handleGenerateReport}
-        className="bg-spotify-green hover:bg-spotify-green/90"
-        disabled={!selectedUnit || !reportType || isGenerating}
-      >
-        {isGenerating ? "Generating..." : "Generate Report"}
-      </Button>
     </div>
   );
 }
