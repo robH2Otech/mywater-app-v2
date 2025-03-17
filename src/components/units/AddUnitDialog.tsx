@@ -1,6 +1,5 @@
-
 import { useState, useEffect } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { UnitFormFields } from "./UnitFormFields";
 import { UnitFormActions } from "./UnitFormActions";
@@ -9,6 +8,7 @@ import { addDoc, collection, getDocs, setDoc, doc } from "firebase/firestore";
 import { db } from "@/integrations/firebase/client";
 import { determineUnitStatus, createAlertMessage } from "@/utils/unitStatusUtils";
 import { determineUVCStatus, createUVCAlertMessage } from "@/utils/uvcStatusUtils";
+import { ScrollableDialogContent } from "@/components/shared/ScrollableDialogContent";
 
 export function AddUnitDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (open: boolean) => void }) {
   const { toast } = useToast();
@@ -30,7 +30,6 @@ export function AddUnitDialog({ open, onOpenChange }: { open: boolean; onOpenCha
     iccid: "",
   });
 
-  // Fetch the highest unit number on load
   useEffect(() => {
     const fetchNextUnitNumber = async () => {
       try {
@@ -51,7 +50,6 @@ export function AddUnitDialog({ open, onOpenChange }: { open: boolean; onOpenCha
         });
         
         setNextUnitNumber(highestNumber + 1);
-        // Pre-fill the name field with the next MYWATER unit number
         setFormData(prev => ({
           ...prev,
           name: `MYWATER ${String(highestNumber + 1).padStart(3, '0')}`
@@ -69,7 +67,6 @@ export function AddUnitDialog({ open, onOpenChange }: { open: boolean; onOpenCha
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Validate required fields
     if (!formData.name || !formData.total_volume) {
       toast({
         title: "Error",
@@ -82,21 +79,16 @@ export function AddUnitDialog({ open, onOpenChange }: { open: boolean; onOpenCha
     setIsSubmitting(true);
 
     try {
-      // Parse volume to numeric value
       const numericVolume = parseFloat(formData.total_volume);
       
-      // Determine the status based on the volume
       const status = determineUnitStatus(numericVolume);
       
-      // Create a custom ID in the format MYWATER_XXX
       const formattedNumber = String(nextUnitNumber).padStart(3, '0');
       const customId = `MYWATER_${formattedNumber}`;
       
-      // Process UVC hours if provided
       const uvcHours = formData.uvc_hours ? parseFloat(formData.uvc_hours) : 0;
       const uvcStatus = determineUVCStatus(uvcHours);
       
-      // Add unit to Firestore with a custom ID
       const unitDocRef = doc(db, "units", customId);
       await setDoc(unitDocRef, {
         name: formData.name,
@@ -117,11 +109,9 @@ export function AddUnitDialog({ open, onOpenChange }: { open: boolean; onOpenCha
         updated_at: new Date().toISOString(),
       });
 
-      // Check if an alert should be created for unit status
       if (status === 'warning' || status === 'urgent') {
         const alertMessage = createAlertMessage(formData.name, numericVolume, status);
         
-        // Add a new alert to the alerts collection
         const alertsCollection = collection(db, "alerts");
         await addDoc(alertsCollection, {
           unit_id: customId,
@@ -132,7 +122,6 @@ export function AddUnitDialog({ open, onOpenChange }: { open: boolean; onOpenCha
         });
       }
 
-      // Check if UVC alert should be created
       if (uvcHours > 0 && (uvcStatus === 'warning' || uvcStatus === 'urgent')) {
         const uvcAlertMessage = createUVCAlertMessage(formData.name, uvcHours, uvcStatus);
         
@@ -146,7 +135,6 @@ export function AddUnitDialog({ open, onOpenChange }: { open: boolean; onOpenCha
         });
       }
 
-      // Invalidate and refetch units data
       await queryClient.invalidateQueries({ queryKey: ["units"] });
       await queryClient.invalidateQueries({ queryKey: ["uvc-units"] });
       await queryClient.invalidateQueries({ queryKey: ["alerts"] });
@@ -156,7 +144,6 @@ export function AddUnitDialog({ open, onOpenChange }: { open: boolean; onOpenCha
         description: "Water unit has been added successfully",
       });
       
-      // Close dialog and reset form
       onOpenChange(false);
       setFormData({
         name: "",
@@ -186,7 +173,7 @@ export function AddUnitDialog({ open, onOpenChange }: { open: boolean; onOpenCha
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[600px] bg-spotify-darker border-spotify-accent">
+      <ScrollableDialogContent className="sm:max-w-[600px] bg-spotify-darker border-spotify-accent">
         <DialogHeader>
           <DialogTitle className="text-xl font-semibold text-white">Add New Water Unit</DialogTitle>
         </DialogHeader>
@@ -194,7 +181,7 @@ export function AddUnitDialog({ open, onOpenChange }: { open: boolean; onOpenCha
           <UnitFormFields formData={formData} setFormData={setFormData} />
           <UnitFormActions onCancel={() => onOpenChange(false)} isSubmitting={isSubmitting} />
         </form>
-      </DialogContent>
+      </ScrollableDialogContent>
     </Dialog>
   );
 }

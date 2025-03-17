@@ -1,11 +1,12 @@
 
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { format } from "date-fns";
 import { AlertTriangle, Calendar, User, MessageSquare, FileText } from "lucide-react";
 import { FormInput } from "@/components/shared/FormInput";
 import { FormDatePicker } from "@/components/shared/FormDatePicker";
 import { useState, useEffect } from "react";
+import { ScrollableDialogContent } from "@/components/shared/ScrollableDialogContent";
 
 interface AlertDetailsDialogProps {
   alert: any;
@@ -47,7 +48,7 @@ export function AlertDetailsDialog({ alert, open, onOpenChange, onSave }: AlertD
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[600px] bg-spotify-darker border-spotify-accent">
+      <ScrollableDialogContent className="sm:max-w-[600px] bg-spotify-darker border-spotify-accent">
         <DialogHeader>
           <DialogTitle className="text-xl font-semibold text-white flex items-center gap-2">
             <AlertTriangle className="h-5 w-5" />
@@ -116,7 +117,7 @@ export function AlertDetailsDialog({ alert, open, onOpenChange, onSave }: AlertD
             Save Changes
           </Button>
         </div>
-      </DialogContent>
+      </ScrollableDialogContent>
     </Dialog>
   );
 }

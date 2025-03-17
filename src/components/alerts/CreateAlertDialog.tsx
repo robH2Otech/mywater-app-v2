@@ -1,5 +1,5 @@
 
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -11,6 +11,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useState } from "react";
+import { ScrollableDialogContent } from "@/components/shared/ScrollableDialogContent";
 
 interface CreateAlertDialogProps {
   open: boolean;
@@ -27,7 +28,7 @@ export const CreateAlertDialog = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="bg-spotify-darker text-white sm:max-w-[600px] w-[95vw] max-h-[90vh] overflow-y-auto">
+      <ScrollableDialogContent className="bg-spotify-darker text-white sm:max-w-[600px] w-[95vw]">
         <DialogHeader>
           <DialogTitle className="text-xl font-semibold">Create Alert</DialogTitle>
         </DialogHeader>
@@ -94,7 +95,7 @@ export const CreateAlertDialog = ({
             Create Alert
           </Button>
         </div>
-      </DialogContent>
+      </ScrollableDialogContent>
     </Dialog>
   );
 };
