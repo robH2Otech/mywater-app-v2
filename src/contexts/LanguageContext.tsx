@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useEffect, ReactNode } from "react";
 
 // Available languages
@@ -147,6 +146,21 @@ const translations: Translations = {
     "system": "System",
     "light": "Light",
     "dark": "Dark",
+
+    // Chart related translations
+    "chart.select.timerange": "Select time range",
+    "chart.24hours": "Last 24 hours",
+    "chart.7days": "Last 7 days",
+    "chart.30days": "Last 30 days",
+    "chart.6months": "Last 6 months",
+    "chart.loading": "Loading chart data...",
+    "chart.no.data": "No data available",
+    "chart.volume": "Volume (m³)",
+    "dashboard.loading": "Loading dashboard data...",
+    "dashboard.total.units": "Total Units",
+    "dashboard.filter.changes": "Filter Changes Required",
+    "dashboard.active.alerts": "Active Alerts",
+    "dashboard.volume.today": "Total Volume Today",
   },
   fr: {
     // Dashboard
@@ -269,6 +283,21 @@ const translations: Translations = {
     "system": "Système",
     "light": "Clair",
     "dark": "Sombre",
+    
+    // Chart related translations
+    "chart.select.timerange": "Sélectionner la période",
+    "chart.24hours": "Dernières 24 heures",
+    "chart.7days": "7 derniers jours",
+    "chart.30days": "30 derniers jours",
+    "chart.6months": "6 derniers mois",
+    "chart.loading": "Chargement des données...",
+    "chart.no.data": "Aucune donnée disponible",
+    "chart.volume": "Volume (m³)",
+    "dashboard.loading": "Chargement des données du tableau de bord...",
+    "dashboard.total.units": "Unités totales",
+    "dashboard.filter.changes": "Changements de filtre requis",
+    "dashboard.active.alerts": "Alertes actives",
+    "dashboard.volume.today": "Volume total aujourd'hui",
   }
 };
 

@@ -8,8 +8,12 @@ import { collection, query, where, getDocs } from "firebase/firestore";
 import { db } from "@/integrations/firebase/client";
 import { UnitData } from "@/types/analytics";
 import { determineUnitStatus } from "@/utils/unitStatusUtils";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 export const Dashboard = () => {
+  const { t } = useLanguage();
+
+  // Fetch all units data
   const { data: units = [], isLoading: isLoadingUnits } = useQuery({
     queryKey: ["dashboard-units"],
     queryFn: async () => {
@@ -42,6 +46,7 @@ export const Dashboard = () => {
     },
   });
 
+  // Fetch alerts data
   const { data: alerts = [], isLoading: isLoadingAlerts } = useQuery({
     queryKey: ["dashboard-alerts"],
     queryFn: async () => {
@@ -65,34 +70,34 @@ export const Dashboard = () => {
   const errorUnits = units.filter((unit) => unit.status === "urgent").length;
 
   if (isLoadingUnits || isLoadingAlerts) {
-    return <div className="flex justify-center p-12">Loading dashboard data...</div>;
+    return <div className="flex justify-center p-12">{t("dashboard.loading")}</div>;
   }
 
   return (
     <div className="space-y-6 animate-fadeIn">
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard
-          title="Total Units"
+          title={t("dashboard.total.units")}
           value={units.length}
           icon={Droplet}
           link="/units"
         />
         <StatCard
-          title="Filter Changes Required"
+          title={t("dashboard.filter.changes")}
           value={warningUnits}
           icon={Calendar}
           link="/filters"
           iconColor="text-yellow-500"
         />
         <StatCard
-          title="Active Alerts"
+          title={t("dashboard.active.alerts")}
           value={alerts.length}
           icon={Bell}
           link="/alerts"
           iconColor="text-red-500"
         />
         <StatCard
-          title="Total Volume Today"
+          title={t("dashboard.volume.today")}
           value={`${calculateTotalVolume(units)} m³`}
           icon={Activity}
           link="/analytics"
