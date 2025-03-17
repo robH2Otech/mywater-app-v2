@@ -4,11 +4,14 @@ import React, { createContext, useContext, useState, useEffect, ReactNode } from
 // Available languages
 export type Language = "en" | "fr";
 
+// Define params type for translation function
+type TranslationParams = Record<string, string>;
+
 // Language context type
 type LanguageContextType = {
   language: Language;
   setLanguage: (lang: Language) => void;
-  t: (key: string) => string;
+  t: (key: string, params?: TranslationParams) => string;
 };
 
 // Create context with default values
@@ -284,7 +287,7 @@ export const LanguageProvider = ({ children }: { children: ReactNode }) => {
   };
 
   // Translation function
-  const t = (key: string, params?: Record<string, string>) => {
+  const t = (key: string, params?: TranslationParams) => {
     let text = translations[language][key] || translations["en"][key] || key;
     
     // Replace params in translation string
