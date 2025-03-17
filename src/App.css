@@ -86,3 +86,29 @@
     min-height: 44px;
   }
 }
+
+/* Form slider styles */
+.form-slider-container {
+  position: relative;
+  padding: 1rem 0;
+  margin-top: 0.5rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.form-slider-label {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 0.5rem;
+  font-size: 0.875rem;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+/* Custom styling for scrollbar */
+.scrollable-form {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.scrollable-form::-webkit-scrollbar {
+  display: none;
+}

@@ -5,6 +5,7 @@ import { Filter } from "lucide-react";
 import { FormInput } from "@/components/shared/FormInput";
 import { FormDatePicker } from "@/components/shared/FormDatePicker";
 import { useState, useEffect } from "react";
+import { ScrollableDialogContent } from "@/components/shared/ScrollableDialogContent";
 
 interface FilterDetailsDialogProps {
   filter: any;
@@ -46,7 +47,7 @@ export function FilterDetailsDialog({ filter, open, onOpenChange, onSave }: Filt
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[600px] w-[95vw] max-h-[90vh] overflow-y-auto bg-spotify-darker border-spotify-accent">
+      <DialogContent className="sm:max-w-[600px] w-[95vw] max-h-[90vh] overflow-hidden bg-spotify-darker border-spotify-accent">
         <DialogHeader>
           <DialogTitle className="text-xl font-semibold text-white flex items-center gap-2">
             <Filter className="h-5 w-5" />
@@ -54,67 +55,69 @@ export function FilterDetailsDialog({ filter, open, onOpenChange, onSave }: Filt
           </DialogTitle>
         </DialogHeader>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
-          <FormInput
-            label="Name"
-            value={formData.name}
-            onChange={(value) => setFormData({ ...formData, name: value })}
-          />
+        <ScrollableDialogContent>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+            <FormInput
+              label="Name"
+              value={formData.name}
+              onChange={(value) => setFormData({ ...formData, name: value })}
+            />
 
-          <FormInput
-            label="Location"
-            value={formData.location}
-            onChange={(value) => setFormData({ ...formData, location: value })}
-          />
+            <FormInput
+              label="Location"
+              value={formData.location}
+              onChange={(value) => setFormData({ ...formData, location: value })}
+            />
 
-          <FormInput
-            label="Total Volume (m³)"
-            type="number"
-            value={formData.total_volume}
-            onChange={(value) => setFormData({ ...formData, total_volume: value })}
-          />
+            <FormInput
+              label="Total Volume (m³)"
+              type="number"
+              value={formData.total_volume}
+              onChange={(value) => setFormData({ ...formData, total_volume: value })}
+            />
 
-          <FormDatePicker
-            label="Next Maintenance"
-            value={formData.next_maintenance}
-            onChange={(date) => setFormData({ ...formData, next_maintenance: date })}
-          />
+            <FormDatePicker
+              label="Next Maintenance"
+              value={formData.next_maintenance}
+              onChange={(date) => setFormData({ ...formData, next_maintenance: date })}
+            />
 
-          <FormInput
-            label="Contact Name"
-            value={formData.contact_name}
-            onChange={(value) => setFormData({ ...formData, contact_name: value })}
-          />
+            <FormInput
+              label="Contact Name"
+              value={formData.contact_name}
+              onChange={(value) => setFormData({ ...formData, contact_name: value })}
+            />
 
-          <FormInput
-            label="Email"
-            type="email"
-            value={formData.contact_email}
-            onChange={(value) => setFormData({ ...formData, contact_email: value })}
-          />
+            <FormInput
+              label="Email"
+              type="email"
+              value={formData.contact_email}
+              onChange={(value) => setFormData({ ...formData, contact_email: value })}
+            />
 
-          <FormInput
-            label="Phone"
-            value={formData.contact_phone}
-            onChange={(value) => setFormData({ ...formData, contact_phone: value })}
-          />
-        </div>
+            <FormInput
+              label="Phone"
+              value={formData.contact_phone}
+              onChange={(value) => setFormData({ ...formData, contact_phone: value })}
+            />
+          </div>
 
-        <div className="flex justify-end gap-3 mt-4">
-          <Button
-            onClick={() => onOpenChange(false)}
-            variant="outline"
-            className="bg-spotify-accent hover:bg-spotify-accent-hover text-white"
-          >
-            Cancel
-          </Button>
-          <Button
-            onClick={handleSave}
-            className="bg-spotify-green hover:bg-spotify-green/90 text-white"
-          >
-            Save
-          </Button>
-        </div>
+          <div className="flex justify-end gap-3 mt-4">
+            <Button
+              onClick={() => onOpenChange(false)}
+              variant="outline"
+              className="bg-spotify-accent hover:bg-spotify-accent-hover text-white"
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleSave}
+              className="bg-spotify-green hover:bg-spotify-green/90 text-white"
+            >
+              Save
+            </Button>
+          </div>
+        </ScrollableDialogContent>
       </DialogContent>
     </Dialog>
   );

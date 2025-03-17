@@ -170,7 +170,7 @@ export function EditUnitDialog({ unit, open, onOpenChange }: EditUnitDialogProps
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[600px] bg-spotify-darker border-spotify-accent">
+      <DialogContent className="sm:max-w-[600px] bg-spotify-darker border-spotify-accent overflow-hidden">
         <DialogHeader>
           <DialogTitle className="text-xl font-semibold text-white">Edit Water Unit</DialogTitle>
         </DialogHeader>
