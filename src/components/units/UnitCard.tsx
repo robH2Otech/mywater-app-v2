@@ -12,6 +12,7 @@ interface UnitCardProps {
   status: string;
   location?: string | null;
   total_volume?: number | string | null;
+  volume?: number | string | null;
   last_maintenance?: string | null;
   contact_name?: string | null;
   contact_email?: string | null;
@@ -31,6 +32,7 @@ export const UnitCard = ({
   status,
   location,
   total_volume,
+  volume,
   last_maintenance,
   contact_name,
   contact_email,
@@ -72,6 +74,11 @@ export const UnitCard = ({
     return new Date(date).toLocaleDateString();
   };
 
+  // Display the volume (last 24h) instead of total_volume
+  const displayVolume = volume !== undefined && volume !== null 
+    ? (typeof volume === 'string' ? volume : volume.toLocaleString(undefined, { maximumFractionDigits: 2 }))
+    : "N/A";
+
   const handleEditClick = (e: React.MouseEvent) => {
     e.preventDefault(); // Prevent navigation
     setIsEditDialogOpen(true);
@@ -103,7 +110,7 @@ export const UnitCard = ({
           </div>
           <div className="space-y-2">
             <p className="text-sm text-gray-400">
-              Volume: {total_volume ? `${total_volume} m³` : "N/A"}
+              Volume: {displayVolume} m³
             </p>
             <p className="text-sm text-gray-400">
               Last Maintenance: {formatDate(last_maintenance)}
@@ -119,6 +126,7 @@ export const UnitCard = ({
           status,
           location,
           total_volume,
+          volume,
           contact_name,
           contact_email,
           contact_phone,

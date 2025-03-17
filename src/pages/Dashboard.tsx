@@ -23,7 +23,7 @@ export const Dashboard = () => {
       const processedUnits = unitsSnapshot.docs.map(doc => {
         const data = doc.data();
         
-        // Ensure volume is a number
+        // Get the 24h volume from the volume field (not total_volume)
         let volumeLastDay = data.volume;
         if (typeof volumeLastDay === 'string') {
           volumeLastDay = parseFloat(volumeLastDay);
@@ -116,7 +116,7 @@ export const Dashboard = () => {
 // Enhanced helper function to calculate total volume from all units for the last 24 hours
 function calculateTotalVolumeLastDay(units: UnitData[]): string {
   const total = units.reduce((sum, unit) => {
-    // Ensure we're working with numbers
+    // Use volume (24h data) instead of total_volume
     let volume = 0;
     
     if (unit.volume !== undefined && unit.volume !== null) {

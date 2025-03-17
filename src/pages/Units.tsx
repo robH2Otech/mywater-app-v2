@@ -22,10 +22,24 @@ export const Units = () => {
         const unitsQuery = query(unitsCollection, orderBy("created_at", "desc"));
         const unitsSnapshot = await getDocs(unitsQuery);
         
-        return unitsSnapshot.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data()
-        })) as UnitData[];
+        return unitsSnapshot.docs.map(doc => {
+          const data = doc.data();
+          
+          // Process volume data to ensure it's correctly typed
+          let volume = data.volume;
+          if (typeof volume === 'string') {
+            volume = parseFloat(volume);
+            if (isNaN(volume)) volume = 0;
+          } else if (volume === undefined || volume === null) {
+            volume = 0;
+          }
+          
+          return {
+            id: doc.id,
+            ...data,
+            volume: volume // Make sure volume is a number
+          };
+        }) as UnitData[];
       } catch (error) {
         console.error("Error fetching units:", error);
         toast({
@@ -69,6 +83,7 @@ export const Units = () => {
               name={unit.name}
               status={unit.status || "active"}
               location={unit.location}
+              volume={unit.volume}
               total_volume={unit.total_volume}
               last_maintenance={unit.last_maintenance}
             />
