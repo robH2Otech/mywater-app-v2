@@ -18,6 +18,7 @@ import { Users } from "./pages/Users";
 import { Auth } from "./pages/Auth";
 import { useEffect, useState } from "react";
 import { supabase } from "./integrations/supabase/client";
+import { LanguageProvider } from "./contexts/LanguageContext";
 
 const queryClient = new QueryClient();
 
@@ -54,108 +55,110 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
 };
 
 const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <BrowserRouter>
-        <Routes>
-          <Route path="/auth" element={<Auth />} />
-          <Route
-            path="/"
-            element={
-              <ProtectedRoute>
-                <Layout>
-                  <Dashboard />
-                </Layout>
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/units"
-            element={
-              <ProtectedRoute>
-                <Layout>
-                  <Units />
-                </Layout>
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/units/:id"
-            element={
-              <ProtectedRoute>
-                <Layout>
-                  <UnitDetails />
-                </Layout>
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/filters"
-            element={
-              <ProtectedRoute>
-                <Layout>
-                  <Filters />
-                </Layout>
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/uvc"
-            element={
-              <ProtectedRoute>
-                <Layout>
-                  <UVC />
-                </Layout>
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/alerts"
-            element={
-              <ProtectedRoute>
-                <Layout>
-                  <Alerts />
-                </Layout>
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/analytics"
-            element={
-              <ProtectedRoute>
-                <Layout>
-                  <Analytics />
-                </Layout>
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/users"
-            element={
-              <ProtectedRoute>
-                <Layout>
-                  <Users />
-                </Layout>
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/settings"
-            element={
-              <ProtectedRoute>
-                <Layout>
-                  <Settings />
-                </Layout>
-              </ProtectedRoute>
-            }
-          />
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </BrowserRouter>
-    </TooltipProvider>
-  </QueryClientProvider>
+  <LanguageProvider>
+    <QueryClientProvider client={queryClient}>
+      <TooltipProvider>
+        <Toaster />
+        <Sonner />
+        <BrowserRouter>
+          <Routes>
+            <Route path="/auth" element={<Auth />} />
+            <Route
+              path="/"
+              element={
+                <ProtectedRoute>
+                  <Layout>
+                    <Dashboard />
+                  </Layout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/units"
+              element={
+                <ProtectedRoute>
+                  <Layout>
+                    <Units />
+                  </Layout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/units/:id"
+              element={
+                <ProtectedRoute>
+                  <Layout>
+                    <UnitDetails />
+                  </Layout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/filters"
+              element={
+                <ProtectedRoute>
+                  <Layout>
+                    <Filters />
+                  </Layout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/uvc"
+              element={
+                <ProtectedRoute>
+                  <Layout>
+                    <UVC />
+                  </Layout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/alerts"
+              element={
+                <ProtectedRoute>
+                  <Layout>
+                    <Alerts />
+                  </Layout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/analytics"
+              element={
+                <ProtectedRoute>
+                  <Layout>
+                    <Analytics />
+                  </Layout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/users"
+              element={
+                <ProtectedRoute>
+                  <Layout>
+                    <Users />
+                  </Layout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/settings"
+              element={
+                <ProtectedRoute>
+                  <Layout>
+                    <Settings />
+                  </Layout>
+                </ProtectedRoute>
+              }
+            />
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </BrowserRouter>
+      </TooltipProvider>
+    </QueryClientProvider>
+  </LanguageProvider>
 );
 
 export default App;

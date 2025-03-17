@@ -1,14 +1,18 @@
 
+import { useLanguage } from "@/contexts/LanguageContext";
+
 interface WelcomeMessageProps {
   firstName: string;
 }
 
 export const WelcomeMessage = ({ firstName }: WelcomeMessageProps) => {
+  const { t } = useLanguage();
+  
   // If no firstName is provided, return a default message
   if (!firstName) {
     return (
       <div className="text-white text-lg">
-        Welcome to the dashboard!
+        {t("dashboard.welcome")}
       </div>
     );
   }
@@ -18,7 +22,7 @@ export const WelcomeMessage = ({ firstName }: WelcomeMessageProps) => {
   
   return (
     <div className="text-white text-lg">
-      Hey {capitalizedName}, welcome back!
+      {t("dashboard.welcome.user", { name: capitalizedName })}
     </div>
   );
 };

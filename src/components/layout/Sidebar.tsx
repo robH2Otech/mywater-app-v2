@@ -2,17 +2,7 @@
 import { Home, Droplets, Filter, Bell, BarChart2, Users, Settings, Lightbulb, X } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-
-const navigation = [
-  { name: "Dashboard", icon: Home, path: "/" },
-  { name: "Water Units", icon: Droplets, path: "/units" },
-  { name: "Filters", icon: Filter, path: "/filters" },
-  { name: "UVC", icon: Lightbulb, path: "/uvc" },
-  { name: "Alerts", icon: Bell, path: "/alerts" },
-  { name: "Analytics", icon: BarChart2, path: "/analytics" },
-  { name: "Users", icon: Users, path: "/users" },
-  { name: "Settings", icon: Settings, path: "/settings" },
-];
+import { useLanguage } from "@/contexts/LanguageContext";
 
 interface SidebarProps {
   isMobile?: boolean;
@@ -21,6 +11,18 @@ interface SidebarProps {
 
 export const Sidebar = ({ isMobile, closeSidebar }: SidebarProps) => {
   const location = useLocation();
+  const { t } = useLanguage();
+
+  const navigation = [
+    { name: t("nav.dashboard"), icon: Home, path: "/" },
+    { name: t("nav.water.units"), icon: Droplets, path: "/units" },
+    { name: t("nav.filters"), icon: Filter, path: "/filters" },
+    { name: t("nav.uvc"), icon: Lightbulb, path: "/uvc" },
+    { name: t("nav.alerts"), icon: Bell, path: "/alerts" },
+    { name: t("nav.analytics"), icon: BarChart2, path: "/analytics" },
+    { name: t("nav.users"), icon: Users, path: "/users" },
+    { name: t("nav.settings"), icon: Settings, path: "/settings" },
+  ];
 
   return (
     <div className={`h-screen ${isMobile ? "w-[250px]" : "w-64"} bg-spotify-darker border-r border-white/10 flex flex-col`}>

@@ -1,6 +1,7 @@
 
 import React, { useState, useEffect, RefObject } from "react";
 import { Slider } from "@/components/ui/slider";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 interface FormSliderProps {
   containerRef: RefObject<HTMLDivElement>;
@@ -9,6 +10,7 @@ interface FormSliderProps {
 export function FormSlider({ containerRef }: FormSliderProps) {
   const [sliderValue, setSliderValue] = useState(0);
   const [isVisible, setIsVisible] = useState(false);
+  const { t } = useLanguage();
 
   useEffect(() => {
     const container = containerRef.current;
@@ -66,7 +68,7 @@ export function FormSlider({ containerRef }: FormSliderProps) {
   return (
     <div className="form-slider-container">
       <div className="form-slider-label">
-        <span>Scroll</span>
+        <span>{t("form.scroll")}</span>
         <span>{Math.round(sliderValue)}%</span>
       </div>
       <Slider
