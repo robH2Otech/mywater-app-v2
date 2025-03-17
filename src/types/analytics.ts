@@ -63,6 +63,6 @@ export interface MeasurementData {
   timestamp: string;
   volume: number;
   temperature: number;
-  cumulative_volume: number;
+  cumulative_volume?: number; // Changed to optional to match Measurement interface
   uvc_hours?: number;
 }
