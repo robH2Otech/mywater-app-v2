@@ -1,7 +1,7 @@
 
 import { collection, query, orderBy, limit, onSnapshot } from "firebase/firestore";
 import { db } from "@/integrations/firebase/client";
-import { Measurement } from "@/utils/measurements/types";
+import { Measurement, ProcessedMeasurement } from "@/utils/measurements/types";
 import { safeFormatTimestamp } from "@/utils/measurements/formatUtils";
 
 /**
@@ -27,16 +27,16 @@ export function createMeasurementsQuery(unitId: string, count: number = 24) {
 }
 
 /**
- * Transforms raw Firestore document data into Measurement objects
- * with correctly formatted timestamps
+ * Transforms raw Firestore document data into ProcessedMeasurement objects
+ * with correctly formatted timestamps and required id field
  */
 export function processMeasurementDocuments(
   docs: any[]
-): Measurement[] {
+): ProcessedMeasurement[] {
   // Convert all documents to measurement objects with correctly formatted timestamps
   const measurements = docs.map(doc => {
     const data = doc.data();
-    const measurement: Measurement = {
+    const measurement: ProcessedMeasurement = {
       id: doc.id,
       timestamp: data.timestamp ? safeFormatTimestamp(data.timestamp) : "Invalid date",
       volume: typeof data.volume === 'number' ? data.volume : parseFloat(data.volume || '0'),

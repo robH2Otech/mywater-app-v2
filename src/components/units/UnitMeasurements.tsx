@@ -1,7 +1,7 @@
 
 import { Card } from "@/components/ui/card";
 import { useRealtimeMeasurements } from "@/hooks/measurements/useRealtimeMeasurements";
-import { MeasurementData } from "@/types/analytics";
+import { ProcessedMeasurement } from "@/utils/measurements/types";
 import {
   Table,
   TableBody,
@@ -18,7 +18,7 @@ interface UnitMeasurementsProps {
 export function UnitMeasurements({ unitId }: UnitMeasurementsProps) {
   const { measurements, isLoading, error } = useRealtimeMeasurements(unitId);
 
-  const safeRenderMeasurements = (measurements: any[]) => {
+  const safeRenderMeasurements = (measurements: ProcessedMeasurement[]) => {
     return measurements.map((measurement) => {
       try {
         // Get timestamp directly - it should already be formatted by useRealtimeMeasurements

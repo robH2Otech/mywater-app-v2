@@ -9,3 +9,8 @@ export interface Measurement {
   uvc_hours?: number;
   raw_timestamp?: any;
 }
+
+// Type for processed measurements that always include an ID
+export interface ProcessedMeasurement extends Measurement {
+  id: string; // ID is required in processed measurements
+}

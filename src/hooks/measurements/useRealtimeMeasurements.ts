@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { onSnapshot } from "firebase/firestore";
-import { Measurement } from "@/utils/measurements/types";
+import { ProcessedMeasurement } from "@/utils/measurements/types";
 import { 
   updateUnitTotalVolume
 } from "./useUnitVolume";
@@ -12,7 +12,7 @@ import {
 } from "./useMeasurementCollection";
 
 export function useRealtimeMeasurements(unitId: string, count: number = 24) {
-  const [measurements, setMeasurements] = useState<(Measurement & { id: string })[]>([]);
+  const [measurements, setMeasurements] = useState<ProcessedMeasurement[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
   const queryClient = useQueryClient();
