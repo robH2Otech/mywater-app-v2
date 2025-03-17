@@ -6,4 +6,5 @@ export interface Measurement {
   volume: number;
   temperature: number;
   uvc_hours?: number;
+  cumulative_volume?: number; // Add cumulative_volume as an optional field
 }
