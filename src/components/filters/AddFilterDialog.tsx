@@ -1,6 +1,6 @@
 
 import { useState } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
@@ -9,6 +9,7 @@ import { FormInput } from "../shared/FormInput";
 import { useQuery } from "@tanstack/react-query";
 import { collection, addDoc, getDocs, query, orderBy } from "firebase/firestore";
 import { db } from "@/integrations/firebase/client";
+import { ScrollableDialogContent } from "@/components/shared/ScrollableDialogContent";
 
 export function AddFilterDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (open: boolean) => void }) {
   const { toast } = useToast();
@@ -78,7 +79,7 @@ export function AddFilterDialog({ open, onOpenChange }: { open: boolean; onOpenC
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[600px] w-[95vw] max-h-[90vh] overflow-y-auto bg-spotify-darker border-spotify-accent">
+      <ScrollableDialogContent className="sm:max-w-[600px] w-[95vw] bg-spotify-darker border-spotify-accent">
         <DialogHeader>
           <DialogTitle className="text-xl font-semibold text-white">Add New Filter</DialogTitle>
         </DialogHeader>
@@ -181,7 +182,7 @@ export function AddFilterDialog({ open, onOpenChange }: { open: boolean; onOpenC
             </Button>
           </div>
         </form>
-      </DialogContent>
+      </ScrollableDialogContent>
     </Dialog>
   );
 }

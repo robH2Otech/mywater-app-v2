@@ -1,3 +1,4 @@
+
 /* Reset any conflicting styles */
 #root {
   max-width: 100%;
@@ -91,6 +92,12 @@
     overflow-y: auto;
     max-height: 80vh;
   }
+  
+  /* Make slider thumb bigger for better touch experience */
+  .slider-thumb-large {
+    height: 24px !important;
+    width: 24px !important;
+  }
 }
 
 /* Dialog scroll animation */
@@ -107,4 +114,36 @@
 
 .dialog-animation {
   animation: dialogEntrance 0.3s ease-out forwards;
+}
+
+/* Scroll indicator styles */
+.scroll-indicator {
+  height: 4px;
+  background-color: #30D158;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  transition: width 0.1s;
+}
+
+/* Slider styles for dialogs */
+.dialog-slider {
+  margin-top: 8px;
+  padding: 0 8px;
+}
+
+.dialog-slider .slider-track {
+  height: 6px;
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.dialog-slider .slider-range {
+  background-color: #30D158;
+}
+
+.dialog-slider .slider-thumb {
+  width: 18px;
+  height: 18px;
+  background-color: #fff;
+  border: 2px solid #30D158;
 }
