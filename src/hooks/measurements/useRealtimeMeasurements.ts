@@ -3,7 +3,10 @@ import { useState, useEffect } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { onSnapshot } from "firebase/firestore";
 import { Measurement } from "@/utils/measurements/types";
-import { updateUnitTotalVolume } from "./useUnitVolume";
+import { 
+  fetchUnitStartingVolume, 
+  updateUnitTotalVolume 
+} from "./useUnitVolume";
 import { 
   createMeasurementsQuery,
   processMeasurementDocuments
@@ -34,30 +37,27 @@ export function useRealtimeMeasurements(unitId: string, count: number = 24) {
         measurementsQuery,
         async (querySnapshot) => {
           try {
-            // Process documents to get the most recent measurements (limited to count/24)
-            // The query already limits and sorts by timestamp desc
-            const measurementsData = processMeasurementDocuments(querySnapshot.docs);
+            const startingVolume = await fetchUnitStartingVolume(unitId);
+            
+            // Process docs and ensure we get the most recent measurements (last 24 hours)
+            // The query already sorts by timestamp desc and limits to count (24)
+            const measurementsData = processMeasurementDocuments(
+              querySnapshot.docs,
+              startingVolume
+            );
             
             setMeasurements(measurementsData);
             setIsLoading(false);
             
-            // Update the unit's total_volume with the latest total volume
+            // Update the unit's total_volume with the latest cumulative volume
             if (measurementsData.length > 0) {
-              // Calculate sum of volumes in the last 24 hours (not cumulative)
-              const totalVolume = measurementsData.reduce((sum, measurement) => {
-                return sum + (typeof measurement.volume === 'number' ? measurement.volume : 0);
-              }, 0);
-              
-              console.log(`Unit ${unitId}: Calculated last 24h volume: ${totalVolume} m³`);
-              
-              // Update both total_volume and last_24h_volume fields in Firestore
-              await updateUnitTotalVolume(unitId, totalVolume);
+              const latestMeasurement = measurementsData[0]; // First item (most recent)
+              await updateUnitTotalVolume(unitId, latestMeasurement.cumulative_volume);
               
               // Invalidate queries to refresh UI
               queryClient.invalidateQueries({ queryKey: ['units'] });
               queryClient.invalidateQueries({ queryKey: ['filter-units'] });
               queryClient.invalidateQueries({ queryKey: ['unit', unitId] });
-              queryClient.invalidateQueries({ queryKey: ['dashboard-units'] });
             }
           } catch (err) {
             console.error("Error processing measurements data:", err);

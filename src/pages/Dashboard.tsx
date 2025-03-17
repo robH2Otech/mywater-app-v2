@@ -23,20 +23,12 @@ export const Dashboard = () => {
       const processedUnits = unitsSnapshot.docs.map(doc => {
         const data = doc.data();
         
-        // Ensure total_volume is a number (this now reflects last 24h volume)
+        // Ensure total_volume is a number
         let totalVolume = data.total_volume;
         if (typeof totalVolume === 'string') {
           totalVolume = parseFloat(totalVolume);
         } else if (totalVolume === undefined || totalVolume === null) {
           totalVolume = 0;
-        }
-        
-        // Get the last_24h_volume if available
-        let last24hVolume = data.last_24h_volume;
-        if (typeof last24hVolume === 'string') {
-          last24hVolume = parseFloat(last24hVolume);
-        } else if (last24hVolume === undefined || last24hVolume === null) {
-          last24hVolume = totalVolume; // Fall back to total_volume if not set
         }
         
         // Recalculate status based on current volume
@@ -46,7 +38,6 @@ export const Dashboard = () => {
           id: doc.id,
           ...data,
           total_volume: totalVolume,
-          last_24h_volume: last24hVolume,
           status: status // Override with calculated status
         };
       }) as UnitData[];
@@ -107,7 +98,7 @@ export const Dashboard = () => {
         />
         <StatCard
           title={t("dashboard.volume.today")}
-          value={`${calculateTotalLast24hVolume(units)} m³`}
+          value={`${calculateTotalVolume(units)} m³`}
           icon={Activity}
           link="/analytics"
           subValue={`${units.length > 0 ? '↑ 13.2%' : '-'}`}
@@ -122,15 +113,16 @@ export const Dashboard = () => {
   );
 };
 
-// Enhanced helper function to calculate total volume from all units in the last 24 hours
-function calculateTotalLast24hVolume(units: UnitData[]): string {
+// Enhanced helper function to calculate total volume from all units
+function calculateTotalVolume(units: UnitData[]): string {
   const total = units.reduce((sum, unit) => {
-    // Use last_24h_volume if available, otherwise use total_volume (which should now be the same)
-    let volume = unit.last_24h_volume !== undefined ? unit.last_24h_volume : unit.total_volume;
-    
     // Ensure we're working with numbers
-    if (typeof volume !== 'number') {
-      volume = typeof volume === 'string' ? parseFloat(volume) : 0;
+    let volume = 0;
+    
+    if (unit.total_volume !== undefined && unit.total_volume !== null) {
+      volume = typeof unit.total_volume === 'string' 
+        ? parseFloat(unit.total_volume) 
+        : unit.total_volume;
     }
     
     // Skip NaN values

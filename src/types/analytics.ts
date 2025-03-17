@@ -7,7 +7,6 @@ export interface UnitData {
   location?: string;
   status?: string;
   total_volume?: number | string;
-  last_24h_volume?: number | string; // Added this property
   last_maintenance?: string;
   next_maintenance?: string;
   setup_date?: string;
