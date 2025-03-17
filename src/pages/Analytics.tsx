@@ -6,7 +6,6 @@ import { useState } from "react";
 import { deleteDoc, doc } from "firebase/firestore";
 import { db } from "@/integrations/firebase/client";
 import { toast } from "@/components/ui/use-toast";
-import { PDFUtils } from "@/components/analytics/pdf/PDFUtils";
 
 export function Analytics() {
   const [selectedUnit, setSelectedUnit] = useState("");

@@ -15,7 +15,7 @@ import { UnitStatusCard } from "./reports/UnitStatusCard";
 import { DailyMeasurementsTable } from "./reports/DailyMeasurementsTable";
 import { NoDataCard } from "./reports/NoDataCard";
 
-// Import PDF generation utilities
+// Import PDF generation utilities from the refactored files
 import { generateVisualPDF, generateTabularPDF } from "./pdf/PDFGenerator";
 
 interface ReportVisualProps {
