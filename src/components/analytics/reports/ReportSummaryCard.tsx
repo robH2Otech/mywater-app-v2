@@ -1,6 +1,7 @@
 
 import { Card } from "@/components/ui/card";
 import { format } from "date-fns";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface ReportSummaryCardProps {
   totalVolume: number;
@@ -17,10 +18,12 @@ export function ReportSummaryCard({
   startDate,
   endDate
 }: ReportSummaryCardProps) {
+  const isMobile = useIsMobile();
+
   return (
     <Card className="p-4 bg-spotify-darker border-spotify-accent">
       <h3 className="text-lg font-semibold mb-4">Report Summary</h3>
-      <div className="grid grid-cols-2 gap-4">
+      <div className={`grid ${isMobile ? "grid-cols-1 gap-3" : "grid-cols-2 gap-4"}`}>
         <div>
           <p className="text-gray-400 text-sm">Total Volume</p>
           <p className="text-xl font-semibold">{totalVolume.toFixed(2)} m³</p>

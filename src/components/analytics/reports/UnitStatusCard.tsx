@@ -1,16 +1,19 @@
 
 import { Card } from "@/components/ui/card";
 import { UnitData } from "@/types/analytics";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface UnitStatusCardProps {
   unit: UnitData;
 }
 
 export function UnitStatusCard({ unit }: UnitStatusCardProps) {
+  const isMobile = useIsMobile();
+  
   return (
     <Card className="p-4 bg-spotify-darker border-spotify-accent">
       <h3 className="text-lg font-semibold mb-4">Unit Status</h3>
-      <div className="grid grid-cols-2 gap-4">
+      <div className={`grid ${isMobile ? "grid-cols-1 gap-3" : "grid-cols-2 gap-4"}`}>
         <div>
           <p className="text-gray-400 text-sm">Unit Status</p>
           <p className={`text-lg font-medium ${

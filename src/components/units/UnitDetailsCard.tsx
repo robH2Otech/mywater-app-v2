@@ -3,16 +3,19 @@ import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { format } from "date-fns";
 import { UnitData } from "@/types/analytics";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface UnitDetailsCardProps {
   unit: UnitData;
 }
 
 export const UnitDetailsCard = ({ unit }: UnitDetailsCardProps) => {
+  const isMobile = useIsMobile();
+  
   const formatDate = (date: string | null) => {
     if (!date) return "Not available";
     try {
-      return format(new Date(date), "PPP");
+      return format(new Date(date), isMobile ? "MMM d, yyyy" : "PPP");
     } catch (err) {
       console.error("Invalid date format:", date, err);
       return "Invalid date";
@@ -28,8 +31,8 @@ export const UnitDetailsCard = ({ unit }: UnitDetailsCardProps) => {
   };
 
   return (
-    <Card className="bg-spotify-darker border-spotify-accent p-6">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+    <Card className="bg-spotify-darker border-spotify-accent p-4 md:p-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
         <div className="space-y-2">
           <label className="text-sm text-gray-400">Unit Name</label>
           <Input
@@ -139,7 +142,7 @@ export const UnitDetailsCard = ({ unit }: UnitDetailsCardProps) => {
         </div>
 
         {unit?.notes && (
-          <div className="col-span-2 space-y-2">
+          <div className="col-span-1 md:col-span-2 space-y-2">
             <label className="text-sm text-gray-400">Notes</label>
             <Input
               value={unit.notes}
