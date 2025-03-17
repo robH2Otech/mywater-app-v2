@@ -14,6 +14,7 @@ import {
   calculateMetricsFromMeasurements
 } from "@/utils/reportGenerator";
 import { fetchLatestVolume } from "@/hooks/measurements/useUnitVolume";
+import { Measurement } from "@/utils/measurements/types";
 
 interface ReportGenerationFormProps {
   selectedUnit: string;
@@ -81,7 +82,7 @@ export function ReportGenerationForm({
         if (latestMeasurement.volume !== undefined) {
           const latestVolume = typeof latestMeasurement.volume === 'number' 
             ? Number(latestMeasurement.volume.toFixed(2)) 
-            : Number(parseFloat(latestMeasurement.volume || '0').toFixed(2));
+            : Number(parseFloat(String(latestMeasurement.volume) || '0').toFixed(2));
           
           unitData.total_volume = latestVolume;
           console.log(`Updated unit total_volume to latest: ${latestVolume}`);
@@ -90,7 +91,7 @@ export function ReportGenerationForm({
         if (latestMeasurement.uvc_hours !== undefined) {
           const latestUvcHours = typeof latestMeasurement.uvc_hours === 'number' 
             ? Number(latestMeasurement.uvc_hours.toFixed(1)) 
-            : Number(parseFloat(latestMeasurement.uvc_hours || '0').toFixed(1));
+            : Number(parseFloat(String(latestMeasurement.uvc_hours) || '0').toFixed(1));
           
           unitData.uvc_hours = latestUvcHours;
           console.log(`Updated unit uvc_hours to latest: ${latestUvcHours}`);

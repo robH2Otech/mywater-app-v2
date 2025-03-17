@@ -1,11 +1,11 @@
 
 // Measurement type definition
 export interface Measurement {
-  timestamp: string;
-  raw_timestamp?: any; // Add raw_timestamp as an optional field
+  id?: string;
+  timestamp: string | any; // Support both string and Firebase timestamp
   volume: number;
   temperature: number;
-  cumulative_volume?: number; // Make cumulative_volume optional
+  cumulative_volume?: number;
   uvc_hours?: number;
-  id?: string; // Add id field that's used in certain contexts
+  raw_timestamp?: any;
 }

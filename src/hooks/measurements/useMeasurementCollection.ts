@@ -32,35 +32,31 @@ export function createMeasurementsQuery(unitId: string, count: number = 24) {
  */
 export function processMeasurementDocuments(
   docs: any[]
-): (Measurement & { id: string })[] {
+): Measurement[] {
   // Convert all documents to measurement objects with correctly formatted timestamps
   const measurements = docs.map(doc => {
     const data = doc.data();
-    
-    // Handle timestamp
-    if (data.timestamp) {
-      data.timestamp = safeFormatTimestamp(data.timestamp);
-    } else {
-      data.timestamp = "Invalid date";
-    }
-    
-    // Ensure numeric values have consistent formatting
-    if (data.volume !== undefined) {
-      data.volume = typeof data.volume === 'number' ? data.volume : parseFloat(data.volume || '0');
-    }
-    
-    if (data.temperature !== undefined) {
-      data.temperature = typeof data.temperature === 'number' ? data.temperature : parseFloat(data.temperature || '0');
-    }
-    
-    if (data.uvc_hours !== undefined) {
-      data.uvc_hours = typeof data.uvc_hours === 'number' ? data.uvc_hours : parseFloat(data.uvc_hours || '0');
-    }
-    
-    return {
+    const measurement: Measurement = {
       id: doc.id,
-      ...data,
-    } as Measurement & { id: string };
+      timestamp: data.timestamp ? safeFormatTimestamp(data.timestamp) : "Invalid date",
+      volume: typeof data.volume === 'number' ? data.volume : parseFloat(data.volume || '0'),
+      temperature: typeof data.temperature === 'number' ? data.temperature : parseFloat(data.temperature || '0'),
+    };
+    
+    // Add optional fields if they exist in the data
+    if (data.uvc_hours !== undefined) {
+      measurement.uvc_hours = typeof data.uvc_hours === 'number' 
+        ? data.uvc_hours 
+        : parseFloat(data.uvc_hours || '0');
+    }
+    
+    if (data.cumulative_volume !== undefined) {
+      measurement.cumulative_volume = typeof data.cumulative_volume === 'number'
+        ? data.cumulative_volume
+        : parseFloat(data.cumulative_volume || '0');
+    }
+    
+    return measurement;
   });
   
   return measurements;

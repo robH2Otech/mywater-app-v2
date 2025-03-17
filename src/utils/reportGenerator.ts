@@ -1,9 +1,9 @@
-
 import { UnitData } from "@/types/analytics";
 import { getMeasurementsCollectionPath } from "@/hooks/measurements/useMeasurementCollection";
 import { collection, query, where, orderBy, getDocs, Timestamp } from "firebase/firestore";
 import { db } from "@/integrations/firebase/client";
 import { subDays, format, parseISO } from "date-fns";
+import { Measurement } from "@/utils/measurements/types";
 
 // Function to get date range based on report type
 export const getDateRangeForReportType = (reportType: string): { startDate: Date, endDate: Date } => {
@@ -31,7 +31,7 @@ export const getDateRangeForReportType = (reportType: string): { startDate: Date
 };
 
 // Function to fetch measurements for a unit within a date range
-export const fetchMeasurementsForReport = async (unitId: string, reportType: string) => {
+export const fetchMeasurementsForReport = async (unitId: string, reportType: string): Promise<Measurement[]> => {
   try {
     const { startDate, endDate } = getDateRangeForReportType(reportType);
     const measurementsPath = getMeasurementsCollectionPath(unitId);
@@ -49,41 +49,43 @@ export const fetchMeasurementsForReport = async (unitId: string, reportType: str
     );
     
     const querySnapshot = await getDocs(q);
-    const measurements = querySnapshot.docs.map(doc => ({
-      id: doc.id,
-      ...doc.data(),
-      // Convert Firestore timestamp to string for easier processing
-      timestamp: doc.data().timestamp instanceof Timestamp 
-        ? doc.data().timestamp.toDate().toISOString() 
-        : doc.data().timestamp
-    }));
-    
-    console.log(`Retrieved ${measurements.length} measurements for report`);
-    
-    // Process measurements to ensure consistent numeric formatting
-    measurements.forEach(measurement => {
-      // Ensure volume is a number with 2 decimal places
-      if (measurement.volume !== undefined) {
-        measurement.volume = typeof measurement.volume === 'number' 
-          ? Number(measurement.volume.toFixed(2))
-          : Number(parseFloat(measurement.volume || '0').toFixed(2));
+    const measurements: Measurement[] = querySnapshot.docs.map(doc => {
+      const data = doc.data();
+      
+      // Create a measurement object with required fields
+      const measurement: Measurement = {
+        id: doc.id,
+        // Convert Firestore timestamp to string for easier processing
+        timestamp: data.timestamp instanceof Timestamp 
+          ? data.timestamp.toDate().toISOString() 
+          : data.timestamp,
+        volume: 0, // Default values that will be overwritten below
+        temperature: 0,
+      };
+      
+      // Process numeric values with proper formatting
+      if (data.volume !== undefined) {
+        measurement.volume = typeof data.volume === 'number' 
+          ? Number(data.volume.toFixed(2))
+          : Number(parseFloat(data.volume || '0').toFixed(2));
       }
       
-      // Ensure temperature is a number with 1 decimal place
-      if (measurement.temperature !== undefined) {
-        measurement.temperature = typeof measurement.temperature === 'number'
-          ? Number(measurement.temperature.toFixed(1))
-          : Number(parseFloat(measurement.temperature || '0').toFixed(1));
+      if (data.temperature !== undefined) {
+        measurement.temperature = typeof data.temperature === 'number'
+          ? Number(data.temperature.toFixed(1))
+          : Number(parseFloat(data.temperature || '0').toFixed(1));
       }
       
-      // Ensure uvc_hours is a number with 1 decimal place
-      if (measurement.uvc_hours !== undefined) {
-        measurement.uvc_hours = typeof measurement.uvc_hours === 'number'
-          ? Number(measurement.uvc_hours.toFixed(1))
-          : Number(parseFloat(measurement.uvc_hours || '0').toFixed(1));
+      if (data.uvc_hours !== undefined) {
+        measurement.uvc_hours = typeof data.uvc_hours === 'number'
+          ? Number(data.uvc_hours.toFixed(1))
+          : Number(parseFloat(data.uvc_hours || '0').toFixed(1));
       }
+      
+      return measurement;
     });
     
+    console.log(`Retrieved ${measurements.length} measurements for report`);
     return measurements;
   } catch (error) {
     console.error("Error fetching measurements for report:", error);
@@ -92,7 +94,7 @@ export const fetchMeasurementsForReport = async (unitId: string, reportType: str
 };
 
 // Calculate aggregated metrics from measurements
-export const calculateMetricsFromMeasurements = (measurements: any[]) => {
+export const calculateMetricsFromMeasurements = (measurements: Measurement[]) => {
   if (!measurements.length) {
     return {
       totalVolume: 0,
@@ -181,7 +183,7 @@ export const calculateMetricsFromMeasurements = (measurements: any[]) => {
 };
 
 // Generate plain text report content (used for the current simple reports)
-export function generateReportContent(unitData: UnitData, reportType: string, measurements: any[] = []): string {
+export function generateReportContent(unitData: UnitData, reportType: string, measurements: Measurement[] = []): string {
   const timestamp = new Date().toLocaleString();
   const { startDate, endDate } = getDateRangeForReportType(reportType);
   const metrics = calculateMetricsFromMeasurements(measurements);
