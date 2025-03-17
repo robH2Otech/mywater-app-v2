@@ -24,7 +24,7 @@ export async function fetchUnitStartingVolume(unitId: string): Promise<number> {
 }
 
 /**
- * Updates a unit's total volume in Firestore based on the last 24 hours measurements
+ * Updates a unit's volume information in Firestore based on the last 24 hours measurements
  */
 export async function updateUnitTotalVolume(
   unitId: string, 
@@ -36,10 +36,12 @@ export async function updateUnitTotalVolume(
       return;
     }
     
+    console.log(`Updating unit ${unitId} with last 24h volume: ${last24HoursVolume}`);
+    
     const unitDocRef = doc(db, "units", unitId);
     await updateDoc(unitDocRef, {
-      total_volume: last24HoursVolume,
-      last_24h_volume: last24HoursVolume, // Add this field to track 24h volume separately
+      total_volume: last24HoursVolume, // Use last 24h volume as the main total_volume field
+      last_24h_volume: last24HoursVolume, // Also store separately for reference
       updated_at: new Date().toISOString()
     });
   } catch (err) {

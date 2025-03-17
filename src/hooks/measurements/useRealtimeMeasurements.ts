@@ -43,11 +43,14 @@ export function useRealtimeMeasurements(unitId: string, count: number = 24) {
             
             // Update the unit's total_volume with the latest total volume
             if (measurementsData.length > 0) {
-              // Calculate total volume for the last 24 hours
+              // Calculate sum of volumes in the last 24 hours (not cumulative)
               const totalVolume = measurementsData.reduce((sum, measurement) => {
                 return sum + (typeof measurement.volume === 'number' ? measurement.volume : 0);
               }, 0);
               
+              console.log(`Unit ${unitId}: Calculated last 24h volume: ${totalVolume} m³`);
+              
+              // Update both total_volume and last_24h_volume fields in Firestore
               await updateUnitTotalVolume(unitId, totalVolume);
               
               // Invalidate queries to refresh UI

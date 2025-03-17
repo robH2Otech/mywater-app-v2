@@ -20,13 +20,18 @@ export function ReportSummaryCard({
 }: ReportSummaryCardProps) {
   const isMobile = useIsMobile();
 
+  // Format volume with proper decimal places and thousands separators
+  const formatVolume = (volume: number) => {
+    return volume.toLocaleString(undefined, { maximumFractionDigits: 2 });
+  };
+
   return (
     <Card className="p-4 bg-spotify-darker border-spotify-accent">
       <h3 className="text-lg font-semibold mb-4">Report Summary</h3>
       <div className={`grid ${isMobile ? "grid-cols-1 gap-3" : "grid-cols-2 gap-4"}`}>
         <div>
           <p className="text-gray-400 text-sm">Total Volume</p>
-          <p className="text-xl font-semibold">{totalVolume.toFixed(2)} m³</p>
+          <p className="text-xl font-semibold">{formatVolume(totalVolume)} m³</p>
         </div>
         <div>
           <p className="text-gray-400 text-sm">Avg. Temperature</p>

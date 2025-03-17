@@ -72,6 +72,20 @@ export const UnitCard = ({
     return new Date(date).toLocaleDateString();
   };
 
+  // Format volume with proper decimal places and thousands separators
+  const formatVolume = (volume: number | string | null | undefined) => {
+    if (volume === null || volume === undefined) return "N/A";
+    
+    try {
+      const numVolume = typeof volume === 'string' ? parseFloat(volume) : volume;
+      if (isNaN(numVolume)) return "N/A";
+      return numVolume.toLocaleString(undefined, { maximumFractionDigits: 2 });
+    } catch (err) {
+      console.error("Error formatting volume:", err);
+      return "N/A";
+    }
+  };
+
   const handleEditClick = (e: React.MouseEvent) => {
     e.preventDefault(); // Prevent navigation
     setIsEditDialogOpen(true);
@@ -103,7 +117,7 @@ export const UnitCard = ({
           </div>
           <div className="space-y-2">
             <p className="text-sm text-gray-400">
-              Volume: {total_volume ? `${total_volume} m³` : "N/A"}
+              Volume: {formatVolume(total_volume)} m³
             </p>
             <p className="text-sm text-gray-400">
               Last Maintenance: {formatDate(last_maintenance)}

@@ -125,7 +125,7 @@ export const Dashboard = () => {
 // Enhanced helper function to calculate total volume from all units in the last 24 hours
 function calculateTotalLast24hVolume(units: UnitData[]): string {
   const total = units.reduce((sum, unit) => {
-    // Prefer last_24h_volume if available, otherwise use total_volume
+    // Use last_24h_volume if available, otherwise use total_volume (which should now be the same)
     let volume = unit.last_24h_volume !== undefined ? unit.last_24h_volume : unit.total_volume;
     
     // Ensure we're working with numbers
