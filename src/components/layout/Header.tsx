@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { UserAvatar } from "./UserAvatar";
 import { WelcomeMessage } from "./WelcomeMessage";
@@ -6,7 +7,11 @@ import { collection, query, where, getDocs } from "firebase/firestore";
 import { onAuthStateChanged } from "firebase/auth";
 import { db, auth } from "@/integrations/firebase/client";
 
-export const Header = () => {
+interface HeaderProps {
+  children?: React.ReactNode;
+}
+
+export const Header = ({ children }: HeaderProps) => {
   const [firstName, setFirstName] = useState<string>("");
   const [lastName, setLastName] = useState<string>("");
 
@@ -51,7 +56,10 @@ export const Header = () => {
 
   return (
     <header className="h-16 bg-spotify-darker border-b border-white/10 flex items-center justify-between px-6">
-      <WelcomeMessage firstName={firstName} />
+      <div className="flex items-center">
+        {children}
+        <WelcomeMessage firstName={firstName} />
+      </div>
       <div className="flex items-center gap-4">
         <NotificationsMenu />
         <UserAvatar firstName={firstName} lastName={lastName} />
