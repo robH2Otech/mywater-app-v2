@@ -24,8 +24,8 @@ interface UnitFormFieldsProps {
 
 export function UnitFormFields({ formData, setFormData }: UnitFormFieldsProps) {
   return (
-    <ScrollableDialogContent maxHeight="60vh">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+    <ScrollableDialogContent maxHeight="65vh">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-5 p-1">
         <FormInput
           label="Unit Name"
           value={formData.name}

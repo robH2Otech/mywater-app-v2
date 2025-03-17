@@ -90,8 +90,8 @@
 /* Form slider styles */
 .form-slider-container {
   position: relative;
-  padding: 1rem 0;
-  margin-top: 0.5rem;
+  padding: 1.5rem 0 1rem;
+  margin-top: 1rem;
   border-top: 1px solid rgba(255, 255, 255, 0.1);
 }
 
@@ -111,4 +111,14 @@
 
 .scrollable-form::-webkit-scrollbar {
   display: none;
+}
+
+/* Ensure calendar is interactive */
+.rdp-button, .rdp-day, .rdp-nav_button {
+  pointer-events: auto !important;
+}
+
+/* Ensure dialog content has enough padding */
+.scrollable-form > div {
+  padding: 4px;
 }

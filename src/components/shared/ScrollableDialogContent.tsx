@@ -21,12 +21,14 @@ export function ScrollableDialogContent({
     <div className={`relative w-full ${className}`}>
       <div
         ref={scrollContainerRef}
-        className="scrollable-form overflow-y-auto pr-1"
+        className="scrollable-form overflow-y-auto px-2 pb-4"
         style={{ maxHeight }}
       >
         {children}
       </div>
-      <FormSlider containerRef={scrollContainerRef} />
+      <div className="mt-6">
+        <FormSlider containerRef={scrollContainerRef} />
+      </div>
     </div>
   );
 }

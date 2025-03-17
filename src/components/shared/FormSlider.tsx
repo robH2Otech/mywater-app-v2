@@ -66,8 +66,8 @@ export function FormSlider({ containerRef }: FormSliderProps) {
   if (!isVisible) return null;
 
   return (
-    <div className="form-slider-container">
-      <div className="form-slider-label">
+    <div className="form-slider-container pt-4">
+      <div className="form-slider-label mb-3">
         <span>{t("form.scroll")}</span>
         <span>{Math.round(sliderValue)}%</span>
       </div>

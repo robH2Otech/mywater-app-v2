@@ -132,13 +132,13 @@ export const Settings = () => {
 
       <Separator className="bg-spotify-accent" />
 
-      {/* About Section */}
+      {/* About Section - Updated text as requested */}
       <section className="space-y-4">
         <h2 className="text-lg font-medium text-white">{t("settings.about")}</h2>
         <div className="space-y-3">
-          <p className="text-sm text-gray-400">Version: 2.0.0</p>
+          <p className="text-sm text-gray-400">Version: 3.0.0</p>
           <p className="text-sm text-gray-300 leading-relaxed">
-            WATER ReUSE App is a comprehensive water management solution designed to help monitor and optimize water usage through advanced analytics and real-time alerts.
+            MYWATER app
           </p>
           <div className="space-y-2">
             <h3 className="text-sm font-medium text-white">{t("settings.disclaimer")}</h3>

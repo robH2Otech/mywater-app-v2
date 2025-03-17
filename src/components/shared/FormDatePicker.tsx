@@ -39,10 +39,10 @@ export function FormDatePicker({ value, onChange, label }: FormDatePickerProps) 
             mode="single"
             selected={value || undefined}
             onSelect={onChange}
-            className="bg-spotify-darker text-white rounded-md border-spotify-accent"
-            disabled={(date) => date < new Date()}
+            className="bg-spotify-darker text-white rounded-md border-spotify-accent pointer-events-auto"
+            disabled={(date) => date < new Date("1900-01-01")}
             captionLayout="dropdown-buttons"
-            fromYear={2024}
+            fromYear={1900}
             toYear={2030}
             initialFocus
           />
