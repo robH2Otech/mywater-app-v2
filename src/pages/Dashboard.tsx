@@ -23,21 +23,21 @@ export const Dashboard = () => {
       const processedUnits = unitsSnapshot.docs.map(doc => {
         const data = doc.data();
         
-        // Get the 24h volume from the volume field (not total_volume)
-        let volumeLastDay = data.volume;
-        if (typeof volumeLastDay === 'string') {
-          volumeLastDay = parseFloat(volumeLastDay);
-        } else if (volumeLastDay === undefined || volumeLastDay === null) {
-          volumeLastDay = 0;
+        // Ensure total_volume is a number
+        let totalVolume = data.total_volume;
+        if (typeof totalVolume === 'string') {
+          totalVolume = parseFloat(totalVolume);
+        } else if (totalVolume === undefined || totalVolume === null) {
+          totalVolume = 0;
         }
         
         // Recalculate status based on current volume
-        const status = determineUnitStatus(volumeLastDay);
+        const status = determineUnitStatus(totalVolume);
         
         return {
           id: doc.id,
           ...data,
-          volume: volumeLastDay,
+          total_volume: totalVolume,
           status: status // Override with calculated status
         };
       }) as UnitData[];
@@ -98,7 +98,7 @@ export const Dashboard = () => {
         />
         <StatCard
           title={t("dashboard.volume.today")}
-          value={`${calculateTotalVolumeLastDay(units)} m³`}
+          value={`${calculateTotalVolume(units)} m³`}
           icon={Activity}
           link="/analytics"
           subValue={`${units.length > 0 ? '↑ 13.2%' : '-'}`}
@@ -113,16 +113,16 @@ export const Dashboard = () => {
   );
 };
 
-// Enhanced helper function to calculate total volume from all units for the last 24 hours
-function calculateTotalVolumeLastDay(units: UnitData[]): string {
+// Enhanced helper function to calculate total volume from all units
+function calculateTotalVolume(units: UnitData[]): string {
   const total = units.reduce((sum, unit) => {
-    // Use volume (24h data) instead of total_volume
+    // Ensure we're working with numbers
     let volume = 0;
     
-    if (unit.volume !== undefined && unit.volume !== null) {
-      volume = typeof unit.volume === 'string' 
-        ? parseFloat(unit.volume) 
-        : unit.volume;
+    if (unit.total_volume !== undefined && unit.total_volume !== null) {
+      volume = typeof unit.total_volume === 'string' 
+        ? parseFloat(unit.total_volume) 
+        : unit.total_volume;
     }
     
     // Skip NaN values

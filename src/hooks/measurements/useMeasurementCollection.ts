@@ -28,12 +28,13 @@ export function createMeasurementsQuery(unitId: string, count: number = 24) {
 
 /**
  * Transforms raw Firestore document data into Measurement objects
- * with correctly formatted timestamps
+ * with correctly formatted timestamps and calculated cumulative volumes
  */
 export function processMeasurementDocuments(
-  docs: any[]
+  docs: any[], 
+  startingVolume: number
 ): (Measurement & { id: string })[] {
-  // Convert all documents to measurement objects with correctly formatted timestamps
+  // First convert all documents to measurement objects with correctly formatted timestamps
   const measurements = docs.map(doc => {
     const data = doc.data();
     
@@ -50,5 +51,22 @@ export function processMeasurementDocuments(
     } as Measurement & { id: string };
   });
   
+  // Sort by timestamp in ascending order for proper cumulative calculation
+  // Our query gets data in desc order, but we need asc order for calculations
+  const sortedMeasurements = [...measurements].sort((a, b) => {
+    if (!a.timestamp || !b.timestamp) return 0;
+    return a.timestamp.localeCompare(b.timestamp);
+  });
+  
+  // Calculate cumulative volumes correctly
+  let runningTotal = startingVolume;
+  
+  for (const measurement of sortedMeasurements) {
+    const volume = typeof measurement.volume === 'number' ? measurement.volume : 0;
+    runningTotal += volume;
+    measurement.cumulative_volume = runningTotal;
+  }
+  
+  // Return in the original order (desc for display - newest first)
   return measurements;
 }

@@ -4,10 +4,13 @@ import { useQueryClient } from "@tanstack/react-query";
 import { onSnapshot } from "firebase/firestore";
 import { Measurement } from "@/utils/measurements/types";
 import { 
+  fetchUnitStartingVolume, 
+  updateUnitTotalVolume 
+} from "./useUnitVolume";
+import { 
   createMeasurementsQuery,
   processMeasurementDocuments
 } from "./useMeasurementCollection";
-import { calculate24HourVolume, updateUnitVolume } from "./useUnitVolume";
 
 export function useRealtimeMeasurements(unitId: string, count: number = 24) {
   const [measurements, setMeasurements] = useState<(Measurement & { id: string })[]>([]);
@@ -34,37 +37,28 @@ export function useRealtimeMeasurements(unitId: string, count: number = 24) {
         measurementsQuery,
         async (querySnapshot) => {
           try {
+            const startingVolume = await fetchUnitStartingVolume(unitId);
+            
             // Process docs and ensure we get the most recent measurements (last 24 hours)
-            const measurementsData = processMeasurementDocuments(querySnapshot.docs);
+            // The query already sorts by timestamp desc and limits to count (24)
+            const measurementsData = processMeasurementDocuments(
+              querySnapshot.docs,
+              startingVolume
+            );
             
-            // Sort by timestamp to ensure proper order (newest first)
-            measurementsData.sort((a, b) => {
-              return new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime();
-            });
-            
-            // Limit to exactly 24 data points (or less if not enough data)
-            const limitedData = measurementsData.slice(0, count);
-            
-            // Calculate the total volume for the last 24 hours
-            const volumeLast24Hours = calculate24HourVolume(limitedData);
-            console.log(`Unit ${unitId} - Last 24h volume: ${volumeLast24Hours.toFixed(2)} m³`);
-            
-            // Update the unit document with the latest 24-hour volume
-            if (limitedData.length > 0) {
-              try {
-                await updateUnitVolume(unitId, volumeLast24Hours);
-              } catch (updateErr) {
-                console.error(`Failed to update unit ${unitId} volume:`, updateErr);
-              }
-            }
-            
-            setMeasurements(limitedData);
+            setMeasurements(measurementsData);
             setIsLoading(false);
             
-            // Invalidate queries to refresh UI
-            queryClient.invalidateQueries({ queryKey: ['units'] });
-            queryClient.invalidateQueries({ queryKey: ['filter-units'] });
-            queryClient.invalidateQueries({ queryKey: ['unit', unitId] });
+            // Update the unit's total_volume with the latest cumulative volume
+            if (measurementsData.length > 0) {
+              const latestMeasurement = measurementsData[0]; // First item (most recent)
+              await updateUnitTotalVolume(unitId, latestMeasurement.cumulative_volume);
+              
+              // Invalidate queries to refresh UI
+              queryClient.invalidateQueries({ queryKey: ['units'] });
+              queryClient.invalidateQueries({ queryKey: ['filter-units'] });
+              queryClient.invalidateQueries({ queryKey: ['unit', unitId] });
+            }
           } catch (err) {
             console.error("Error processing measurements data:", err);
             setError(err as Error);

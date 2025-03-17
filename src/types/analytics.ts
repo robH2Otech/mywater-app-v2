@@ -6,8 +6,7 @@ export interface UnitData {
   name?: string;
   location?: string;
   status?: string;
-  volume?: number | string; // The volume from last 24 hours
-  total_volume?: number; // Add the missing total_volume property
+  total_volume?: number | string;
   last_maintenance?: string;
   next_maintenance?: string;
   setup_date?: string;
@@ -64,5 +63,6 @@ export interface MeasurementData {
   timestamp: string;
   volume: number;
   temperature: number;
+  cumulative_volume: number;
   uvc_hours?: number;
 }
