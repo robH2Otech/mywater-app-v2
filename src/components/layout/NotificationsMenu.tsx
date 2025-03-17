@@ -1,6 +1,6 @@
 
 import { useState } from "react";
-import { Bell, AlertTriangle, Info } from "lucide-react";
+import { Bell, Instagram, Facebook, Twitter, Mail } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -24,25 +24,25 @@ export const NotificationsMenu = () => {
   const [notifications, setNotifications] = useState<Notification[]>([
     {
       id: "1",
-      title: "Low Water Flow",
-      content: "Water flow below threshold in MYWATER_001",
-      icon: <AlertTriangle className="h-4 w-4 text-yellow-500" />,
+      title: "Instagram",
+      content: "New followers on your latest post",
+      icon: <Instagram className="h-4 w-4 text-pink-500" />,
       time: "2 min ago",
       read: false,
     },
     {
       id: "2",
-      title: "Filter Change Required",
-      content: "Unit MYWATER_002 filter needs replacement",
-      icon: <Info className="h-4 w-4 text-blue-500" />,
+      title: "Facebook",
+      content: "3 new messages from your friends",
+      icon: <Facebook className="h-4 w-4 text-blue-600" />,
       time: "15 min ago",
       read: false,
     },
     {
       id: "3",
-      title: "System Update",
-      content: "Software update available for your units",
-      icon: <Info className="h-4 w-4 text-gray-400" />,
+      title: "Twitter",
+      content: "Your post was retweeted 12 times",
+      icon: <Twitter className="h-4 w-4 text-blue-400" />,
       time: "1 hour ago",
       read: false,
     },
@@ -50,7 +50,7 @@ export const NotificationsMenu = () => {
       id: "4",
       title: "MyWater Alert",
       content: "Usage spike detected in Unit MYWATER_002",
-      icon: <AlertTriangle className="h-4 w-4 text-spotify-green" />,
+      icon: <Mail className="h-4 w-4 text-spotify-green" />,
       time: "3 hours ago",
       read: true,
     },
@@ -134,7 +134,7 @@ export const NotificationsMenu = () => {
         </div>
         <DropdownMenuSeparator className="bg-gray-700" />
         <DropdownMenuItem className="px-4 py-2 text-center text-gray-400 hover:text-white cursor-pointer hover:bg-spotify-accent">
-          View all notifications
+          Connect social accounts
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>

@@ -24,24 +24,21 @@ export async function fetchUnitStartingVolume(unitId: string): Promise<number> {
 }
 
 /**
- * Updates a unit's total volume in Firestore with the latest 24h volume
+ * Updates a unit's total volume in Firestore based on the latest measurement
  */
 export async function updateUnitTotalVolume(
   unitId: string, 
-  last24hVolume: number
+  latestCumulativeVolume: number
 ): Promise<void> {
   try {
-    if (!unitId || typeof last24hVolume !== 'number') {
-      console.warn("Invalid parameters for updateUnitTotalVolume", { unitId, last24hVolume });
+    if (!unitId || typeof latestCumulativeVolume !== 'number') {
+      console.warn("Invalid parameters for updateUnitTotalVolume", { unitId, latestCumulativeVolume });
       return;
     }
     
-    console.log(`Updating unit ${unitId} with last 24h volume: ${last24hVolume}`);
-    
     const unitDocRef = doc(db, "units", unitId);
     await updateDoc(unitDocRef, {
-      total_volume: last24hVolume,
-      last_24h_volume: last24hVolume, // Store explicitly for reference
+      total_volume: latestCumulativeVolume,
       updated_at: new Date().toISOString()
     });
   } catch (err) {
