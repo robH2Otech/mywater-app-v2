@@ -9,7 +9,7 @@ import { getDateRangeForReportType } from "@/utils/reportGenerator";
 import { toast } from "@/components/ui/use-toast";
 import { useIsMobile } from "@/hooks/use-mobile";
 
-// Import our new components
+// Import our components
 import { ReportSummaryCard } from "./reports/ReportSummaryCard";
 import { UnitStatusCard } from "./reports/UnitStatusCard";
 import { DailyMeasurementsTable } from "./reports/DailyMeasurementsTable";
@@ -35,6 +35,27 @@ export function ReportVisual({ unit, reportType, metrics }: ReportVisualProps) {
   const isMobile = useIsMobile();
   const { startDate, endDate } = getDateRangeForReportType(reportType);
   
+  // Ensure all numeric values are properly formatted
+  const formattedMetrics = {
+    ...metrics,
+    totalVolume: Number(metrics.totalVolume.toFixed(2)),
+    avgVolume: Number(metrics.avgVolume.toFixed(2)),
+    maxVolume: Number(metrics.maxVolume.toFixed(2)),
+    avgTemperature: Number(metrics.avgTemperature.toFixed(1)),
+    totalUvcHours: Number(metrics.totalUvcHours.toFixed(1)),
+  };
+  
+  // Ensure unit data is formatted correctly
+  const formattedUnit = {
+    ...unit,
+    total_volume: typeof unit.total_volume === 'number' 
+      ? Number(unit.total_volume.toFixed(2)) 
+      : Number((parseFloat(unit.total_volume as string || '0')).toFixed(2)),
+    uvc_hours: typeof unit.uvc_hours === 'number' 
+      ? Number(unit.uvc_hours.toFixed(1)) 
+      : Number((parseFloat(unit.uvc_hours as string || '0')).toFixed(1)),
+  };
+  
   const handleGenerateVisualPDF = async () => {
     try {
       console.log("Starting visual PDF report generation...");
@@ -45,7 +66,7 @@ export function ReportVisual({ unit, reportType, metrics }: ReportVisualProps) {
         throw new Error("Report container element not found");
       }
       
-      await generateVisualPDF(reportContainer, unit, reportType);
+      await generateVisualPDF(reportContainer, formattedUnit, reportType);
     } catch (error) {
       console.error("Error generating visual PDF:", error);
       
@@ -59,7 +80,7 @@ export function ReportVisual({ unit, reportType, metrics }: ReportVisualProps) {
   
   const handleGenerateTabularPDF = () => {
     try {
-      generateTabularPDF(unit, reportType, metrics, startDate, endDate);
+      generateTabularPDF(formattedUnit, reportType, formattedMetrics, startDate, endDate);
     } catch (error) {
       console.error("Error generating tabular PDF:", error);
       
@@ -97,14 +118,14 @@ export function ReportVisual({ unit, reportType, metrics }: ReportVisualProps) {
       
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <ReportSummaryCard 
-          totalVolume={metrics.totalVolume}
-          avgTemperature={metrics.avgTemperature}
-          totalUvcHours={metrics.totalUvcHours}
+          totalVolume={formattedMetrics.totalVolume}
+          avgTemperature={formattedMetrics.avgTemperature}
+          totalUvcHours={formattedMetrics.totalUvcHours}
           startDate={startDate}
           endDate={endDate}
         />
         
-        <UnitStatusCard unit={unit} />
+        <UnitStatusCard unit={formattedUnit} />
       </div>
       
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">

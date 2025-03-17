@@ -13,6 +13,7 @@ import {
   fetchMeasurementsForReport,
   calculateMetricsFromMeasurements
 } from "@/utils/reportGenerator";
+import { fetchLatestVolume } from "@/hooks/measurements/useUnitVolume";
 
 interface ReportGenerationFormProps {
   selectedUnit: string;
@@ -56,7 +57,7 @@ export function ReportGenerationForm({
       }
       
       // Create a base UnitData object with required id and default empty name
-      const unitData: UnitData = {
+      let unitData: UnitData = {
         id: unitSnapshot.id,
         name: unitSnapshot.data().name || 'Unknown Unit',
         ...unitSnapshot.data() as DocumentData
@@ -64,6 +65,48 @@ export function ReportGenerationForm({
       
       // Fetch measurements for the report period
       const measurements = await fetchMeasurementsForReport(selectedUnit, reportType);
+      
+      // Update unit data with latest volume and UVC hours from measurements
+      if (measurements.length > 0) {
+        // Sort measurements to get the most recent one
+        const sortedMeasurements = [...measurements].sort((a, b) => {
+          const dateA = typeof a.timestamp === 'string' ? new Date(a.timestamp) : a.timestamp;
+          const dateB = typeof b.timestamp === 'string' ? new Date(b.timestamp) : b.timestamp;
+          return dateB.getTime() - dateA.getTime();
+        });
+        
+        const latestMeasurement = sortedMeasurements[0];
+        
+        // Update unitData with the latest values from measurements
+        if (latestMeasurement.volume !== undefined) {
+          const latestVolume = typeof latestMeasurement.volume === 'number' 
+            ? Number(latestMeasurement.volume.toFixed(2)) 
+            : Number(parseFloat(latestMeasurement.volume || '0').toFixed(2));
+          
+          unitData.total_volume = latestVolume;
+          console.log(`Updated unit total_volume to latest: ${latestVolume}`);
+        }
+        
+        if (latestMeasurement.uvc_hours !== undefined) {
+          const latestUvcHours = typeof latestMeasurement.uvc_hours === 'number' 
+            ? Number(latestMeasurement.uvc_hours.toFixed(1)) 
+            : Number(parseFloat(latestMeasurement.uvc_hours || '0').toFixed(1));
+          
+          unitData.uvc_hours = latestUvcHours;
+          console.log(`Updated unit uvc_hours to latest: ${latestUvcHours}`);
+        }
+      } else {
+        // If no measurements, attempt to fetch the latest volume separately
+        try {
+          const latestVolume = await fetchLatestVolume(selectedUnit);
+          if (latestVolume > 0) {
+            unitData.total_volume = Number(latestVolume.toFixed(2));
+            console.log(`Fetched latest volume separately: ${latestVolume}`);
+          }
+        } catch (err) {
+          console.warn("Could not fetch latest volume:", err);
+        }
+      }
       
       // Generate report content based on unit data and measurements
       const reportContent = generateReportContent(unitData, reportType, measurements);

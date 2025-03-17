@@ -59,6 +59,31 @@ export const fetchMeasurementsForReport = async (unitId: string, reportType: str
     }));
     
     console.log(`Retrieved ${measurements.length} measurements for report`);
+    
+    // Process measurements to ensure consistent numeric formatting
+    measurements.forEach(measurement => {
+      // Ensure volume is a number with 2 decimal places
+      if (measurement.volume !== undefined) {
+        measurement.volume = typeof measurement.volume === 'number' 
+          ? Number(measurement.volume.toFixed(2))
+          : Number(parseFloat(measurement.volume || '0').toFixed(2));
+      }
+      
+      // Ensure temperature is a number with 1 decimal place
+      if (measurement.temperature !== undefined) {
+        measurement.temperature = typeof measurement.temperature === 'number'
+          ? Number(measurement.temperature.toFixed(1))
+          : Number(parseFloat(measurement.temperature || '0').toFixed(1));
+      }
+      
+      // Ensure uvc_hours is a number with 1 decimal place
+      if (measurement.uvc_hours !== undefined) {
+        measurement.uvc_hours = typeof measurement.uvc_hours === 'number'
+          ? Number(measurement.uvc_hours.toFixed(1))
+          : Number(parseFloat(measurement.uvc_hours || '0').toFixed(1));
+      }
+    });
+    
     return measurements;
   } catch (error) {
     console.error("Error fetching measurements for report:", error);
@@ -79,10 +104,21 @@ export const calculateMetricsFromMeasurements = (measurements: any[]) => {
     };
   }
   
-  let totalVolume = 0;
+  // Get the latest volume from the most recent measurement
+  const sortedMeasurements = [...measurements].sort((a, b) => {
+    const dateA = typeof a.timestamp === 'string' ? new Date(a.timestamp) : a.timestamp;
+    const dateB = typeof b.timestamp === 'string' ? new Date(b.timestamp) : b.timestamp;
+    return dateB.getTime() - dateA.getTime();
+  });
+  
+  const latestMeasurement = sortedMeasurements[0];
+  const latestVolume = latestMeasurement?.volume || 0;
+  const latestUvcHours = latestMeasurement?.uvc_hours || 0;
+  
+  console.log(`Latest measurement for report - Volume: ${latestVolume}, UVC Hours: ${latestUvcHours}`);
+  
   let totalTemperature = 0;
   let maxVolume = 0;
-  let totalUvcHours = 0;
   
   // Create daily aggregations for charts
   const dailyMap = new Map();
@@ -92,9 +128,7 @@ export const calculateMetricsFromMeasurements = (measurements: any[]) => {
     const temperature = typeof measurement.temperature === 'number' ? measurement.temperature : 0;
     const uvcHours = typeof measurement.uvc_hours === 'number' ? measurement.uvc_hours : 0;
     
-    totalVolume += volume;
     totalTemperature += temperature;
-    totalUvcHours += uvcHours;
     
     if (volume > maxVolume) {
       maxVolume = volume;
@@ -117,9 +151,9 @@ export const calculateMetricsFromMeasurements = (measurements: any[]) => {
       }
       
       const dayData = dailyMap.get(day);
-      dayData.volume += volume;
+      dayData.volume = volume; // Use the exact volume from measurement, not cumulative
       dayData.temperature += temperature;
-      dayData.uvcHours += uvcHours;
+      dayData.uvcHours = uvcHours; // Use exact UVC hours, not cumulative
       dayData.count += 1;
     }
   });
@@ -127,21 +161,21 @@ export const calculateMetricsFromMeasurements = (measurements: any[]) => {
   // Calculate averages for each day
   const dailyData = Array.from(dailyMap.values()).map(day => ({
     date: day.date,
-    volume: day.volume,
-    avgVolume: day.volume / day.count,
-    avgTemperature: day.temperature / day.count,
-    uvcHours: day.uvcHours
+    volume: Number(day.volume.toFixed(2)),
+    avgVolume: Number((day.volume / day.count).toFixed(2)),
+    avgTemperature: Number((day.temperature / day.count).toFixed(1)),
+    uvcHours: Number(day.uvcHours.toFixed(1))
   }));
   
   // Sort by date
   dailyData.sort((a, b) => a.date.localeCompare(b.date));
   
   return {
-    totalVolume,
-    avgVolume: totalVolume / measurements.length,
-    maxVolume,
-    avgTemperature: totalTemperature / measurements.length,
-    totalUvcHours,
+    totalVolume: latestVolume, // Use latest volume instead of accumulated
+    avgVolume: Number((latestVolume / measurements.length).toFixed(2)),
+    maxVolume: Number(maxVolume.toFixed(2)),
+    avgTemperature: Number((totalTemperature / measurements.length).toFixed(1)),
+    totalUvcHours: latestUvcHours, // Use latest UVC hours instead of accumulated
     dailyData
   };
 };
@@ -160,14 +194,14 @@ Unit Information:
 Name: ${unitData.name || 'N/A'}
 Location: ${unitData.location || 'N/A'}
 Status: ${unitData.status || 'N/A'}
-Total Volume: ${unitData.total_volume || 0} m³
+Total Volume: ${metrics.totalVolume.toFixed(2)} m³
 
 Performance Metrics:
 Total Volume Processed: ${metrics.totalVolume.toFixed(2)} m³
 Average Daily Volume: ${metrics.avgVolume.toFixed(2)} m³
 Maximum Daily Volume: ${metrics.maxVolume.toFixed(2)} m³
-Average Temperature: ${metrics.avgTemperature.toFixed(2)} °C
-Total UVC Hours: ${metrics.totalUvcHours.toFixed(2)} hours
+Average Temperature: ${metrics.avgTemperature.toFixed(1)} °C
+Total UVC Hours: ${metrics.totalUvcHours.toFixed(1)} hours
 
 Last Maintenance: ${unitData.last_maintenance ? new Date(unitData.last_maintenance).toLocaleDateString() : 'N/A'}
 Next Maintenance: ${unitData.next_maintenance ? new Date(unitData.next_maintenance).toLocaleDateString() : 'N/A'}

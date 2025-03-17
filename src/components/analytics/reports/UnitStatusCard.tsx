@@ -18,6 +18,14 @@ export function UnitStatusCard({ unit }: UnitStatusCardProps) {
     return numericVolume.toFixed(2);
   };
   
+  // Format UVC hours with exactly 1 decimal place
+  const formatUVCHours = (hours: number | string | undefined | null) => {
+    if (hours === undefined || hours === null) return "0.0";
+    const numericHours = typeof hours === 'string' ? parseFloat(hours) : hours;
+    if (isNaN(numericHours)) return "0.0";
+    return numericHours.toFixed(1);
+  };
+  
   return (
     <Card className="p-4 bg-spotify-darker border-spotify-accent">
       <h3 className="text-lg font-semibold mb-4">Unit Status</h3>
@@ -48,7 +56,7 @@ export function UnitStatusCard({ unit }: UnitStatusCardProps) {
         </div>
         <div>
           <p className="text-gray-400 text-sm">UVC Hours</p>
-          <p className="text-lg font-medium">{formatVolume(unit.uvc_hours)}</p>
+          <p className="text-lg font-medium">{formatUVCHours(unit.uvc_hours)}</p>
         </div>
         <div>
           <p className="text-gray-400 text-sm">Last Maintenance</p>
