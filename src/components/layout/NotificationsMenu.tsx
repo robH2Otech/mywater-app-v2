@@ -1,6 +1,6 @@
 
 import { useState } from "react";
-import { Bell, Instagram, Facebook, Twitter, Mail } from "lucide-react";
+import { Bell, Mail } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -24,25 +24,25 @@ export const NotificationsMenu = () => {
   const [notifications, setNotifications] = useState<Notification[]>([
     {
       id: "1",
-      title: "Instagram",
-      content: "New followers on your latest post",
-      icon: <Instagram className="h-4 w-4 text-pink-500" />,
+      title: "MyWater Alert",
+      content: "Unit MYWATER_001 requires maintenance",
+      icon: <Mail className="h-4 w-4 text-spotify-green" />,
       time: "2 min ago",
       read: false,
     },
     {
       id: "2",
-      title: "Facebook",
-      content: "3 new messages from your friends",
-      icon: <Facebook className="h-4 w-4 text-blue-600" />,
+      title: "MyWater Alert",
+      content: "High water usage detected in MYWATER_003",
+      icon: <Mail className="h-4 w-4 text-spotify-green" />,
       time: "15 min ago",
       read: false,
     },
     {
       id: "3",
-      title: "Twitter",
-      content: "Your post was retweeted 12 times",
-      icon: <Twitter className="h-4 w-4 text-blue-400" />,
+      title: "MyWater Alert",
+      content: "Low water flow in MYWATER_005",
+      icon: <Mail className="h-4 w-4 text-spotify-green" />,
       time: "1 hour ago",
       read: false,
     },
@@ -132,10 +132,6 @@ export const NotificationsMenu = () => {
             </div>
           )}
         </div>
-        <DropdownMenuSeparator className="bg-gray-700" />
-        <DropdownMenuItem className="px-4 py-2 text-center text-gray-400 hover:text-white cursor-pointer hover:bg-spotify-accent">
-          Connect social accounts
-        </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
   );

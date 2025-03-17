@@ -3,10 +3,7 @@ import { useState, useEffect } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { onSnapshot } from "firebase/firestore";
 import { Measurement } from "@/utils/measurements/types";
-import { 
-  fetchUnitStartingVolume, 
-  updateUnitTotalVolume 
-} from "./useUnitVolume";
+import { updateUnitTotalVolume } from "./useUnitVolume";
 import { 
   createMeasurementsQuery,
   processMeasurementDocuments
@@ -37,27 +34,27 @@ export function useRealtimeMeasurements(unitId: string, count: number = 24) {
         measurementsQuery,
         async (querySnapshot) => {
           try {
-            const startingVolume = await fetchUnitStartingVolume(unitId);
-            
-            // Process docs and ensure we get the most recent measurements (last 24 hours)
-            // The query already sorts by timestamp desc and limits to count (24)
-            const measurementsData = processMeasurementDocuments(
-              querySnapshot.docs,
-              startingVolume
-            );
+            // Process documents to get the most recent measurements (limited to count/24)
+            // The query already limits and sorts by timestamp desc
+            const measurementsData = processMeasurementDocuments(querySnapshot.docs);
             
             setMeasurements(measurementsData);
             setIsLoading(false);
             
-            // Update the unit's total_volume with the latest cumulative volume
+            // Update the unit's total_volume with the latest total volume
             if (measurementsData.length > 0) {
-              const latestMeasurement = measurementsData[0]; // First item (most recent)
-              await updateUnitTotalVolume(unitId, latestMeasurement.cumulative_volume);
+              // Calculate total volume for the last 24 hours
+              const totalVolume = measurementsData.reduce((sum, measurement) => {
+                return sum + (typeof measurement.volume === 'number' ? measurement.volume : 0);
+              }, 0);
+              
+              await updateUnitTotalVolume(unitId, totalVolume);
               
               // Invalidate queries to refresh UI
               queryClient.invalidateQueries({ queryKey: ['units'] });
               queryClient.invalidateQueries({ queryKey: ['filter-units'] });
               queryClient.invalidateQueries({ queryKey: ['unit', unitId] });
+              queryClient.invalidateQueries({ queryKey: ['dashboard-units'] });
             }
           } catch (err) {
             console.error("Error processing measurements data:", err);
