@@ -1,3 +1,4 @@
+
 import { UnitData } from "@/types/analytics";
 import { ReportChart } from "./ReportChart";
 import { Card } from "@/components/ui/card";
@@ -202,6 +203,7 @@ export function ReportVisual({ unit, reportType, metrics }: ReportVisualProps) {
     } catch (error) {
       console.error("Error in manual table drawing:", error);
       doc.setTextColor(255, 0, 0);
+      const marginSize = 14; // Define margin variable here as well for error case
       doc.text(`Error drawing table: ${error instanceof Error ? error.message : String(error)}`, marginSize, startY + 10);
       return startY + 20;
     }
@@ -219,6 +221,7 @@ export function ReportVisual({ unit, reportType, metrics }: ReportVisualProps) {
       
       const pageWidth = doc.internal.pageSize.getWidth();
       console.log("Page width:", pageWidth);
+      const marginSize = 14; // Define margin variable here
       
       // Add company logo/header
       console.log("Adding company header...");
