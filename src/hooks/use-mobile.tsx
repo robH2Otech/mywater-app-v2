@@ -16,11 +16,23 @@ export function useIsMobile() {
       setIsMobile(window.innerWidth < MOBILE_BREAKPOINT)
     }
     
-    // Add event listener
-    window.addEventListener("resize", checkMobileSize)
+    // Check on mount
+    checkMobileSize()
+    
+    // Add event listener with debounce for performance
+    let timeoutId: number;
+    const handleResize = () => {
+      clearTimeout(timeoutId);
+      timeoutId = window.setTimeout(checkMobileSize, 100);
+    };
+    
+    window.addEventListener("resize", handleResize)
     
     // Cleanup
-    return () => window.removeEventListener("resize", checkMobileSize)
+    return () => {
+      window.removeEventListener("resize", handleResize)
+      clearTimeout(timeoutId);
+    }
   }, [])
 
   return isMobile
@@ -41,11 +53,23 @@ export function useIsTablet() {
       setIsTablet(width >= MOBILE_BREAKPOINT && width < TABLET_BREAKPOINT)
     }
     
-    // Add event listener
-    window.addEventListener("resize", checkTabletSize)
+    // Check on mount
+    checkTabletSize()
+    
+    // Add event listener with debounce for performance
+    let timeoutId: number;
+    const handleResize = () => {
+      clearTimeout(timeoutId);
+      timeoutId = window.setTimeout(checkTabletSize, 100);
+    };
+    
+    window.addEventListener("resize", handleResize)
     
     // Cleanup
-    return () => window.removeEventListener("resize", checkTabletSize)
+    return () => {
+      window.removeEventListener("resize", handleResize)
+      clearTimeout(timeoutId);
+    }
   }, [])
 
   return isTablet
