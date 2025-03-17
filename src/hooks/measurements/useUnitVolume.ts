@@ -11,7 +11,7 @@ export async function fetchUnitStartingVolume(unitId: string): Promise<number> {
     const unitDoc = await getDoc(unitDocRef);
     
     if (!unitDoc.exists()) {
-      console.warn(`Unit ${unitId} not found when fetching total volume`);
+      console.warn(`Unit ${unitId} not found when fetching starting volume`);
       return 0;
     }
     
@@ -24,25 +24,25 @@ export async function fetchUnitStartingVolume(unitId: string): Promise<number> {
 }
 
 /**
- * Updates a unit's total volume in Firestore based on the latest measurement
+ * Updates a unit's volume in Firestore based on the last 24 hours measurements
  */
-export async function updateUnitTotalVolume(
+export async function updateUnitVolume(
   unitId: string, 
-  latestCumulativeVolume: number
+  lastVolume: number
 ): Promise<void> {
   try {
-    if (!unitId || typeof latestCumulativeVolume !== 'number') {
-      console.warn("Invalid parameters for updateUnitTotalVolume", { unitId, latestCumulativeVolume });
+    if (!unitId || typeof lastVolume !== 'number') {
+      console.warn("Invalid parameters for updateUnitVolume", { unitId, lastVolume });
       return;
     }
     
     const unitDocRef = doc(db, "units", unitId);
     await updateDoc(unitDocRef, {
-      total_volume: latestCumulativeVolume,
+      volume: lastVolume,
       updated_at: new Date().toISOString()
     });
   } catch (err) {
-    console.error("Error updating unit total volume:", err);
+    console.error("Error updating unit volume:", err);
     throw err;
   }
 }

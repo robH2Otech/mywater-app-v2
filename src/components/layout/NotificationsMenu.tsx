@@ -1,6 +1,6 @@
 
 import { useState } from "react";
-import { Bell, Instagram, Facebook, Twitter, Mail } from "lucide-react";
+import { Bell, AlertTriangle, Info, Check } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -17,6 +17,7 @@ interface Notification {
   content: string;
   icon: React.ReactNode;
   time: string;
+  type: "alert" | "info" | "success";
   read: boolean;
 }
 
@@ -24,34 +25,38 @@ export const NotificationsMenu = () => {
   const [notifications, setNotifications] = useState<Notification[]>([
     {
       id: "1",
-      title: "Instagram",
-      content: "New followers on your latest post",
-      icon: <Instagram className="h-4 w-4 text-pink-500" />,
+      title: "Unit Warning",
+      content: "Filter change required for MYWATER_002",
+      icon: <AlertTriangle className="h-4 w-4 text-yellow-500" />,
       time: "2 min ago",
+      type: "alert",
       read: false,
     },
     {
       id: "2",
-      title: "Facebook",
-      content: "3 new messages from your friends",
-      icon: <Facebook className="h-4 w-4 text-blue-600" />,
+      title: "System Update",
+      content: "System maintenance scheduled for tonight",
+      icon: <Info className="h-4 w-4 text-blue-500" />,
       time: "15 min ago",
+      type: "info",
       read: false,
     },
     {
       id: "3",
-      title: "Twitter",
-      content: "Your post was retweeted 12 times",
-      icon: <Twitter className="h-4 w-4 text-blue-400" />,
+      title: "Alert Resolved",
+      content: "Temperature alert for MYWATER_003 resolved",
+      icon: <Check className="h-4 w-4 text-green-500" />,
       time: "1 hour ago",
+      type: "success",
       read: false,
     },
     {
       id: "4",
       title: "MyWater Alert",
       content: "Usage spike detected in Unit MYWATER_002",
-      icon: <Mail className="h-4 w-4 text-spotify-green" />,
+      icon: <AlertTriangle className="h-4 w-4 text-spotify-green" />,
       time: "3 hours ago",
+      type: "alert",
       read: true,
     },
   ]);
@@ -134,7 +139,7 @@ export const NotificationsMenu = () => {
         </div>
         <DropdownMenuSeparator className="bg-gray-700" />
         <DropdownMenuItem className="px-4 py-2 text-center text-gray-400 hover:text-white cursor-pointer hover:bg-spotify-accent">
-          Connect social accounts
+          View all notifications
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>

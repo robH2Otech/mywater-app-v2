@@ -5,6 +5,5 @@ export interface Measurement {
   raw_timestamp?: any; // Add raw_timestamp as an optional field
   volume: number;
   temperature: number;
-  cumulative_volume: number;
   uvc_hours?: number;
 }

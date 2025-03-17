@@ -4,10 +4,6 @@ import { useQueryClient } from "@tanstack/react-query";
 import { onSnapshot } from "firebase/firestore";
 import { Measurement } from "@/utils/measurements/types";
 import { 
-  fetchUnitStartingVolume, 
-  updateUnitTotalVolume 
-} from "./useUnitVolume";
-import { 
   createMeasurementsQuery,
   processMeasurementDocuments
 } from "./useMeasurementCollection";
@@ -37,28 +33,17 @@ export function useRealtimeMeasurements(unitId: string, count: number = 24) {
         measurementsQuery,
         async (querySnapshot) => {
           try {
-            const startingVolume = await fetchUnitStartingVolume(unitId);
-            
             // Process docs and ensure we get the most recent measurements (last 24 hours)
             // The query already sorts by timestamp desc and limits to count (24)
-            const measurementsData = processMeasurementDocuments(
-              querySnapshot.docs,
-              startingVolume
-            );
+            const measurementsData = processMeasurementDocuments(querySnapshot.docs);
             
             setMeasurements(measurementsData);
             setIsLoading(false);
             
-            // Update the unit's total_volume with the latest cumulative volume
-            if (measurementsData.length > 0) {
-              const latestMeasurement = measurementsData[0]; // First item (most recent)
-              await updateUnitTotalVolume(unitId, latestMeasurement.cumulative_volume);
-              
-              // Invalidate queries to refresh UI
-              queryClient.invalidateQueries({ queryKey: ['units'] });
-              queryClient.invalidateQueries({ queryKey: ['filter-units'] });
-              queryClient.invalidateQueries({ queryKey: ['unit', unitId] });
-            }
+            // Invalidate queries to refresh UI
+            queryClient.invalidateQueries({ queryKey: ['units'] });
+            queryClient.invalidateQueries({ queryKey: ['filter-units'] });
+            queryClient.invalidateQueries({ queryKey: ['unit', unitId] });
           } catch (err) {
             console.error("Error processing measurements data:", err);
             setError(err as Error);
