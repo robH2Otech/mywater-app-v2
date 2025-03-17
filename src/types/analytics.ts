@@ -6,6 +6,7 @@ export interface UnitData {
   name?: string;
   location?: string;
   status?: string;
+  volume?: number | string;
   total_volume?: number | string;
   last_maintenance?: string;
   next_maintenance?: string;
@@ -63,6 +64,5 @@ export interface MeasurementData {
   timestamp: string;
   volume: number;
   temperature: number;
-  cumulative_volume: number;
   uvc_hours?: number;
 }

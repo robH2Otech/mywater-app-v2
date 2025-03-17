@@ -5,7 +5,8 @@ import { onSnapshot } from "firebase/firestore";
 import { Measurement } from "@/utils/measurements/types";
 import { 
   fetchUnitStartingVolume, 
-  updateUnitTotalVolume 
+  updateUnitVolume,
+  fetchLast24HoursVolume
 } from "./useUnitVolume";
 import { 
   createMeasurementsQuery,
@@ -39,8 +40,7 @@ export function useRealtimeMeasurements(unitId: string, count: number = 24) {
           try {
             const startingVolume = await fetchUnitStartingVolume(unitId);
             
-            // Process docs and ensure we get the most recent measurements (last 24 hours)
-            // The query already sorts by timestamp desc and limits to count (24)
+            // Process docs to get measurements
             const measurementsData = processMeasurementDocuments(
               querySnapshot.docs,
               startingVolume
@@ -49,16 +49,21 @@ export function useRealtimeMeasurements(unitId: string, count: number = 24) {
             setMeasurements(measurementsData);
             setIsLoading(false);
             
-            // Update the unit's total_volume with the latest cumulative volume
-            if (measurementsData.length > 0) {
-              const latestMeasurement = measurementsData[0]; // First item (most recent)
-              await updateUnitTotalVolume(unitId, latestMeasurement.cumulative_volume);
-              
-              // Invalidate queries to refresh UI
-              queryClient.invalidateQueries({ queryKey: ['units'] });
-              queryClient.invalidateQueries({ queryKey: ['filter-units'] });
-              queryClient.invalidateQueries({ queryKey: ['unit', unitId] });
-            }
+            // Calculate the total 24h volume from measurements
+            let total24hVolume = 0;
+            measurementsData.forEach(measurement => {
+              if (typeof measurement.volume === 'number') {
+                total24hVolume += measurement.volume;
+              }
+            });
+            
+            // Update the unit's volume with the 24h total
+            await updateUnitVolume(unitId, total24hVolume);
+            
+            // Invalidate queries to refresh UI
+            queryClient.invalidateQueries({ queryKey: ['units'] });
+            queryClient.invalidateQueries({ queryKey: ['filter-units'] });
+            queryClient.invalidateQueries({ queryKey: ['unit', unitId] });
           } catch (err) {
             console.error("Error processing measurements data:", err);
             setError(err as Error);

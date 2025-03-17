@@ -69,6 +69,7 @@ export const Units = () => {
               name={unit.name}
               status={unit.status || "active"}
               location={unit.location}
+              volume={unit.volume}
               total_volume={unit.total_volume}
               last_maintenance={unit.last_maintenance}
             />
