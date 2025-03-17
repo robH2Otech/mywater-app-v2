@@ -35,6 +35,11 @@ export function UnitMeasurements({ unitId }: UnitMeasurementsProps) {
         const uvcHours = measurement.uvc_hours !== undefined && typeof measurement.uvc_hours === 'number'
           ? measurement.uvc_hours.toLocaleString(undefined, { maximumFractionDigits: 1 })
           : "N/A";
+          
+        // Format cumulative volume, ensure it's displayed properly
+        const cumulativeVolume = typeof measurement.cumulative_volume === 'number'
+          ? measurement.cumulative_volume.toLocaleString(undefined, { maximumFractionDigits: 2 })
+          : "N/A";
 
         return (
           <TableRow key={measurement.id} className="hover:bg-spotify-accent/20">
@@ -42,13 +47,14 @@ export function UnitMeasurements({ unitId }: UnitMeasurementsProps) {
             <TableCell className="text-white text-right">{volume}</TableCell>
             <TableCell className="text-white text-right">{temperature}</TableCell>
             <TableCell className="text-white text-right">{uvcHours}</TableCell>
+            <TableCell className="text-white text-right">{cumulativeVolume}</TableCell>
           </TableRow>
         );
       } catch (err) {
         console.error("Error rendering measurement row:", err, measurement);
         return (
           <TableRow key={measurement.id || 'error-row'}>
-            <TableCell colSpan={4} className="text-red-400 text-center">Error displaying measurement data</TableCell>
+            <TableCell colSpan={5} className="text-red-400 text-center">Error displaying measurement data</TableCell>
           </TableRow>
         );
       }
@@ -93,6 +99,7 @@ export function UnitMeasurements({ unitId }: UnitMeasurementsProps) {
                 <TableHead className="text-right text-gray-400">Volume (m³)</TableHead>
                 <TableHead className="text-right text-gray-400">Temperature (°C)</TableHead>
                 <TableHead className="text-right text-gray-400">UVC Hours</TableHead>
+                <TableHead className="text-right text-gray-400">Cumulative Volume (m³)</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>

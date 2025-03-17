@@ -23,21 +23,21 @@ export const Dashboard = () => {
       const processedUnits = unitsSnapshot.docs.map(doc => {
         const data = doc.data();
         
-        // Ensure volume is a number
-        let volume = data.volume;
-        if (typeof volume === 'string') {
-          volume = parseFloat(volume);
-        } else if (volume === undefined || volume === null) {
-          volume = 0;
+        // Ensure total_volume is a number
+        let totalVolume = data.total_volume;
+        if (typeof totalVolume === 'string') {
+          totalVolume = parseFloat(totalVolume);
+        } else if (totalVolume === undefined || totalVolume === null) {
+          totalVolume = 0;
         }
         
         // Recalculate status based on current volume
-        const status = determineUnitStatus(volume);
+        const status = determineUnitStatus(totalVolume);
         
         return {
           id: doc.id,
           ...data,
-          volume: volume,
+          total_volume: totalVolume,
           status: status // Override with calculated status
         };
       }) as UnitData[];
@@ -113,16 +113,16 @@ export const Dashboard = () => {
   );
 };
 
-// Enhanced helper function to calculate total volume from all units' 24h volumes
+// Enhanced helper function to calculate total volume from all units
 function calculateTotalVolume(units: UnitData[]): string {
   const total = units.reduce((sum, unit) => {
-    // Get 24h volume from the unit
+    // Ensure we're working with numbers
     let volume = 0;
     
-    if (unit.volume !== undefined && unit.volume !== null) {
-      volume = typeof unit.volume === 'string' 
-        ? parseFloat(unit.volume) 
-        : unit.volume;
+    if (unit.total_volume !== undefined && unit.total_volume !== null) {
+      volume = typeof unit.total_volume === 'string' 
+        ? parseFloat(unit.total_volume) 
+        : unit.total_volume;
     }
     
     // Skip NaN values

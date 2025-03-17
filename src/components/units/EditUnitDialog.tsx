@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
@@ -14,7 +15,6 @@ interface EditUnitDialogProps {
     id: string;
     name: string;
     location: string | null;
-    volume?: number | string | null;
     total_volume: number | string | null;
     status: string;
     contact_name: string | null;

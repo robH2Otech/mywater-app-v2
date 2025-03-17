@@ -11,7 +11,6 @@ interface UnitCardProps {
   name: string;
   status: string;
   location?: string | null;
-  volume?: number | string | null;
   total_volume?: number | string | null;
   last_maintenance?: string | null;
   contact_name?: string | null;
@@ -31,7 +30,6 @@ export const UnitCard = ({
   name,
   status,
   location,
-  volume,
   total_volume,
   last_maintenance,
   contact_name,
@@ -105,7 +103,7 @@ export const UnitCard = ({
           </div>
           <div className="space-y-2">
             <p className="text-sm text-gray-400">
-              Volume: {volume ? `${volume} m³` : "N/A"}
+              Volume: {total_volume ? `${total_volume} m³` : "N/A"}
             </p>
             <p className="text-sm text-gray-400">
               Last Maintenance: {formatDate(last_maintenance)}
@@ -120,7 +118,6 @@ export const UnitCard = ({
           name,
           status,
           location,
-          volume,
           total_volume,
           contact_name,
           contact_email,

@@ -1,3 +1,4 @@
+
 import { collection, doc, addDoc, getDocs, query, orderBy, limit, getDoc, updateDoc, serverTimestamp } from "firebase/firestore";
 import { db } from "@/integrations/firebase/client";
 import { Measurement } from './types';
@@ -8,7 +9,7 @@ import { formatTimestamp } from './formatUtils';
  */
 export const addMeasurement = async (unitId: string, volume: number, temperature: number, uvcHours?: number) => {
   try {
-    // Get the unit document to read the current volume
+    // Get the unit document to read the current total_volume
     const unitDocRef = doc(db, "units", unitId);
     const unitDoc = await getDoc(unitDocRef);
     

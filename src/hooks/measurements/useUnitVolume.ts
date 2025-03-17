@@ -1,7 +1,6 @@
 
-import { doc, getDoc, updateDoc, collection, query, orderBy, limit, getDocs } from "firebase/firestore";
+import { doc, getDoc, updateDoc } from "firebase/firestore";
 import { db } from "@/integrations/firebase/client";
-import { getMeasurementsCollectionPath } from "./useMeasurementCollection";
 
 /**
  * Fetches a unit's starting volume from Firestore
@@ -25,60 +24,25 @@ export async function fetchUnitStartingVolume(unitId: string): Promise<number> {
 }
 
 /**
- * Fetches a unit's last 24 hours volume
+ * Updates a unit's total volume in Firestore based on the latest measurement
  */
-export async function fetchLast24HoursVolume(unitId: string): Promise<number> {
-  try {
-    if (!unitId) return 0;
-    
-    const collectionPath = getMeasurementsCollectionPath(unitId);
-    const measurementsCollectionRef = collection(db, collectionPath);
-    
-    // Get the last 24 measurements (assuming 1 per hour)
-    const measurementsQuery = query(
-      measurementsCollectionRef,
-      orderBy("timestamp", "desc"),
-      limit(24)
-    );
-    
-    const querySnapshot = await getDocs(measurementsQuery);
-    
-    // Sum up all volumes from the measurements
-    let totalVolume = 0;
-    querySnapshot.docs.forEach(doc => {
-      const data = doc.data();
-      if (data.volume && typeof data.volume === 'number') {
-        totalVolume += data.volume;
-      }
-    });
-    
-    return totalVolume;
-  } catch (err) {
-    console.error("Error fetching last 24 hours volume:", err);
-    return 0;
-  }
-}
-
-/**
- * Updates a unit's volume in Firestore based on the last 24 hours measurements
- */
-export async function updateUnitVolume(
+export async function updateUnitTotalVolume(
   unitId: string, 
-  last24HoursVolume: number
+  latestCumulativeVolume: number
 ): Promise<void> {
   try {
-    if (!unitId || typeof last24HoursVolume !== 'number') {
-      console.warn("Invalid parameters for updateUnitVolume", { unitId, last24HoursVolume });
+    if (!unitId || typeof latestCumulativeVolume !== 'number') {
+      console.warn("Invalid parameters for updateUnitTotalVolume", { unitId, latestCumulativeVolume });
       return;
     }
     
     const unitDocRef = doc(db, "units", unitId);
     await updateDoc(unitDocRef, {
-      volume: last24HoursVolume,
+      total_volume: latestCumulativeVolume,
       updated_at: new Date().toISOString()
     });
   } catch (err) {
-    console.error("Error updating unit volume:", err);
+    console.error("Error updating unit total volume:", err);
     throw err;
   }
 }
