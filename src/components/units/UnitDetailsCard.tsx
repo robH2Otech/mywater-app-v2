@@ -31,123 +31,123 @@ export const UnitDetailsCard = ({ unit }: UnitDetailsCardProps) => {
   };
 
   return (
-    <Card className="bg-spotify-darker border-spotify-accent p-4 md:p-6">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
-        <div className="space-y-2">
+    <Card className="bg-spotify-darker border-spotify-accent p-3 md:p-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-6">
+        <div className="space-y-1 md:space-y-2">
           <label className="text-sm text-gray-400">Unit Name</label>
           <Input
             value={unit?.name || ""}
             readOnly
-            className="bg-spotify-accent border-spotify-accent-hover text-white cursor-default"
+            className="bg-spotify-accent border-spotify-accent-hover text-white cursor-default h-9 md:h-10"
           />
         </div>
 
-        <div className="space-y-2">
+        <div className="space-y-1 md:space-y-2">
           <label className="text-sm text-gray-400">Maintenance Contact</label>
           <Input
             value={unit?.contact_name || "Not specified"}
             readOnly
-            className="bg-spotify-accent border-spotify-accent-hover text-white cursor-default"
+            className="bg-spotify-accent border-spotify-accent-hover text-white cursor-default h-9 md:h-10"
           />
         </div>
 
-        <div className="space-y-2">
+        <div className="space-y-1 md:space-y-2">
           <label className="text-sm text-gray-400">Location</label>
           <Input
             value={unit?.location || "Not specified"}
             readOnly
-            className="bg-spotify-accent border-spotify-accent-hover text-white cursor-default"
+            className="bg-spotify-accent border-spotify-accent-hover text-white cursor-default h-9 md:h-10"
           />
         </div>
 
-        <div className="space-y-2">
+        <div className="space-y-1 md:space-y-2">
           <label className="text-sm text-gray-400">Email</label>
           <Input
             value={unit?.contact_email || "Not specified"}
             readOnly
-            className="bg-spotify-accent border-spotify-accent-hover text-white cursor-default"
+            className="bg-spotify-accent border-spotify-accent-hover text-white cursor-default h-9 md:h-10"
           />
         </div>
 
-        <div className="space-y-2">
+        <div className="space-y-1 md:space-y-2">
           <label className="text-sm text-gray-400">Total Volume (m³)</label>
           <Input
             value={formatVolume(unit?.total_volume)}
             readOnly
-            className="bg-spotify-accent border-spotify-accent-hover text-white cursor-default"
+            className="bg-spotify-accent border-spotify-accent-hover text-white cursor-default h-9 md:h-10"
           />
         </div>
 
-        <div className="space-y-2">
+        <div className="space-y-1 md:space-y-2">
           <label className="text-sm text-gray-400">Phone</label>
           <Input
             value={unit?.contact_phone || "Not specified"}
             readOnly
-            className="bg-spotify-accent border-spotify-accent-hover text-white cursor-default"
+            className="bg-spotify-accent border-spotify-accent-hover text-white cursor-default h-9 md:h-10"
           />
         </div>
 
-        <div className="space-y-2">
+        <div className="space-y-1 md:space-y-2">
           <label className="text-sm text-gray-400">Status</label>
           <Input
             value={unit?.status || ""}
             readOnly
-            className="bg-spotify-accent border-spotify-accent-hover text-white cursor-default"
+            className="bg-spotify-accent border-spotify-accent-hover text-white cursor-default h-9 md:h-10"
           />
         </div>
 
-        <div className="space-y-2">
+        <div className="space-y-1 md:space-y-2">
           <label className="text-sm text-gray-400">Next Maintenance</label>
           <Input
             value={formatDate(unit?.next_maintenance || null)}
             readOnly
-            className="bg-spotify-accent border-spotify-accent-hover text-white cursor-default"
+            className="bg-spotify-accent border-spotify-accent-hover text-white cursor-default h-9 md:h-10"
           />
         </div>
 
-        <div className="space-y-2">
+        <div className="space-y-1 md:space-y-2">
           <label className="text-sm text-gray-400">Setup Date</label>
           <Input
             value={formatDate(unit?.setup_date || null)}
             readOnly
-            className="bg-spotify-accent border-spotify-accent-hover text-white cursor-default"
+            className="bg-spotify-accent border-spotify-accent-hover text-white cursor-default h-9 md:h-10"
           />
         </div>
 
-        <div className="space-y-2">
+        <div className="space-y-1 md:space-y-2">
           <label className="text-sm text-gray-400">UVC Hours</label>
           <Input
             value={unit?.uvc_hours ? formatVolume(unit.uvc_hours) : "Not specified"}
             readOnly
-            className="bg-spotify-accent border-spotify-accent-hover text-white cursor-default"
+            className="bg-spotify-accent border-spotify-accent-hover text-white cursor-default h-9 md:h-10"
           />
         </div>
 
-        <div className="space-y-2">
+        <div className="space-y-1 md:space-y-2">
           <label className="text-sm text-gray-400">EID</label>
           <Input
             value={unit?.eid || "Not specified"}
             readOnly
-            className="bg-spotify-accent border-spotify-accent-hover text-white cursor-default"
+            className="bg-spotify-accent border-spotify-accent-hover text-white cursor-default h-9 md:h-10 text-xs md:text-sm"
           />
         </div>
 
-        <div className="space-y-2">
+        <div className="space-y-1 md:space-y-2">
           <label className="text-sm text-gray-400">ICCID</label>
           <Input
             value={unit?.iccid || "Not specified"}
             readOnly
-            className="bg-spotify-accent border-spotify-accent-hover text-white cursor-default"
+            className="bg-spotify-accent border-spotify-accent-hover text-white cursor-default h-9 md:h-10 text-xs md:text-sm"
           />
         </div>
 
         {unit?.notes && (
-          <div className="col-span-1 md:col-span-2 space-y-2">
+          <div className="col-span-1 md:col-span-2 space-y-1 md:space-y-2">
             <label className="text-sm text-gray-400">Notes</label>
             <Input
               value={unit.notes}
               readOnly
-              className="bg-spotify-accent border-spotify-accent-hover text-white cursor-default"
+              className="bg-spotify-accent border-spotify-accent-hover text-white cursor-default h-9 md:h-10"
             />
           </div>
         )}

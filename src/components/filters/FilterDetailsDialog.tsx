@@ -1,8 +1,7 @@
 
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { format } from "date-fns";
-import { Filter, Calendar, Mail, Phone, User, FileText } from "lucide-react";
+import { Filter } from "lucide-react";
 import { FormInput } from "@/components/shared/FormInput";
 import { FormDatePicker } from "@/components/shared/FormDatePicker";
 import { useState, useEffect } from "react";
@@ -47,7 +46,7 @@ export function FilterDetailsDialog({ filter, open, onOpenChange, onSave }: Filt
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[600px] bg-spotify-darker border-spotify-accent">
+      <DialogContent className="sm:max-w-[600px] w-[95vw] max-h-[90vh] overflow-y-auto bg-spotify-darker border-spotify-accent">
         <DialogHeader>
           <DialogTitle className="text-xl font-semibold text-white flex items-center gap-2">
             <Filter className="h-5 w-5" />
@@ -55,7 +54,7 @@ export function FilterDetailsDialog({ filter, open, onOpenChange, onSave }: Filt
           </DialogTitle>
         </DialogHeader>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
           <FormInput
             label="Name"
             value={formData.name}
@@ -101,7 +100,7 @@ export function FilterDetailsDialog({ filter, open, onOpenChange, onSave }: Filt
           />
         </div>
 
-        <div className="flex justify-end gap-4 mt-6">
+        <div className="flex justify-end gap-3 mt-4">
           <Button
             onClick={() => onOpenChange(false)}
             variant="outline"
@@ -113,7 +112,7 @@ export function FilterDetailsDialog({ filter, open, onOpenChange, onSave }: Filt
             onClick={handleSave}
             className="bg-spotify-green hover:bg-spotify-green/90 text-white"
           >
-            Save Changes
+            Save
           </Button>
         </div>
       </DialogContent>

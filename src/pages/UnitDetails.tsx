@@ -32,14 +32,14 @@ export const UnitDetails = () => {
   if (error) {
     console.error("Error loading unit details:", error);
     return (
-      <div className="container mx-auto p-6 max-w-4xl">
-        <Card className="bg-spotify-darker border-spotify-accent p-6">
-          <div className="text-red-400 p-4">
-            <h2 className="text-xl font-semibold mb-2">Error loading unit details</h2>
-            <p>{error.message || "An unknown error occurred"}</p>
+      <div className="container mx-auto p-3 md:p-6 max-w-4xl">
+        <Card className="bg-spotify-darker border-spotify-accent p-4 md:p-6">
+          <div className="text-red-400 p-3 md:p-4">
+            <h2 className="text-lg md:text-xl font-semibold mb-2">Error loading unit details</h2>
+            <p className="text-sm md:text-base">{error.message || "An unknown error occurred"}</p>
             <button 
               onClick={() => navigate("/units")} 
-              className="mt-4 bg-spotify-accent px-4 py-2 rounded hover:bg-spotify-accent-hover"
+              className="mt-3 md:mt-4 bg-spotify-accent px-3 py-1.5 md:px-4 md:py-2 rounded hover:bg-spotify-accent-hover text-sm md:text-base"
             >
               Back to Units
             </button>
@@ -51,12 +51,12 @@ export const UnitDetails = () => {
 
   if (isLoading) {
     return (
-      <div className="container mx-auto p-6 max-w-4xl">
-        <Card className="bg-spotify-darker border-spotify-accent p-6">
-          <div className="animate-pulse space-y-4">
-            <div className="h-8 bg-spotify-accent rounded w-1/3"></div>
-            <div className="h-32 bg-spotify-accent rounded"></div>
-            <div className="h-64 bg-spotify-accent rounded"></div>
+      <div className="container mx-auto p-3 md:p-6 max-w-4xl">
+        <Card className="bg-spotify-darker border-spotify-accent p-4 md:p-6">
+          <div className="animate-pulse space-y-3 md:space-y-4">
+            <div className="h-6 md:h-8 bg-spotify-accent rounded w-1/3"></div>
+            <div className="h-24 md:h-32 bg-spotify-accent rounded"></div>
+            <div className="h-48 md:h-64 bg-spotify-accent rounded"></div>
           </div>
         </Card>
       </div>
@@ -65,14 +65,14 @@ export const UnitDetails = () => {
 
   if (!unit) {
     return (
-      <div className="container mx-auto p-6 max-w-4xl">
-        <Card className="bg-spotify-darker border-spotify-accent p-6">
-          <div className="text-center p-4">
-            <h2 className="text-xl font-semibold mb-2">Unit not found</h2>
-            <p>The requested water unit could not be found.</p>
+      <div className="container mx-auto p-3 md:p-6 max-w-4xl">
+        <Card className="bg-spotify-darker border-spotify-accent p-4 md:p-6">
+          <div className="text-center p-3 md:p-4">
+            <h2 className="text-lg md:text-xl font-semibold mb-2">Unit not found</h2>
+            <p className="text-sm md:text-base">The requested water unit could not be found.</p>
             <button 
               onClick={() => navigate("/units")} 
-              className="mt-4 bg-spotify-accent px-4 py-2 rounded hover:bg-spotify-accent-hover"
+              className="mt-3 md:mt-4 bg-spotify-accent px-3 py-1.5 md:px-4 md:py-2 rounded hover:bg-spotify-accent-hover text-sm md:text-base"
             >
               Back to Units
             </button>
@@ -83,8 +83,8 @@ export const UnitDetails = () => {
   }
 
   return (
-    <div className="container mx-auto p-6 max-w-4xl animate-fadeIn space-y-6">
-      <Card className="bg-spotify-darker border-spotify-accent p-6">
+    <div className="container mx-auto p-3 md:p-6 max-w-4xl animate-fadeIn space-y-4 md:space-y-6">
+      <Card className="bg-spotify-darker border-spotify-accent p-4 md:p-6">
         <UnitDetailsHeader 
           title="Water Unit Details"
           isSyncing={isSyncing}

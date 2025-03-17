@@ -146,9 +146,9 @@ export function UVCDetailsDialog({ unit, open, onOpenChange, onSave }: UVCDetail
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[500px] bg-spotify-darker border-spotify-accent">
+      <DialogContent className="sm:max-w-[500px] w-[95vw] max-h-[90vh] overflow-y-auto bg-spotify-darker border-spotify-accent">
         <DialogHeader>
-          <DialogTitle className="text-xl font-semibold text-white flex items-center gap-2">
+          <DialogTitle className="text-lg md:text-xl font-semibold text-white flex items-center gap-2">
             <Lightbulb className="h-5 w-5" />
             {unit.name} - UVC Details
           </DialogTitle>
@@ -157,7 +157,7 @@ export function UVCDetailsDialog({ unit, open, onOpenChange, onSave }: UVCDetail
         {isLoading ? (
           <UVCDialogLoader />
         ) : (
-          <div className="space-y-6 mt-4">
+          <div className="space-y-4 mt-3">
             <UVCProgressBar hours={formData.uvc_hours} />
             <UVCDialogForm formData={formData} setFormData={setFormData} />
             <UVCDialogActions 

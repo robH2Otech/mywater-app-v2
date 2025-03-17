@@ -78,19 +78,19 @@ export function AddFilterDialog({ open, onOpenChange }: { open: boolean; onOpenC
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[600px] bg-spotify-darker border-spotify-accent">
+      <DialogContent className="sm:max-w-[600px] w-[95vw] max-h-[90vh] overflow-y-auto bg-spotify-darker border-spotify-accent">
         <DialogHeader>
           <DialogTitle className="text-xl font-semibold text-white">Add New Filter</DialogTitle>
         </DialogHeader>
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
               <label className="text-sm text-gray-400">Water Unit</label>
               <Select
                 value={formData.unit_id}
                 onValueChange={(value) => setFormData({ ...formData, unit_id: value })}
               >
-                <SelectTrigger className="bg-spotify-accent border-spotify-accent-hover text-white">
+                <SelectTrigger className="bg-spotify-accent border-spotify-accent-hover text-white h-10">
                   <SelectValue placeholder="Select a unit" />
                 </SelectTrigger>
                 <SelectContent className="bg-spotify-darker border-spotify-accent">
@@ -159,7 +159,7 @@ export function AddFilterDialog({ open, onOpenChange }: { open: boolean; onOpenC
               value={formData.notes}
               onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
               placeholder="Additional Notes"
-              className="w-full h-24 px-3 py-2 bg-spotify-accent border-spotify-accent-hover text-white rounded-md resize-none"
+              className="w-full h-20 px-3 py-2 bg-spotify-accent border-spotify-accent-hover text-white rounded-md resize-none"
             />
           </div>
 

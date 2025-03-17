@@ -23,7 +23,7 @@ export const Layout = ({ children }: LayoutProps) => {
       {/* Mobile sidebar overlay */}
       {isMobile && showMobileSidebar && (
         <div 
-          className="fixed inset-0 bg-black bg-opacity-50 z-30"
+          className="fixed inset-0 bg-black bg-opacity-50 z-30 animate-fadeIn"
           onClick={toggleMobileSidebar}
         />
       )}
@@ -52,7 +52,7 @@ export const Layout = ({ children }: LayoutProps) => {
             </Button>
           )}
         </Header>
-        <main className="p-3 md:p-4 lg:p-6 max-w-[2000px] mx-auto">{children}</main>
+        <main className="p-2 md:p-4 lg:p-6 max-w-[2000px] mx-auto">{children}</main>
       </div>
     </div>
   );

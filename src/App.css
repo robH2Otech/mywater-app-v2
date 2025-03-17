@@ -35,6 +35,22 @@
   animation: fadeIn 0.2s ease-out forwards;
 }
 
+/* Mobile dialog animations */
+@keyframes slideUpMobile {
+  from {
+    transform: translateY(20%);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.mobile-dialog-animation {
+  animation: slideUpMobile 0.25s ease-out forwards;
+}
+
 /* Logo animation */
 @keyframes logo-spin {
   from {
@@ -48,5 +64,25 @@
 @media (prefers-reduced-motion: no-preference) {
   a:nth-of-type(2) .logo {
     animation: logo-spin infinite 20s linear;
+  }
+}
+
+/* Mobile input adjustments */
+@media (max-width: 640px) {
+  input, select, textarea {
+    font-size: 16px !important; /* Prevents iOS zoom on focus */
+  }
+  
+  .dialog-content {
+    padding: 16px !important;
+  }
+  
+  .form-spacing {
+    gap: 12px !important;
+  }
+  
+  /* Ensure elements have enough touch target size */
+  button {
+    min-height: 44px;
   }
 }

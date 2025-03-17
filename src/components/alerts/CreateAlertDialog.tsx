@@ -1,3 +1,4 @@
+
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -26,25 +27,25 @@ export const CreateAlertDialog = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="bg-spotify-darker text-white sm:max-w-[600px]">
+      <DialogContent className="bg-spotify-darker text-white sm:max-w-[600px] w-[95vw] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="text-xl font-semibold">Create Alert</DialogTitle>
         </DialogHeader>
-        <div className="space-y-6 py-4">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div className="space-y-4 py-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             {/* First Row */}
-            <div className="space-y-2">
+            <div className="space-y-1.5">
               <label className="text-sm font-medium">Unit ID</label>
               <Input 
                 placeholder="Enter unit ID"
-                className="bg-spotify-accent border-spotify-accent"
+                className="bg-spotify-accent border-spotify-accent h-9 md:h-10"
               />
             </div>
 
-            <div className="space-y-2">
+            <div className="space-y-1.5">
               <label className="text-sm font-medium">Status</label>
               <Select value={status} onValueChange={setStatus}>
-                <SelectTrigger className="bg-spotify-accent border-spotify-accent">
+                <SelectTrigger className="bg-spotify-accent border-spotify-accent h-9 md:h-10">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent className="bg-spotify-darker border-spotify-accent">
@@ -57,29 +58,29 @@ export const CreateAlertDialog = ({
             </div>
 
             {/* Second Row */}
-            <div className="space-y-2">
+            <div className="space-y-1.5">
               <label className="text-sm font-medium">Message</label>
               <Input 
                 placeholder="Enter alert message"
-                className="bg-spotify-accent border-spotify-accent"
+                className="bg-spotify-accent border-spotify-accent h-9 md:h-10"
               />
             </div>
 
-            <div className="space-y-2">
+            <div className="space-y-1.5">
               <label className="text-sm font-medium">Assign To</label>
               <Input 
                 placeholder="Enter assignee"
-                className="bg-spotify-accent border-spotify-accent"
+                className="bg-spotify-accent border-spotify-accent h-9 md:h-10"
               />
             </div>
           </div>
 
           {/* Full Width Comments Area */}
-          <div className="space-y-2">
+          <div className="space-y-1.5">
             <label className="text-sm font-medium">Comments</label>
             <Textarea 
               placeholder="Enter any additional comments"
-              className="bg-spotify-accent border-spotify-accent min-h-[100px]"
+              className="bg-spotify-accent border-spotify-accent min-h-[80px]"
             />
           </div>
 

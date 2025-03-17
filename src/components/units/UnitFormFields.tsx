@@ -23,7 +23,7 @@ interface UnitFormFieldsProps {
 
 export function UnitFormFields({ formData, setFormData }: UnitFormFieldsProps) {
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
       <FormInput
         label="Unit Name"
         value={formData.name}
@@ -95,7 +95,7 @@ export function UnitFormFields({ formData, setFormData }: UnitFormFieldsProps) {
           value={formData.status}
           onValueChange={(value) => setFormData({ ...formData, status: value })}
         >
-          <SelectTrigger className="bg-spotify-accent border-spotify-accent-hover text-white">
+          <SelectTrigger className="bg-spotify-accent border-spotify-accent-hover text-white h-10">
             <SelectValue placeholder="Select status" />
           </SelectTrigger>
           <SelectContent className="bg-spotify-darker border-spotify-accent">

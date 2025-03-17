@@ -12,7 +12,7 @@ interface UVCDialogFormProps {
 
 export function UVCDialogForm({ formData, setFormData }: UVCDialogFormProps) {
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       <div>
         <p className="text-sm text-gray-400 mb-2">
           Enter the total accumulated UVC hours for this unit.
