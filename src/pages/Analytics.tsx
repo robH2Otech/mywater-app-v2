@@ -6,6 +6,7 @@ import { useState } from "react";
 import { deleteDoc, doc } from "firebase/firestore";
 import { db } from "@/integrations/firebase/client";
 import { toast } from "@/components/ui/use-toast";
+import { PDFUtils } from "@/components/analytics/pdf/PDFUtils";
 
 export function Analytics() {
   const [selectedUnit, setSelectedUnit] = useState("");
@@ -23,6 +24,11 @@ export function Analytics() {
       
       // Refresh the reports list
       refetchReports();
+      
+      toast({
+        title: "Report deleted",
+        description: "The report has been removed successfully.",
+      });
     } catch (error) {
       console.error("Error deleting report:", error);
       toast({

@@ -21,8 +21,8 @@ export function createMeasurementsQuery(unitId: string, count: number = 24) {
   
   return query(
     measurementsCollectionRef,
-    orderBy("timestamp", "desc"),
-    limit(count)
+    orderBy("timestamp", "desc"), // Get most recent first
+    limit(count) // Limit to the specified count (default 24)
   );
 }
 
@@ -34,7 +34,8 @@ export function processMeasurementDocuments(
   docs: any[], 
   startingVolume: number
 ): (Measurement & { id: string })[] {
-  return docs.map((doc, index, array) => {
+  // First convert all documents to measurement objects with correctly formatted timestamps
+  const measurements = docs.map(doc => {
     const data = doc.data();
     
     // Handle timestamp
@@ -44,18 +45,28 @@ export function processMeasurementDocuments(
       data.timestamp = "Invalid date";
     }
     
-    // Calculate proper cumulative volume
-    // Since we're getting data in desc order, we need to reverse calculate
-    let cumulativeVolume = startingVolume;
-    for (let i = array.length - 1; i >= index; i--) {
-      const measurementVolume = array[i].data().volume || 0;
-      cumulativeVolume += measurementVolume;
-    }
-    
     return {
       id: doc.id,
       ...data,
-      cumulative_volume: cumulativeVolume
     } as Measurement & { id: string };
   });
+  
+  // Sort by timestamp in ascending order for proper cumulative calculation
+  // Our query gets data in desc order, but we need asc order for calculations
+  const sortedMeasurements = [...measurements].sort((a, b) => {
+    if (!a.timestamp || !b.timestamp) return 0;
+    return a.timestamp.localeCompare(b.timestamp);
+  });
+  
+  // Calculate cumulative volumes correctly
+  let runningTotal = startingVolume;
+  
+  for (const measurement of sortedMeasurements) {
+    const volume = typeof measurement.volume === 'number' ? measurement.volume : 0;
+    runningTotal += volume;
+    measurement.cumulative_volume = runningTotal;
+  }
+  
+  // Return in the original order (desc for display - newest first)
+  return measurements;
 }

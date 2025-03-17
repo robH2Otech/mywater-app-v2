@@ -67,6 +67,11 @@ export function useFilterStatus() {
 
   const syncUnitMeasurements = async (unitId: string) => {
     try {
+      toast({
+        title: "Synchronizing",
+        description: "Fetching latest measurements data...",
+      });
+      
       // Recalculate all cumulative volumes for this unit
       const finalVolume = await recalculateCumulativeVolumes(unitId);
       
@@ -83,13 +88,16 @@ export function useFilterStatus() {
           await updateUnitStatus(unitId, calculatedStatus, unitData.name, finalVolume);
         }
         
+        // Force refresh the measurements data
+        queryClient.invalidateQueries({ queryKey: ['measurements', unitId] });
+        
         toast({
           title: "Measurements synced",
           description: `${unitData.name} measurements synchronized successfully.`,
         });
       }
       
-      // Refresh data
+      // Refresh all related data
       await queryClient.invalidateQueries({ queryKey: ['filter-units'] });
       await queryClient.invalidateQueries({ queryKey: ['units'] });
       await queryClient.invalidateQueries({ queryKey: ['unit', unitId] });

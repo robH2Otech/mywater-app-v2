@@ -1,10 +1,6 @@
 
-import { useState } from "react";
 import { Card } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { initializeSampleMeasurements } from "@/utils/measurements/sampleDataUtils";
 import { useRealtimeMeasurements } from "@/hooks/measurements/useRealtimeMeasurements";
-import { toast } from "sonner";
 import { MeasurementData } from "@/types/analytics";
 import {
   Table,
@@ -20,21 +16,7 @@ interface UnitMeasurementsProps {
 }
 
 export function UnitMeasurements({ unitId }: UnitMeasurementsProps) {
-  const [isGenerating, setIsGenerating] = useState(false);
   const { measurements, isLoading, error } = useRealtimeMeasurements(unitId);
-
-  const handleGenerateSample = async () => {
-    setIsGenerating(true);
-    try {
-      await initializeSampleMeasurements(unitId);
-      toast.success("Sample data generated successfully");
-    } catch (error) {
-      console.error("Failed to generate sample data:", error);
-      toast.error("Failed to generate sample data");
-    } finally {
-      setIsGenerating(false);
-    }
-  };
 
   const safeRenderMeasurements = (measurements: MeasurementData[]) => {
     return measurements.map((measurement) => {
@@ -85,14 +67,6 @@ export function UnitMeasurements({ unitId }: UnitMeasurementsProps) {
       <Card className="bg-spotify-darker border-spotify-accent p-6">
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-xl font-semibold text-white">Last 24 hours Water Data</h2>
-          <Button 
-            onClick={handleGenerateSample}
-            disabled={isGenerating}
-            variant="outline"
-            className="bg-spotify-accent hover:bg-spotify-accent-hover text-white border-none"
-          >
-            {isGenerating ? "Generating..." : "Generate Sample Data"}
-          </Button>
         </div>
         <div className="h-60 flex items-center justify-center">
           <p className="text-red-400">Error loading measurements: {error.message}</p>
@@ -105,17 +79,7 @@ export function UnitMeasurements({ unitId }: UnitMeasurementsProps) {
     <Card className="bg-spotify-darker border-spotify-accent p-6">
       <div className="flex justify-between items-center mb-4">
         <h2 className="text-xl font-semibold text-white">Last 24 hours Water Data</h2>
-        <div className="flex gap-2 items-center">
-          {isLoading && <span className="text-gray-400 text-sm">Syncing...</span>}
-          <Button 
-            onClick={handleGenerateSample}
-            disabled={isGenerating}
-            variant="outline"
-            className="bg-spotify-accent hover:bg-spotify-accent-hover text-white border-none"
-          >
-            {isGenerating ? "Generating..." : "Generate Sample Data"}
-          </Button>
-        </div>
+        {isLoading && <span className="text-gray-400 text-sm">Syncing...</span>}
       </div>
 
       {isLoading && measurements.length === 0 ? (

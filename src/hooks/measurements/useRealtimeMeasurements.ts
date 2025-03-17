@@ -38,6 +38,9 @@ export function useRealtimeMeasurements(unitId: string, count: number = 24) {
         async (querySnapshot) => {
           try {
             const startingVolume = await fetchUnitStartingVolume(unitId);
+            
+            // Process docs and ensure we get the most recent measurements (last 24 hours)
+            // The query already sorts by timestamp desc and limits to count (24)
             const measurementsData = processMeasurementDocuments(
               querySnapshot.docs,
               startingVolume
