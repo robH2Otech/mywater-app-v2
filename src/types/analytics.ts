@@ -7,6 +7,7 @@ export interface UnitData {
   location?: string;
   status?: string;
   volume?: number | string; // The volume from last 24 hours
+  total_volume?: number; // Add the missing total_volume property
   last_maintenance?: string;
   next_maintenance?: string;
   setup_date?: string;
