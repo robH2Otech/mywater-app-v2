@@ -44,6 +44,19 @@ export function processMeasurementDocuments(
       data.timestamp = "Invalid date";
     }
     
+    // Ensure numeric values have consistent formatting
+    if (data.volume !== undefined) {
+      data.volume = typeof data.volume === 'number' ? data.volume : parseFloat(data.volume || '0');
+    }
+    
+    if (data.temperature !== undefined) {
+      data.temperature = typeof data.temperature === 'number' ? data.temperature : parseFloat(data.temperature || '0');
+    }
+    
+    if (data.uvc_hours !== undefined) {
+      data.uvc_hours = typeof data.uvc_hours === 'number' ? data.uvc_hours : parseFloat(data.uvc_hours || '0');
+    }
+    
     return {
       id: doc.id,
       ...data,

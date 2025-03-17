@@ -20,9 +20,9 @@ export function ReportSummaryCard({
 }: ReportSummaryCardProps) {
   const isMobile = useIsMobile();
 
-  // Format number with 2 decimal places
-  const formatNumber = (value: number) => {
-    return value.toLocaleString(undefined, { maximumFractionDigits: 2 });
+  // Format numbers with specific decimal places
+  const formatNumber = (value: number, decimals: number = 2) => {
+    return value.toFixed(decimals);
   };
 
   return (
@@ -35,11 +35,11 @@ export function ReportSummaryCard({
         </div>
         <div>
           <p className="text-gray-400 text-sm">Avg. Temperature</p>
-          <p className="text-xl font-semibold">{formatNumber(avgTemperature)} °C</p>
+          <p className="text-xl font-semibold">{formatNumber(avgTemperature, 1)} °C</p>
         </div>
         <div>
           <p className="text-gray-400 text-sm">Total UVC Hours</p>
-          <p className="text-xl font-semibold">{formatNumber(totalUvcHours)} hours</p>
+          <p className="text-xl font-semibold">{formatNumber(totalUvcHours, 1)} hours</p>
         </div>
         <div>
           <p className="text-gray-400 text-sm">Date Range</p>

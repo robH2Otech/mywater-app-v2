@@ -18,14 +18,15 @@ interface UnitMeasurementsProps {
 export function UnitMeasurements({ unitId }: UnitMeasurementsProps) {
   const { measurements, isLoading, error } = useRealtimeMeasurements(unitId);
 
-  const safeRenderMeasurements = (measurements: MeasurementData[]) => {
+  const safeRenderMeasurements = (measurements: any[]) => {
     return measurements.map((measurement) => {
       try {
         // Get timestamp directly - it should already be formatted by useRealtimeMeasurements
         const timestamp = measurement.timestamp || "Invalid date";
           
+        // Format volume with exactly 2 decimal places
         const volume = typeof measurement.volume === 'number' 
-          ? measurement.volume.toLocaleString(undefined, { maximumFractionDigits: 2 }) 
+          ? measurement.volume.toFixed(2) 
           : "N/A";
           
         const temperature = typeof measurement.temperature === 'number' 
@@ -33,7 +34,7 @@ export function UnitMeasurements({ unitId }: UnitMeasurementsProps) {
           : "N/A";
           
         const uvcHours = measurement.uvc_hours !== undefined && typeof measurement.uvc_hours === 'number'
-          ? measurement.uvc_hours.toLocaleString(undefined, { maximumFractionDigits: 1 })
+          ? measurement.uvc_hours.toFixed(1)
           : "N/A";
 
         return (

@@ -49,6 +49,7 @@ export function useUnitDetails(id: string | undefined) {
         console.log(`Latest measurement for unit ${id}:`, latestMeasurement);
         
         if (latestMeasurement.volume !== undefined) {
+          // Get latest volume from measurement
           latestVolume = typeof latestMeasurement.volume === 'string' 
             ? parseFloat(latestMeasurement.volume) 
             : (latestMeasurement.volume || 0);

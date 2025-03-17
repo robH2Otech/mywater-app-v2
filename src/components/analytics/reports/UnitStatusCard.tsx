@@ -10,12 +10,12 @@ interface UnitStatusCardProps {
 export function UnitStatusCard({ unit }: UnitStatusCardProps) {
   const isMobile = useIsMobile();
   
-  // Format volume with 2 decimal places
+  // Format volume with exactly 2 decimal places
   const formatVolume = (volume: number | string | undefined | null) => {
-    if (volume === undefined || volume === null) return "0";
+    if (volume === undefined || volume === null) return "0.00";
     const numericVolume = typeof volume === 'string' ? parseFloat(volume) : volume;
-    if (isNaN(numericVolume)) return "0";
-    return numericVolume.toLocaleString(undefined, { maximumFractionDigits: 2 });
+    if (isNaN(numericVolume)) return "0.00";
+    return numericVolume.toFixed(2);
   };
   
   return (

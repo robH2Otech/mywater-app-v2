@@ -9,6 +9,7 @@ import { UVCProgressBar } from "./UVCProgressBar";
 import { UVCDialogForm } from "./UVCDialogForm";
 import { UVCDialogActions } from "./UVCDialogActions";
 import { UVCDialogLoader } from "./UVCDialogLoader";
+import { getMeasurementsCollectionPath } from "@/hooks/measurements/useMeasurementCollection";
 
 interface UVCDetailsDialogProps {
   unit: any;
@@ -55,9 +56,10 @@ export function UVCDetailsDialog({ unit, open, onOpenChange, onSave }: UVCDetail
             if (!latestData.is_uvc_accumulated) {
               // Get latest measurement data for this unit to add to the base hours
               try {
+                // Use correct measurements collection path
+                const collectionPath = getMeasurementsCollectionPath(unit.id);
                 const measurementsQuery = query(
-                  collection(db, "measurements"),
-                  where("unit_id", "==", unit.id),
+                  collection(db, collectionPath),
                   orderBy("timestamp", "desc"),
                   limit(1)
                 );
@@ -86,12 +88,12 @@ export function UVCDetailsDialog({ unit, open, onOpenChange, onSave }: UVCDetail
             }
             
             setFormData({
-              uvc_hours: totalUvcHours.toString(),
+              uvc_hours: totalUvcHours.toFixed(1),
               uvc_installation_date: latestData.uvc_installation_date ? new Date(latestData.uvc_installation_date) : null,
             });
             
             console.log(`UVCDetailsDialog - Setting form data for unit ${unit.id}:`, {
-              uvc_hours: totalUvcHours.toString(),
+              uvc_hours: totalUvcHours.toFixed(1),
               uvc_installation_date: latestData.uvc_installation_date
             });
           } else {
@@ -99,7 +101,7 @@ export function UVCDetailsDialog({ unit, open, onOpenChange, onSave }: UVCDetail
             console.log(`UVCDetailsDialog - Unit ${unit.id} not found in Firestore, using props data:`, unit);
             
             setFormData({
-              uvc_hours: unit.uvc_hours?.toString() || "0",
+              uvc_hours: parseFloat(unit.uvc_hours || 0).toFixed(1),
               uvc_installation_date: unit.uvc_installation_date ? new Date(unit.uvc_installation_date) : null,
             });
           }
@@ -113,7 +115,7 @@ export function UVCDetailsDialog({ unit, open, onOpenChange, onSave }: UVCDetail
           
           // Fallback to the data passed in props
           setFormData({
-            uvc_hours: unit.uvc_hours?.toString() || "0",
+            uvc_hours: parseFloat(unit.uvc_hours || 0).toFixed(1),
             uvc_installation_date: unit.uvc_installation_date ? new Date(unit.uvc_installation_date) : null,
           });
         } finally {

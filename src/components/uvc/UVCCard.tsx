@@ -16,6 +16,11 @@ export function UVCCard({ unit, onEditClick, onCardClick }: UVCCardProps) {
   const lifePercentage = calculateUVCLifePercentage(uvcHours);
   const hoursRemaining = MAX_UVC_HOURS - uvcHours;
 
+  // Format UVC hours with 1 decimal place
+  const formatUVCHours = (hours: number) => {
+    return hours.toFixed(1);
+  };
+
   return (
     <Card 
       key={unit.id} 
@@ -65,7 +70,7 @@ export function UVCCard({ unit, onEditClick, onCardClick }: UVCCardProps) {
                 uvcHours >= WARNING_THRESHOLD ? 'text-yellow-400' :
                 'text-green-400'
               }`} />
-              UVC Hours: {uvcHours.toLocaleString()} / {MAX_UVC_HOURS.toLocaleString()}
+              UVC Hours: {formatUVCHours(uvcHours)} / {MAX_UVC_HOURS.toLocaleString()}
             </div>
             
             <div className="w-full bg-gray-700 rounded-full h-2.5">
@@ -82,7 +87,7 @@ export function UVCCard({ unit, onEditClick, onCardClick }: UVCCardProps) {
             <div className="flex items-center gap-2 text-sm text-gray-400">
               <Clock className="h-4 w-4" />
               {hoursRemaining > 0 
-                ? `Hours remaining: ${hoursRemaining.toLocaleString()}`
+                ? `Hours remaining: ${formatUVCHours(hoursRemaining)}`
                 : 'Replacement overdue'
               }
             </div>

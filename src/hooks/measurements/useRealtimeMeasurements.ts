@@ -47,15 +47,21 @@ export function useRealtimeMeasurements(unitId: string, count: number = 24) {
             
             // Update the unit's total_volume with the latest volume measurement
             if (measurementsData.length > 0) {
-              const latestMeasurement = measurementsData[0]; // First item (most recent)
+              // Get first item (most recent) to use for updates
+              const latestMeasurement = measurementsData[0]; 
               const latestVolume = latestMeasurement.volume;
               
+              console.log(`Latest measurement for unit ${unitId}: volume=${latestVolume}, UVC hours=${latestMeasurement.uvc_hours}`);
+              
+              // Update unit with latest volume
               await updateUnitTotalVolume(unitId, latestVolume);
               
-              // Invalidate queries to refresh UI
+              // Invalidate queries to refresh UI across the entire app
               queryClient.invalidateQueries({ queryKey: ['units'] });
               queryClient.invalidateQueries({ queryKey: ['filter-units'] });
               queryClient.invalidateQueries({ queryKey: ['unit', unitId] });
+              queryClient.invalidateQueries({ queryKey: ['uvc-units'] });
+              queryClient.invalidateQueries({ queryKey: ['reports'] });
             }
           } catch (err) {
             console.error("Error processing measurements data:", err);
