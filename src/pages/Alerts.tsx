@@ -11,6 +11,7 @@ import { collection, getDocs } from "firebase/firestore";
 import { db } from "@/integrations/firebase/client";
 import { UnitData, AlertData } from "@/types/analytics";
 import { determineUnitStatus } from "@/utils/unitStatusUtils";
+import { RecentAlerts } from "@/components/dashboard/RecentAlerts";
 
 interface UnitWithAlerts extends UnitData {
   alerts: AlertData[];
@@ -74,9 +75,6 @@ export const Alerts = () => {
     alerts: alerts.filter(alert => alert.unit_id === unit.id)
   })) as UnitWithAlerts[];
 
-  const isLoading = unitsLoading || alertsLoading;
-  const error = unitsError || alertsError;
-
   if (error) {
     console.error("Error in Alerts component:", error);
     toast({
@@ -100,10 +98,21 @@ export const Alerts = () => {
         addButtonText="New Alert"
       />
       
-      <AlertsList
-        units={unitsWithAlerts}
-        onAlertClick={setSelectedAlert}
-      />
+      <div className="grid grid-cols-1 gap-6">
+        {/* Recent Alerts Section */}
+        <div className="w-full">
+          <RecentAlerts />
+        </div>
+
+        {/* All Alerts List */}
+        <div className="bg-spotify-darker rounded-lg p-6">
+          <h2 className="text-xl font-semibold text-white mb-4">All Alerts</h2>
+          <AlertsList
+            units={unitsWithAlerts}
+            onAlertClick={setSelectedAlert}
+          />
+        </div>
+      </div>
 
       <CreateAlertDialog 
         open={isDialogOpen} 
