@@ -8,9 +8,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
 import { collection, addDoc } from "firebase/firestore";
 import { db } from "@/integrations/firebase/client";
-
-type UserRole = "admin" | "technician" | "user";
-type UserStatus = "active" | "inactive" | "pending";
+import { UserRole, UserStatus } from "@/types/users";
 
 interface FormData {
   first_name: string;
@@ -21,6 +19,7 @@ interface FormData {
   job_title: string;
   role: UserRole;
   status: UserStatus;
+  password: string;
 }
 
 interface AddUserDialogProps {
@@ -39,7 +38,8 @@ export function AddUserDialog({ open, onOpenChange }: AddUserDialogProps) {
     company: "",
     job_title: "",
     role: "user",
-    status: "active"
+    status: "active",
+    password: ""
   });
 
   const handleInputChange = (field: keyof FormData, value: string) => {
@@ -49,8 +49,8 @@ export function AddUserDialog({ open, onOpenChange }: AddUserDialogProps) {
   const handleSubmit = async () => {
     try {
       // Validate required fields
-      if (!formData.first_name || !formData.last_name || !formData.email) {
-        throw new Error("First name, last name, and email are required");
+      if (!formData.first_name || !formData.last_name || !formData.email || !formData.password || !formData.company) {
+        throw new Error("First name, last name, email, password and company are required");
       }
 
       // Add user to Firebase
@@ -66,7 +66,7 @@ export function AddUserDialog({ open, onOpenChange }: AddUserDialogProps) {
         description: "User has been added successfully",
       });
 
-      // Reset form
+      // Reset form and close dialog
       setFormData({
         first_name: "",
         last_name: "",
@@ -75,10 +75,10 @@ export function AddUserDialog({ open, onOpenChange }: AddUserDialogProps) {
         company: "",
         job_title: "",
         role: "user",
-        status: "active"
+        status: "active",
+        password: ""
       });
       
-      // Close dialog
       if (onOpenChange) {
         onOpenChange(false);
       }
@@ -122,6 +122,14 @@ export function AddUserDialog({ open, onOpenChange }: AddUserDialogProps) {
             required
           />
           <FormInput
+            label="Password"
+            type="password"
+            value={formData.password}
+            onChange={(value) => handleInputChange("password", value)}
+            required
+            minLength={6}
+          />
+          <FormInput
             label="Phone"
             value={formData.phone}
             onChange={(value) => handleInputChange("phone", value)}
@@ -130,6 +138,7 @@ export function AddUserDialog({ open, onOpenChange }: AddUserDialogProps) {
             label="Company"
             value={formData.company}
             onChange={(value) => handleInputChange("company", value)}
+            required
           />
           <FormInput
             label="Job Title"
@@ -146,6 +155,7 @@ export function AddUserDialog({ open, onOpenChange }: AddUserDialogProps) {
                 <SelectValue placeholder="Select role" />
               </SelectTrigger>
               <SelectContent className="bg-spotify-darker border-spotify-accent-hover">
+                <SelectItem value="superadmin">Super Admin</SelectItem>
                 <SelectItem value="admin">Admin</SelectItem>
                 <SelectItem value="technician">Technician</SelectItem>
                 <SelectItem value="user">User</SelectItem>

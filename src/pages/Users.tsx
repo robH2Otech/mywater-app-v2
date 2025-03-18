@@ -15,7 +15,7 @@ export const Users = () => {
   const [selectedUser, setSelectedUser] = useState<any>(null);
   const [isAddUserOpen, setIsAddUserOpen] = useState(false);
 
-  const { data: users = [], isLoading, error } = useQuery({
+  const { data: users = [], isLoading: unitsLoading, error: unitsError } = useQuery({
     queryKey: ["users"],
     queryFn: async () => {
       console.log("Fetching users data from Firebase...");
@@ -41,11 +41,11 @@ export const Users = () => {
     },
   });
 
-  if (error) {
+  if (unitsError) {
     return <div>Error loading users. Please try again.</div>;
   }
 
-  if (isLoading) {
+  if (unitsLoading) {
     return <LoadingSkeleton />;
   }
 
@@ -78,6 +78,7 @@ export const Users = () => {
         open={!!selectedUser}
         onOpenChange={(open) => !open && setSelectedUser(null)}
         user={selectedUser}
+        currentUserRole="superadmin" // TODO: Get this from authentication context
       />
     </div>
   );
