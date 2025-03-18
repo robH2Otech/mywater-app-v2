@@ -9,6 +9,7 @@ interface FormInputProps {
   type?: string;
   required?: boolean;
   minLength?: number;
+  disabled?: boolean;
 }
 
 export function FormInput({ 
@@ -18,7 +19,8 @@ export function FormInput({
   placeholder, 
   type = "text",
   required = false,
-  minLength
+  minLength,
+  disabled = false
 }: FormInputProps) {
   return (
     <div className="space-y-2">
@@ -31,6 +33,7 @@ export function FormInput({
         className="bg-spotify-accent border-spotify-accent-hover text-white"
         required={required}
         minLength={minLength}
+        disabled={disabled}
       />
     </div>
   );

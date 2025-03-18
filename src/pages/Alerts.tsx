@@ -75,8 +75,8 @@ export const Alerts = () => {
     alerts: alerts.filter(alert => alert.unit_id === unit.id)
   })) as UnitWithAlerts[];
 
-  if (error) {
-    console.error("Error in Alerts component:", error);
+  if (unitsError || alertsError) {
+    console.error("Error in Alerts component:", unitsError || alertsError);
     toast({
       title: "Error loading alerts",
       description: "There was a problem loading the alerts. Please try again.",
@@ -85,7 +85,7 @@ export const Alerts = () => {
     return <div>Error loading alerts. Please try again.</div>;
   }
 
-  if (isLoading) {
+  if (unitsLoading || alertsLoading) {
     return <LoadingSkeleton />;
   }
 

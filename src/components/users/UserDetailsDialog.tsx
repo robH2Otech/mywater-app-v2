@@ -9,7 +9,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { doc, updateDoc } from "firebase/firestore";
 import { db } from "@/integrations/firebase/client";
 import { Mail, Send, FileText, Bell } from "lucide-react";
-import { User, UserRole } from "@/types/users";
+import { User, UserRole, UserStatus } from "@/types/users";
 
 interface UserDetailsDialogProps {
   user: User | null;
@@ -18,17 +18,29 @@ interface UserDetailsDialogProps {
   currentUserRole?: UserRole;
 }
 
+interface UserFormData {
+  first_name: string;
+  last_name: string;
+  email: string;
+  phone: string;
+  company: string;
+  job_title: string;
+  role: UserRole;
+  status: UserStatus;
+  password: string;
+}
+
 export function UserDetailsDialog({ user, open, onOpenChange, currentUserRole = "user" }: UserDetailsDialogProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<UserFormData>({
     first_name: "",
     last_name: "",
     email: "",
     phone: "",
     company: "",
     job_title: "",
-    role: "user" as UserRole,
+    role: "user",
     status: "active",
     password: ""
   });
@@ -36,7 +48,14 @@ export function UserDetailsDialog({ user, open, onOpenChange, currentUserRole = 
   useEffect(() => {
     if (user) {
       setFormData({
-        ...user,
+        first_name: user.first_name,
+        last_name: user.last_name,
+        email: user.email,
+        phone: user.phone || "",
+        company: user.company || "",
+        job_title: user.job_title || "",
+        role: user.role,
+        status: user.status,
         password: user.password || ""
       });
     }
@@ -44,7 +63,7 @@ export function UserDetailsDialog({ user, open, onOpenChange, currentUserRole = 
 
   const isEditable = currentUserRole === "superadmin";
 
-  const handleInputChange = (field: string, value: string) => {
+  const handleInputChange = (field: keyof UserFormData, value: string) => {
     if (!isEditable) return;
     setFormData(prev => ({ ...prev, [field]: value }));
   };
@@ -190,7 +209,7 @@ export function UserDetailsDialog({ user, open, onOpenChange, currentUserRole = 
             <label className="text-sm text-gray-400">Status</label>
             <Select
               value={formData.status}
-              onValueChange={(value) => handleInputChange("status", value)}
+              onValueChange={(value: UserStatus) => handleInputChange("status", value)}
               disabled={!isEditable}
             >
               <SelectTrigger className="bg-spotify-accent border-spotify-accent-hover text-white">
