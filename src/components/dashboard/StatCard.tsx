@@ -1,3 +1,4 @@
+
 import { Link } from "react-router-dom";
 import { Card } from "@/components/ui/card";
 import { LucideIcon } from "lucide-react";
@@ -17,9 +18,9 @@ export const StatCard = ({
   value,
   icon: Icon,
   link,
-  iconColor = "text-spotify-green",
+  iconColor = "text-primary",
   subValue,
-  subValueColor = "text-spotify-green",
+  subValueColor = "text-primary",
 }: StatCardProps) => {
   return (
     <Link to={link} className="block">

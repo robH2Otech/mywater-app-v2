@@ -29,7 +29,7 @@ export const Sidebar = ({ isMobile, closeSidebar }: SidebarProps) => {
       {/* Sidebar header with close button for mobile */}
       <div className="flex items-center justify-between p-4">
         <div className="flex items-center gap-2">
-          <Droplets className="h-8 w-8 text-spotify-green" />
+          <Droplets className="h-8 w-8 text-primary" />
           <div className="flex flex-col">
             <h1 className="text-xl font-bold text-white leading-tight">MYWATER</h1>
             <span className="text-sm text-white/80">Technologies</span>
@@ -60,7 +60,7 @@ export const Sidebar = ({ isMobile, closeSidebar }: SidebarProps) => {
               to={item.path}
               className={`flex items-center gap-3 px-4 py-3 rounded-md transition-colors ${
                 isActive
-                  ? "bg-spotify-green text-white"
+                  ? "bg-primary text-white"
                   : "text-gray-400 hover:text-white hover:bg-spotify-accent"
               }`}
               onClick={isMobile ? closeSidebar : undefined}
