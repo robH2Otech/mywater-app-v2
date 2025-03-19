@@ -59,7 +59,7 @@ export function UnitMeasurements({ unitId }: UnitMeasurementsProps) {
   // Show error message if there's an error
   if (error) {
     return (
-      <Card className="bg-spotify-darker border-spotify-accent p-6">
+      <Card className="bg-spotify-darker border-primary/20 p-6">
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-xl font-semibold text-white">Last 24 hours Water Data</h2>
         </div>
@@ -71,7 +71,7 @@ export function UnitMeasurements({ unitId }: UnitMeasurementsProps) {
   }
 
   return (
-    <Card className="bg-spotify-darker border-spotify-accent p-6">
+    <Card className="bg-spotify-darker border-primary/20 p-6">
       <div className="flex justify-between items-center mb-4">
         <h2 className="text-xl font-semibold text-white">Last 24 hours Water Data</h2>
         {isLoading && <span className="text-gray-400 text-sm">Syncing...</span>}

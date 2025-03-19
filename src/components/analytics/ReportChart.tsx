@@ -40,7 +40,7 @@ export function ReportChart({ data, title, type, unit }: ReportChartProps) {
                 formatter={(value: number) => [`${value.toFixed(2)} ${unit || ''}`, type === 'volume' ? 'Volume' : '']}
               />
               <Legend />
-              <Bar dataKey="volume" name={`Volume${unit ? ` (${unit})` : ''}`} fill="#4CAF50" />
+              <Bar dataKey="volume" name={`Volume${unit ? ` (${unit})` : ''}`} fill="#39afcd" />
             </BarChart>
           ) : type === 'temperature' ? (
             <LineChart data={formattedData}>
@@ -64,7 +64,7 @@ export function ReportChart({ data, title, type, unit }: ReportChartProps) {
                 labelStyle={{ color: '#fff' }}
               />
               <Legend />
-              <Line type="monotone" dataKey="uvcHours" name="UVC Hours" stroke="#2196F3" />
+              <Line type="monotone" dataKey="uvcHours" name="UVC Hours" stroke="#39afcd" />
             </LineChart>
           )}
         </ResponsiveContainer>

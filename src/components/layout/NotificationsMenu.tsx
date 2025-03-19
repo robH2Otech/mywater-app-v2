@@ -42,7 +42,7 @@ export const NotificationsMenu = () => {
       id: "3",
       title: "Filter Maintenance",
       content: "Filter change required for MYWATER_003",
-      icon: <DropletIcon className="h-4 w-4 text-spotify-green" />,
+      icon: <DropletIcon className="h-4 w-4 text-primary" />,
       time: "3 hours ago",
       read: true,
     },
@@ -71,7 +71,7 @@ export const NotificationsMenu = () => {
           <Bell className="h-5 w-5" />
           {unreadCount > 0 && (
             <Badge 
-              className="absolute -top-1 -right-1 px-1.5 py-0.5 bg-spotify-green text-[10px] text-white" 
+              className="absolute -top-1 -right-1 px-1.5 py-0.5 bg-primary text-[10px] text-white" 
               variant="outline"
             >
               {unreadCount}

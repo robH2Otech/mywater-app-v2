@@ -1,4 +1,3 @@
-
 import { Check, AlertTriangle, AlertOctagon, MapPin, Edit } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Card } from "@/components/ui/card";
@@ -52,7 +51,7 @@ export const UnitCard = ({
       case "warning":
         return <AlertTriangle className="h-5 w-5 text-yellow-500" />;
       default:
-        return <Check className="h-5 w-5 text-spotify-green" />;
+        return <Check className="h-5 w-5 text-primary" />;
     }
   };
 
@@ -72,7 +71,6 @@ export const UnitCard = ({
     return new Date(date).toLocaleDateString();
   };
 
-  // Format volume with only 2 decimal places
   const formatVolume = (volume: number | string | null | undefined) => {
     if (volume === null || volume === undefined) return "N/A";
     

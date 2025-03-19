@@ -1,4 +1,3 @@
-
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Check, AlertTriangle, AlertOctagon, MapPin, Edit, Calendar } from "lucide-react";
@@ -18,7 +17,7 @@ export function FilterCard({ unit, onEditClick, onClick }: FilterCardProps) {
         return <AlertTriangle className="h-5 w-5 text-yellow-500" />;
       case "active":
       default:
-        return <Check className="h-5 w-5 text-spotify-green" />;
+        return <Check className="h-5 w-5 text-primary" />;
     }
   };
 
@@ -34,7 +33,6 @@ export function FilterCard({ unit, onEditClick, onClick }: FilterCardProps) {
     }
   };
 
-  // Enhanced function to format volume with thousands separators and fixed decimal places
   const formatVolume = (volume: number | string | null | undefined) => {
     if (volume === null || volume === undefined) return 'N/A';
     
