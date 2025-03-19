@@ -123,7 +123,7 @@ export function Auth() {
 
           <Button
             type="submit"
-            className="w-full bg-spotify-green hover:bg-spotify-green/90"
+            className="w-full bg-mywater-blue hover:bg-mywater-blue/90"
             disabled={isLoading}
           >
             {isLoading
@@ -138,7 +138,7 @@ export function Auth() {
           <button
             type="button"
             onClick={() => setIsLogin(!isLogin)}
-            className="text-spotify-green hover:underline"
+            className="text-mywater-blue hover:underline"
           >
             {isLogin
               ? "Need an account? Sign up"
