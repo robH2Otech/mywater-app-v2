@@ -33,7 +33,7 @@ export function UnitStatusCard({ unit }: UnitStatusCardProps) {
         <div>
           <p className="text-gray-400 text-sm">Unit Status</p>
           <p className={`text-lg font-medium ${
-            unit.status === 'active' ? 'text-green-400' :
+            unit.status === 'active' ? 'text-mywater-blue' :
             unit.status === 'warning' ? 'text-yellow-400' :
             unit.status === 'urgent' ? 'text-red-400' : 'text-gray-400'
           }`}>
@@ -43,7 +43,7 @@ export function UnitStatusCard({ unit }: UnitStatusCardProps) {
         <div>
           <p className="text-gray-400 text-sm">UVC Status</p>
           <p className={`text-lg font-medium ${
-            unit.uvc_status === 'active' ? 'text-green-400' :
+            unit.uvc_status === 'active' ? 'text-mywater-blue' :
             unit.uvc_status === 'warning' ? 'text-yellow-400' :
             unit.uvc_status === 'urgent' ? 'text-red-400' : 'text-gray-400'
           }`}>

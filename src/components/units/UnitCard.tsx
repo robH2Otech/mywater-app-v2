@@ -51,7 +51,7 @@ export const UnitCard = ({
       case "warning":
         return <AlertTriangle className="h-5 w-5 text-yellow-500" />;
       default:
-        return <Check className="h-5 w-5 text-primary" />;
+        return <Check className="h-5 w-5 text-mywater-blue" />;
     }
   };
 
