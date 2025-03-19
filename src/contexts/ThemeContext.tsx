@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useEffect } from 'react';
 
 type ThemeColor = 'mywater-blue' | 'spotify-green' | 'dark-blue';

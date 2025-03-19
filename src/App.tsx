@@ -1,21 +1,22 @@
+
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { Layout } from "@/components/layout/Layout";
 import { LanguageProvider } from "./contexts/LanguageContext";
 import { ThemeProvider } from "./contexts/ThemeContext";
-import Index from "./pages/Index";
-import Auth from "./pages/Auth";
-import Dashboard from "./pages/Dashboard";
-import Units from "./pages/Units";
-import UnitDetails from "./pages/UnitDetails";
-import UVC from "./pages/UVC";
-import Filters from "./pages/Filters";
-import Users from "./pages/Users";
-import Alerts from "./pages/Alerts";
-import Analytics from "./pages/Analytics";
-import Settings from "./pages/Settings";
-import NotFound from "./pages/NotFound";
+import { Index } from "./pages/Index";
+import { Auth } from "./pages/Auth";
+import { Dashboard } from "./pages/Dashboard";
+import { Units } from "./pages/Units";
+import { UnitDetails } from "./pages/UnitDetails";
+import { UVC } from "./pages/UVC";
+import { Filters } from "./pages/Filters";
+import { Users } from "./pages/Users";
+import { Alerts } from "./pages/Alerts";
+import { Analytics } from "./pages/Analytics";
+import { Settings } from "./pages/Settings";
+import { NotFound } from "./pages/NotFound";
 
 const queryClient = new QueryClient();
 

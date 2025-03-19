@@ -15,17 +15,14 @@ import {
   Bell,
   Trash2,
   Download,
-  Palette,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Separator } from "@/components/ui/separator";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { useTheme } from "@/contexts/ThemeContext";
 
 export const Settings = () => {
   const { toast } = useToast();
   const { language, setLanguage, t } = useLanguage();
-  const { themeColor, setThemeColor } = useTheme();
   const [theme, setTheme] = useState("system");
   const [alertNotifications, setAlertNotifications] = useState(true);
   const [systemUpdates, setSystemUpdates] = useState(true);
@@ -58,24 +55,6 @@ export const Settings = () => {
             <SelectItem value="system">{t("system")}</SelectItem>
             <SelectItem value="light">{t("light")}</SelectItem>
             <SelectItem value="dark">{t("dark")}</SelectItem>
-          </SelectContent>
-        </Select>
-      </section>
-
-      <Separator className="bg-spotify-accent" />
-
-      {/* Color Theme Section */}
-      <section className="space-y-3">
-        <h2 className="text-lg font-medium text-white">Color Theme</h2>
-        <Select value={themeColor} onValueChange={setThemeColor}>
-          <SelectTrigger className="w-[240px] bg-spotify-accent text-sm">
-            <Palette className="mr-2 h-4 w-4" />
-            <SelectValue placeholder="Select color theme" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="mywater-blue">MYWATER Blue (#39afcd)</SelectItem>
-            <SelectItem value="spotify-green">Spotify Green (#1DB954)</SelectItem>
-            <SelectItem value="dark-blue">Dark Blue (#2c53A0)</SelectItem>
           </SelectContent>
         </Select>
       </section>
@@ -143,7 +122,7 @@ export const Settings = () => {
           <Button
             variant="default"
             onClick={handleExportData}
-            className="text-sm h-9 bg-primary hover:bg-primary/90"
+            className="text-sm h-9 bg-spotify-green hover:bg-spotify-green/90"
           >
             <Download className="h-4 w-4 mr-2" />
             {t("button.export.data")}

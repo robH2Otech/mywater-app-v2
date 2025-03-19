@@ -19,7 +19,7 @@ export function PageHeader({ title, description, onAddClick, addButtonText }: Pa
       {onAddClick && (
         <Button 
           onClick={onAddClick}
-          className="bg-primary hover:bg-primary/90"
+          className="bg-spotify-green hover:bg-spotify-green/90"
         >
           <Plus className="h-4 w-4 mr-2" />
           {addButtonText}

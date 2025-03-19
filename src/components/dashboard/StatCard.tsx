@@ -18,9 +18,9 @@ export const StatCard = ({
   value,
   icon: Icon,
   link,
-  iconColor = "text-primary",
+  iconColor = "text-spotify-green",
   subValue,
-  subValueColor = "text-primary",
+  subValueColor = "text-spotify-green",
 }: StatCardProps) => {
   return (
     <Link to={link} className="block">

@@ -13,7 +13,7 @@ export function StatusIcon({ status }: StatusIconProps) {
       return <AlertTriangle className="h-5 w-5 text-yellow-500" />;
     case "active":
     default:
-      return <Check className="h-5 w-5 text-primary" />;
+      return <Check className="h-5 w-5 text-spotify-green" />;
   }
 }
 
