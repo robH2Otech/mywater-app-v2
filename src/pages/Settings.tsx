@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { 
   Select,
   SelectContent,
@@ -19,42 +19,13 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { Separator } from "@/components/ui/separator";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { ColorThemeSelector } from "@/components/settings/ColorThemeSelector";
 
 export const Settings = () => {
   const { toast } = useToast();
   const { language, setLanguage, t } = useLanguage();
   const [theme, setTheme] = useState("system");
-  const [colorTheme, setColorTheme] = useState("mywater-blue");
   const [alertNotifications, setAlertNotifications] = useState(true);
   const [systemUpdates, setSystemUpdates] = useState(true);
-
-  // Load saved color theme preference on component mount
-  useEffect(() => {
-    const savedColorTheme = localStorage.getItem('appColorTheme');
-    if (savedColorTheme) {
-      setColorTheme(savedColorTheme);
-      
-      // Apply the saved theme
-      const root = document.documentElement;
-      switch (savedColorTheme) {
-        case 'mywater-blue':
-          root.style.setProperty('--app-theme-color', '#39afcd');
-          break;
-        case 'spotify-green':
-          root.style.setProperty('--app-theme-color', '#1DB954');
-          break;
-        case 'st-tropaz-blue':
-          root.style.setProperty('--app-theme-color', '#2c53A0');
-          break;
-      }
-    }
-  }, []);
-
-  // Save color theme preference when it changes
-  useEffect(() => {
-    localStorage.setItem('appColorTheme', colorTheme);
-  }, [colorTheme]);
 
   const handleClearCache = () => {
     toast({
@@ -86,14 +57,6 @@ export const Settings = () => {
             <SelectItem value="dark">{t("dark")}</SelectItem>
           </SelectContent>
         </Select>
-      </section>
-
-      <Separator className="bg-spotify-accent" />
-
-      {/* Color Theme Section */}
-      <section className="space-y-3">
-        <h2 className="text-lg font-medium text-white">Color Theme</h2>
-        <ColorThemeSelector theme={colorTheme} setTheme={setColorTheme} />
       </section>
 
       <Separator className="bg-spotify-accent" />
@@ -159,7 +122,7 @@ export const Settings = () => {
           <Button
             variant="default"
             onClick={handleExportData}
-            className="text-sm h-9 bg-mywater-blue hover:bg-mywater-blue/90"
+            className="text-sm h-9 bg-spotify-green hover:bg-spotify-green/90"
           >
             <Download className="h-4 w-4 mr-2" />
             {t("button.export.data")}
@@ -173,7 +136,7 @@ export const Settings = () => {
       <section className="space-y-4">
         <h2 className="text-lg font-medium text-white">{t("settings.about")}</h2>
         <div className="space-y-3">
-          <p className="text-sm text-gray-400">Version: 3.0.25</p>
+          <p className="text-sm text-gray-400">Version: 3.0.0</p>
           <p className="text-sm text-gray-300 leading-relaxed">
             MYWATER app
           </p>

@@ -1,4 +1,3 @@
-
 import type { Config } from "tailwindcss";
 
 export default {
@@ -24,17 +23,11 @@ export default {
       },
       colors: {
         spotify: {
-          green: "#1DB954", // Keeping for backward compatibility
+          green: "#1DB954",
           dark: "#121212",
           darker: "#181818",
           accent: "#282828",
           "accent-hover": "#404040",
-        },
-        mywater: {
-          blue: "#39afcd",
-          "blue-hover": "#2d9cb8",
-          "st-tropaz": "#2c53A0",
-          "st-tropaz-hover": "#234387",
         },
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",

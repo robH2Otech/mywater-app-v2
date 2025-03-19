@@ -54,7 +54,7 @@ export function AddUserDialogContent({
         </Button>
         <Button 
           onClick={handleSubmit}
-          className="bg-mywater-blue hover:bg-mywater-blue/90"
+          className="bg-spotify-green hover:bg-spotify-green/90"
         >
           Add User
         </Button>
