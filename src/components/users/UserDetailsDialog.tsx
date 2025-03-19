@@ -101,30 +101,45 @@ export function UserDetailsDialog({ user, open, onOpenChange, currentUserRole = 
   };
 
   const handleAction = (action: 'email' | 'report' | 'reminder' | 'invoice') => {
-    if (!user?.email) return;
+    if (!user?.email) {
+      toast({
+        title: "Cannot send email",
+        description: "User email is not available",
+        variant: "destructive",
+      });
+      return;
+    }
 
     let subject = '';
     let body = '';
+    const fullName = `${user.first_name} ${user.last_name}`;
 
     switch (action) {
+      case 'email':
+        subject = `Message from MYWATER Technologies`;
+        body = `Hello ${fullName},\n\n`;
+        break;
       case 'report':
-        subject = 'Your Latest Report';
-        body = 'Please find attached your latest report.';
+        subject = `Your Latest Report from MYWATER Technologies`;
+        body = `Hello ${fullName},\n\nPlease find attached your latest report from MYWATER Technologies.\n\nBest regards,\nMYWATER Technologies Team`;
         break;
       case 'reminder':
-        subject = 'Reminder';
-        body = 'This is a reminder for your upcoming tasks.';
+        subject = `Reminder from MYWATER Technologies`;
+        body = `Hello ${fullName},\n\nThis is a friendly reminder about your upcoming service appointment.\n\nBest regards,\nMYWATER Technologies Team`;
         break;
       case 'invoice':
-        subject = 'Invoice';
-        body = 'Please find attached your latest invoice.';
+        subject = `Invoice from MYWATER Technologies`;
+        body = `Hello ${fullName},\n\nPlease find attached your latest invoice from MYWATER Technologies.\n\nBest regards,\nMYWATER Technologies Team`;
         break;
-      default:
-        subject = '';
-        body = '';
     }
 
+    // Open default email client with pre-filled details
     window.location.href = `mailto:${user.email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+    
+    toast({
+      title: "Email client opened",
+      description: `Preparing to send ${action} to ${user.email}`,
+    });
   };
 
   if (!user) return null;

@@ -58,7 +58,7 @@ export function UsersList({ users, onUserClick }: UsersListProps) {
                     </Badge>
                   </div>
                   {user.status === 'active' ? (
-                    <CheckCircle2 className="h-5 w-5 text-spotify-green" />
+                    <CheckCircle2 className="h-5 w-5 text-mywater-blue" />
                   ) : (
                     <AlertCircle className="h-5 w-5 text-red-500" />
                   )}
