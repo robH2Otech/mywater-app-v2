@@ -18,7 +18,7 @@ export function UVCDialogActions({ onCancel, onSave }: UVCDialogActionsProps) {
       </Button>
       <Button
         onClick={onSave}
-        className="bg-spotify-green hover:bg-spotify-green/90 text-white"
+        className="bg-primary hover:bg-primary/90 text-white"
       >
         Save Changes
       </Button>

@@ -1,3 +1,4 @@
+
 import { Button } from "@/components/ui/button";
 
 interface UnitFormActionsProps {
@@ -19,7 +20,7 @@ export function UnitFormActions({ onCancel, isSubmitting }: UnitFormActionsProps
       <Button
         type="submit"
         disabled={isSubmitting}
-        className="bg-spotify-green hover:bg-spotify-green/90 text-white"
+        className="bg-primary hover:bg-primary/90 text-white"
       >
         {isSubmitting ? "Saving..." : "Save Changes"}
       </Button>
