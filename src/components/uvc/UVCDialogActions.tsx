@@ -16,7 +16,7 @@ export function UVCDialogActions({ onCancel, onSave }: UVCDialogActionsProps) {
       >
         Cancel
       </Button>
-      <Button onClick={onSave}>
+      <Button onClick={onSave} className="bg-mywater-blue hover:bg-mywater-blue/90">
         Save Changes
       </Button>
     </div>

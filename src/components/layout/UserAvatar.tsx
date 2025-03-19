@@ -41,7 +41,7 @@ export const UserAvatar = ({ firstName, lastName }: UserAvatarProps) => {
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Avatar className="h-8 w-8 cursor-pointer hover:opacity-80 transition-opacity">
-          <AvatarFallback className="bg-primary text-white">
+          <AvatarFallback className="bg-mywater-blue text-white">
             {getInitials()}
           </AvatarFallback>
         </Avatar>

@@ -158,7 +158,7 @@ export function ReportGenerationForm({
 
       <Button 
         onClick={handleGenerateReport}
-        className="bg-spotify-green hover:bg-spotify-green/90"
+        className="bg-mywater-blue hover:bg-mywater-blue/90"
         disabled={!selectedUnit || !reportType || isGenerating}
       >
         {isGenerating ? "Generating..." : "Generate Report"}

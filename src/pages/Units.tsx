@@ -47,7 +47,7 @@ export const Units = () => {
         </div>
         <Button 
           onClick={() => setIsAddUnitOpen(true)}
-          className="bg-spotify-green hover:bg-spotify-green/90 w-full md:w-auto"
+          className="bg-mywater-blue hover:bg-mywater-blue/90 w-full md:w-auto"
         >
           <Plus className="h-4 w-4 mr-2" />
           Add Unit
@@ -82,4 +82,4 @@ export const Units = () => {
       />
     </div>
   );
-};
+}
