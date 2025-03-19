@@ -132,11 +132,11 @@ export const Settings = () => {
 
       <Separator className="bg-spotify-accent" />
 
-      {/* About Section - Updated version number as requested */}
+      {/* About Section - Updated text as requested */}
       <section className="space-y-4">
         <h2 className="text-lg font-medium text-white">{t("settings.about")}</h2>
         <div className="space-y-3">
-          <p className="text-sm text-gray-400">Version: 3.0.25</p>
+          <p className="text-sm text-gray-400">Version: 3.0.0</p>
           <p className="text-sm text-gray-300 leading-relaxed">
             MYWATER app
           </p>

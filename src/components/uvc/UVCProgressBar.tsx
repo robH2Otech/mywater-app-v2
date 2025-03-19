@@ -15,7 +15,7 @@ export function UVCProgressBar({ hours }: UVCProgressBarProps) {
     const percentage = calculatePercentage();
     if (percentage > 90) return "text-red-500";
     if (percentage > 80) return "text-yellow-500";
-    return "text-primary";
+    return "text-spotify-green";
   };
 
   return (
@@ -29,7 +29,7 @@ export function UVCProgressBar({ hours }: UVCProgressBarProps) {
           className={`h-2.5 rounded-full ${
             calculatePercentage() > 90 ? 'bg-red-500' : 
             calculatePercentage() > 80 ? 'bg-yellow-500' : 
-            'bg-primary'
+            'bg-spotify-green'
           }`}
           style={{ width: `${calculatePercentage()}%` }}
         ></div>

@@ -1,4 +1,3 @@
-
 import type { Config } from "tailwindcss";
 
 export default {
@@ -29,10 +28,6 @@ export default {
           darker: "#181818",
           accent: "#282828",
           "accent-hover": "#404040",
-        },
-        mywater: {
-          blue: "#39afcd",
-          "blue-dark": "#2c53A0",
         },
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
