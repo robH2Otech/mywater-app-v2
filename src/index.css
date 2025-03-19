@@ -1,3 +1,4 @@
+
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 
 @tailwind base;
@@ -6,6 +7,7 @@
 
 @layer base {
   :root {
+    --app-theme-color: #39afcd;
     --background: 240 10% 3.9%;
     --foreground: 0 0% 98%;
     --card: 240 10% 3.9%;
@@ -40,5 +42,22 @@
 @layer utilities {
   .glass {
     @apply bg-spotify-accent/30 backdrop-blur-lg border border-white/10;
+  }
+  
+  .theme-color {
+    color: var(--app-theme-color);
+  }
+  
+  .bg-theme {
+    background-color: var(--app-theme-color);
+  }
+  
+  .hover\:bg-theme:hover {
+    background-color: var(--app-theme-color);
+    opacity: 0.9;
+  }
+  
+  .border-theme {
+    border-color: var(--app-theme-color);
   }
 }
