@@ -56,7 +56,7 @@ export function UVCCard({ unit, onEditClick, onCardClick }: UVCCardProps) {
               <span className={`text-sm font-medium ${
                 unit.uvc_status === 'urgent' ? 'text-red-400' : 
                 unit.uvc_status === 'warning' ? 'text-yellow-400' : 
-                'text-green-400'
+                'text-mywater-blue'
               }`}>
                 {getStatusText(unit.uvc_status)}
               </span>
@@ -68,7 +68,7 @@ export function UVCCard({ unit, onEditClick, onCardClick }: UVCCardProps) {
               <Lightbulb className={`h-4 w-4 ${
                 uvcHours >= URGENT_THRESHOLD ? 'text-red-400' :
                 uvcHours >= WARNING_THRESHOLD ? 'text-yellow-400' :
-                'text-green-400'
+                'text-mywater-blue'
               }`} />
               UVC Hours: {formatUVCHours(uvcHours)} / {MAX_UVC_HOURS.toLocaleString()}
             </div>
@@ -78,7 +78,7 @@ export function UVCCard({ unit, onEditClick, onCardClick }: UVCCardProps) {
                 className={`h-2.5 rounded-full ${
                   uvcHours >= URGENT_THRESHOLD ? 'bg-red-500' : 
                   uvcHours >= WARNING_THRESHOLD ? 'bg-yellow-500' : 
-                  'bg-spotify-green'
+                  'bg-mywater-blue'
                 }`}
                 style={{ width: `${lifePercentage}%` }}
               ></div>

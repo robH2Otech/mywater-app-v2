@@ -88,7 +88,7 @@ export const CreateAlertDialog = ({
             </div>
 
             <Button 
-              className="w-full bg-spotify-green hover:bg-spotify-green/90"
+              className="w-full bg-mywater-blue hover:bg-mywater-blue/90"
               onClick={() => {
                 onCreateAlert();
                 onOpenChange(false);

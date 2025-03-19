@@ -113,7 +113,7 @@ export function AlertDetailsDialog({ alert, open, onOpenChange, onSave }: AlertD
             </Button>
             <Button
               onClick={handleSave}
-              className="bg-spotify-green hover:bg-spotify-green/90 text-white"
+              className="bg-mywater-blue hover:bg-mywater-blue/90 text-white"
             >
               Save Changes
             </Button>

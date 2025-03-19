@@ -162,7 +162,7 @@ export const Settings = () => {
           <Button
             variant="default"
             onClick={handleExportData}
-            className="text-sm h-9"
+            className="text-sm h-9 bg-mywater-blue hover:bg-mywater-blue/90"
           >
             <Download className="h-4 w-4 mr-2" />
             {t("button.export.data")}

@@ -178,7 +178,7 @@ export function AddFilterDialog({ open, onOpenChange }: { open: boolean; onOpenC
               <Button
                 type="submit"
                 disabled={isSubmitting}
-                className="bg-spotify-green hover:bg-spotify-green/90 text-white"
+                className="bg-mywater-blue hover:bg-mywater-blue/90 text-white"
               >
                 Add Filter
               </Button>

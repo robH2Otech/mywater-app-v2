@@ -14,36 +14,36 @@ export function UserActionButtons({ onAction }: UserActionButtonsProps) {
         variant="outline"
         size="sm"
         onClick={() => onAction('email')}
-        className="bg-spotify-accent hover:bg-spotify-accent-hover"
+        className="bg-spotify-accent hover:bg-spotify-accent-hover border-mywater-blue/20"
       >
-        <Mail className="w-4 h-4 mr-2" />
+        <Mail className="w-4 h-4 mr-2 text-mywater-blue" />
         Email
       </Button>
       <Button
         variant="outline"
         size="sm"
         onClick={() => onAction('report')}
-        className="bg-spotify-accent hover:bg-spotify-accent-hover"
+        className="bg-spotify-accent hover:bg-spotify-accent-hover border-mywater-blue/20"
       >
-        <FileText className="w-4 h-4 mr-2" />
+        <FileText className="w-4 h-4 mr-2 text-mywater-blue" />
         Send Report
       </Button>
       <Button
         variant="outline"
         size="sm"
         onClick={() => onAction('reminder')}
-        className="bg-spotify-accent hover:bg-spotify-accent-hover"
+        className="bg-spotify-accent hover:bg-spotify-accent-hover border-mywater-blue/20"
       >
-        <Bell className="w-4 h-4 mr-2" />
+        <Bell className="w-4 h-4 mr-2 text-mywater-blue" />
         Send Reminder
       </Button>
       <Button
         variant="outline"
         size="sm"
         onClick={() => onAction('invoice')}
-        className="bg-spotify-accent hover:bg-spotify-accent-hover"
+        className="bg-spotify-accent hover:bg-spotify-accent-hover border-mywater-blue/20"
       >
-        <Send className="w-4 h-4 mr-2" />
+        <Send className="w-4 h-4 mr-2 text-mywater-blue" />
         Send Invoice
       </Button>
     </div>

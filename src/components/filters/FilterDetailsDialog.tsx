@@ -112,7 +112,7 @@ export function FilterDetailsDialog({ filter, open, onOpenChange, onSave }: Filt
             </Button>
             <Button
               onClick={handleSave}
-              className="bg-spotify-green hover:bg-spotify-green/90 text-white"
+              className="bg-mywater-blue hover:bg-mywater-blue/90 text-white"
             >
               Save
             </Button>
