@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { 
   Select,
   SelectContent,
@@ -15,6 +15,7 @@ import {
   Bell,
   Trash2,
   Download,
+  Palette,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Separator } from "@/components/ui/separator";
@@ -26,6 +27,27 @@ export const Settings = () => {
   const [theme, setTheme] = useState("system");
   const [alertNotifications, setAlertNotifications] = useState(true);
   const [systemUpdates, setSystemUpdates] = useState(true);
+  const [colorTheme, setColorTheme] = useState("mywater-blue");
+
+  useEffect(() => {
+    // Apply color theme when it changes
+    const root = document.documentElement;
+    
+    switch (colorTheme) {
+      case "mywater-blue":
+        root.style.setProperty("--primary", "191 54% 51%"); // MYWATER blue
+        root.style.setProperty("--ring", "191 54% 51%");
+        break;
+      case "spotify-green":
+        root.style.setProperty("--primary", "142 72% 42%"); // Spotify green
+        root.style.setProperty("--ring", "142 72% 42%");
+        break;
+      case "med-blue":
+        root.style.setProperty("--primary", "218 57% 40%"); // Med blue
+        root.style.setProperty("--ring", "218 57% 40%");
+        break;
+    }
+  }, [colorTheme]);
 
   const handleClearCache = () => {
     toast({
@@ -55,6 +77,24 @@ export const Settings = () => {
             <SelectItem value="system">{t("system")}</SelectItem>
             <SelectItem value="light">{t("light")}</SelectItem>
             <SelectItem value="dark">{t("dark")}</SelectItem>
+          </SelectContent>
+        </Select>
+      </section>
+
+      <Separator className="bg-spotify-accent" />
+
+      {/* Color Theme Section */}
+      <section className="space-y-3">
+        <h2 className="text-lg font-medium text-white">Color Theme</h2>
+        <Select value={colorTheme} onValueChange={setColorTheme}>
+          <SelectTrigger className="w-[240px] bg-spotify-accent text-sm">
+            <Palette className="mr-2 h-4 w-4" />
+            <SelectValue placeholder="Select color theme" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="mywater-blue">MYWATER Blue (#39afcd)</SelectItem>
+            <SelectItem value="spotify-green">Spotify Green (#1DB954)</SelectItem>
+            <SelectItem value="med-blue">Med Blue (#2c53A0)</SelectItem>
           </SelectContent>
         </Select>
       </section>
@@ -122,7 +162,7 @@ export const Settings = () => {
           <Button
             variant="default"
             onClick={handleExportData}
-            className="text-sm h-9 bg-spotify-green hover:bg-spotify-green/90"
+            className="text-sm h-9"
           >
             <Download className="h-4 w-4 mr-2" />
             {t("button.export.data")}
@@ -136,7 +176,7 @@ export const Settings = () => {
       <section className="space-y-4">
         <h2 className="text-lg font-medium text-white">{t("settings.about")}</h2>
         <div className="space-y-3">
-          <p className="text-sm text-gray-400">Version: 3.0.0</p>
+          <p className="text-sm text-gray-400">Version: 3.0.25</p>
           <p className="text-sm text-gray-300 leading-relaxed">
             MYWATER app
           </p>

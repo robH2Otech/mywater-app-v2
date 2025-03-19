@@ -1,3 +1,4 @@
+
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 
@@ -16,10 +17,7 @@ export function PageHeader({ title, description, onAddClick, addButtonText }: Pa
         <p className="text-gray-400">{description}</p>
       </div>
       {onAddClick && (
-        <Button 
-          onClick={onAddClick}
-          className="bg-spotify-green hover:bg-spotify-green/90"
-        >
+        <Button onClick={onAddClick}>
           <Plus className="h-4 w-4 mr-2" />
           {addButtonText}
         </Button>
