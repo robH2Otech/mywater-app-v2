@@ -4,7 +4,6 @@ import { Bell } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
 import { RecentAlerts } from "@/components/dashboard/RecentAlerts";
-import { WaterUsageChart } from "@/components/dashboard/WaterUsageChart";
 
 const Index = () => {
   const { data: alerts = [], isError } = useQuery({
@@ -43,24 +42,6 @@ const Index = () => {
     },
   });
 
-  // Fetch units data for the water usage chart
-  const { data: units = [] } = useQuery({
-    queryKey: ["units-for-chart"],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("units")
-        .select("*")
-        .order('name', { ascending: true });
-      
-      if (error) {
-        console.error("Error fetching units:", error);
-        throw error;
-      }
-      
-      return data || [];
-    }
-  });
-
   // Get active alerts count (warning + urgent)
   const activeAlertsCount = Array.isArray(alerts) ? alerts.length : 0;
   const bellColor = activeAlertsCount > 0 ? "text-red-500" : "text-gray-400";
@@ -83,8 +64,6 @@ const Index = () => {
             <p className="text-xl text-gray-400">Monitor and manage your water systems</p>
           </div>
         </Card>
-        
-        <WaterUsageChart units={units} />
         
         <RecentAlerts />
       </div>
