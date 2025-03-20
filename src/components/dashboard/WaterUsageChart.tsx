@@ -8,14 +8,43 @@ import {
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
+  Bar,
+  BarChart,
+  ComposedChart,
+  Legend,
 } from "recharts";
 import { useEffect, useState } from "react";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { 
+  Select, 
+  SelectContent, 
+  SelectItem, 
+  SelectTrigger, 
+  SelectValue 
+} from "@/components/ui/select";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { subDays, subHours, format, parseISO } from "date-fns";
-import { collection, query, where, orderBy, getDocs, Timestamp } from "firebase/firestore";
+import { 
+  subDays, 
+  subHours, 
+  format, 
+  parseISO, 
+  startOfDay,
+  endOfDay,
+  isAfter,
+  isBefore
+} from "date-fns";
+import { 
+  collection, 
+  query, 
+  where, 
+  orderBy, 
+  getDocs, 
+  Timestamp 
+} from "firebase/firestore";
 import { db } from "@/integrations/firebase/client";
 import { ChartContainer, ChartTooltipContent } from "@/components/ui/chart";
+import { FormDatePicker } from "@/components/shared/FormDatePicker";
+import { Button } from "@/components/ui/button";
+import { RefreshCw } from "lucide-react";
 
 // Define time range options
 type TimeRange = "24h" | "7d" | "30d" | "6m";
@@ -29,9 +58,12 @@ export const WaterUsageChart = ({ units = [] }: WaterUsageChartProps) => {
   const [timeRange, setTimeRange] = useState<TimeRange>("24h");
   const [chartData, setChartData] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [startDate, setStartDate] = useState<Date | null>(null);
+  const [endDate, setEndDate] = useState<Date | null>(null);
+  const [useCustomDate, setUseCustomDate] = useState(false);
 
   // Function to get measurements for all units in the specified time range
-  const fetchMeasurementsForTimeRange = async (range: TimeRange) => {
+  const fetchMeasurementsForTimeRange = async (range: TimeRange, customStartDate?: Date, customEndDate?: Date) => {
     if (!units || units.length === 0) {
       return [];
     }
@@ -39,41 +71,61 @@ export const WaterUsageChart = ({ units = [] }: WaterUsageChartProps) => {
     setIsLoading(true);
     
     try {
-      // Calculate start date based on selected time range
-      const endDate = new Date();
-      let startDate: Date;
+      // Calculate start date based on selected time range or use custom dates
+      let queryStartDate: Date;
+      let queryEndDate: Date = new Date();
       let formatPattern: string;
       let groupByField: string;
       
-      switch (range) {
-        case "24h":
-          startDate = subHours(endDate, 24);
-          formatPattern = "HH:mm"; // Hour format
+      if (customStartDate && customEndDate && useCustomDate) {
+        queryStartDate = startOfDay(customStartDate);
+        queryEndDate = endOfDay(customEndDate);
+        
+        // Determine format based on date range span
+        const daysDiff = Math.round((queryEndDate.getTime() - queryStartDate.getTime()) / (1000 * 60 * 60 * 24));
+        
+        if (daysDiff <= 2) {
+          formatPattern = "HH:mm"; // Hour format for 1-2 days
           groupByField = "hour";
-          break;
-        case "7d":
-          startDate = subDays(endDate, 7);
-          formatPattern = "MMM dd"; // Month day format
+        } else if (daysDiff <= 31) {
+          formatPattern = "MMM dd"; // Month day format for up to a month
           groupByField = "day";
-          break;
-        case "30d":
-          startDate = subDays(endDate, 30);
-          formatPattern = "MMM dd"; // Month day format
-          groupByField = "day";
-          break;
-        case "6m":
-          startDate = subDays(endDate, 180);
-          formatPattern = "MMM yyyy"; // Month year format
+        } else {
+          formatPattern = "MMM yyyy"; // Month year format for longer periods
           groupByField = "month";
-          break;
-        default:
-          startDate = subHours(endDate, 24);
-          formatPattern = "HH:mm";
-          groupByField = "hour";
+        }
+      } else {
+        // Use predefined time ranges
+        switch (range) {
+          case "24h":
+            queryStartDate = subHours(queryEndDate, 24);
+            formatPattern = "HH:mm"; // Hour format
+            groupByField = "hour";
+            break;
+          case "7d":
+            queryStartDate = subDays(queryEndDate, 7);
+            formatPattern = "MMM dd"; // Month day format
+            groupByField = "day";
+            break;
+          case "30d":
+            queryStartDate = subDays(queryEndDate, 30);
+            formatPattern = "MMM dd"; // Month day format
+            groupByField = "day";
+            break;
+          case "6m":
+            queryStartDate = subDays(queryEndDate, 180);
+            formatPattern = "MMM yyyy"; // Month year format
+            groupByField = "month";
+            break;
+          default:
+            queryStartDate = subHours(queryEndDate, 24);
+            formatPattern = "HH:mm";
+            groupByField = "hour";
+        }
       }
 
-      const startTimestamp = Timestamp.fromDate(startDate);
-      const endTimestamp = Timestamp.fromDate(endDate);
+      const startTimestamp = Timestamp.fromDate(queryStartDate);
+      const endTimestamp = Timestamp.fromDate(queryEndDate);
       
       // Collect all measurements from all units
       const allMeasurements = [];
@@ -135,14 +187,26 @@ export const WaterUsageChart = ({ units = [] }: WaterUsageChartProps) => {
         if (!groupedData.has(formattedDate)) {
           groupedData.set(formattedDate, {
             name: formattedDate,
-            value: 0
+            total: 0,
+            hourlyRate: 0,
+            count: 0
           });
         }
         
         // Accumulate volume for this time period
         const entry = groupedData.get(formattedDate);
-        entry.value += measurement.volume;
+        entry.total += measurement.volume;
+        entry.count += 1;
       });
+      
+      // Calculate hourly rates
+      for (const [key, entry] of groupedData.entries()) {
+        if (entry.count > 0) {
+          // Simple average hourly rate calculation
+          entry.hourlyRate = Math.round(entry.total / entry.count);
+          entry.total = Math.round(entry.total); // Round total to whole number
+        }
+      }
       
       // Convert to array for chart and sort chronologically
       const sortedData = Array.from(groupedData.values()).sort((a, b) => {
@@ -151,7 +215,7 @@ export const WaterUsageChart = ({ units = [] }: WaterUsageChartProps) => {
       
       // Ensure we have data - use placeholder if empty
       if (sortedData.length === 0) {
-        return generatePlaceholderData(range);
+        return generatePlaceholderData(range, queryStartDate, queryEndDate);
       }
       
       return sortedData;
@@ -164,60 +228,91 @@ export const WaterUsageChart = ({ units = [] }: WaterUsageChartProps) => {
   };
 
   // Generate placeholder data when no measurements are available
-  const generatePlaceholderData = (range: TimeRange) => {
-    const endDate = new Date();
-    let dataPoints: any[] = [];
+  const generatePlaceholderData = (range: TimeRange, startDate?: Date, endDate?: Date) => {
+    const end = endDate || new Date();
+    const dataPoints: any[] = [];
     
     switch (range) {
-      case "24h":
+      case "24h": {
         // Generate hourly data for last 24 hours
-        for (let i = 0; i < 24; i++) {
-          const date = subHours(endDate, 24 - i);
+        const start = startDate || subHours(end, 24);
+        const hourCount = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60));
+        
+        for (let i = 0; i < hourCount; i++) {
+          const date = new Date(start.getTime() + i * 60 * 60 * 1000);
+          const totalVolume = Math.floor(Math.random() * 50) + 10;
           dataPoints.push({
             name: format(date, "HH:mm"),
-            value: Math.floor(Math.random() * 50) + 10
+            total: totalVolume,
+            hourlyRate: Math.round(totalVolume / 2)
           });
         }
         break;
-      case "7d":
+      }
+      case "7d": {
         // Generate daily data for last 7 days
-        for (let i = 0; i < 7; i++) {
-          const date = subDays(endDate, 7 - i);
+        const start = startDate || subDays(end, 7);
+        const dayCount = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
+        
+        for (let i = 0; i < dayCount; i++) {
+          const date = new Date(start.getTime() + i * 24 * 60 * 60 * 1000);
+          const totalVolume = Math.floor(Math.random() * 200) + 50;
           dataPoints.push({
             name: format(date, "MMM dd"),
-            value: Math.floor(Math.random() * 200) + 50
+            total: totalVolume,
+            hourlyRate: Math.round(totalVolume / 8)
           });
         }
         break;
-      case "30d":
+      }
+      case "30d": {
         // Generate data for last 30 days (showing 10 points)
-        for (let i = 0; i < 10; i++) {
-          const date = subDays(endDate, 30 - (i * 3));
+        const start = startDate || subDays(end, 30);
+        const dayCount = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
+        const stepSize = Math.max(1, Math.floor(dayCount / 10));
+        
+        for (let i = 0; i < dayCount; i += stepSize) {
+          const date = new Date(start.getTime() + i * 24 * 60 * 60 * 1000);
+          const totalVolume = Math.floor(Math.random() * 500) + 100;
           dataPoints.push({
             name: format(date, "MMM dd"),
-            value: Math.floor(Math.random() * 500) + 100
+            total: totalVolume,
+            hourlyRate: Math.round(totalVolume / 24)
           });
         }
         break;
-      case "6m":
+      }
+      case "6m": {
         // Generate monthly data for last 6 months
-        for (let i = 0; i < 6; i++) {
-          const date = subDays(endDate, 180 - (i * 30));
+        const start = startDate || subDays(end, 180);
+        const monthCount = 6;
+        
+        for (let i = 0; i < monthCount; i++) {
+          const date = new Date(start.getTime() + i * 30 * 24 * 60 * 60 * 1000);
+          const totalVolume = Math.floor(Math.random() * 2000) + 400;
           dataPoints.push({
             name: format(date, "MMM yyyy"),
-            value: Math.floor(Math.random() * 2000) + 400
+            total: totalVolume,
+            hourlyRate: Math.round(totalVolume / 30 / 24)
           });
         }
         break;
-      default:
+      }
+      default: {
         // Default 24h data
-        for (let i = 0; i < 24; i++) {
-          const date = subHours(endDate, 24 - i);
+        const start = startDate || subHours(end, 24);
+        const hourCount = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60));
+        
+        for (let i = 0; i < hourCount; i++) {
+          const date = new Date(start.getTime() + i * 60 * 60 * 1000);
+          const totalVolume = Math.floor(Math.random() * 50) + 10;
           dataPoints.push({
             name: format(date, "HH:mm"),
-            value: Math.floor(Math.random() * 50) + 10
+            total: totalVolume,
+            hourlyRate: Math.round(totalVolume / 2)
           });
         }
+      }
     }
     
     return dataPoints;
@@ -226,12 +321,35 @@ export const WaterUsageChart = ({ units = [] }: WaterUsageChartProps) => {
   // Update chart data when time range or units change
   useEffect(() => {
     const updateChartData = async () => {
-      const data = await fetchMeasurementsForTimeRange(timeRange);
-      setChartData(data);
+      if (useCustomDate && startDate && endDate) {
+        const data = await fetchMeasurementsForTimeRange(timeRange, startDate, endDate);
+        setChartData(data);
+      } else {
+        const data = await fetchMeasurementsForTimeRange(timeRange);
+        setChartData(data);
+        // Reset custom dates when switching to predefined time ranges
+        if (useCustomDate) {
+          setUseCustomDate(false);
+        }
+      }
     };
     
     updateChartData();
-  }, [timeRange, units]);
+  }, [timeRange, units, useCustomDate, startDate, endDate]);
+
+  // Apply custom date range
+  const applyCustomDateRange = () => {
+    if (startDate && endDate) {
+      setUseCustomDate(true);
+    }
+  };
+
+  // Reset to predefined ranges
+  const resetToTimeRange = () => {
+    setUseCustomDate(false);
+    setStartDate(null);
+    setEndDate(null);
+  };
 
   // Get appropriate time range label
   const getTimeRangeLabel = (range: TimeRange) => {
@@ -244,27 +362,74 @@ export const WaterUsageChart = ({ units = [] }: WaterUsageChartProps) => {
     }
   };
 
+  // Get chart title based on current selection
+  const getChartTitle = () => {
+    if (useCustomDate && startDate && endDate) {
+      return `${t("dashboard.usage.title")} (${format(startDate, "MMM dd")} - ${format(endDate, "MMM dd")})`;
+    }
+    return t("dashboard.usage.title");
+  };
+
   return (
     <Card className="p-6 glass lg:col-span-2">
-      <div className="flex justify-between items-center mb-4">
-        <h2 className="text-lg font-semibold">{t("dashboard.usage.title")}</h2>
-        <Select
-          value={timeRange}
-          onValueChange={(value: TimeRange) => setTimeRange(value)}
-        >
-          <SelectTrigger className="w-[180px] bg-spotify-darker border-spotify-accent">
-            <SelectValue placeholder={t("chart.select.timerange")} />
-          </SelectTrigger>
-          <SelectContent className="bg-spotify-darker border-spotify-accent">
-            <SelectItem value="24h">{t("chart.24hours")}</SelectItem>
-            <SelectItem value="7d">{t("chart.7days")}</SelectItem>
-            <SelectItem value="30d">{t("chart.30days")}</SelectItem>
-            <SelectItem value="6m">{t("chart.6months")}</SelectItem>
-          </SelectContent>
-        </Select>
+      <div className="flex flex-col space-y-4">
+        <div className="flex justify-between items-center">
+          <h2 className="text-lg font-semibold">{getChartTitle()}</h2>
+          
+          <div className="flex items-center space-x-2">
+            {useCustomDate ? (
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={resetToTimeRange}
+                className="bg-spotify-darker border-spotify-accent text-white hover:bg-spotify-accent"
+              >
+                <RefreshCw className="h-4 w-4 mr-2" />
+                {t("chart.reset")}
+              </Button>
+            ) : (
+              <Select
+                value={timeRange}
+                onValueChange={(value: TimeRange) => setTimeRange(value)}
+              >
+                <SelectTrigger className="w-[180px] bg-spotify-darker border-spotify-accent">
+                  <SelectValue placeholder={t("chart.select.timerange")} />
+                </SelectTrigger>
+                <SelectContent className="bg-spotify-darker border-spotify-accent">
+                  <SelectItem value="24h">{t("chart.24hours")}</SelectItem>
+                  <SelectItem value="7d">{t("chart.7days")}</SelectItem>
+                  <SelectItem value="30d">{t("chart.30days")}</SelectItem>
+                  <SelectItem value="6m">{t("chart.6months")}</SelectItem>
+                </SelectContent>
+              </Select>
+            )}
+          </div>
+        </div>
+        
+        <div className="flex flex-wrap gap-4 items-end">
+          <div className="grid grid-cols-2 gap-4 flex-grow">
+            <FormDatePicker
+              value={startDate}
+              onChange={setStartDate}
+              label={t("chart.startDate") || "Start Date"}
+            />
+            <FormDatePicker
+              value={endDate}
+              onChange={setEndDate}
+              label={t("chart.endDate") || "End Date"}
+            />
+          </div>
+          <Button 
+            onClick={applyCustomDateRange} 
+            disabled={!startDate || !endDate || (startDate && endDate && isAfter(startDate, endDate))}
+            className="bg-mywater-blue hover:bg-mywater-med-blue text-white"
+          >
+            {t("chart.apply") || "Apply Range"}
+          </Button>
+        </div>
       </div>
       
-      <div className="h-[300px]">
+      <div className="h-[300px] mt-4">
         {isLoading ? (
           <div className="h-full flex items-center justify-center">
             <p>{t("chart.loading")}</p>
@@ -272,16 +437,20 @@ export const WaterUsageChart = ({ units = [] }: WaterUsageChartProps) => {
         ) : (
           <ChartContainer 
             config={{
-              waterUsage: { 
-                label: getTimeRangeLabel(timeRange), 
+              total: { 
+                label: t("chart.totalVolume") || "Total Volume", 
                 color: "#39afcd" 
+              },
+              hourlyRate: {
+                label: t("chart.hourlyRate") || "Rate",
+                color: "#2c53a0"
               }
             }}
             className="h-full"
           >
-            <AreaChart data={chartData}>
+            <ComposedChart data={chartData}>
               <defs>
-                <linearGradient id="colorValue" x1="0" y1="0" x2="0" y2="1">
+                <linearGradient id="colorTotal" x1="0" y1="0" x2="0" y2="1">
                   <stop offset="5%" stopColor="#39afcd" stopOpacity={0.3} />
                   <stop offset="95%" stopColor="#39afcd" stopOpacity={0} />
                 </linearGradient>
@@ -295,26 +464,33 @@ export const WaterUsageChart = ({ units = [] }: WaterUsageChartProps) => {
               />
               <YAxis 
                 stroke="#666"
-                tickFormatter={(value) => `${value} m³`}
+                tickFormatter={(value) => `${Math.round(value)} m³`}
               />
               <Tooltip
                 content={({ active, payload }) => (
                   <ChartTooltipContent
                     active={active}
                     payload={payload}
-                    labelFormatter={() => `${getTimeRangeLabel(timeRange)}`}
+                    labelFormatter={(value) => `${value}`}
                   />
                 )}
               />
+              <Legend />
+              <Bar 
+                dataKey="hourlyRate" 
+                name="hourlyRate"
+                fill="#2c53a0" 
+                radius={[4, 4, 0, 0]}
+              />
               <Area
                 type="monotone"
-                dataKey="value"
-                name="waterUsage"
+                dataKey="total"
+                name="total"
                 stroke="#39afcd"
                 fillOpacity={1}
-                fill="url(#colorValue)"
+                fill="url(#colorTotal)"
               />
-            </AreaChart>
+            </ComposedChart>
           </ChartContainer>
         )}
       </div>
