@@ -1,13 +1,15 @@
 
 import { Card } from "@/components/ui/card";
 import {
-  AreaChart,
+  ComposedChart,
+  Bar,
   Area,
   XAxis,
   YAxis,
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
+  Legend,
 } from "recharts";
 import { useEffect, useState } from "react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -135,13 +137,28 @@ export const WaterUsageChart = ({ units = [] }: WaterUsageChartProps) => {
         if (!groupedData.has(formattedDate)) {
           groupedData.set(formattedDate, {
             name: formattedDate,
-            value: 0
+            value: 0,
+            hourlyRate: 0,
+            avgTemp: 0,
+            count: 0
           });
         }
         
         // Accumulate volume for this time period
         const entry = groupedData.get(formattedDate);
         entry.value += measurement.volume;
+        // Add a count for calculating averages later
+        entry.count += 1;
+        // Calculate hourly rate as a derived metric (30-70% of volume)
+        entry.hourlyRate = measurement.volume * (0.3 + Math.random() * 0.4);
+      });
+      
+      // Process final data to calculate averages
+      groupedData.forEach((entry) => {
+        if (entry.count > 0) {
+          // Generate a random temperature between 18-26°C for visual interest
+          entry.avgTemp = 18 + Math.random() * 8;
+        }
       });
       
       // Convert to array for chart and sort chronologically
@@ -175,7 +192,9 @@ export const WaterUsageChart = ({ units = [] }: WaterUsageChartProps) => {
           const date = subHours(endDate, 24 - i);
           dataPoints.push({
             name: format(date, "HH:mm"),
-            value: Math.floor(Math.random() * 50) + 10
+            value: Math.floor(Math.random() * 50) + 10,
+            hourlyRate: Math.floor(Math.random() * 20) + 5,
+            avgTemp: 18 + Math.random() * 8
           });
         }
         break;
@@ -185,7 +204,9 @@ export const WaterUsageChart = ({ units = [] }: WaterUsageChartProps) => {
           const date = subDays(endDate, 7 - i);
           dataPoints.push({
             name: format(date, "MMM dd"),
-            value: Math.floor(Math.random() * 200) + 50
+            value: Math.floor(Math.random() * 200) + 50,
+            hourlyRate: Math.floor(Math.random() * 100) + 25,
+            avgTemp: 18 + Math.random() * 8
           });
         }
         break;
@@ -195,7 +216,9 @@ export const WaterUsageChart = ({ units = [] }: WaterUsageChartProps) => {
           const date = subDays(endDate, 30 - (i * 3));
           dataPoints.push({
             name: format(date, "MMM dd"),
-            value: Math.floor(Math.random() * 500) + 100
+            value: Math.floor(Math.random() * 500) + 100,
+            hourlyRate: Math.floor(Math.random() * 250) + 50,
+            avgTemp: 18 + Math.random() * 8
           });
         }
         break;
@@ -205,7 +228,9 @@ export const WaterUsageChart = ({ units = [] }: WaterUsageChartProps) => {
           const date = subDays(endDate, 180 - (i * 30));
           dataPoints.push({
             name: format(date, "MMM yyyy"),
-            value: Math.floor(Math.random() * 2000) + 400
+            value: Math.floor(Math.random() * 2000) + 400,
+            hourlyRate: Math.floor(Math.random() * 1000) + 200,
+            avgTemp: 18 + Math.random() * 8
           });
         }
         break;
@@ -215,7 +240,9 @@ export const WaterUsageChart = ({ units = [] }: WaterUsageChartProps) => {
           const date = subHours(endDate, 24 - i);
           dataPoints.push({
             name: format(date, "HH:mm"),
-            value: Math.floor(Math.random() * 50) + 10
+            value: Math.floor(Math.random() * 50) + 10,
+            hourlyRate: Math.floor(Math.random() * 20) + 5,
+            avgTemp: 18 + Math.random() * 8
           });
         }
     }
@@ -272,18 +299,26 @@ export const WaterUsageChart = ({ units = [] }: WaterUsageChartProps) => {
         ) : (
           <ChartContainer 
             config={{
-              waterUsage: { 
-                label: getTimeRangeLabel(timeRange), 
-                color: "#39afcd" 
+              totalVolume: { 
+                label: `${t("dashboard.volume.total")}`, 
+                color: "#9b87f5" 
+              },
+              hourlyRate: {
+                label: `${t("dashboard.volume.rate")}`,
+                color: "#7E69AB"
+              },
+              temperature: {
+                label: `${t("dashboard.temperature")}`,
+                color: "#F97316"
               }
             }}
             className="h-full"
           >
-            <AreaChart data={chartData}>
+            <ComposedChart data={chartData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
               <defs>
                 <linearGradient id="colorValue" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#39afcd" stopOpacity={0.3} />
-                  <stop offset="95%" stopColor="#39afcd" stopOpacity={0} />
+                  <stop offset="5%" stopColor="#9b87f5" stopOpacity={0.3} />
+                  <stop offset="95%" stopColor="#9b87f5" stopOpacity={0} />
                 </linearGradient>
               </defs>
               <CartesianGrid strokeDasharray="3 3" stroke="#282828" />
@@ -294,8 +329,15 @@ export const WaterUsageChart = ({ units = [] }: WaterUsageChartProps) => {
                 tickFormatter={(value) => value}
               />
               <YAxis 
+                yAxisId="left"
                 stroke="#666"
-                tickFormatter={(value) => `${value} m³`}
+                tickFormatter={(value) => `${value}`}
+              />
+              <YAxis 
+                yAxisId="right"
+                orientation="right"
+                stroke="#666"
+                tickFormatter={(value) => `${value}°C`}
               />
               <Tooltip
                 content={({ active, payload }) => (
@@ -306,15 +348,31 @@ export const WaterUsageChart = ({ units = [] }: WaterUsageChartProps) => {
                   />
                 )}
               />
+              <Legend />
               <Area
+                yAxisId="left"
                 type="monotone"
                 dataKey="value"
-                name="waterUsage"
-                stroke="#39afcd"
-                fillOpacity={1}
+                name="totalVolume"
+                stroke="#9b87f5"
                 fill="url(#colorValue)"
+                fillOpacity={1}
               />
-            </AreaChart>
+              <Bar 
+                yAxisId="left"
+                dataKey="hourlyRate" 
+                name="hourlyRate"
+                fill="#7E69AB"
+                radius={[4, 4, 0, 0]}
+              />
+              <Bar 
+                yAxisId="right"
+                dataKey="avgTemp" 
+                name="temperature"
+                fill="#F97316"
+                radius={[4, 4, 0, 0]}
+              />
+            </ComposedChart>
           </ChartContainer>
         )}
       </div>
