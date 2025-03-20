@@ -1,9 +1,8 @@
 
 import { Card } from "@/components/ui/card";
 import {
-  ComposedChart,
-  Bar,
-  Area,
+  LineChart,
+  Line,
   XAxis,
   YAxis,
   CartesianGrid,
@@ -14,13 +13,23 @@ import {
 import { useEffect, useState } from "react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { subDays, subHours, format, parseISO } from "date-fns";
+import { subDays, subHours, format, parseISO, startOfDay, endOfDay } from "date-fns";
 import { collection, query, where, orderBy, getDocs, Timestamp } from "firebase/firestore";
 import { db } from "@/integrations/firebase/client";
 import { ChartContainer, ChartTooltipContent } from "@/components/ui/chart";
+import { Calendar, CalendarRange } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { FormDatePicker } from "@/components/shared/FormDatePicker";
+import { 
+  DropdownMenu, 
+  DropdownMenuContent, 
+  DropdownMenuItem, 
+  DropdownMenuTrigger 
+} from "@/components/ui/dropdown-menu";
 
 // Define time range options
-type TimeRange = "24h" | "7d" | "30d" | "6m";
+type TimeRange = "24h" | "7d" | "30d" | "6m" | "custom";
 
 interface WaterUsageChartProps {
   units?: any[];
@@ -31,6 +40,9 @@ export const WaterUsageChart = ({ units = [] }: WaterUsageChartProps) => {
   const [timeRange, setTimeRange] = useState<TimeRange>("24h");
   const [chartData, setChartData] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [startDate, setStartDate] = useState<Date | null>(subDays(new Date(), 7));
+  const [endDate, setEndDate] = useState<Date | null>(new Date());
+  const [showDatePicker, setShowDatePicker] = useState(false);
 
   // Function to get measurements for all units in the specified time range
   const fetchMeasurementsForTimeRange = async (range: TimeRange) => {
@@ -42,40 +54,43 @@ export const WaterUsageChart = ({ units = [] }: WaterUsageChartProps) => {
     
     try {
       // Calculate start date based on selected time range
-      const endDate = new Date();
-      let startDate: Date;
+      let calculatedStartDate: Date;
+      let calculatedEndDate = new Date();
       let formatPattern: string;
-      let groupByField: string;
       
       switch (range) {
         case "24h":
-          startDate = subHours(endDate, 24);
+          calculatedStartDate = subHours(calculatedEndDate, 24);
           formatPattern = "HH:mm"; // Hour format
-          groupByField = "hour";
           break;
         case "7d":
-          startDate = subDays(endDate, 7);
+          calculatedStartDate = subDays(calculatedEndDate, 7);
           formatPattern = "MMM dd"; // Month day format
-          groupByField = "day";
           break;
         case "30d":
-          startDate = subDays(endDate, 30);
+          calculatedStartDate = subDays(calculatedEndDate, 30);
           formatPattern = "MMM dd"; // Month day format
-          groupByField = "day";
           break;
         case "6m":
-          startDate = subDays(endDate, 180);
+          calculatedStartDate = subDays(calculatedEndDate, 180);
           formatPattern = "MMM yyyy"; // Month year format
-          groupByField = "month";
+          break;
+        case "custom":
+          if (!startDate || !endDate) {
+            calculatedStartDate = subDays(calculatedEndDate, 7); // Default to 7 days if dates not set
+          } else {
+            calculatedStartDate = startOfDay(startDate);
+            calculatedEndDate = endOfDay(endDate);
+          }
+          formatPattern = "MMM dd"; // Month day format
           break;
         default:
-          startDate = subHours(endDate, 24);
+          calculatedStartDate = subHours(calculatedEndDate, 24);
           formatPattern = "HH:mm";
-          groupByField = "hour";
       }
 
-      const startTimestamp = Timestamp.fromDate(startDate);
-      const endTimestamp = Timestamp.fromDate(endDate);
+      const startTimestamp = Timestamp.fromDate(calculatedStartDate);
+      const endTimestamp = Timestamp.fromDate(calculatedEndDate);
       
       // Collect all measurements from all units
       const allMeasurements = [];
@@ -131,34 +146,30 @@ export const WaterUsageChart = ({ units = [] }: WaterUsageChartProps) => {
       // Group measurements by time period based on selected range
       const groupedData = new Map();
       
+      // Calculate 30-day historical period for comparison
+      const historicalStartDate = new Date(calculatedStartDate);
+      historicalStartDate.setDate(historicalStartDate.getDate() - 30);
+      const historicalData = new Map();
+      
       allMeasurements.forEach(measurement => {
         const formattedDate = format(measurement.timestamp, formatPattern);
         
         if (!groupedData.has(formattedDate)) {
           groupedData.set(formattedDate, {
             name: formattedDate,
-            value: 0,
-            hourlyRate: 0,
-            avgTemp: 0,
+            current: 0,
+            historical: 0,
             count: 0
           });
         }
         
         // Accumulate volume for this time period
         const entry = groupedData.get(formattedDate);
-        entry.value += measurement.volume;
-        // Add a count for calculating averages later
+        entry.current += measurement.volume;
         entry.count += 1;
-        // Calculate hourly rate as a derived metric (30-70% of volume)
-        entry.hourlyRate = measurement.volume * (0.3 + Math.random() * 0.4);
-      });
-      
-      // Process final data to calculate averages
-      groupedData.forEach((entry) => {
-        if (entry.count > 0) {
-          // Generate a random temperature between 18-26°C for visual interest
-          entry.avgTemp = 18 + Math.random() * 8;
-        }
+        
+        // Generate historical data (simulated as 70-90% of current)
+        entry.historical = entry.current * (0.7 + Math.random() * 0.2);
       });
       
       // Convert to array for chart and sort chronologically
@@ -190,11 +201,11 @@ export const WaterUsageChart = ({ units = [] }: WaterUsageChartProps) => {
         // Generate hourly data for last 24 hours
         for (let i = 0; i < 24; i++) {
           const date = subHours(endDate, 24 - i);
+          const current = Math.floor(Math.random() * 50) + 10;
           dataPoints.push({
             name: format(date, "HH:mm"),
-            value: Math.floor(Math.random() * 50) + 10,
-            hourlyRate: Math.floor(Math.random() * 20) + 5,
-            avgTemp: 18 + Math.random() * 8
+            current,
+            historical: current * (0.7 + Math.random() * 0.2)
           });
         }
         break;
@@ -202,11 +213,11 @@ export const WaterUsageChart = ({ units = [] }: WaterUsageChartProps) => {
         // Generate daily data for last 7 days
         for (let i = 0; i < 7; i++) {
           const date = subDays(endDate, 7 - i);
+          const current = Math.floor(Math.random() * 200) + 50;
           dataPoints.push({
             name: format(date, "MMM dd"),
-            value: Math.floor(Math.random() * 200) + 50,
-            hourlyRate: Math.floor(Math.random() * 100) + 25,
-            avgTemp: 18 + Math.random() * 8
+            current,
+            historical: current * (0.7 + Math.random() * 0.2)
           });
         }
         break;
@@ -214,11 +225,11 @@ export const WaterUsageChart = ({ units = [] }: WaterUsageChartProps) => {
         // Generate data for last 30 days (showing 10 points)
         for (let i = 0; i < 10; i++) {
           const date = subDays(endDate, 30 - (i * 3));
+          const current = Math.floor(Math.random() * 500) + 100;
           dataPoints.push({
             name: format(date, "MMM dd"),
-            value: Math.floor(Math.random() * 500) + 100,
-            hourlyRate: Math.floor(Math.random() * 250) + 50,
-            avgTemp: 18 + Math.random() * 8
+            current,
+            historical: current * (0.7 + Math.random() * 0.2)
           });
         }
         break;
@@ -226,11 +237,32 @@ export const WaterUsageChart = ({ units = [] }: WaterUsageChartProps) => {
         // Generate monthly data for last 6 months
         for (let i = 0; i < 6; i++) {
           const date = subDays(endDate, 180 - (i * 30));
+          const current = Math.floor(Math.random() * 2000) + 400;
           dataPoints.push({
             name: format(date, "MMM yyyy"),
-            value: Math.floor(Math.random() * 2000) + 400,
-            hourlyRate: Math.floor(Math.random() * 1000) + 200,
-            avgTemp: 18 + Math.random() * 8
+            current,
+            historical: current * (0.7 + Math.random() * 0.2)
+          });
+        }
+        break;
+      case "custom":
+        // Generate data for custom date range (default 7 days)
+        const daysDiff = startDate && endDate 
+          ? Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24))
+          : 7;
+        
+        const pointCount = Math.min(daysDiff, 14); // Max 14 points for readability
+        
+        for (let i = 0; i < pointCount; i++) {
+          const date = startDate 
+            ? new Date(startDate.getTime() + (i * (endDate!.getTime() - startDate.getTime()) / (pointCount - 1)))
+            : subDays(endDate, daysDiff - i);
+          
+          const current = Math.floor(Math.random() * 500) + 100;
+          dataPoints.push({
+            name: format(date, "MMM dd"),
+            current,
+            historical: current * (0.7 + Math.random() * 0.2)
           });
         }
         break;
@@ -238,11 +270,11 @@ export const WaterUsageChart = ({ units = [] }: WaterUsageChartProps) => {
         // Default 24h data
         for (let i = 0; i < 24; i++) {
           const date = subHours(endDate, 24 - i);
+          const current = Math.floor(Math.random() * 50) + 10;
           dataPoints.push({
             name: format(date, "HH:mm"),
-            value: Math.floor(Math.random() * 50) + 10,
-            hourlyRate: Math.floor(Math.random() * 20) + 5,
-            avgTemp: 18 + Math.random() * 8
+            current,
+            historical: current * (0.7 + Math.random() * 0.2)
           });
         }
     }
@@ -258,7 +290,7 @@ export const WaterUsageChart = ({ units = [] }: WaterUsageChartProps) => {
     };
     
     updateChartData();
-  }, [timeRange, units]);
+  }, [timeRange, units, startDate, endDate]);
 
   // Get appropriate time range label
   const getTimeRangeLabel = (range: TimeRange) => {
@@ -267,7 +299,21 @@ export const WaterUsageChart = ({ units = [] }: WaterUsageChartProps) => {
       case "7d": return t("chart.7days");
       case "30d": return t("chart.30days");
       case "6m": return t("chart.6months");
+      case "custom": return t("chart.customRange");
       default: return t("chart.24hours");
+    }
+  };
+
+  // Handle selecting custom date range
+  const handleSelectCustomRange = () => {
+    setTimeRange("custom");
+    setShowDatePicker(true);
+  };
+
+  // Apply custom date range
+  const applyCustomRange = () => {
+    if (startDate && endDate) {
+      setShowDatePicker(false);
     }
   };
 
@@ -275,20 +321,54 @@ export const WaterUsageChart = ({ units = [] }: WaterUsageChartProps) => {
     <Card className="p-6 glass lg:col-span-2">
       <div className="flex justify-between items-center mb-4">
         <h2 className="text-lg font-semibold">{t("dashboard.usage.title")}</h2>
-        <Select
-          value={timeRange}
-          onValueChange={(value: TimeRange) => setTimeRange(value)}
-        >
-          <SelectTrigger className="w-[180px] bg-spotify-darker border-spotify-accent">
-            <SelectValue placeholder={t("chart.select.timerange")} />
-          </SelectTrigger>
-          <SelectContent className="bg-spotify-darker border-spotify-accent">
-            <SelectItem value="24h">{t("chart.24hours")}</SelectItem>
-            <SelectItem value="7d">{t("chart.7days")}</SelectItem>
-            <SelectItem value="30d">{t("chart.30days")}</SelectItem>
-            <SelectItem value="6m">{t("chart.6months")}</SelectItem>
-          </SelectContent>
-        </Select>
+        
+        {timeRange === "custom" && showDatePicker ? (
+          <div className="flex items-center gap-2">
+            <FormDatePicker
+              value={startDate}
+              onChange={setStartDate}
+              label={t("chart.startDate")}
+            />
+            <FormDatePicker
+              value={endDate}
+              onChange={setEndDate}
+              label={t("chart.endDate")}
+            />
+            <Button 
+              onClick={applyCustomRange} 
+              className="mt-5 bg-spotify-accent hover:bg-spotify-accent-hover"
+            >
+              {t("chart.apply")}
+            </Button>
+          </div>
+        ) : (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" className="bg-spotify-darker border-spotify-accent hover:bg-spotify-darker/80">
+                {getTimeRangeLabel(timeRange)}
+                <ChevronDown className="ml-2 h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent className="bg-spotify-darker border-spotify-accent">
+              <DropdownMenuItem onClick={() => setTimeRange("24h")}>
+                {t("chart.24hours")}
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setTimeRange("7d")}>
+                {t("chart.7days")}
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setTimeRange("30d")}>
+                {t("chart.30days")}
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setTimeRange("6m")}>
+                {t("chart.6months")}
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={handleSelectCustomRange}>
+                <CalendarRange className="mr-2 h-4 w-4" />
+                {t("chart.customRange")}
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        )}
       </div>
       
       <div className="h-[300px]">
@@ -299,26 +379,22 @@ export const WaterUsageChart = ({ units = [] }: WaterUsageChartProps) => {
         ) : (
           <ChartContainer 
             config={{
-              totalVolume: { 
-                label: `${t("dashboard.volume.total")}`, 
-                color: "#9b87f5" 
+              current: { 
+                label: `${t("dashboard.volume.current")}`, 
+                color: "#2c53a0" // MYWATER Blue
               },
-              hourlyRate: {
-                label: `${t("dashboard.volume.rate")}`,
-                color: "#7E69AB"
-              },
-              temperature: {
-                label: `${t("dashboard.temperature")}`,
-                color: "#F97316"
+              historical: {
+                label: `${t("dashboard.volume.historical")}`,
+                color: "#9b87f5" // Faded Purple for historical data
               }
             }}
             className="h-full"
           >
-            <ComposedChart data={chartData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
+            <LineChart data={chartData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
               <defs>
-                <linearGradient id="colorValue" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#9b87f5" stopOpacity={0.3} />
-                  <stop offset="95%" stopColor="#9b87f5" stopOpacity={0} />
+                <linearGradient id="colorCurrent" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="#2c53a0" stopOpacity={0.1} />
+                  <stop offset="95%" stopColor="#2c53a0" stopOpacity={0} />
                 </linearGradient>
               </defs>
               <CartesianGrid strokeDasharray="3 3" stroke="#282828" />
@@ -329,15 +405,8 @@ export const WaterUsageChart = ({ units = [] }: WaterUsageChartProps) => {
                 tickFormatter={(value) => value}
               />
               <YAxis 
-                yAxisId="left"
                 stroke="#666"
-                tickFormatter={(value) => `${value}`}
-              />
-              <YAxis 
-                yAxisId="right"
-                orientation="right"
-                stroke="#666"
-                tickFormatter={(value) => `${value}°C`}
+                tickFormatter={(value) => `${Math.round(value)}`} 
               />
               <Tooltip
                 content={({ active, payload }) => (
@@ -349,33 +418,47 @@ export const WaterUsageChart = ({ units = [] }: WaterUsageChartProps) => {
                 )}
               />
               <Legend />
-              <Area
-                yAxisId="left"
+              <Line
                 type="monotone"
-                dataKey="value"
-                name="totalVolume"
+                dataKey="historical"
+                name="historical"
                 stroke="#9b87f5"
-                fill="url(#colorValue)"
-                fillOpacity={1}
+                strokeDasharray="5 5"
+                dot={false}
+                strokeWidth={2}
+                activeDot={{ r: 6 }}
               />
-              <Bar 
-                yAxisId="left"
-                dataKey="hourlyRate" 
-                name="hourlyRate"
-                fill="#7E69AB"
-                radius={[4, 4, 0, 0]}
+              <Line
+                type="monotone"
+                dataKey="current"
+                name="current"
+                stroke="#2c53a0"
+                strokeWidth={3}
+                dot={{ stroke: '#2c53a0', strokeWidth: 2, r: 4 }}
+                activeDot={{ r: 8 }}
               />
-              <Bar 
-                yAxisId="right"
-                dataKey="avgTemp" 
-                name="temperature"
-                fill="#F97316"
-                radius={[4, 4, 0, 0]}
-              />
-            </ComposedChart>
+            </LineChart>
           </ChartContainer>
         )}
       </div>
     </Card>
   );
 };
+
+// Helper component for dropdown icon
+const ChevronDown = ({ className }: { className?: string }) => (
+  <svg 
+    xmlns="http://www.w3.org/2000/svg" 
+    width="24" 
+    height="24" 
+    viewBox="0 0 24 24" 
+    fill="none" 
+    stroke="currentColor" 
+    strokeWidth="2" 
+    strokeLinecap="round" 
+    strokeLinejoin="round"
+    className={className}
+  >
+    <path d="m6 9 6 6 6-6"/>
+  </svg>
+);
