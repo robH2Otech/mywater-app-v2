@@ -22,7 +22,7 @@ export const UnitDetailsCard = ({ unit }: UnitDetailsCardProps) => {
     }
   };
 
-  // Format volume with thousands separators and no decimal places
+  // Format volume with whole numbers only
   const formatVolume = (volume: number | string | undefined | null) => {
     if (volume === undefined || volume === null) return "0";
     const numericVolume = typeof volume === 'string' ? parseFloat(volume) : volume;

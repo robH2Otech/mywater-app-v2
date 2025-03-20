@@ -20,9 +20,9 @@ export function ReportSummaryCard({
 }: ReportSummaryCardProps) {
   const isMobile = useIsMobile();
 
-  // Format numbers with specific decimal places
-  const formatNumber = (value: number, decimals: number = 2) => {
-    return value.toFixed(decimals);
+  // Format numbers with whole numbers only
+  const formatNumber = (value: number) => {
+    return Math.round(value).toString();
   };
 
   return (
@@ -31,15 +31,15 @@ export function ReportSummaryCard({
       <div className={`grid ${isMobile ? "grid-cols-1 gap-3" : "grid-cols-2 gap-4"}`}>
         <div>
           <p className="text-gray-400 text-sm">Total Volume</p>
-          <p className="text-xl font-semibold">{formatNumber(totalVolume, 2)} m³</p>
+          <p className="text-xl font-semibold">{formatNumber(totalVolume)} m³</p>
         </div>
         <div>
           <p className="text-gray-400 text-sm">Avg. Temperature</p>
-          <p className="text-xl font-semibold">{formatNumber(avgTemperature, 1)} °C</p>
+          <p className="text-xl font-semibold">{formatNumber(avgTemperature)} °C</p>
         </div>
         <div>
           <p className="text-gray-400 text-sm">Total UVC Hours</p>
-          <p className="text-xl font-semibold">{formatNumber(totalUvcHours, 1)} hours</p>
+          <p className="text-xl font-semibold">{formatNumber(totalUvcHours)} hours</p>
         </div>
         <div>
           <p className="text-gray-400 text-sm">Date Range</p>

@@ -1,5 +1,5 @@
 
-import { MAX_UVC_HOURS } from "@/utils/uvcStatusUtils";
+import { MAX_UVC_HOURS, WARNING_THRESHOLD, URGENT_THRESHOLD } from "@/utils/uvcStatusUtils";
 
 interface UVCProgressBarProps {
   hours: string | number;
@@ -13,9 +13,19 @@ export function UVCProgressBar({ hours }: UVCProgressBarProps) {
 
   const getPercentageClass = () => {
     const percentage = calculatePercentage();
-    if (percentage > 90) return "text-red-500";
-    if (percentage > 80) return "text-yellow-500";
+    const numericHours = typeof hours === 'string' ? parseFloat(hours) : hours;
+    
+    if (numericHours >= URGENT_THRESHOLD) return "text-red-500";
+    if (numericHours >= WARNING_THRESHOLD) return "text-yellow-500";
     return "text-mywater-blue";
+  };
+
+  const getProgressBarColor = () => {
+    const numericHours = typeof hours === 'string' ? parseFloat(hours) : hours;
+    
+    if (numericHours >= URGENT_THRESHOLD) return 'bg-red-500';
+    if (numericHours >= WARNING_THRESHOLD) return 'bg-yellow-500';
+    return 'bg-mywater-blue';
   };
 
   return (
@@ -26,11 +36,7 @@ export function UVCProgressBar({ hours }: UVCProgressBarProps) {
       </div>
       <div className="w-full bg-gray-700 rounded-full h-2.5 mt-2">
         <div 
-          className={`h-2.5 rounded-full ${
-            calculatePercentage() > 90 ? 'bg-red-500' : 
-            calculatePercentage() > 80 ? 'bg-yellow-500' : 
-            'bg-mywater-blue'
-          }`}
+          className={`h-2.5 rounded-full ${getProgressBarColor()}`}
           style={{ width: `${calculatePercentage()}%` }}
         ></div>
       </div>

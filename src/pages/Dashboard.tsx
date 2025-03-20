@@ -131,6 +131,6 @@ function calculateTotalVolume(units: UnitData[]): string {
     return sum + volume;
   }, 0);
   
-  // Format with thousands separators and 1 decimal place
-  return total.toLocaleString(undefined, { maximumFractionDigits: 1 });
+  // Format with whole numbers only
+  return Math.round(total).toLocaleString();
 }
