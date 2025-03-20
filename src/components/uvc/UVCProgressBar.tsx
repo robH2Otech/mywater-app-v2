@@ -35,7 +35,7 @@ export function UVCProgressBar({ hours }: UVCProgressBarProps) {
         ></div>
       </div>
       <div className="text-sm text-gray-400 mt-2">
-        {typeof hours === 'string' ? hours : hours.toString()} / {MAX_UVC_HOURS.toLocaleString()} hours
+        {Math.round(typeof hours === 'string' ? parseFloat(hours) : hours)} / {Math.round(MAX_UVC_HOURS)} hours
       </div>
     </div>
   );

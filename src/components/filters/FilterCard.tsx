@@ -1,3 +1,4 @@
+
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Check, AlertTriangle, AlertOctagon, MapPin, Edit, Calendar } from "lucide-react";
@@ -39,7 +40,7 @@ export function FilterCard({ unit, onEditClick, onClick }: FilterCardProps) {
     try {
       const numVolume = typeof volume === 'string' ? parseFloat(volume) : volume;
       if (isNaN(numVolume)) return 'N/A';
-      return numVolume.toLocaleString(undefined, { maximumFractionDigits: 2 });
+      return Math.round(numVolume).toLocaleString();
     } catch (err) {
       console.error("Error formatting volume:", volume, err);
       return 'N/A';
@@ -73,7 +74,11 @@ export function FilterCard({ unit, onEditClick, onClick }: FilterCardProps) {
             </div>
             <div className="flex items-center gap-2">
               {getStatusIcon(unit.status)}
-              <span className="text-sm font-medium">
+              <span className={`text-sm font-medium ${
+                unit.status === 'urgent' ? 'text-red-500' : 
+                unit.status === 'warning' ? 'text-yellow-500' : 
+                'text-mywater-blue'
+              }`}>
                 {getStatusText(unit.status)}
               </span>
             </div>

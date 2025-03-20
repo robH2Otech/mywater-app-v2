@@ -16,9 +16,9 @@ export function UVCCard({ unit, onEditClick, onCardClick }: UVCCardProps) {
   const lifePercentage = calculateUVCLifePercentage(uvcHours);
   const hoursRemaining = MAX_UVC_HOURS - uvcHours;
 
-  // Format UVC hours with 1 decimal place
+  // Format UVC hours as whole numbers
   const formatUVCHours = (hours: number) => {
-    return hours.toFixed(1);
+    return Math.round(hours);
   };
 
   return (
@@ -70,7 +70,7 @@ export function UVCCard({ unit, onEditClick, onCardClick }: UVCCardProps) {
                 uvcHours >= WARNING_THRESHOLD ? 'text-yellow-400' :
                 'text-mywater-blue'
               }`} />
-              UVC Hours: {formatUVCHours(uvcHours)} / {MAX_UVC_HOURS.toLocaleString()}
+              UVC Hours: {formatUVCHours(uvcHours)} / {formatUVCHours(MAX_UVC_HOURS)}
             </div>
             
             <div className="w-full bg-gray-700 rounded-full h-2.5">

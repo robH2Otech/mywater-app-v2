@@ -1,3 +1,4 @@
+
 import { Check, AlertTriangle, AlertOctagon, MapPin, Edit } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Card } from "@/components/ui/card";
@@ -77,7 +78,7 @@ export const UnitCard = ({
     try {
       const numVolume = typeof volume === 'string' ? parseFloat(volume) : volume;
       if (isNaN(numVolume)) return "N/A";
-      return numVolume.toLocaleString(undefined, { maximumFractionDigits: 2 });
+      return Math.round(numVolume).toLocaleString();
     } catch (err) {
       console.error("Error formatting volume:", volume, err);
       return "N/A";
@@ -108,7 +109,11 @@ export const UnitCard = ({
             </div>
             <div className="flex items-center gap-2">
               {getStatusIcon()}
-              <span className="text-sm font-medium capitalize text-gray-200">
+              <span className={`text-sm font-medium capitalize ${
+                status === 'urgent' ? 'text-red-400' : 
+                status === 'warning' ? 'text-yellow-400' : 
+                'text-mywater-blue'
+              }`}>
                 {getStatusText(status)}
               </span>
             </div>

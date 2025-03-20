@@ -57,11 +57,19 @@ export function UsersList({ users, onUserClick }: UsersListProps) {
                       {user.role}
                     </Badge>
                   </div>
-                  {user.status === 'active' ? (
-                    <CheckCircle2 className="h-5 w-5 text-mywater-blue" />
-                  ) : (
-                    <AlertCircle className="h-5 w-5 text-red-500" />
-                  )}
+                  <div className="flex items-center gap-2">
+                    {user.status === 'active' ? (
+                      <>
+                        <CheckCircle2 className="h-5 w-5 text-mywater-blue" />
+                        <span className="text-sm font-medium text-mywater-blue">Active</span>
+                      </>
+                    ) : (
+                      <>
+                        <AlertCircle className="h-5 w-5 text-red-500" />
+                        <span className="text-sm font-medium text-red-400">Inactive</span>
+                      </>
+                    )}
+                  </div>
                 </div>
                 
                 <div className="space-y-2 text-left">

@@ -21,6 +21,11 @@ export function ReportChart({ data, title, type, unit }: ReportChartProps) {
   // Format date for display
   const formattedData = data.map(item => ({
     ...item,
+    // Round numeric values to whole numbers
+    volume: Math.round(item.volume),
+    avgVolume: Math.round(item.avgVolume),
+    avgTemperature: Math.round(item.avgTemperature),
+    uvcHours: Math.round(item.uvcHours),
     date: new Date(item.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
   }));
   
@@ -37,7 +42,7 @@ export function ReportChart({ data, title, type, unit }: ReportChartProps) {
               <Tooltip 
                 contentStyle={{ backgroundColor: '#222', border: '1px solid #444' }} 
                 labelStyle={{ color: '#fff' }}
-                formatter={(value: number) => [`${value.toFixed(2)} ${unit || ''}`, type === 'volume' ? 'Volume' : '']}
+                formatter={(value: number) => [`${Math.round(value)} ${unit || ''}`, type === 'volume' ? 'Volume' : '']}
               />
               <Legend />
               <Bar dataKey="volume" name={`Volume${unit ? ` (${unit})` : ''}`} fill="#39afcd" />
@@ -50,6 +55,7 @@ export function ReportChart({ data, title, type, unit }: ReportChartProps) {
               <Tooltip 
                 contentStyle={{ backgroundColor: '#222', border: '1px solid #444' }} 
                 labelStyle={{ color: '#fff' }}
+                formatter={(value: number) => [`${Math.round(value)}°C`, 'Temperature']}
               />
               <Legend />
               <Line type="monotone" dataKey="avgTemperature" name="Temperature (°C)" stroke="#FF5722" />
@@ -62,6 +68,7 @@ export function ReportChart({ data, title, type, unit }: ReportChartProps) {
               <Tooltip 
                 contentStyle={{ backgroundColor: '#222', border: '1px solid #444' }} 
                 labelStyle={{ color: '#fff' }}
+                formatter={(value: number) => [`${Math.round(value)} hours`, 'UVC Hours']}
               />
               <Legend />
               <Line type="monotone" dataKey="uvcHours" name="UVC Hours" stroke="#39afcd" />

@@ -22,12 +22,12 @@ export const UnitDetailsCard = ({ unit }: UnitDetailsCardProps) => {
     }
   };
 
-  // Format volume with thousands separators and fixed decimal places
+  // Format volume with thousands separators and no decimal places
   const formatVolume = (volume: number | string | undefined | null) => {
     if (volume === undefined || volume === null) return "0";
     const numericVolume = typeof volume === 'string' ? parseFloat(volume) : volume;
     if (isNaN(numericVolume)) return "0";
-    return numericVolume.toLocaleString(undefined, { maximumFractionDigits: 2 });
+    return Math.round(numericVolume).toLocaleString();
   };
 
   return (
@@ -117,7 +117,7 @@ export const UnitDetailsCard = ({ unit }: UnitDetailsCardProps) => {
         <div className="space-y-1 md:space-y-2">
           <label className="text-sm text-gray-400">UVC Hours</label>
           <Input
-            value={unit?.uvc_hours ? formatVolume(unit.uvc_hours) : "Not specified"}
+            value={unit?.uvc_hours ? Math.round(Number(unit.uvc_hours)).toString() : "Not specified"}
             readOnly
             className="bg-spotify-accent border-spotify-accent-hover text-white cursor-default h-9 md:h-10"
           />

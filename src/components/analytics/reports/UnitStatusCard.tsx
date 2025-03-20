@@ -10,20 +10,20 @@ interface UnitStatusCardProps {
 export function UnitStatusCard({ unit }: UnitStatusCardProps) {
   const isMobile = useIsMobile();
   
-  // Format volume with exactly 2 decimal places
+  // Format volume with whole numbers
   const formatVolume = (volume: number | string | undefined | null) => {
-    if (volume === undefined || volume === null) return "0.00";
+    if (volume === undefined || volume === null) return "0";
     const numericVolume = typeof volume === 'string' ? parseFloat(volume) : volume;
-    if (isNaN(numericVolume)) return "0.00";
-    return numericVolume.toFixed(2);
+    if (isNaN(numericVolume)) return "0";
+    return Math.round(numericVolume).toString();
   };
   
-  // Format UVC hours with exactly 1 decimal place
+  // Format UVC hours with whole numbers
   const formatUVCHours = (hours: number | string | undefined | null) => {
-    if (hours === undefined || hours === null) return "0.0";
+    if (hours === undefined || hours === null) return "0";
     const numericHours = typeof hours === 'string' ? parseFloat(hours) : hours;
-    if (isNaN(numericHours)) return "0.0";
-    return numericHours.toFixed(1);
+    if (isNaN(numericHours)) return "0";
+    return Math.round(numericHours).toString();
   };
   
   return (

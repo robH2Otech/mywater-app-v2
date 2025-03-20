@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -31,7 +30,6 @@ export function Auth() {
         const userCredential = await createUserWithEmailAndPassword(auth, email, password);
         const user = userCredential.user;
         
-        // Create a user profile document in Firestore
         await addDoc(collection(db, "app_users"), {
           id: user.uid,
           email: user.email,
@@ -48,14 +46,12 @@ export function Auth() {
           description: "Account created successfully. You may now sign in.",
         });
         
-        // Switch to login view
         setIsLogin(true);
       }
     } catch (error: any) {
       console.error("Auth error:", error);
       let errorMessage = "Authentication failed";
       
-      // Handle common Firebase auth errors
       if (error.code === 'auth/invalid-email') {
         errorMessage = "Invalid email address format";
       } else if (error.code === 'auth/user-disabled') {
@@ -81,7 +77,6 @@ export function Auth() {
   };
 
   const handleTempAccess = () => {
-    // Store a flag in local storage to indicate temporary access
     localStorage.setItem('tempAccess', 'true');
     toast({
       title: "Temporary Access Granted",
@@ -95,7 +90,7 @@ export function Auth() {
       <div className="w-full max-w-md space-y-8 bg-spotify-darker p-8 rounded-lg">
         <div className="text-center">
           <h2 className="text-3xl font-bold text-white">
-            {isLogin ? "Welcome back" : "Create account"}
+            Welcome back to MYWATER app
           </h2>
           <p className="mt-2 text-gray-400">
             {isLogin
@@ -135,15 +130,9 @@ export function Auth() {
         </form>
 
         <div className="text-center space-y-4">
-          <button
-            type="button"
-            onClick={() => setIsLogin(!isLogin)}
-            className="text-mywater-blue hover:underline"
-          >
-            {isLogin
-              ? "Need an account? Sign up"
-              : "Already have an account? Sign in"}
-          </button>
+          <p className="text-mywater-blue">
+            Contact us for account: contact@mywatertechnologies.com
+          </p>
           
           <div className="pt-2 border-t border-gray-700">
             <Button
