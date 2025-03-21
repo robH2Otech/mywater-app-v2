@@ -1,6 +1,6 @@
 
 import { useState } from "react";
-import { Bell, AlertTriangle, Info, DropletIcon, Instagram, Facebook, Linkedin } from "lucide-react";
+import { Bell, AlertTriangle, Info, DropletIcon } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -18,14 +18,6 @@ interface Notification {
   icon: React.ReactNode;
   time: string;
   read: boolean;
-}
-
-interface SocialPost {
-  id: string;
-  platform: "instagram" | "facebook" | "linkedin";
-  content: string;
-  date: string;
-  url: string;
 }
 
 export const NotificationsMenu = () => {
@@ -55,31 +47,6 @@ export const NotificationsMenu = () => {
       read: true,
     },
   ]);
-  
-  // Add social media posts
-  const [socialPosts, setSocialPosts] = useState<SocialPost[]>([
-    {
-      id: "1",
-      platform: "instagram",
-      content: "Join our water conservation challenge this month! #MYWATER #SaveWater",
-      date: "2 days ago",
-      url: "https://instagram.com/mywatertechnologies"
-    },
-    {
-      id: "2",
-      platform: "facebook",
-      content: "MYWATER is proud to announce our new eco-friendly packaging initiative.",
-      date: "1 week ago",
-      url: "https://facebook.com/mywatertechnologies"
-    },
-    {
-      id: "3",
-      platform: "linkedin",
-      content: "MYWATER Technologies partners with leading research institutions to improve water quality.",
-      date: "3 days ago",
-      url: "https://linkedin.com/company/mywatertechnologies"
-    }
-  ]);
 
   const unreadCount = notifications.filter(n => !n.read).length;
 
@@ -95,23 +62,6 @@ export const NotificationsMenu = () => {
     setNotifications(
       notifications.map((notification) => ({ ...notification, read: true }))
     );
-  };
-  
-  const getPlatformIcon = (platform: string) => {
-    switch (platform) {
-      case "instagram":
-        return <Instagram className="h-4 w-4 text-pink-500" />;
-      case "facebook":
-        return <Facebook className="h-4 w-4 text-blue-500" />;
-      case "linkedin":
-        return <Linkedin className="h-4 w-4 text-blue-700" />;
-      default:
-        return <Info className="h-4 w-4" />;
-    }
-  };
-  
-  const openSocialUrl = (url: string) => {
-    window.open(url, "_blank");
   };
 
   return (
@@ -146,9 +96,7 @@ export const NotificationsMenu = () => {
             </Button>
           )}
         </div>
-        
-        {/* Regular notifications */}
-        <div className="max-h-[200px] overflow-y-auto py-2">
+        <div className="max-h-[400px] overflow-y-auto py-2">
           {notifications.length > 0 ? (
             notifications.map((notification) => (
               <DropdownMenuItem
@@ -176,36 +124,6 @@ export const NotificationsMenu = () => {
             </div>
           )}
         </div>
-        
-        <DropdownMenuSeparator className="bg-gray-700" />
-        
-        {/* Social media feed section */}
-        <div className="px-4 py-2 border-b border-gray-700">
-          <h3 className="font-semibold text-white">Follow Us</h3>
-          <p className="text-xs text-gray-400">Stay updated with MYWATER</p>
-        </div>
-        
-        <div className="max-h-[200px] overflow-y-auto py-2">
-          {socialPosts.map((post) => (
-            <DropdownMenuItem
-              key={post.id}
-              className="px-4 py-3 cursor-pointer flex items-start gap-3 text-white hover:bg-spotify-accent"
-              onClick={() => openSocialUrl(post.url)}
-            >
-              <div className="flex-shrink-0 mt-1">
-                {getPlatformIcon(post.platform)}
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="flex justify-between">
-                  <p className="font-medium capitalize">{post.platform}</p>
-                  <span className="text-xs text-gray-500">{post.date}</span>
-                </div>
-                <p className="text-sm mt-1">{post.content}</p>
-              </div>
-            </DropdownMenuItem>
-          ))}
-        </div>
-        
         <DropdownMenuSeparator className="bg-gray-700" />
         <DropdownMenuItem className="px-4 py-2 text-center text-gray-400 hover:text-white cursor-pointer hover:bg-spotify-accent">
           View all notifications

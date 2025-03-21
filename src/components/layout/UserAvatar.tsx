@@ -32,25 +32,16 @@ export const UserAvatar = ({ firstName, lastName }: UserAvatarProps) => {
 
   const getInitials = () => {
     if (firstName && lastName) {
-      // Ensure we get the first character of each name, properly capitalized
-      const firstInitial = firstName.charAt(0).toUpperCase();
-      const lastInitial = lastName.charAt(0).toUpperCase();
-      return `${firstInitial}${lastInitial}`;
-    } else if (firstName) {
-      // If only first name is available
-      return firstName.charAt(0).toUpperCase();
-    } else if (lastName) {
-      // If only last name is available
-      return lastName.charAt(0).toUpperCase();
+      return `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase();
     }
-    return "U"; // Default fallback
+    return "U";
   };
 
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Avatar className="h-8 w-8 cursor-pointer hover:opacity-80 transition-opacity">
-          <AvatarFallback className="bg-mywater-blue text-white font-medium">
+          <AvatarFallback className="bg-mywater-blue text-white">
             {getInitials()}
           </AvatarFallback>
         </Avatar>
