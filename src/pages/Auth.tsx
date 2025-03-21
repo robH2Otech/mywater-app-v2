@@ -1,10 +1,11 @@
-import { useState } from "react";
+
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { FormInput } from "@/components/shared/FormInput";
 import { useToast } from "@/hooks/use-toast";
 import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword } from "firebase/auth";
-import { collection, addDoc } from "firebase/firestore";
+import { collection, addDoc, getDocs, query, where } from "firebase/firestore";
 import { auth, db } from "@/integrations/firebase/client";
 
 export function Auth() {
@@ -14,6 +15,47 @@ export function Auth() {
   const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [migratingUsers, setMigratingUsers] = useState(false);
+
+  // Check if business users have been migrated
+  useEffect(() => {
+    const checkBusinessUsers = async () => {
+      try {
+        // Check if the collection exists and has documents
+        const businessUsersSnapshot = await getDocs(collection(db, "app_users_business"));
+        
+        if (businessUsersSnapshot.empty) {
+          // Get all existing users
+          const usersSnapshot = await getDocs(collection(db, "app_users"));
+          
+          if (!usersSnapshot.empty) {
+            setMigratingUsers(true);
+            
+            // Migrate all users to business collection
+            for (const doc of usersSnapshot.docs) {
+              const userData = doc.data();
+              await addDoc(collection(db, "app_users_business"), {
+                ...userData,
+                migrated_at: new Date().toISOString(),
+              });
+            }
+            
+            toast({
+              title: "Users Migrated",
+              description: "All users have been migrated to business accounts.",
+            });
+          }
+          
+          setMigratingUsers(false);
+        }
+      } catch (error) {
+        console.error("Error checking business users:", error);
+        setMigratingUsers(false);
+      }
+    };
+    
+    checkBusinessUsers();
+  }, [toast]);
 
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -24,13 +66,28 @@ export function Auth() {
         const userCredential = await signInWithEmailAndPassword(auth, email, password);
         const user = userCredential.user;
         
-        console.log("User signed in:", user);
-        navigate("/");
+        // Check if user exists in business collection
+        const businessUsersRef = collection(db, "app_users_business");
+        const q = query(businessUsersRef, where("id", "==", user.uid));
+        const querySnapshot = await getDocs(q);
+        
+        if (querySnapshot.empty) {
+          toast({
+            title: "Access Denied",
+            description: "You don't have access to the business section.",
+            variant: "destructive",
+          });
+          setIsLoading(false);
+          return;
+        }
+        
+        console.log("Business user signed in:", user);
+        navigate("/dashboard");
       } else {
         const userCredential = await createUserWithEmailAndPassword(auth, email, password);
         const user = userCredential.user;
         
-        await addDoc(collection(db, "app_users"), {
+        await addDoc(collection(db, "app_users_business"), {
           id: user.uid,
           email: user.email,
           first_name: "",
@@ -43,7 +100,7 @@ export function Auth() {
         
         toast({
           title: "Success",
-          description: "Account created successfully. You may now sign in.",
+          description: "Business account created successfully. You may now sign in.",
         });
         
         setIsLogin(true);
@@ -82,8 +139,25 @@ export function Auth() {
       title: "Temporary Access Granted",
       description: "You now have temporary access to the app.",
     });
-    navigate("/");
+    navigate("/dashboard");
   };
+
+  if (migratingUsers) {
+    return (
+      <div className="min-h-screen bg-spotify-dark flex items-center justify-center p-4">
+        <div className="w-full max-w-md space-y-8 bg-spotify-darker p-8 rounded-lg">
+          <div className="text-center">
+            <h2 className="text-3xl font-bold text-white">
+              Migrating Users
+            </h2>
+            <p className="mt-2 text-gray-400">
+              Please wait while we migrate user accounts...
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-spotify-dark flex items-center justify-center p-4">

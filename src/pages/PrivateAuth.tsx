@@ -8,16 +8,21 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { 
   createUserWithEmailAndPassword, 
-  signInWithEmailAndPassword 
+  signInWithEmailAndPassword,
+  signInWithPopup,
+  GoogleAuthProvider,
+  FacebookAuthProvider
 } from "firebase/auth";
-import { collection, addDoc } from "firebase/firestore";
+import { collection, addDoc, getDocs, query, where } from "firebase/firestore";
 import { auth, db } from "@/integrations/firebase/client";
 import { PrivateUserRegisterForm } from "@/components/users/private/PrivateUserRegisterForm";
+import { Facebook, Mail, Globe } from "lucide-react";
 
 export function PrivateAuth() {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
+  const [socialLoading, setSocialLoading] = useState<string | null>(null);
   const [authMode, setAuthMode] = useState<"login" | "register">("login");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -30,6 +35,21 @@ export function PrivateAuth() {
       if (authMode === "login") {
         const userCredential = await signInWithEmailAndPassword(auth, email, password);
         const user = userCredential.user;
+        
+        // Check if user exists in private users collection
+        const privateUsersRef = collection(db, "private_users");
+        const q = query(privateUsersRef, where("uid", "==", user.uid));
+        const querySnapshot = await getDocs(q);
+        
+        if (querySnapshot.empty) {
+          toast({
+            title: "Account not found",
+            description: "No home user account found with these credentials.",
+            variant: "destructive",
+          });
+          setIsLoading(false);
+          return;
+        }
         
         console.log("Private user signed in:", user);
         navigate("/private-dashboard");
@@ -70,6 +90,42 @@ export function PrivateAuth() {
     }
   };
 
+  const handleSocialAuth = async (provider: 'google' | 'facebook') => {
+    setSocialLoading(provider);
+    try {
+      const authProvider = provider === 'google' ? new GoogleAuthProvider() : new FacebookAuthProvider();
+      const result = await signInWithPopup(auth, authProvider);
+      const user = result.user;
+      
+      // Check if user exists in private_users collection
+      const privateUsersRef = collection(db, "private_users");
+      const q = query(privateUsersRef, where("uid", "==", user.uid));
+      const querySnapshot = await getDocs(q);
+      
+      if (querySnapshot.empty) {
+        // Redirect to complete registration with pre-filled email
+        setAuthMode("register");
+        setEmail(user.email || "");
+        toast({
+          title: "Additional Information Needed",
+          description: "Please complete your profile to continue.",
+        });
+      } else {
+        // User already exists, redirect to dashboard
+        navigate("/private-dashboard");
+      }
+    } catch (error: any) {
+      console.error("Social auth error:", error);
+      toast({
+        title: "Authentication Failed",
+        description: error.message || "Could not sign in with social account",
+        variant: "destructive",
+      });
+    } finally {
+      setSocialLoading(null);
+    }
+  };
+
   const handleLoginTab = () => {
     setAuthMode("login");
   };
@@ -100,35 +156,70 @@ export function PrivateAuth() {
             </TabsList>
 
             <TabsContent value="login">
-              <form onSubmit={handleAuth} className="space-y-6">
-                <FormInput
-                  label="Email"
-                  type="email"
-                  value={email}
-                  onChange={setEmail}
-                  required
-                />
-                <FormInput
-                  label="Password"
-                  type="password"
-                  value={password}
-                  onChange={setPassword}
-                  required
-                  minLength={6}
-                />
+              <div className="space-y-6">
+                <div className="flex flex-col gap-4">
+                  <Button 
+                    type="button"
+                    className="w-full bg-[#4285F4] hover:bg-[#4285F4]/90 text-white"
+                    onClick={() => handleSocialAuth('google')}
+                    disabled={!!socialLoading}
+                  >
+                    <Globe className="mr-2 h-4 w-4" />
+                    {socialLoading === 'google' ? "Signing in..." : "Sign in with Google"}
+                  </Button>
+                  
+                  <Button 
+                    type="button"
+                    className="w-full bg-[#1877F2] hover:bg-[#1877F2]/90 text-white"
+                    onClick={() => handleSocialAuth('facebook')}
+                    disabled={!!socialLoading}
+                  >
+                    <Facebook className="mr-2 h-4 w-4" />
+                    {socialLoading === 'facebook' ? "Signing in..." : "Sign in with Facebook"}
+                  </Button>
+                </div>
+                
+                <div className="relative">
+                  <div className="absolute inset-0 flex items-center">
+                    <span className="w-full border-t border-gray-600"></span>
+                  </div>
+                  <div className="relative flex justify-center text-xs">
+                    <span className="bg-spotify-darker px-2 text-gray-400">
+                      Or continue with email
+                    </span>
+                  </div>
+                </div>
+                
+                <form onSubmit={handleAuth} className="space-y-6">
+                  <FormInput
+                    label="Email"
+                    type="email"
+                    value={email}
+                    onChange={setEmail}
+                    required
+                  />
+                  <FormInput
+                    label="Password"
+                    type="password"
+                    value={password}
+                    onChange={setPassword}
+                    required
+                    minLength={6}
+                  />
 
-                <Button
-                  type="submit"
-                  className="w-full bg-mywater-blue hover:bg-mywater-blue/90"
-                  disabled={isLoading}
-                >
-                  {isLoading ? "Signing in..." : "Sign In"}
-                </Button>
-              </form>
+                  <Button
+                    type="submit"
+                    className="w-full bg-mywater-blue hover:bg-mywater-blue/90"
+                    disabled={isLoading}
+                  >
+                    {isLoading ? "Signing in..." : "Sign In with Email"}
+                  </Button>
+                </form>
+              </div>
             </TabsContent>
 
             <TabsContent value="register">
-              <PrivateUserRegisterForm />
+              <PrivateUserRegisterForm socialEmail={email} />
             </TabsContent>
           </Tabs>
 

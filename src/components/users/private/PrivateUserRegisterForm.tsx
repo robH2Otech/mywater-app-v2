@@ -12,7 +12,7 @@ import {
   SelectValue 
 } from "@/components/ui/select";
 import { FormDatePicker } from "@/components/shared/FormDatePicker";
-import { createUserWithEmailAndPassword } from "firebase/auth";
+import { createUserWithEmailAndPassword, getAuth, updateProfile } from "firebase/auth";
 import { collection, addDoc } from "firebase/firestore";
 import { auth, db } from "@/integrations/firebase/client";
 
@@ -27,13 +27,17 @@ const PURIFIER_MODELS = [
   "MYWATER Countertop Premium"
 ];
 
-export function PrivateUserRegisterForm() {
+interface PrivateUserRegisterFormProps {
+  socialEmail?: string;
+}
+
+export function PrivateUserRegisterForm({ socialEmail = "" }: PrivateUserRegisterFormProps) {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
   
   // Form fields
-  const [email, setEmail] = useState("");
+  const [email, setEmail] = useState(socialEmail);
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [firstName, setFirstName] = useState("");
@@ -47,7 +51,7 @@ export function PrivateUserRegisterForm() {
     e.preventDefault();
     
     // Validate form
-    if (password !== confirmPassword) {
+    if (!socialEmail && password !== confirmPassword) {
       toast({
         title: "Passwords do not match",
         description: "Please make sure your passwords match.",
@@ -77,9 +81,26 @@ export function PrivateUserRegisterForm() {
     setIsLoading(true);
     
     try {
-      // Create user account
-      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-      const user = userCredential.user;
+      // Determine if we're using social login or email/password
+      let user;
+      
+      if (socialEmail) {
+        // User is already authenticated via social login
+        user = auth.currentUser;
+        
+        if (!user) {
+          throw new Error("User session expired. Please sign in again.");
+        }
+        
+        // Update user profile if needed
+        await updateProfile(user, {
+          displayName: `${firstName} ${lastName}`
+        });
+      } else {
+        // Create user account with email/password
+        const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+        user = userCredential.user;
+      }
       
       // Calculate cartridge replacement date (1 year from purchase)
       const replacementDate = new Date(purchaseDate);
@@ -166,6 +187,7 @@ export function PrivateUserRegisterForm() {
         value={email}
         onChange={setEmail}
         required
+        disabled={!!socialEmail}
       />
       
       <FormInput
@@ -204,24 +226,26 @@ export function PrivateUserRegisterForm() {
         onChange={setPurchaseDate}
       />
       
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <FormInput
-          label="Password"
-          type="password"
-          value={password}
-          onChange={setPassword}
-          required
-          minLength={6}
-        />
-        <FormInput
-          label="Confirm Password"
-          type="password"
-          value={confirmPassword}
-          onChange={setConfirmPassword}
-          required
-          minLength={6}
-        />
-      </div>
+      {!socialEmail && (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <FormInput
+            label="Password"
+            type="password"
+            value={password}
+            onChange={setPassword}
+            required
+            minLength={6}
+          />
+          <FormInput
+            label="Confirm Password"
+            type="password"
+            value={confirmPassword}
+            onChange={setConfirmPassword}
+            required
+            minLength={6}
+          />
+        </div>
+      )}
 
       <Button
         type="submit"
