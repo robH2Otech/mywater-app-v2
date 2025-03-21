@@ -18,7 +18,11 @@ import { Users } from "./pages/Users";
 import { Auth } from "./pages/Auth";
 import { useEffect, useState } from "react";
 import { supabase } from "./integrations/supabase/client";
+import { auth } from "./integrations/firebase/client";
 import { LanguageProvider } from "./contexts/LanguageContext";
+import { LandingPage } from "./pages/LandingPage";
+import { PrivateAuth } from "./pages/PrivateAuth";
+import { PrivateDashboard } from "./pages/PrivateDashboard";
 
 const queryClient = new QueryClient();
 
@@ -54,6 +58,40 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   return <>{children}</>;
 };
 
+const PrivateProtectedRoute = ({ children }: { children: React.ReactNode }) => {
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    const checkAuth = async () => {
+      try {
+        const user = await new Promise((resolve) => {
+          const unsubscribe = auth.onAuthStateChanged((user) => {
+            resolve(user);
+            unsubscribe();
+          });
+        });
+        
+        setIsAuthenticated(!!user);
+      } catch (error) {
+        console.error("Error checking auth state:", error);
+        setIsAuthenticated(false);
+      }
+    };
+    
+    checkAuth();
+  }, []);
+
+  if (isAuthenticated === null) {
+    return <div>Loading...</div>;
+  }
+
+  if (!isAuthenticated) {
+    return <Navigate to="/private-auth" />;
+  }
+
+  return <>{children}</>;
+};
+
 const App = () => (
   <LanguageProvider>
     <QueryClientProvider client={queryClient}>
@@ -62,9 +100,19 @@ const App = () => (
         <Sonner />
         <BrowserRouter>
           <Routes>
+            <Route path="/" element={<LandingPage />} />
             <Route path="/auth" element={<Auth />} />
+            <Route path="/private-auth" element={<PrivateAuth />} />
             <Route
-              path="/"
+              path="/private-dashboard"
+              element={
+                <PrivateProtectedRoute>
+                  <PrivateDashboard />
+                </PrivateProtectedRoute>
+              }
+            />
+            <Route
+              path="/dashboard"
               element={
                 <ProtectedRoute>
                   <Layout>
