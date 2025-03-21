@@ -68,10 +68,29 @@ export function Auth() {
         
         // Check if user exists in business collection
         const businessUsersRef = collection(db, "app_users_business");
-        const q = query(businessUsersRef, where("id", "==", user.uid));
+        const q = query(businessUsersRef, where("email", "==", user.email));
         const querySnapshot = await getDocs(q);
         
         if (querySnapshot.empty) {
+          // If not found, check app_users as fallback and migrate if found
+          const usersRef = collection(db, "app_users");
+          const usersQuery = query(usersRef, where("email", "==", user.email));
+          const usersSnapshot = await getDocs(usersQuery);
+          
+          if (!usersSnapshot.empty) {
+            // Migrate the user to app_users_business
+            const userData = usersSnapshot.docs[0].data();
+            await addDoc(collection(db, "app_users_business"), {
+              ...userData,
+              email: user.email,
+              migrated_at: new Date().toISOString(),
+            });
+            
+            console.log("User migrated during login:", user.email);
+            navigate("/dashboard");
+            return;
+          }
+          
           toast({
             title: "Access Denied",
             description: "You don't have access to the business section.",

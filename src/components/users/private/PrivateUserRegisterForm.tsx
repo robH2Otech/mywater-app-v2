@@ -106,8 +106,8 @@ export function PrivateUserRegisterForm({ socialEmail = "" }: PrivateUserRegiste
       const replacementDate = new Date(purchaseDate);
       replacementDate.setFullYear(replacementDate.getFullYear() + 1);
       
-      // Store additional user data
-      await addDoc(collection(db, "private_users"), {
+      // Store additional user data in app_users_privat collection
+      await addDoc(collection(db, "app_users_privat"), {
         uid: user.uid,
         email: user.email,
         first_name: firstName,

@@ -22,7 +22,7 @@ export const Header = ({ children }: HeaderProps) => {
           console.log("Fetching user profile for email:", user.email);
           
           // First, check the private_users collection (for home users)
-          const privateUsersRef = collection(db, "private_users");
+          const privateUsersRef = collection(db, "app_users_privat");
           const privateQuery = query(privateUsersRef, where("uid", "==", user.uid));
           const privateSnapshot = await getDocs(privateQuery);
           

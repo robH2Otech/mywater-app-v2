@@ -23,6 +23,7 @@ import { LanguageProvider } from "./contexts/LanguageContext";
 import { LandingPage } from "./pages/LandingPage";
 import { PrivateAuth } from "./pages/PrivateAuth";
 import { PrivateDashboard } from "./pages/PrivateDashboard";
+import Index from "./pages/Index";
 
 const queryClient = new QueryClient();
 
@@ -116,7 +117,7 @@ const App = () => (
               element={
                 <ProtectedRoute>
                   <Layout>
-                    <Dashboard />
+                    <Index />
                   </Layout>
                 </ProtectedRoute>
               }

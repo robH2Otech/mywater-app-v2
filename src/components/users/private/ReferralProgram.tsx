@@ -122,9 +122,9 @@ export function ReferralProgram({ userData }: ReferralProgramProps) {
         return;
       }
       
-      // In a real app, this would send actual emails
-      // For now, we'll just create referral records
+      // Store the referral data in Firebase
       for (const { email, name } of emails) {
+        // Create referral record
         await addDoc(collection(db, "referrals"), {
           referrer_id: userData.uid,
           referrer_name: `${userData.first_name} ${userData.last_name}`,
@@ -134,6 +134,33 @@ export function ReferralProgram({ userData }: ReferralProgramProps) {
           status: "pending",
           created_at: new Date(),
           updated_at: new Date()
+        });
+        
+        // Store email data in a new emails collection for sending
+        const emailContent = `Hi ${name},
+
+I wanted to share something I've been really happy with – my MYWATER water purification system. It provides clean, great-tasting water right from my tap, and I'm saving money on bottled water.
+
+I'm inviting you to try MYWATER with a special 20% discount! Just use this link: https://mywater.com/refer?code=${referralCode} when you purchase.
+
+If you decide to get a MYWATER system, you'll also get the chance to refer 3 friends and earn a free replacement cartridge for yourself!
+
+Check it out here: https://mywater.com/products
+
+Best,
+${userData.first_name} ${userData.last_name}`;
+
+        await addDoc(collection(db, "emails_to_send"), {
+          to: email,
+          to_name: name,
+          from: userData.email || "noreply@mywater.com",
+          from_name: `${userData.first_name} ${userData.last_name}`,
+          subject: `${userData.first_name} invited you to try MYWATER (20% discount!)`,
+          body: emailContent,
+          html_body: emailContent.replace(/\n/g, "<br>"),
+          created_at: new Date(),
+          status: "pending",
+          type: "referral"
         });
       }
       
@@ -184,7 +211,7 @@ export function ReferralProgram({ userData }: ReferralProgramProps) {
     setIsLoading(true);
     
     try {
-      const userDocRef = doc(db, "private_users", userData.id);
+      const userDocRef = doc(db, "app_users_privat", userData.id);
       
       await updateDoc(userDocRef, {
         referral_reward_claimed: true,

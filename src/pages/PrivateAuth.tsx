@@ -36,19 +36,33 @@ export function PrivateAuth() {
         const userCredential = await signInWithEmailAndPassword(auth, email, password);
         const user = userCredential.user;
         
-        // Check if user exists in private users collection
-        const privateUsersRef = collection(db, "private_users");
+        // Check if user exists in private users collection - use app_users_privat
+        const privateUsersRef = collection(db, "app_users_privat");
         const q = query(privateUsersRef, where("uid", "==", user.uid));
         const querySnapshot = await getDocs(q);
         
         if (querySnapshot.empty) {
-          toast({
-            title: "Account not found",
-            description: "No home user account found with these credentials.",
-            variant: "destructive",
-          });
-          setIsLoading(false);
-          return;
+          // Check old collection as fallback
+          const oldPrivateUsersRef = collection(db, "private_users");
+          const oldQuery = query(oldPrivateUsersRef, where("uid", "==", user.uid));
+          const oldSnapshot = await getDocs(oldQuery);
+          
+          if (oldSnapshot.empty) {
+            toast({
+              title: "Account not found",
+              description: "No home user account found with these credentials.",
+              variant: "destructive",
+            });
+            setIsLoading(false);
+            return;
+          } else {
+            // Migrate to new collection
+            const userData = oldSnapshot.docs[0].data();
+            await addDoc(collection(db, "app_users_privat"), {
+              ...userData,
+              migrated_at: new Date().toISOString()
+            });
+          }
         }
         
         console.log("Private user signed in:", user);
@@ -106,35 +120,49 @@ export function PrivateAuth() {
       const result = await signInWithPopup(auth, authProvider);
       const user = result.user;
       
-      // First check if user already exists in private_users collection
-      const privateUsersRef = collection(db, "private_users");
+      // First check if user already exists in app_users_privat collection
+      const privateUsersRef = collection(db, "app_users_privat");
       const q = query(privateUsersRef, where("uid", "==", user.uid));
       const querySnapshot = await getDocs(q);
       
       if (querySnapshot.empty) {
-        // Create a new user in private_users collection
-        try {
-          // Extract user info from social login
-          const name = user.displayName || '';
-          const nameParts = name.split(' ');
-          const firstName = nameParts[0] || '';
-          const lastName = nameParts.length > 1 ? nameParts.slice(1).join(' ') : '';
-          
-          await addDoc(collection(db, "private_users"), {
-            uid: user.uid,
-            email: user.email,
-            first_name: firstName,
-            last_name: lastName,
-            created_at: new Date().toISOString(),
-            auth_provider: provider
+        // Check the old collection as fallback
+        const oldPrivateUsersRef = collection(db, "private_users");
+        const oldQuery = query(oldPrivateUsersRef, where("uid", "==", user.uid));
+        const oldSnapshot = await getDocs(oldQuery);
+        
+        if (!oldSnapshot.empty) {
+          // Migrate to the new collection
+          const userData = oldSnapshot.docs[0].data();
+          await addDoc(collection(db, "app_users_privat"), {
+            ...userData,
+            migrated_at: new Date().toISOString()
           });
-          
-          toast({
-            title: "Account created",
-            description: "Your account has been created successfully.",
-          });
-        } catch (error) {
-          console.error("Error creating user profile:", error);
+        } else {
+          // Create a new user in app_users_privat collection
+          try {
+            // Extract user info from social login
+            const name = user.displayName || '';
+            const nameParts = name.split(' ');
+            const firstName = nameParts[0] || '';
+            const lastName = nameParts.length > 1 ? nameParts.slice(1).join(' ') : '';
+            
+            await addDoc(collection(db, "app_users_privat"), {
+              uid: user.uid,
+              email: user.email,
+              first_name: firstName,
+              last_name: lastName,
+              created_at: new Date().toISOString(),
+              auth_provider: provider
+            });
+            
+            toast({
+              title: "Account created",
+              description: "Your account has been created successfully.",
+            });
+          } catch (error) {
+            console.error("Error creating user profile:", error);
+          }
         }
       }
       
