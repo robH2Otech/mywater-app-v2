@@ -94,6 +94,15 @@ export function PrivateAuth() {
     setSocialLoading(provider);
     try {
       const authProvider = provider === 'google' ? new GoogleAuthProvider() : new FacebookAuthProvider();
+      
+      // Add these lines to make Google auth work with specific domains
+      if (provider === 'google') {
+        // Remove any domain restrictions that might be causing the issue
+        authProvider.setCustomParameters({
+          prompt: 'select_account'
+        });
+      }
+      
       const result = await signInWithPopup(auth, authProvider);
       const user = result.user;
       
@@ -116,9 +125,22 @@ export function PrivateAuth() {
       }
     } catch (error: any) {
       console.error("Social auth error:", error);
+      
+      let errorMessage = "Authentication Failed";
+      
+      if (error.code === 'auth/unauthorized-domain') {
+        errorMessage = "This domain is not authorized for authentication. Please try another sign-in method.";
+      } else if (error.code === 'auth/popup-closed-by-user') {
+        errorMessage = "Sign-in was cancelled. Please try again.";
+      } else if (error.code === 'auth/cancelled-popup-request') {
+        errorMessage = "Too many popup requests. Please try again.";
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+      
       toast({
         title: "Authentication Failed",
-        description: error.message || "Could not sign in with social account",
+        description: errorMessage,
         variant: "destructive",
       });
     } finally {

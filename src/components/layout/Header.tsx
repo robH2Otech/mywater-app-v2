@@ -21,10 +21,38 @@ export const Header = ({ children }: HeaderProps) => {
         try {
           console.log("Fetching user profile for email:", user.email);
           
-          // Query the app_users collection to find the user by email
+          // First check if the user has a profile in the private_users collection
+          const privateUsersRef = collection(db, "private_users");
+          const privateQuery = query(privateUsersRef, where("uid", "==", user.uid));
+          const privateSnapshot = await getDocs(privateQuery);
+          
+          if (!privateSnapshot.empty) {
+            const userData = privateSnapshot.docs[0].data();
+            console.log("Private user profile found:", userData);
+            
+            setFirstName(userData.first_name || "");
+            setLastName(userData.last_name || "");
+            return;
+          }
+          
+          // If not found in private users, check business users
+          const businessUsersRef = collection(db, "app_users_business");
+          const businessQuery = query(businessUsersRef, where("id", "==", user.uid));
+          const businessSnapshot = await getDocs(businessQuery);
+          
+          if (!businessSnapshot.empty) {
+            const userData = businessSnapshot.docs[0].data();
+            console.log("Business user profile found:", userData);
+            
+            setFirstName(userData.first_name || "");
+            setLastName(userData.last_name || "");
+            return;
+          }
+          
+          // Fallback to app_users collection
           const usersRef = collection(db, "app_users");
-          const q = query(usersRef, where("email", "==", user.email));
-          const querySnapshot = await getDocs(q);
+          const usersQuery = query(usersRef, where("email", "==", user.email));
+          const querySnapshot = await getDocs(usersQuery);
           
           if (!querySnapshot.empty) {
             const userData = querySnapshot.docs[0].data();
