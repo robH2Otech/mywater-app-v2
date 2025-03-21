@@ -2,7 +2,7 @@
 import { useLanguage } from "@/contexts/LanguageContext";
 
 interface WelcomeMessageProps {
-  firstName: string;
+  firstName?: string;
 }
 
 export const WelcomeMessage = ({ firstName }: WelcomeMessageProps) => {
@@ -11,7 +11,7 @@ export const WelcomeMessage = ({ firstName }: WelcomeMessageProps) => {
   // If no firstName is provided, return a default message
   if (!firstName) {
     return (
-      <div className="text-white text-lg">
+      <div className="text-white text-2xl font-medium">
         {t("dashboard.welcome")}
       </div>
     );
@@ -21,8 +21,8 @@ export const WelcomeMessage = ({ firstName }: WelcomeMessageProps) => {
   const capitalizedName = firstName.charAt(0).toUpperCase() + firstName.slice(1);
   
   return (
-    <div className="text-white text-lg">
-      Hello, {capitalizedName}, welcome back!
+    <div className="text-white text-2xl font-medium">
+      Hey {capitalizedName}, welcome back!
     </div>
   );
 };

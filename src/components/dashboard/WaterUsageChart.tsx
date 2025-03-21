@@ -1,4 +1,3 @@
-
 import { Card } from "@/components/ui/card";
 import {
   AreaChart,
@@ -247,7 +246,7 @@ export const WaterUsageChart = ({ units = [] }: WaterUsageChartProps) => {
   return (
     <Card className="p-6 glass lg:col-span-2">
       <div className="flex justify-between items-center mb-4">
-        <h2 className="text-lg font-semibold">{t("dashboard.usage.title")}</h2>
+        <h2 className="text-lg font-semibold">Water Usage</h2>
         <Select
           value={timeRange}
           onValueChange={(value: TimeRange) => setTimeRange(value)}
@@ -256,10 +255,10 @@ export const WaterUsageChart = ({ units = [] }: WaterUsageChartProps) => {
             <SelectValue placeholder={t("chart.select.timerange")} />
           </SelectTrigger>
           <SelectContent className="bg-spotify-darker border-spotify-accent">
-            <SelectItem value="24h">{t("chart.24hours")}</SelectItem>
-            <SelectItem value="7d">{t("chart.7days")}</SelectItem>
-            <SelectItem value="30d">{t("chart.30days")}</SelectItem>
-            <SelectItem value="6m">{t("chart.6months")}</SelectItem>
+            <SelectItem value="24h">Last 24 hours</SelectItem>
+            <SelectItem value="7d">Last 7 days</SelectItem>
+            <SelectItem value="30d">Last 30 days</SelectItem>
+            <SelectItem value="6m">Last 6 months</SelectItem>
           </SelectContent>
         </Select>
       </div>
