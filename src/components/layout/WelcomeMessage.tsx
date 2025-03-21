@@ -22,7 +22,7 @@ export const WelcomeMessage = ({ firstName }: WelcomeMessageProps) => {
   
   return (
     <div className="text-white text-lg">
-      {t("dashboard.welcome.user", { name: capitalizedName })}
+      Hello, {capitalizedName}, welcome back!
     </div>
   );
 };

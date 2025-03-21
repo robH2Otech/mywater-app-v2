@@ -31,10 +31,22 @@ export const UserAvatar = ({ firstName, lastName }: UserAvatarProps) => {
   };
 
   const getInitials = () => {
-    if (firstName && lastName) {
-      return `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase();
+    // Trim and check for non-empty strings to avoid initials like "U"
+    const firstInitial = firstName && firstName.trim() ? firstName.trim().charAt(0).toUpperCase() : "";
+    const lastInitial = lastName && lastName.trim() ? lastName.trim().charAt(0).toUpperCase() : "";
+    
+    // If both initials are available, use them
+    if (firstInitial && lastInitial) {
+      return `${firstInitial}${lastInitial}`;
     }
-    return "U";
+    
+    // If only first name is available, use first 2 letters
+    if (firstInitial && !lastInitial && firstName.length > 1) {
+      return `${firstName.substring(0, 2).toUpperCase()}`;
+    }
+    
+    // Default fallback
+    return firstInitial || lastInitial || "U";
   };
 
   return (

@@ -94,31 +94,74 @@ export function PrivateAuth() {
     setSocialLoading(provider);
     try {
       const authProvider = provider === 'google' ? new GoogleAuthProvider() : new FacebookAuthProvider();
+      
+      // Remove any domain restrictions that could be causing issues
+      if (provider === 'google') {
+        const googleProvider = authProvider as GoogleAuthProvider;
+        googleProvider.setCustomParameters({
+          prompt: 'select_account'
+        });
+      }
+      
       const result = await signInWithPopup(auth, authProvider);
       const user = result.user;
       
-      // Check if user exists in private_users collection
+      // First check if user already exists in private_users collection
       const privateUsersRef = collection(db, "private_users");
       const q = query(privateUsersRef, where("uid", "==", user.uid));
       const querySnapshot = await getDocs(q);
       
       if (querySnapshot.empty) {
-        // Redirect to complete registration with pre-filled email
-        setAuthMode("register");
-        setEmail(user.email || "");
-        toast({
-          title: "Additional Information Needed",
-          description: "Please complete your profile to continue.",
-        });
-      } else {
-        // User already exists, redirect to dashboard
-        navigate("/private-dashboard");
+        // Create a new user in private_users collection
+        try {
+          // Extract user info from social login
+          const name = user.displayName || '';
+          const nameParts = name.split(' ');
+          const firstName = nameParts[0] || '';
+          const lastName = nameParts.length > 1 ? nameParts.slice(1).join(' ') : '';
+          
+          await addDoc(collection(db, "private_users"), {
+            uid: user.uid,
+            email: user.email,
+            first_name: firstName,
+            last_name: lastName,
+            created_at: new Date().toISOString(),
+            auth_provider: provider
+          });
+          
+          toast({
+            title: "Account created",
+            description: "Your account has been created successfully.",
+          });
+        } catch (error) {
+          console.error("Error creating user profile:", error);
+        }
       }
+      
+      // Navigate to the dashboard after successful sign-in or registration
+      navigate("/private-dashboard");
     } catch (error: any) {
       console.error("Social auth error:", error);
+      let errorMessage = "Authentication failed";
+      
+      // Handle specific social auth errors
+      if (error.code === 'auth/account-exists-with-different-credential') {
+        errorMessage = "An account already exists with the same email but different sign-in credentials.";
+      } else if (error.code === 'auth/cancelled-popup-request') {
+        errorMessage = "The sign-in popup was closed before completing authentication.";
+      } else if (error.code === 'auth/popup-blocked') {
+        errorMessage = "The sign-in popup was blocked by your browser.";
+      } else if (error.code === 'auth/popup-closed-by-user') {
+        errorMessage = "The sign-in popup was closed before completing authentication.";
+      } else if (error.code === 'auth/unauthorized-domain') {
+        errorMessage = "This domain is not authorized for OAuth operations. Please use a valid domain.";
+      } else {
+        errorMessage = error.message || "Could not sign in with social account";
+      }
+      
       toast({
-        title: "Authentication Failed",
-        description: error.message || "Could not sign in with social account",
+        title: "Authentication Error",
+        description: errorMessage,
         variant: "destructive",
       });
     } finally {
