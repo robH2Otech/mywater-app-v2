@@ -14,7 +14,7 @@ export const Sidebar = ({ isMobile, closeSidebar }: SidebarProps) => {
   const { t } = useLanguage();
 
   const navigation = [
-    { name: t("nav.dashboard"), icon: Home, path: "/" },
+    { name: t("nav.dashboard"), icon: Home, path: "/dashboard" },
     { name: t("nav.water.units"), icon: Droplets, path: "/units" },
     { name: t("nav.filters"), icon: Filter, path: "/filters" },
     { name: t("nav.uvc"), icon: Lightbulb, path: "/uvc" },

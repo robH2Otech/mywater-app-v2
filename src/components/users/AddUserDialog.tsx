@@ -51,8 +51,8 @@ export function AddUserDialog({ open, onOpenChange }: AddUserDialogProps) {
         throw new Error("First name, last name, email, password and company are required");
       }
 
-      // Add user to Firebase
-      const usersCollectionRef = collection(db, "app_users");
+      // Add user to Firebase in the app_users_business collection
+      const usersCollectionRef = collection(db, "app_users_business");
       await addDoc(usersCollectionRef, {
         ...formData,
         created_at: new Date().toISOString(),

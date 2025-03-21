@@ -20,7 +20,8 @@ export const Users = () => {
     queryFn: async () => {
       console.log("Fetching users data from Firebase...");
       try {
-        const usersCollection = collection(db, "app_users");
+        // Updated to fetch from app_users_business collection
+        const usersCollection = collection(db, "app_users_business");
         const usersSnapshot = await getDocs(usersCollection);
         const usersList = usersSnapshot.docs.map(doc => ({
           id: doc.id,
