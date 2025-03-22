@@ -23,7 +23,7 @@ export const UserAvatar = ({ firstName, lastName }: UserAvatarProps) => {
     try {
       await auth.signOut();
       toast.success("Logged out successfully");
-      navigate("/auth");
+      navigate("/"); // Navigate to landing page instead of /auth
     } catch (error) {
       console.error("Error logging out:", error);
       toast.error("Failed to log out");
