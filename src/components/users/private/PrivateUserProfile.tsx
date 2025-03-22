@@ -15,7 +15,7 @@ import {
 } from "lucide-react";
 import { format } from "date-fns";
 import { db } from "@/integrations/firebase/client";
-import { doc, updateDoc } from "firebase/firestore";
+import { doc, updateDoc, collection, query, where, getDocs } from "firebase/firestore";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 
 interface PrivateUserProfileProps {
@@ -44,7 +44,7 @@ export function PrivateUserProfile({ userData }: PrivateUserProfileProps) {
   };
   
   const handleSave = async () => {
-    if (!userData?.id) {
+    if (!userData?.id || !userData?.uid) {
       toast({
         title: "Error",
         description: "Could not update profile: User data not found",
@@ -56,14 +56,18 @@ export function PrivateUserProfile({ userData }: PrivateUserProfileProps) {
     setIsLoading(true);
     
     try {
-      // Use the proper Firestore collection for private users
-      const userDocRef = doc(db, "private_users", userData.id);
+      // Determine which collection to use
+      const isNewCollection = userData.id.startsWith('app_users_privat_');
+      const collectionName = isNewCollection ? "app_users_privat" : "private_users";
+      
+      // Update in the appropriate collection
+      const userDocRef = doc(db, collectionName, userData.id);
       
       await updateDoc(userDocRef, {
         address,
         phone,
         email,
-        updated_at: new Date()
+        updated_at: new Date().toISOString()
       });
       
       // Update local userData
@@ -198,7 +202,7 @@ export function PrivateUserProfile({ userData }: PrivateUserProfileProps) {
                       <Home className="h-5 w-5 text-gray-400 mt-0.5" />
                       <div>
                         <p className="text-sm text-gray-400">Address</p>
-                        <p className="text-white">{userData?.address}</p>
+                        <p className="text-white">{userData?.address || "Not provided"}</p>
                       </div>
                     </div>
                     
@@ -206,7 +210,7 @@ export function PrivateUserProfile({ userData }: PrivateUserProfileProps) {
                       <Phone className="h-5 w-5 text-gray-400 mt-0.5" />
                       <div>
                         <p className="text-sm text-gray-400">Phone</p>
-                        <p className="text-white">{userData?.phone}</p>
+                        <p className="text-white">{userData?.phone || "Not provided"}</p>
                       </div>
                     </div>
                   </div>
@@ -220,7 +224,7 @@ export function PrivateUserProfile({ userData }: PrivateUserProfileProps) {
                     <div className="flex items-start gap-3">
                       <div>
                         <p className="text-sm text-gray-400">Model</p>
-                        <p className="text-white">{userData?.purifier_model}</p>
+                        <p className="text-white">{userData?.purifier_model || "Not available"}</p>
                       </div>
                     </div>
                     

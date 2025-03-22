@@ -1,8 +1,8 @@
 
 import { initializeApp } from "firebase/app";
-import { getAuth } from "firebase/auth";
-import { getFirestore } from "firebase/firestore";
-import { getStorage } from "firebase/storage";
+import { getAuth, connectAuthEmulator } from "firebase/auth";
+import { getFirestore, connectFirestoreEmulator } from "firebase/firestore";
+import { getStorage, connectStorageEmulator } from "firebase/storage";
 
 // Firebase configuration
 const firebaseConfig = {
@@ -10,7 +10,7 @@ const firebaseConfig = {
   authDomain: "mywater-app-533f8.firebaseapp.com",
   databaseURL: "https://mywater-app-533f8-default-rtdb.europe-west1.firebasedatabase.app",
   projectId: "mywater-app-533f8",
-  storageBucket: "mywater-app-533f8.firebasestorage.app",
+  storageBucket: "mywater-app-533f8.appspot.com",
   messagingSenderId: "1017703121603",
   appId: "1:1017703121603:web:77f5259b84a019a4429876"
 };
@@ -22,3 +22,17 @@ const firebaseApp = initializeApp(firebaseConfig);
 export const auth = getAuth(firebaseApp);
 export const db = getFirestore(firebaseApp);
 export const storage = getStorage(firebaseApp);
+
+// Enable local emulator if in development environment
+if (import.meta.env.DEV) {
+  const useEmulator = false; // Set to true to use Firebase emulators
+  if (useEmulator) {
+    connectAuthEmulator(auth, "http://localhost:9099");
+    connectFirestoreEmulator(db, "localhost", 8080);
+    connectStorageEmulator(storage, "localhost", 9199);
+    console.log("Using Firebase emulator suite");
+  }
+}
+
+// Configure auth persistence
+auth.useDeviceLanguage();
