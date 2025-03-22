@@ -57,9 +57,11 @@ export function ReferralProgram({ userData }: ReferralProgramProps) {
         );
         
         const codeSnapshot = await getDocs(codeQuery);
+        let currentReferralCode = "";
         
         if (!codeSnapshot.empty) {
-          setReferralCode(codeSnapshot.docs[0].data().code);
+          currentReferralCode = codeSnapshot.docs[0].data().code;
+          setReferralCode(currentReferralCode);
         } else {
           // Create a referral code if none exists
           const firstName = userData.first_name || "";
@@ -72,6 +74,7 @@ export function ReferralProgram({ userData }: ReferralProgramProps) {
             created_at: new Date()
           });
           
+          currentReferralCode = newCode;
           setReferralCode(newCode);
         }
         
@@ -94,7 +97,7 @@ export function ReferralProgram({ userData }: ReferralProgramProps) {
         const template = generateReferralEmailTemplate(
           "[Friend's Name]", 
           userData.first_name + " " + userData.last_name, 
-          newCode || codeSnapshot.docs[0]?.data().code || "CODE"
+          currentReferralCode
         );
         setEmailTemplate(template);
       } catch (error) {

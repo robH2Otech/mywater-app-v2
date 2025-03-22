@@ -55,6 +55,7 @@ export function PrivateUserProfile({ userData }: PrivateUserProfileProps) {
     setIsLoading(true);
     
     try {
+      // Use the proper Firestore collection for private users
       const userDocRef = doc(db, "private_users", userData.id);
       
       await updateDoc(userDocRef, {
