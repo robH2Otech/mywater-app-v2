@@ -6,6 +6,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { FormInput } from "@/components/shared/FormInput";
 import { useToast } from "@/hooks/use-toast";
 import { Progress } from "@/components/ui/progress";
+import { Textarea } from "@/components/ui/textarea";
 import { 
   Share2, 
   Copy, 
@@ -20,6 +21,8 @@ import {
 } from "lucide-react";
 import { db } from "@/integrations/firebase/client";
 import { collection, query, where, getDocs, addDoc, updateDoc, doc } from "firebase/firestore";
+import { generateReferralEmailTemplate, sendReferralEmail } from "@/utils/emailUtil";
+import { ReferralProgressChart } from "./ReferralProgressChart";
 
 interface ReferralProgramProps {
   userData: any;
@@ -39,6 +42,7 @@ export function ReferralProgram({ userData }: ReferralProgramProps) {
   const [referralName1, setReferralName1] = useState("");
   const [referralName2, setReferralName2] = useState("");
   const [referralName3, setReferralName3] = useState("");
+  const [emailTemplate, setEmailTemplate] = useState("");
   
   // Load referral data
   useEffect(() => {
@@ -85,6 +89,14 @@ export function ReferralProgram({ userData }: ReferralProgramProps) {
             ...doc.data()
           })));
         }
+        
+        // Generate email template
+        const template = generateReferralEmailTemplate(
+          "[Friend's Name]", 
+          userData.first_name + " " + userData.last_name, 
+          newCode || codeSnapshot.docs[0]?.data().code || "CODE"
+        );
+        setEmailTemplate(template);
       } catch (error) {
         console.error("Error fetching referral data:", error);
       }
@@ -136,32 +148,18 @@ export function ReferralProgram({ userData }: ReferralProgramProps) {
           updated_at: new Date()
         });
         
-        // Store email data in a new emails collection for sending
-        const emailContent = `Hi ${name},
-
-I wanted to share something I've been really happy with – my MYWATER water purification system. It provides clean, great-tasting water right from my tap, and I'm saving money on bottled water.
-
-I'm inviting you to try MYWATER with a special 20% discount! Just use this link: https://mywater.com/refer?code=${referralCode} when you purchase.
-
-If you decide to get a MYWATER system, you'll also get the chance to refer 3 friends and earn a free replacement cartridge for yourself!
-
-Check it out here: https://mywater.com/products
-
-Best,
-${userData.first_name} ${userData.last_name}`;
-
-        await addDoc(collection(db, "emails_to_send"), {
-          to: email,
-          to_name: name,
-          from: userData.email || "noreply@mywater.com",
-          from_name: `${userData.first_name} ${userData.last_name}`,
-          subject: `${userData.first_name} invited you to try MYWATER (20% discount!)`,
-          body: emailContent,
-          html_body: emailContent.replace(/\n/g, "<br>"),
-          created_at: new Date(),
-          status: "pending",
-          type: "referral"
-        });
+        // Send personalized email
+        let personalizedEmail = emailTemplate;
+        personalizedEmail = personalizedEmail.replace(/\[Friend's Name\]/g, name);
+        
+        // Send the email
+        await sendReferralEmail(
+          email,
+          name,
+          `${userData.first_name} ${userData.last_name}`,
+          referralCode,
+          personalizedEmail
+        );
       }
       
       // Update referrals list
@@ -262,7 +260,12 @@ ${userData.first_name} ${userData.last_name}`;
                 <h3 className="text-white font-medium">Your Referral Progress</h3>
                 <p className="text-gray-400 text-sm">{completedReferrals}/3 Friends Purchased</p>
               </div>
-              <Progress value={referralProgress} className="h-2" />
+              
+              {/* Visual representation with the new bar chart */}
+              <div className="h-12 w-full">
+                <ReferralProgressChart referrals={completedReferrals} />
+              </div>
+              
               <p className="text-sm text-gray-400">
                 Refer 3 friends who purchase a MYWATER purifier and earn a free replacement cartridge!
               </p>
@@ -346,6 +349,19 @@ ${userData.first_name} ${userData.last_name}`;
             {showEmailForm && (
               <div className="space-y-4 pt-2 border-t border-gray-700">
                 <h3 className="text-white font-medium">Invite Friends via Email</h3>
+                
+                {/* Email Template Editor */}
+                <div className="space-y-2">
+                  <label className="text-sm text-gray-400">Personalize Your Invitation</label>
+                  <Textarea 
+                    value={emailTemplate}
+                    onChange={(e) => setEmailTemplate(e.target.value)}
+                    className="h-60 bg-spotify-dark text-gray-300 border-gray-700"
+                  />
+                  <p className="text-xs text-gray-500">
+                    Use [Friend's Name] as a placeholder - it will be replaced with your friend's actual name.
+                  </p>
+                </div>
                 
                 <div className="space-y-4">
                   {/* Friend 1 */}

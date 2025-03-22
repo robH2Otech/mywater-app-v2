@@ -3,9 +3,10 @@ import { useLanguage } from "@/contexts/LanguageContext";
 
 interface WelcomeMessageProps {
   firstName?: string;
+  lastName?: string;
 }
 
-export const WelcomeMessage = ({ firstName }: WelcomeMessageProps) => {
+export const WelcomeMessage = ({ firstName, lastName }: WelcomeMessageProps) => {
   const { t } = useLanguage();
   
   // If no firstName is provided, return a default message
@@ -17,12 +18,14 @@ export const WelcomeMessage = ({ firstName }: WelcomeMessageProps) => {
     );
   }
   
-  // Capitalize first letter of the name
-  const capitalizedName = firstName.charAt(0).toUpperCase() + firstName.slice(1);
+  // Get initials
+  const firstInitial = firstName.charAt(0).toUpperCase();
+  const lastInitial = lastName ? lastName.charAt(0).toUpperCase() : '';
+  const initials = lastInitial ? `${firstInitial}${lastInitial}` : firstInitial;
   
   return (
     <div className="text-white text-2xl font-medium">
-      Hey {capitalizedName}, welcome back!
+      Welcome {initials} back to MYWATER app!
     </div>
   );
 };

@@ -7,10 +7,12 @@ export const sendReferralEmail = async (
   toEmail: string,
   toName: string,
   fromName: string,
-  referralCode: string
+  referralCode: string,
+  customMessage?: string
 ) => {
   try {
-    const emailContent = `Hi ${toName},
+    // Default email template
+    const defaultEmailContent = `Hi ${toName},
 
 I wanted to share something I've been really happy with – my MYWATER water purification system. It provides clean, great-tasting water right from my tap, and I'm saving money on bottled water.
 
@@ -22,6 +24,9 @@ Check it out here: https://mywater.com/products
 
 Best,
 ${fromName}`;
+
+    // Use custom message if provided, otherwise use default
+    const emailContent = customMessage || defaultEmailContent;
 
     // In a real app, this would connect to an email sending service
     // For now, we'll store it in Firestore for demonstration
@@ -74,4 +79,24 @@ export const processPendingEmails = async () => {
     console.error("Error processing emails:", error);
     return 0;
   }
+};
+
+// Function to generate a personalized referral email template
+export const generateReferralEmailTemplate = (
+  toName: string,
+  fromName: string,
+  referralCode: string
+) => {
+  return `Hi ${toName},
+
+I wanted to share something I've been really happy with – my MYWATER water purification system. It provides clean, great-tasting water right from my tap, and I'm saving money on bottled water.
+
+I'm inviting you to try MYWATER with a special 20% discount! Just use this link: https://mywater.com/refer?code=${referralCode} when you purchase.
+
+If you decide to get a MYWATER system, you'll also get the chance to refer 3 friends and earn a free replacement cartridge for yourself!
+
+Check it out here: https://mywater.com/products
+
+Best,
+${fromName}`;
 };

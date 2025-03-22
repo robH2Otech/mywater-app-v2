@@ -27,6 +27,8 @@ import {
 } from "firebase/firestore";
 import { PrivateUserProfile } from "@/components/users/private/PrivateUserProfile";
 import { ReferralProgram } from "@/components/users/private/ReferralProgram";
+import { CartridgeDonutChart } from "@/components/users/private/CartridgeDonutChart";
+import { ReferralProgressChart } from "@/components/users/private/ReferralProgressChart";
 
 export function PrivateDashboard() {
   const navigate = useNavigate();
@@ -101,6 +103,26 @@ export function PrivateDashboard() {
     ? format(userData.cartridge_replacement_date.toDate(), 'MMMM d, yyyy')
     : 'Not available';
   
+  // Calculate cartridge usage percentage
+  const calculateCartridgeUsage = () => {
+    if (!userData?.purchase_date || !userData?.cartridge_replacement_date) return 0;
+    
+    const purchaseDate = userData.purchase_date.toDate();
+    const replacementDate = userData.cartridge_replacement_date.toDate();
+    const today = new Date();
+    
+    // Total days in cartridge lifecycle (typically 365 days)
+    const totalDays = differenceInDays(replacementDate, purchaseDate);
+    
+    // Days used so far
+    const daysUsed = differenceInDays(today, purchaseDate);
+    
+    // Percentage used (capped at 100%)
+    return Math.min(100, Math.max(0, Math.round((daysUsed / totalDays) * 100)));
+  };
+  
+  const cartridgeUsagePercent = calculateCartridgeUsage();
+  
   if (loading) {
     return (
       <div className="min-h-screen bg-spotify-dark flex items-center justify-center">
@@ -134,16 +156,10 @@ export function PrivateDashboard() {
               </div>
               
               <div className="flex flex-wrap gap-4">
-                {/* Cartridge Status */}
+                {/* Cartridge Status with Donut Chart */}
                 <div className="bg-spotify-dark rounded-lg p-3 flex items-center gap-3">
-                  <div className={`p-2 rounded-full ${
-                    isReplacementOverdue 
-                      ? "bg-red-500/20 text-red-500" 
-                      : isReplacementDueSoon 
-                        ? "bg-amber-500/20 text-amber-500" 
-                        : "bg-green-500/20 text-green-500"
-                  }`}>
-                    <Clock className="h-5 w-5" />
+                  <div className="h-16 w-16">
+                    <CartridgeDonutChart percentage={cartridgeUsagePercent} />
                   </div>
                   <div>
                     <p className="text-sm text-gray-400">Cartridge Replacement</p>
@@ -163,14 +179,10 @@ export function PrivateDashboard() {
                   </div>
                 </div>
                 
-                {/* Referral Status */}
+                {/* Referral Status with Bar Chart */}
                 <div className="bg-spotify-dark rounded-lg p-3 flex items-center gap-3">
-                  <div className={`p-2 rounded-full ${
-                    userData?.referral_reward_earned
-                      ? "bg-green-500/20 text-green-500"
-                      : "bg-mywater-blue/20 text-mywater-blue"
-                  }`}>
-                    <Share2 className="h-5 w-5" />
+                  <div className="h-16 w-16">
+                    <ReferralProgressChart referrals={userData?.referrals_converted || 0} />
                   </div>
                   <div>
                     <p className="text-sm text-gray-400">Referral Program</p>
