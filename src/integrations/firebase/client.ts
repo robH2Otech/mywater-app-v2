@@ -23,6 +23,9 @@ export const auth = getAuth(firebaseApp);
 export const db = getFirestore(firebaseApp);
 export const storage = getStorage(firebaseApp);
 
+// Set language before auth state is determined
+auth.useDeviceLanguage();
+
 // Enable local emulator if in development environment
 if (import.meta.env.DEV) {
   const useEmulator = false; // Set to true to use Firebase emulators
@@ -33,6 +36,3 @@ if (import.meta.env.DEV) {
     console.log("Using Firebase emulator suite");
   }
 }
-
-// Configure auth persistence
-auth.useDeviceLanguage();
