@@ -16,6 +16,7 @@ import {
 import { format } from "date-fns";
 import { db } from "@/integrations/firebase/client";
 import { doc, updateDoc } from "firebase/firestore";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 
 interface PrivateUserProfileProps {
   userData: any;
@@ -88,6 +89,20 @@ export function PrivateUserProfile({ userData }: PrivateUserProfileProps) {
     }
   };
   
+  // Get user initials for avatar
+  const getInitials = () => {
+    const first = userData?.first_name || "";
+    const last = userData?.last_name || "";
+    
+    if (first && last) {
+      return `${first[0]}${last[0]}`.toUpperCase();
+    } else if (first) {
+      return first.substring(0, 2).toUpperCase();
+    }
+    
+    return "U";
+  };
+  
   // Format dates
   const formattedPurchaseDate = userData?.purchase_date 
     ? format(userData.purchase_date.toDate(), 'MMMM d, yyyy')
@@ -101,10 +116,17 @@ export function PrivateUserProfile({ userData }: PrivateUserProfileProps) {
     <div className="space-y-6">
       <Card className="bg-spotify-darker border-spotify-accent">
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <User className="h-5 w-5 text-mywater-blue" />
-            My Profile
-          </CardTitle>
+          <div className="flex items-center justify-between">
+            <CardTitle className="flex items-center gap-2">
+              <User className="h-5 w-5 text-mywater-blue" />
+              My Profile
+            </CardTitle>
+            <Avatar className="h-12 w-12">
+              <AvatarFallback className="bg-mywater-blue text-white">
+                {getInitials()}
+              </AvatarFallback>
+            </Avatar>
+          </div>
           <CardDescription>
             Your personal information and water purifier details
           </CardDescription>
