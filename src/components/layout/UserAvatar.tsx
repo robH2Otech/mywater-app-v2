@@ -9,7 +9,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
-import { auth } from "@/integrations/firebase/client";
+import { logoutUser } from "@/utils/firebase/auth";
 
 interface UserAvatarProps {
   firstName: string;
@@ -21,7 +21,7 @@ export const UserAvatar = ({ firstName, lastName }: UserAvatarProps) => {
 
   const handleLogout = async () => {
     try {
-      await auth.signOut();
+      await logoutUser();
       toast.success("Logged out successfully");
       navigate("/"); // Navigate to landing page instead of /auth
     } catch (error) {

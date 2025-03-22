@@ -1,0 +1,184 @@
+
+import { 
+  User,
+  UserCredential,
+  GoogleAuthProvider, 
+  FacebookAuthProvider,
+  createUserWithEmailAndPassword,
+  signInWithEmailAndPassword,
+  signInWithPopup,
+  signOut
+} from "firebase/auth";
+import { collection, addDoc, getDocs, query, where } from "firebase/firestore";
+import { auth, db } from "@/integrations/firebase/client";
+
+/**
+ * Firebase authentication utility functions
+ */
+
+// Email/Password Login
+export const loginWithEmail = async (email: string, password: string): Promise<UserCredential> => {
+  try {
+    return await signInWithEmailAndPassword(auth, email, password);
+  } catch (error) {
+    throw error;
+  }
+};
+
+// Email/Password Registration
+export const registerWithEmail = async (email: string, password: string): Promise<UserCredential> => {
+  try {
+    return await createUserWithEmailAndPassword(auth, email, password);
+  } catch (error) {
+    throw error;
+  }
+};
+
+// Social Authentication (Google)
+export const loginWithGoogle = async (): Promise<UserCredential> => {
+  const provider = new GoogleAuthProvider();
+  provider.setCustomParameters({
+    prompt: 'select_account'
+  });
+  
+  try {
+    return await signInWithPopup(auth, provider);
+  } catch (error) {
+    throw error;
+  }
+};
+
+// Social Authentication (Facebook)
+export const loginWithFacebook = async (): Promise<UserCredential> => {
+  const provider = new FacebookAuthProvider();
+  provider.setCustomParameters({
+    display: 'popup'
+  });
+  
+  try {
+    return await signInWithPopup(auth, provider);
+  } catch (error) {
+    throw error;
+  }
+};
+
+// Sign Out
+export const logoutUser = async (): Promise<void> => {
+  try {
+    await signOut(auth);
+  } catch (error) {
+    throw error;
+  }
+};
+
+// Verify if user exists in private users collection
+export const verifyPrivateUser = async (uid: string): Promise<boolean> => {
+  try {
+    // Check if user exists in app_users_privat collection
+    const privateUsersRef = collection(db, "app_users_privat");
+    const q = query(privateUsersRef, where("uid", "==", uid));
+    const querySnapshot = await getDocs(q);
+    
+    if (querySnapshot.empty) {
+      // Check old collection as fallback
+      const oldPrivateUsersRef = collection(db, "private_users");
+      const oldQuery = query(oldPrivateUsersRef, where("uid", "==", uid));
+      const oldSnapshot = await getDocs(oldQuery);
+      
+      if (oldSnapshot.empty) {
+        return false;
+      } else {
+        // Migrate to new collection
+        const userData = oldSnapshot.docs[0].data();
+        await addDoc(collection(db, "app_users_privat"), {
+          ...userData,
+          migrated_at: new Date().toISOString()
+        });
+        return true;
+      }
+    }
+    
+    return true;
+  } catch (error) {
+    console.error("Error verifying private user:", error);
+    throw error;
+  }
+};
+
+// Handle Social User Data
+export const handleSocialUserData = async (user: User, provider: string): Promise<void> => {
+  try {
+    // First check if user already exists in app_users_privat collection
+    const privateUsersRef = collection(db, "app_users_privat");
+    const q = query(privateUsersRef, where("uid", "==", user.uid));
+    const querySnapshot = await getDocs(q);
+    
+    if (querySnapshot.empty) {
+      // Check the old collection as fallback
+      const oldPrivateUsersRef = collection(db, "private_users");
+      const oldQuery = query(oldPrivateUsersRef, where("uid", "==", user.uid));
+      const oldSnapshot = await getDocs(oldQuery);
+      
+      if (!oldSnapshot.empty) {
+        // Migrate from old collection
+        const userData = oldSnapshot.docs[0].data();
+        await addDoc(collection(db, "app_users_privat"), {
+          ...userData,
+          migrated_at: new Date().toISOString()
+        });
+      } else {
+        // Create a new user in app_users_privat collection
+        // Extract user info from social login
+        const name = user.displayName || '';
+        const nameParts = name.split(' ');
+        const firstName = nameParts[0] || '';
+        const lastName = nameParts.length > 1 ? nameParts.slice(1).join(' ') : '';
+        
+        await addDoc(collection(db, "app_users_privat"), {
+          uid: user.uid,
+          email: user.email,
+          first_name: firstName,
+          last_name: lastName,
+          created_at: new Date().toISOString(),
+          auth_provider: provider
+        });
+      }
+    }
+  } catch (error) {
+    console.error("Error handling social user data:", error);
+    throw error;
+  }
+};
+
+// Parse Firebase authentication errors
+export const getAuthErrorMessage = (error: any): string => {
+  let errorMessage = "Authentication failed";
+  
+  if (error.code === 'auth/invalid-email') {
+    errorMessage = "Invalid email address format";
+  } else if (error.code === 'auth/user-disabled') {
+    errorMessage = "This account has been disabled";
+  } else if (error.code === 'auth/user-not-found') {
+    errorMessage = "No account with this email exists";
+  } else if (error.code === 'auth/wrong-password') {
+    errorMessage = "Incorrect password";
+  } else if (error.code === 'auth/email-already-in-use') {
+    errorMessage = "An account with this email already exists";
+  } else if (error.code === 'auth/weak-password') {
+    errorMessage = "Password should be at least 6 characters";
+  } else if (error.code === 'auth/account-exists-with-different-credential') {
+    errorMessage = "An account already exists with the same email but different sign-in credentials.";
+  } else if (error.code === 'auth/cancelled-popup-request') {
+    errorMessage = "The sign-in popup was closed before completing authentication.";
+  } else if (error.code === 'auth/popup-blocked') {
+    errorMessage = "The sign-in popup was blocked by your browser.";
+  } else if (error.code === 'auth/popup-closed-by-user') {
+    errorMessage = "The sign-in popup was closed before completing authentication.";
+  } else if (error.code === 'auth/unauthorized-domain') {
+    errorMessage = "This domain is not authorized for OAuth operations. Please contact support.";
+  } else if (error.message) {
+    errorMessage = error.message;
+  }
+  
+  return errorMessage;
+};
