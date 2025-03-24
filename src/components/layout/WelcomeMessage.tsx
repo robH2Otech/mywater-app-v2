@@ -18,14 +18,12 @@ export const WelcomeMessage = ({ firstName, lastName }: WelcomeMessageProps) => 
     );
   }
   
-  // Get initials
-  const firstInitial = firstName.charAt(0).toUpperCase();
-  const lastInitial = lastName ? lastName.charAt(0).toUpperCase() : '';
-  const initials = lastInitial ? `${firstInitial}${lastInitial}` : firstInitial;
+  // Format the name: use first name only
+  const displayName = firstName.charAt(0).toUpperCase() + firstName.slice(1);
   
   return (
     <div className="text-white text-2xl font-medium">
-      Welcome {initials} back to MYWATER app!
+      Hey {displayName}, welcome back!
     </div>
   );
 };

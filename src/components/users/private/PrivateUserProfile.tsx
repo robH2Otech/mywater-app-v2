@@ -2,7 +2,7 @@
 import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { User } from "lucide-react";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { UserAvatar } from "@/components/layout/UserAvatar";
 import { PrivateUserEditForm } from "./PrivateUserEditForm";
 import { PrivateUserProfileDisplay } from "./PrivateUserProfileDisplay";
 
@@ -32,20 +32,6 @@ export function PrivateUserProfile({ userData }: PrivateUserProfileProps) {
     setIsEditing(false);
   };
   
-  // Get user initials for avatar
-  const getInitials = () => {
-    const first = localUserData?.first_name || "";
-    const last = localUserData?.last_name || "";
-    
-    if (first && last) {
-      return `${first[0]}${last[0]}`.toUpperCase();
-    } else if (first) {
-      return first.substring(0, 2).toUpperCase();
-    }
-    
-    return "U";
-  };
-  
   return (
     <div className="space-y-6">
       <Card className="bg-spotify-darker border-spotify-accent">
@@ -55,11 +41,11 @@ export function PrivateUserProfile({ userData }: PrivateUserProfileProps) {
               <User className="h-5 w-5 text-mywater-blue" />
               My Profile
             </CardTitle>
-            <Avatar className="h-12 w-12">
-              <AvatarFallback className="bg-mywater-blue text-white">
-                {getInitials()}
-              </AvatarFallback>
-            </Avatar>
+            <UserAvatar 
+              firstName={localUserData?.first_name || ""} 
+              lastName={localUserData?.last_name || ""} 
+              showMenu={false}
+            />
           </div>
           <CardDescription>
             Your personal information and water purifier details

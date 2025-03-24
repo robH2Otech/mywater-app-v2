@@ -14,16 +14,23 @@ import { logoutUser } from "@/utils/firebase/auth";
 interface UserAvatarProps {
   firstName: string;
   lastName: string;
+  className?: string;
+  showMenu?: boolean;
 }
 
-export const UserAvatar = ({ firstName, lastName }: UserAvatarProps) => {
+export const UserAvatar = ({ 
+  firstName, 
+  lastName, 
+  className = "",
+  showMenu = true
+}: UserAvatarProps) => {
   const navigate = useNavigate();
 
   const handleLogout = async () => {
     try {
       await logoutUser();
       toast.success("Logged out successfully");
-      navigate("/"); // Navigate to landing page instead of /auth
+      navigate("/"); // Navigate to landing page
     } catch (error) {
       console.error("Error logging out:", error);
       toast.error("Failed to log out");
@@ -49,10 +56,22 @@ export const UserAvatar = ({ firstName, lastName }: UserAvatarProps) => {
     return firstInitial || lastInitial || "U";
   };
 
+  // If we don't need the dropdown menu
+  if (!showMenu) {
+    return (
+      <Avatar className={`h-12 w-12 ${className}`}>
+        <AvatarFallback className="bg-mywater-blue text-white">
+          {getInitials()}
+        </AvatarFallback>
+      </Avatar>
+    );
+  }
+
+  // With dropdown menu
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Avatar className="h-8 w-8 cursor-pointer hover:opacity-80 transition-opacity">
+        <Avatar className={`h-8 w-8 cursor-pointer hover:opacity-80 transition-opacity ${className}`}>
           <AvatarFallback className="bg-mywater-blue text-white">
             {getInitials()}
           </AvatarFallback>
