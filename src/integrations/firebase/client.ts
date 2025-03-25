@@ -39,6 +39,13 @@ if (import.meta.env.DEV) {
   // For development in Lovable, we need to bypass the OAuth domain restriction
   if (isLovableDomain) {
     console.log("Lovable preview environment detected");
+    
+    // Set auth persistence to SESSION to avoid issues with iframe previews
+    import('firebase/auth').then(({ setPersistence, browserSessionPersistence }) => {
+      setPersistence(auth, browserSessionPersistence)
+        .then(() => console.log("Auth persistence set to SESSION"))
+        .catch(err => console.error("Error setting auth persistence:", err));
+    });
   }
 
   if (useEmulator) {

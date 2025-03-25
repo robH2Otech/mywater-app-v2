@@ -35,10 +35,27 @@ export function useSocialAuth() {
       
       // Get user info from credential
       const user = result.user;
+      
+      if (!user) {
+        throw new Error("Authentication successful but no user returned");
+      }
+      
       await handleSocialUserData(user, provider);
       
-      // Navigate to the dashboard after successful sign-in or registration
-      navigate("/private-dashboard");
+      // Check if user needs to complete profile
+      const needsProfileCompletion = result.additionalUserInfo?.isNewUser || false;
+      
+      if (needsProfileCompletion) {
+        // Stay on the register tab to complete profile
+        console.log("New user needs to complete profile");
+        toast({
+          title: "Almost there!",
+          description: "Please complete your profile to finish registration",
+        });
+      } else {
+        // Navigate to the dashboard after successful sign-in
+        navigate("/private-dashboard");
+      }
     } catch (error: any) {
       console.error(`${provider} auth error:`, error);
       

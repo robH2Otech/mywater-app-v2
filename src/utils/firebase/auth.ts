@@ -7,9 +7,11 @@ import {
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
   signInWithPopup,
-  signOut
+  signOut,
+  browserSessionPersistence,
+  setPersistence
 } from "firebase/auth";
-import { collection, addDoc, getDocs, query, where, doc, setDoc } from "firebase/firestore";
+import { collection, getDocs, query, where, doc, setDoc } from "firebase/firestore";
 import { auth, db, currentDomain } from "@/integrations/firebase/client";
 
 /**
@@ -20,6 +22,10 @@ import { auth, db, currentDomain } from "@/integrations/firebase/client";
 export const loginWithEmail = async (email: string, password: string): Promise<UserCredential> => {
   try {
     console.log("Attempting email login for:", email);
+    
+    // Set session persistence to prevent issues in iframe environments
+    await setPersistence(auth, browserSessionPersistence);
+    
     return await signInWithEmailAndPassword(auth, email, password);
   } catch (error) {
     console.error("Email login error:", error);
@@ -31,6 +37,10 @@ export const loginWithEmail = async (email: string, password: string): Promise<U
 export const registerWithEmail = async (email: string, password: string): Promise<UserCredential> => {
   try {
     console.log("Attempting email registration for:", email);
+    
+    // Set session persistence to prevent issues in iframe environments
+    await setPersistence(auth, browserSessionPersistence);
+    
     return await createUserWithEmailAndPassword(auth, email, password);
   } catch (error) {
     console.error("Email registration error:", error);
@@ -47,6 +57,10 @@ export const loginWithGoogle = async (): Promise<UserCredential> => {
   
   try {
     console.log("Attempting Google login with domain:", currentDomain);
+    
+    // Set session persistence to prevent issues in iframe environments
+    await setPersistence(auth, browserSessionPersistence);
+    
     return await signInWithPopup(auth, provider);
   } catch (error) {
     console.error("Google login error:", error);
@@ -63,6 +77,10 @@ export const loginWithFacebook = async (): Promise<UserCredential> => {
   
   try {
     console.log("Attempting Facebook login with domain:", currentDomain);
+    
+    // Set session persistence to prevent issues in iframe environments
+    await setPersistence(auth, browserSessionPersistence);
+    
     return await signInWithPopup(auth, provider);
   } catch (error) {
     console.error("Facebook login error:", error);
@@ -104,7 +122,7 @@ export const verifyPrivateUser = async (uid: string): Promise<boolean> => {
         const userData = oldSnapshot.docs[0].data();
         await setDoc(doc(db, "app_users_privat", uid), {
           ...userData,
-          migrated_at: new Date().toISOString()
+          migrated_at: new Date()
         });
         return true;
       }
@@ -142,39 +160,25 @@ export const handleSocialUserData = async (user: User, provider: string): Promis
     }
     
     if (querySnapshot.empty && !userDocExists) {
-      // Check the old collection as fallback
-      const oldPrivateUsersRef = collection(db, "private_users");
-      const oldQuery = query(oldPrivateUsersRef, where("uid", "==", user.uid));
-      const oldSnapshot = await getDocs(oldQuery);
+      console.log("User not found in database, creating temporary profile");
       
-      if (!oldSnapshot.empty) {
-        console.log("User found in old private_users collection, migrating...");
-        // Migrate from old collection - use UID as document ID
-        const userData = oldSnapshot.docs[0].data();
-        await setDoc(doc(db, "app_users_privat", user.uid), {
-          ...userData,
-          migrated_at: new Date().toISOString()
-        });
-      } else {
-        console.log("Creating new user in app_users_privat collection");
-        // Extract user info from social login
-        const name = user.displayName || '';
-        const nameParts = name.split(' ');
-        const firstName = nameParts[0] || '';
-        const lastName = nameParts.length > 1 ? nameParts.slice(1).join(' ') : '';
-        
-        // Create temporary user data - will need to be completed with registration form
-        // Use UID as document ID for easier retrieval
-        await setDoc(doc(db, "app_users_privat", user.uid), {
-          uid: user.uid,
-          email: user.email,
-          first_name: firstName,
-          last_name: lastName,
-          created_at: new Date().toISOString(),
-          auth_provider: provider,
-          needs_profile_completion: true  // Flag to indicate registration needs to be completed
-        });
-      }
+      // Extract user info from social login
+      const name = user.displayName || '';
+      const nameParts = name.split(' ');
+      const firstName = nameParts[0] || '';
+      const lastName = nameParts.length > 1 ? nameParts.slice(1).join(' ') : '';
+      
+      // Create temporary user data - will need to be completed with registration form
+      // Use UID as document ID for easier retrieval
+      await setDoc(doc(db, "app_users_privat", user.uid), {
+        uid: user.uid,
+        email: user.email,
+        first_name: firstName,
+        last_name: lastName,
+        created_at: new Date(),
+        auth_provider: provider,
+        needs_profile_completion: true  // Flag to indicate registration needs to be completed
+      });
     } else {
       console.log("User already exists in app_users_privat collection");
     }

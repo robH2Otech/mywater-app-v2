@@ -3,7 +3,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { createUserWithEmailAndPassword, updateProfile } from "firebase/auth";
-import { collection, addDoc, doc, setDoc } from "firebase/firestore";
+import { collection, doc, setDoc } from "firebase/firestore";
 import { auth, db } from "@/integrations/firebase/client";
 
 interface RegisterFormHandlerProps {
@@ -46,9 +46,18 @@ export function useRegisterFormHandler() {
     });
     
     // Validate form
-    if (!socialEmail && password !== confirmPassword) {
+    if (!firstName || !lastName) {
       toast({
-        title: "Passwords do not match",
+        title: "Missing information",
+        description: "Please provide your first and last name.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    if (!socialEmail && (!password || password !== confirmPassword)) {
+      toast({
+        title: "Password error",
         description: "Please make sure your passwords match.",
         variant: "destructive",
       });
@@ -99,6 +108,12 @@ export function useRegisterFormHandler() {
         // Create user account with email/password
         const userCredential = await createUserWithEmailAndPassword(auth, email, password);
         user = userCredential.user;
+        
+        // Update display name
+        await updateProfile(user, {
+          displayName: `${firstName} ${lastName}`
+        });
+        
         console.log("User created successfully:", user.uid);
       }
       
@@ -134,17 +149,16 @@ export function useRegisterFormHandler() {
         await setDoc(userDocRef, userData);
         console.log("User data stored successfully with UID as doc ID");
       } catch (error) {
-        console.error("Error saving user with UID as doc ID, falling back to auto-ID:", error);
-        // Fallback to auto-generated document ID
-        await addDoc(collection(db, "app_users_privat"), userData);
-        console.log("User data stored successfully with auto-generated ID");
+        console.error("Error saving user with UID as doc ID:", error);
+        throw error;
       }
       
       // Create a unique referral code
       const referralCode = `${firstName.toLowerCase().substring(0, 3)}${lastName.toLowerCase().substring(0, 3)}${Math.floor(Math.random() * 10000)}`;
       
       console.log("Creating referral code:", referralCode);
-      await addDoc(collection(db, "referral_codes"), {
+      const referralDocRef = doc(collection(db, "referral_codes"));
+      await setDoc(referralDocRef, {
         user_id: user.uid,
         code: referralCode,
         created_at: new Date()
@@ -173,7 +187,7 @@ export function useRegisterFormHandler() {
       }
       
       toast({
-        title: "Error",
+        title: "Registration Error",
         description: errorMessage,
         variant: "destructive",
       });
