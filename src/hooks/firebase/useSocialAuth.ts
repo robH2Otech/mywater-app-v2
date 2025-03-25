@@ -40,6 +40,7 @@ export function useSocialAuth() {
         throw new Error("Authentication successful but no user returned");
       }
       
+      // Process the social user data
       await handleSocialUserData(user, provider);
       
       // Check if user needs to complete profile
@@ -64,7 +65,7 @@ export function useSocialAuth() {
       
       // Add special handling for OAuth domain issues
       if (error.code === 'auth/unauthorized-domain') {
-        errorMessage = `Your domain (${currentDomain}) isn't authorized for ${provider} login. Please ensure you're accessing from an authorized domain or contact support.`;
+        errorMessage = `Your domain (${currentDomain}) isn't authorized for ${provider} login. Please ensure this domain is added to Firebase Auth settings.`;
         console.error(`Unauthorized domain: ${currentDomain}. You need to add this domain to Firebase Auth settings.`);
       }
       

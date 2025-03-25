@@ -2,7 +2,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
-import { loginWithEmail, verifyPrivateUser, getAuthErrorMessage } from "@/utils/firebase/auth";
+import { loginWithEmail, registerWithEmail, verifyPrivateUser, getAuthErrorMessage } from "@/utils/firebase/auth";
 
 /**
  * Hook to handle email-based authentication
@@ -20,22 +20,27 @@ export function useEmailAuth() {
     
     try {
       if (authMode === "login") {
+        console.log("Logging in with email:", email);
         const userCredential = await loginWithEmail(email, password);
         const user = userCredential.user;
         
         // Check if user exists in private users collection
-        await verifyPrivateUser(user.uid);
+        const isPrivateUser = await verifyPrivateUser(user.uid);
         
-        console.log("Private user signed in:", user);
+        if (!isPrivateUser) {
+          throw new Error("Account not found. Please register first.");
+        }
+        
+        console.log("Private user signed in:", user.uid);
         navigate("/private-dashboard");
-      } else {
+      } else if (authMode === "register") {
+        console.log("Starting registration with email");
+        // We'll redirect to the registration form to complete profile
+        // instead of creating the user here
         toast({
-          title: "Please complete the registration form",
-          description: "We need a few more details to set up your account.",
-          variant: "destructive",
+          title: "Please complete registration",
+          description: "Fill in your details to create your account",
         });
-        setIsLoading(false);
-        return;
       }
     } catch (error: any) {
       console.error("Auth error:", error);

@@ -1,6 +1,6 @@
 
 import { initializeApp } from "firebase/app";
-import { getAuth, connectAuthEmulator } from "firebase/auth";
+import { getAuth, connectAuthEmulator, setPersistence, browserSessionPersistence } from "firebase/auth";
 import { getFirestore, connectFirestoreEmulator } from "firebase/firestore";
 import { getStorage, connectStorageEmulator } from "firebase/storage";
 
@@ -30,23 +30,25 @@ auth.useDeviceLanguage();
 export const currentDomain = window.location.hostname;
 console.log("Current domain:", currentDomain);
 
+// Immediately set to session persistence to prevent issues with iframe previews
+(async () => {
+  try {
+    await setPersistence(auth, browserSessionPersistence);
+    console.log("Auth persistence set to SESSION");
+  } catch (err) {
+    console.error("Error setting auth persistence:", err);
+  }
+})();
+
+// Handle Lovable domains
+const isLovableDomain = currentDomain.includes('lovable.app') || currentDomain.includes('lovableproject.com');
+if (isLovableDomain) {
+  console.log("Lovable environment detected:", currentDomain);
+}
+
 // Enable local emulator if in development environment
 if (import.meta.env.DEV) {
-  // Check if we're in the Lovable preview domain
-  const isLovableDomain = currentDomain.includes('lovableproject.com');
   const useEmulator = false; // Set to true to use Firebase emulators
-
-  // For development in Lovable, we need to bypass the OAuth domain restriction
-  if (isLovableDomain) {
-    console.log("Lovable preview environment detected");
-    
-    // Set auth persistence to SESSION to avoid issues with iframe previews
-    import('firebase/auth').then(({ setPersistence, browserSessionPersistence }) => {
-      setPersistence(auth, browserSessionPersistence)
-        .then(() => console.log("Auth persistence set to SESSION"))
-        .catch(err => console.error("Error setting auth persistence:", err));
-    });
-  }
 
   if (useEmulator) {
     connectAuthEmulator(auth, "http://localhost:9099");

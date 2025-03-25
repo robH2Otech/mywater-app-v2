@@ -95,7 +95,7 @@ export function useRegisterFormHandler() {
         
         if (!user) {
           console.error("User session expired during social registration");
-          throw new Error("User session expired. Please sign in again.");
+          throw new Error("User session expired. Please sign in again with social account.");
         }
         
         // Update user profile if needed
@@ -148,21 +148,26 @@ export function useRegisterFormHandler() {
         const userDocRef = doc(db, "app_users_privat", user.uid);
         await setDoc(userDocRef, userData);
         console.log("User data stored successfully with UID as doc ID");
-      } catch (error) {
-        console.error("Error saving user with UID as doc ID:", error);
-        throw error;
+      } catch (firestoreError) {
+        console.error("Error saving user data to Firestore:", firestoreError);
+        throw new Error("Failed to save your profile. Please try again.");
       }
       
       // Create a unique referral code
       const referralCode = `${firstName.toLowerCase().substring(0, 3)}${lastName.toLowerCase().substring(0, 3)}${Math.floor(Math.random() * 10000)}`;
       
       console.log("Creating referral code:", referralCode);
-      const referralDocRef = doc(collection(db, "referral_codes"));
-      await setDoc(referralDocRef, {
-        user_id: user.uid,
-        code: referralCode,
-        created_at: new Date()
-      });
+      try {
+        const referralDocRef = doc(collection(db, "referral_codes"));
+        await setDoc(referralDocRef, {
+          user_id: user.uid,
+          code: referralCode,
+          created_at: new Date()
+        });
+      } catch (referralError) {
+        console.error("Error creating referral code:", referralError);
+        // Don't throw here, as the main account is already created
+      }
       
       toast({
         title: "Account created successfully",

@@ -51,6 +51,8 @@ export const registerWithEmail = async (email: string, password: string): Promis
 // Social Authentication (Google)
 export const loginWithGoogle = async (): Promise<UserCredential> => {
   const provider = new GoogleAuthProvider();
+  
+  // Always force account selection to avoid silent login issues
   provider.setCustomParameters({
     prompt: 'select_account'
   });
@@ -71,6 +73,8 @@ export const loginWithGoogle = async (): Promise<UserCredential> => {
 // Social Authentication (Facebook)
 export const loginWithFacebook = async (): Promise<UserCredential> => {
   const provider = new FacebookAuthProvider();
+  
+  // Force popup display to ensure consistent behavior
   provider.setCustomParameters({
     display: 'popup'
   });
@@ -102,6 +106,20 @@ export const logoutUser = async (): Promise<void> => {
 export const verifyPrivateUser = async (uid: string): Promise<boolean> => {
   try {
     console.log("Verifying private user with UID:", uid);
+    
+    // First try getting the user directly by UID as document ID (most efficient)
+    try {
+      const userDocRef = doc(db, "app_users_privat", uid);
+      const userSnapshot = await userDocRef.get();
+      
+      if (userSnapshot.exists()) {
+        console.log("User found by direct UID lookup");
+        return true;
+      }
+    } catch (error) {
+      console.log("Direct UID lookup failed, falling back to query");
+    }
+    
     // Check if user exists in app_users_privat collection
     const privateUsersRef = collection(db, "app_users_privat");
     const q = query(privateUsersRef, where("uid", "==", uid));
@@ -144,22 +162,25 @@ export const handleSocialUserData = async (user: User, provider: string): Promis
       throw new Error("Invalid user object: missing UID");
     }
     
-    // First check if user already exists in app_users_privat collection
+    // First check if user already exists by UID as document ID
+    try {
+      const userDocRef = doc(db, "app_users_privat", user.uid);
+      const userSnapshot = await userDocRef.get();
+      
+      if (userSnapshot.exists()) {
+        console.log("User document found by UID");
+        return;
+      }
+    } catch (error) {
+      console.log("Direct UID lookup failed, continuing with query");
+    }
+    
+    // Also check by uid field
     const privateUsersRef = collection(db, "app_users_privat");
     const q = query(privateUsersRef, where("uid", "==", user.uid));
     const querySnapshot = await getDocs(q);
     
-    // Also try getting the user directly by UID as document ID
-    let userDocExists = false;
-    try {
-      const userDocRef = doc(db, "app_users_privat", user.uid);
-      const userDocSnap = await getDocs(query(privateUsersRef, where("__name__", "==", user.uid)));
-      userDocExists = !userDocSnap.empty;
-    } catch (error) {
-      console.error("Error checking for user doc by ID:", error);
-    }
-    
-    if (querySnapshot.empty && !userDocExists) {
+    if (querySnapshot.empty) {
       console.log("User not found in database, creating temporary profile");
       
       // Extract user info from social login
