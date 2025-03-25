@@ -26,12 +26,21 @@ export const storage = getStorage(firebaseApp);
 // Set language before auth state is determined
 auth.useDeviceLanguage();
 
-// Log the current domain for debugging purposes
-console.log("Current domain:", window.location.hostname);
+// Current domain for debugging and authorization checks
+export const currentDomain = window.location.hostname;
+console.log("Current domain:", currentDomain);
 
 // Enable local emulator if in development environment
 if (import.meta.env.DEV) {
+  // Check if we're in the Lovable preview domain
+  const isLovableDomain = currentDomain.includes('lovableproject.com');
   const useEmulator = false; // Set to true to use Firebase emulators
+
+  // For development in Lovable, we need to bypass the OAuth domain restriction
+  if (isLovableDomain) {
+    console.log("Lovable preview environment detected");
+  }
+
   if (useEmulator) {
     connectAuthEmulator(auth, "http://localhost:9099");
     connectFirestoreEmulator(db, "localhost", 8080);

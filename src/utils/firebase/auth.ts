@@ -9,8 +9,8 @@ import {
   signInWithPopup,
   signOut
 } from "firebase/auth";
-import { collection, addDoc, getDocs, query, where } from "firebase/firestore";
-import { auth, db } from "@/integrations/firebase/client";
+import { collection, addDoc, getDocs, query, where, doc, setDoc } from "firebase/firestore";
+import { auth, db, currentDomain } from "@/integrations/firebase/client";
 
 /**
  * Firebase authentication utility functions
@@ -46,7 +46,7 @@ export const loginWithGoogle = async (): Promise<UserCredential> => {
   });
   
   try {
-    console.log("Attempting Google login with domain:", window.location.hostname);
+    console.log("Attempting Google login with domain:", currentDomain);
     return await signInWithPopup(auth, provider);
   } catch (error) {
     console.error("Google login error:", error);
@@ -62,7 +62,7 @@ export const loginWithFacebook = async (): Promise<UserCredential> => {
   });
   
   try {
-    console.log("Attempting Facebook login with domain:", window.location.hostname);
+    console.log("Attempting Facebook login with domain:", currentDomain);
     return await signInWithPopup(auth, provider);
   } catch (error) {
     console.error("Facebook login error:", error);
@@ -100,9 +100,9 @@ export const verifyPrivateUser = async (uid: string): Promise<boolean> => {
         return false;
       } else {
         console.log("User found in old private_users collection, migrating...");
-        // Migrate to new collection
+        // Migrate to new collection - use UID as document ID for easier retrieval
         const userData = oldSnapshot.docs[0].data();
-        await addDoc(collection(db, "app_users_privat"), {
+        await setDoc(doc(db, "app_users_privat", uid), {
           ...userData,
           migrated_at: new Date().toISOString()
         });
@@ -122,12 +122,26 @@ export const verifyPrivateUser = async (uid: string): Promise<boolean> => {
 export const handleSocialUserData = async (user: User, provider: string): Promise<void> => {
   try {
     console.log("Handling social user data for:", user.uid, "Provider:", provider);
+    if (!user.uid) {
+      throw new Error("Invalid user object: missing UID");
+    }
+    
     // First check if user already exists in app_users_privat collection
     const privateUsersRef = collection(db, "app_users_privat");
     const q = query(privateUsersRef, where("uid", "==", user.uid));
     const querySnapshot = await getDocs(q);
     
-    if (querySnapshot.empty) {
+    // Also try getting the user directly by UID as document ID
+    let userDocExists = false;
+    try {
+      const userDocRef = doc(db, "app_users_privat", user.uid);
+      const userDocSnap = await getDocs(query(privateUsersRef, where("__name__", "==", user.uid)));
+      userDocExists = !userDocSnap.empty;
+    } catch (error) {
+      console.error("Error checking for user doc by ID:", error);
+    }
+    
+    if (querySnapshot.empty && !userDocExists) {
       // Check the old collection as fallback
       const oldPrivateUsersRef = collection(db, "private_users");
       const oldQuery = query(oldPrivateUsersRef, where("uid", "==", user.uid));
@@ -135,15 +149,14 @@ export const handleSocialUserData = async (user: User, provider: string): Promis
       
       if (!oldSnapshot.empty) {
         console.log("User found in old private_users collection, migrating...");
-        // Migrate from old collection
+        // Migrate from old collection - use UID as document ID
         const userData = oldSnapshot.docs[0].data();
-        await addDoc(collection(db, "app_users_privat"), {
+        await setDoc(doc(db, "app_users_privat", user.uid), {
           ...userData,
           migrated_at: new Date().toISOString()
         });
       } else {
         console.log("Creating new user in app_users_privat collection");
-        // Create a new user in app_users_privat collection
         // Extract user info from social login
         const name = user.displayName || '';
         const nameParts = name.split(' ');
@@ -151,7 +164,8 @@ export const handleSocialUserData = async (user: User, provider: string): Promis
         const lastName = nameParts.length > 1 ? nameParts.slice(1).join(' ') : '';
         
         // Create temporary user data - will need to be completed with registration form
-        await addDoc(collection(db, "app_users_privat"), {
+        // Use UID as document ID for easier retrieval
+        await setDoc(doc(db, "app_users_privat", user.uid), {
           uid: user.uid,
           email: user.email,
           first_name: firstName,
@@ -196,7 +210,7 @@ export const getAuthErrorMessage = (error: any): string => {
   } else if (error.code === 'auth/popup-closed-by-user') {
     errorMessage = "The sign-in popup was closed before completing authentication.";
   } else if (error.code === 'auth/unauthorized-domain') {
-    errorMessage = "This domain is not authorized for OAuth operations. Please contact support.";
+    errorMessage = `This domain (${currentDomain}) is not authorized for OAuth operations. Please contact support.`;
   } else if (error.message) {
     errorMessage = error.message;
   }

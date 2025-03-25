@@ -8,6 +8,7 @@ import {
   handleSocialUserData,
   getAuthErrorMessage 
 } from "@/utils/firebase/auth";
+import { currentDomain } from "@/integrations/firebase/client";
 
 /**
  * Hook to handle social authentication methods
@@ -20,7 +21,7 @@ export function useSocialAuth() {
   const handleSocialAuth = async (provider: 'google' | 'facebook') => {
     setSocialLoading(provider);
     try {
-      console.log(`Attempting ${provider} authentication`);
+      console.log(`Attempting ${provider} authentication on domain: ${currentDomain}`);
       
       let result;
       
@@ -40,12 +41,14 @@ export function useSocialAuth() {
       navigate("/private-dashboard");
     } catch (error: any) {
       console.error(`${provider} auth error:`, error);
+      
       // Enhanced error message for OAuth issues
       let errorMessage = getAuthErrorMessage(error);
       
       // Add special handling for OAuth domain issues
       if (error.code === 'auth/unauthorized-domain') {
-        errorMessage = `Your domain isn't authorized for ${provider} login. Please ensure you're accessing from an authorized domain or contact support.`;
+        errorMessage = `Your domain (${currentDomain}) isn't authorized for ${provider} login. Please ensure you're accessing from an authorized domain or contact support.`;
+        console.error(`Unauthorized domain: ${currentDomain}. You need to add this domain to Firebase Auth settings.`);
       }
       
       toast({

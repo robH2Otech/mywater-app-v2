@@ -103,7 +103,7 @@ export function useRegisterFormHandler() {
       }
       
       // Calculate cartridge replacement date (1 year from purchase)
-      const replacementDate = new Date(purchaseDate);
+      const replacementDate = new Date(purchaseDate!);
       replacementDate.setFullYear(replacementDate.getFullYear() + 1);
       
       console.log("Storing user data in Firestore");
@@ -129,10 +129,16 @@ export function useRegisterFormHandler() {
       };
       
       // Use user.uid as the document ID for easier retrieval
-      const userDocRef = doc(db, "app_users_privat", user.uid);
-      await setDoc(userDocRef, userData);
-      
-      console.log("User data stored successfully");
+      try {
+        const userDocRef = doc(db, "app_users_privat", user.uid);
+        await setDoc(userDocRef, userData);
+        console.log("User data stored successfully with UID as doc ID");
+      } catch (error) {
+        console.error("Error saving user with UID as doc ID, falling back to auto-ID:", error);
+        // Fallback to auto-generated document ID
+        await addDoc(collection(db, "app_users_privat"), userData);
+        console.log("User data stored successfully with auto-generated ID");
+      }
       
       // Create a unique referral code
       const referralCode = `${firstName.toLowerCase().substring(0, 3)}${lastName.toLowerCase().substring(0, 3)}${Math.floor(Math.random() * 10000)}`;
