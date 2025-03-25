@@ -19,8 +19,10 @@ import { auth, db } from "@/integrations/firebase/client";
 // Email/Password Login
 export const loginWithEmail = async (email: string, password: string): Promise<UserCredential> => {
   try {
+    console.log("Attempting email login for:", email);
     return await signInWithEmailAndPassword(auth, email, password);
   } catch (error) {
+    console.error("Email login error:", error);
     throw error;
   }
 };
@@ -28,8 +30,10 @@ export const loginWithEmail = async (email: string, password: string): Promise<U
 // Email/Password Registration
 export const registerWithEmail = async (email: string, password: string): Promise<UserCredential> => {
   try {
+    console.log("Attempting email registration for:", email);
     return await createUserWithEmailAndPassword(auth, email, password);
   } catch (error) {
+    console.error("Email registration error:", error);
     throw error;
   }
 };
@@ -42,8 +46,10 @@ export const loginWithGoogle = async (): Promise<UserCredential> => {
   });
   
   try {
+    console.log("Attempting Google login with domain:", window.location.hostname);
     return await signInWithPopup(auth, provider);
   } catch (error) {
+    console.error("Google login error:", error);
     throw error;
   }
 };
@@ -56,8 +62,10 @@ export const loginWithFacebook = async (): Promise<UserCredential> => {
   });
   
   try {
+    console.log("Attempting Facebook login with domain:", window.location.hostname);
     return await signInWithPopup(auth, provider);
   } catch (error) {
+    console.error("Facebook login error:", error);
     throw error;
   }
 };
@@ -67,6 +75,7 @@ export const logoutUser = async (): Promise<void> => {
   try {
     await signOut(auth);
   } catch (error) {
+    console.error("Logout error:", error);
     throw error;
   }
 };
@@ -74,6 +83,7 @@ export const logoutUser = async (): Promise<void> => {
 // Verify if user exists in private users collection
 export const verifyPrivateUser = async (uid: string): Promise<boolean> => {
   try {
+    console.log("Verifying private user with UID:", uid);
     // Check if user exists in app_users_privat collection
     const privateUsersRef = collection(db, "app_users_privat");
     const q = query(privateUsersRef, where("uid", "==", uid));
@@ -86,8 +96,10 @@ export const verifyPrivateUser = async (uid: string): Promise<boolean> => {
       const oldSnapshot = await getDocs(oldQuery);
       
       if (oldSnapshot.empty) {
+        console.log("User not found in any collection");
         return false;
       } else {
+        console.log("User found in old private_users collection, migrating...");
         // Migrate to new collection
         const userData = oldSnapshot.docs[0].data();
         await addDoc(collection(db, "app_users_privat"), {
@@ -98,6 +110,7 @@ export const verifyPrivateUser = async (uid: string): Promise<boolean> => {
       }
     }
     
+    console.log("User found in app_users_privat collection");
     return true;
   } catch (error) {
     console.error("Error verifying private user:", error);
@@ -108,6 +121,7 @@ export const verifyPrivateUser = async (uid: string): Promise<boolean> => {
 // Handle Social User Data
 export const handleSocialUserData = async (user: User, provider: string): Promise<void> => {
   try {
+    console.log("Handling social user data for:", user.uid, "Provider:", provider);
     // First check if user already exists in app_users_privat collection
     const privateUsersRef = collection(db, "app_users_privat");
     const q = query(privateUsersRef, where("uid", "==", user.uid));
@@ -120,6 +134,7 @@ export const handleSocialUserData = async (user: User, provider: string): Promis
       const oldSnapshot = await getDocs(oldQuery);
       
       if (!oldSnapshot.empty) {
+        console.log("User found in old private_users collection, migrating...");
         // Migrate from old collection
         const userData = oldSnapshot.docs[0].data();
         await addDoc(collection(db, "app_users_privat"), {
@@ -127,6 +142,7 @@ export const handleSocialUserData = async (user: User, provider: string): Promis
           migrated_at: new Date().toISOString()
         });
       } else {
+        console.log("Creating new user in app_users_privat collection");
         // Create a new user in app_users_privat collection
         // Extract user info from social login
         const name = user.displayName || '';
@@ -134,15 +150,19 @@ export const handleSocialUserData = async (user: User, provider: string): Promis
         const firstName = nameParts[0] || '';
         const lastName = nameParts.length > 1 ? nameParts.slice(1).join(' ') : '';
         
+        // Create temporary user data - will need to be completed with registration form
         await addDoc(collection(db, "app_users_privat"), {
           uid: user.uid,
           email: user.email,
           first_name: firstName,
           last_name: lastName,
           created_at: new Date().toISOString(),
-          auth_provider: provider
+          auth_provider: provider,
+          needs_profile_completion: true  // Flag to indicate registration needs to be completed
         });
       }
+    } else {
+      console.log("User already exists in app_users_privat collection");
     }
   } catch (error) {
     console.error("Error handling social user data:", error);
@@ -152,6 +172,7 @@ export const handleSocialUserData = async (user: User, provider: string): Promis
 
 // Parse Firebase authentication errors
 export const getAuthErrorMessage = (error: any): string => {
+  console.log("Processing auth error:", error.code, error.message);
   let errorMessage = "Authentication failed";
   
   if (error.code === 'auth/invalid-email') {

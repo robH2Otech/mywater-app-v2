@@ -5,9 +5,10 @@ import { User } from "lucide-react";
 import { UserAvatar } from "@/components/layout/UserAvatar";
 import { PrivateUserEditForm } from "./PrivateUserEditForm";
 import { PrivateUserProfileDisplay } from "./PrivateUserProfileDisplay";
+import { PrivateUser } from "@/types/privateUser";
 
 interface PrivateUserProfileProps {
-  userData: any;
+  userData: PrivateUser | any;
 }
 
 export function PrivateUserProfile({ userData }: PrivateUserProfileProps) {

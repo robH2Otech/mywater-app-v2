@@ -26,6 +26,9 @@ export const storage = getStorage(firebaseApp);
 // Set language before auth state is determined
 auth.useDeviceLanguage();
 
+// Log the current domain for debugging purposes
+console.log("Current domain:", window.location.hostname);
+
 // Enable local emulator if in development environment
 if (import.meta.env.DEV) {
   const useEmulator = false; // Set to true to use Firebase emulators

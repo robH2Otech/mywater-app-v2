@@ -20,6 +20,8 @@ export function useSocialAuth() {
   const handleSocialAuth = async (provider: 'google' | 'facebook') => {
     setSocialLoading(provider);
     try {
+      console.log(`Attempting ${provider} authentication`);
+      
       let result;
       
       if (provider === 'google') {
@@ -28,6 +30,8 @@ export function useSocialAuth() {
         result = await loginWithFacebook();
       }
       
+      console.log(`${provider} authentication successful`, result);
+      
       // Get user info from credential
       const user = result.user;
       await handleSocialUserData(user, provider);
@@ -35,8 +39,15 @@ export function useSocialAuth() {
       // Navigate to the dashboard after successful sign-in or registration
       navigate("/private-dashboard");
     } catch (error: any) {
-      console.error("Social auth error:", error);
-      const errorMessage = getAuthErrorMessage(error);
+      console.error(`${provider} auth error:`, error);
+      // Enhanced error message for OAuth issues
+      let errorMessage = getAuthErrorMessage(error);
+      
+      // Add special handling for OAuth domain issues
+      if (error.code === 'auth/unauthorized-domain') {
+        errorMessage = `Your domain isn't authorized for ${provider} login. Please ensure you're accessing from an authorized domain or contact support.`;
+      }
+      
       toast({
         title: "Authentication Error",
         description: errorMessage,
