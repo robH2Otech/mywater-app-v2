@@ -4,7 +4,6 @@ import { WelcomeMessage } from "@/components/layout/WelcomeMessage";
 import { Card, CardContent } from "@/components/ui/card";
 import { CartridgeDonutChart } from "@/components/users/private/CartridgeDonutChart";
 import { ReferralProgressChart } from "@/components/users/private/ReferralProgressChart";
-import { differenceInDays } from "date-fns";
 import { DocumentData } from "firebase/firestore";
 
 interface DashboardHeaderProps {
@@ -37,9 +36,9 @@ export function DashboardHeader({
           </div>
           
           <div className="flex flex-wrap gap-4">
-            {/* Cartridge Status with Donut Chart */}
-            <div className="bg-spotify-dark rounded-lg p-3 flex items-center gap-3">
-              <div className="h-16 w-16">
+            {/* Improved Cartridge Status with Larger Donut Chart */}
+            <div className="bg-spotify-dark rounded-lg p-4 flex items-center gap-4">
+              <div className="h-20 w-20">
                 <CartridgeDonutChart percentage={cartridgeUsagePercent} />
               </div>
               <div>
@@ -61,8 +60,8 @@ export function DashboardHeader({
             </div>
             
             {/* Referral Status with Bar Chart */}
-            <div className="bg-spotify-dark rounded-lg p-3 flex items-center gap-3">
-              <div className="h-16 w-16">
+            <div className="bg-spotify-dark rounded-lg p-4 flex items-center gap-4">
+              <div className="h-20 w-20">
                 <ReferralProgressChart referrals={userData?.referrals_converted || 0} />
               </div>
               <div>

@@ -44,6 +44,7 @@ export function PrivateUserProfile({ userData }: PrivateUserProfileProps) {
             <UserAvatar 
               firstName={localUserData?.first_name || ""} 
               lastName={localUserData?.last_name || ""} 
+              className="h-14 w-14"
               showMenu={false}
             />
           </div>
