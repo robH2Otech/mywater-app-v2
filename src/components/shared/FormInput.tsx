@@ -10,6 +10,7 @@ interface FormInputProps {
   required?: boolean;
   minLength?: number;
   disabled?: boolean;
+  className?: string;
 }
 
 export function FormInput({ 
@@ -20,10 +21,11 @@ export function FormInput({
   type = "text",
   required = false,
   minLength,
-  disabled = false
+  disabled = false,
+  className
 }: FormInputProps) {
   return (
-    <div className="space-y-2">
+    <div className={`space-y-2 ${className || ""}`}>
       <label className="text-sm text-gray-400">{label}</label>
       <Input
         type={type}
