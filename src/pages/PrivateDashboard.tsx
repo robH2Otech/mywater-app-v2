@@ -8,6 +8,8 @@ import { DashboardHeader } from "@/components/dashboard/private/DashboardHeader"
 import { CartridgeAlert } from "@/components/dashboard/private/CartridgeAlert";
 import { DashboardTabs } from "@/components/dashboard/private/DashboardTabs";
 import { UserAvatar } from "@/components/layout/UserAvatar";
+import { Card } from "@/components/ui/card";
+import { WelcomeMessage } from "@/components/layout/WelcomeMessage";
 
 export function PrivateDashboard() {
   const navigate = useNavigate();
@@ -41,6 +43,7 @@ export function PrivateDashboard() {
   return (
     <div className="min-h-screen bg-spotify-dark">
       <div className="max-w-7xl mx-auto p-4 md:p-6">
+        {/* Header styled like the business Index page */}
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-2xl md:text-3xl font-bold text-white">MYWATER Home Portal</h1>
           <div className="flex items-center gap-3">
@@ -56,12 +59,25 @@ export function PrivateDashboard() {
           </div>
         </div>
         
+        {/* Welcome message like in business Index */}
+        <Card className="mb-6 bg-spotify-darker border-spotify-accent">
+          <div className="p-6">
+            <WelcomeMessage 
+              firstName={userData?.first_name}
+              lastName={userData?.last_name}
+            />
+            <p className="text-gray-400">
+              {userData?.purifier_model || "MYWATER System"} Owner
+            </p>
+          </div>
+        </Card>
+        
         {/* User greeting and status summary */}
         <DashboardHeader 
           userData={userData}
           daysUntilReplacement={daysUntilReplacement}
-          isReplacementDueSoon={isReplacementDueSoon}
           isReplacementOverdue={isReplacementOverdue}
+          isReplacementDueSoon={isReplacementDueSoon}
           cartridgeUsagePercent={cartridgeUsagePercent}
         />
         

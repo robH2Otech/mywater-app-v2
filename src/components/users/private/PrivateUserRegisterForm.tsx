@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { RegisterFormFields } from "./RegisterFormFields";
 import { PurifierModelSelect } from "./PurifierModelSelect";
 import { useRegisterFormHandler } from "./RegisterFormHandler";
+import { Card } from "@/components/ui/card";
 
 interface PrivateUserRegisterFormProps {
   socialEmail?: string;
@@ -51,45 +52,47 @@ export function PrivateUserRegisterForm({ socialEmail = "" }: PrivateUserRegiste
   };
 
   return (
-    <form onSubmit={onSubmit} className="space-y-4">
-      <RegisterFormFields
-        firstName={firstName}
-        lastName={lastName}
-        email={email}
-        streetAddress={streetAddress}
-        city={city}
-        postalCode={postalCode}
-        country={country}
-        phone={phone}
-        purchaseDate={purchaseDate}
-        password={password}
-        confirmPassword={confirmPassword}
-        setFirstName={setFirstName}
-        setLastName={setLastName}
-        setEmail={setEmail}
-        setStreetAddress={setStreetAddress}
-        setCity={setCity}
-        setPostalCode={setPostalCode}
-        setCountry={setCountry}
-        setPhone={setPhone}
-        setPurchaseDate={setPurchaseDate}
-        setPassword={setPassword}
-        setConfirmPassword={setConfirmPassword}
-        socialEmail={socialEmail}
-      />
-      
-      <PurifierModelSelect 
-        value={purifierModel}
-        onChange={setPurifierModel}
-      />
+    <Card className="p-6 bg-spotify-darker border-spotify-accent">
+      <form onSubmit={onSubmit} className="space-y-4">
+        <RegisterFormFields
+          firstName={firstName}
+          lastName={lastName}
+          email={email}
+          streetAddress={streetAddress}
+          city={city}
+          postalCode={postalCode}
+          country={country}
+          phone={phone}
+          purchaseDate={purchaseDate}
+          password={password}
+          confirmPassword={confirmPassword}
+          setFirstName={setFirstName}
+          setLastName={setLastName}
+          setEmail={setEmail}
+          setStreetAddress={setStreetAddress}
+          setCity={setCity}
+          setPostalCode={setPostalCode}
+          setCountry={setCountry}
+          setPhone={setPhone}
+          setPurchaseDate={setPurchaseDate}
+          setPassword={setPassword}
+          setConfirmPassword={setConfirmPassword}
+          socialEmail={socialEmail}
+        />
+        
+        <PurifierModelSelect 
+          value={purifierModel}
+          onChange={setPurifierModel}
+        />
 
-      <Button
-        type="submit"
-        className="w-full bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700 text-white font-medium py-3"
-        disabled={isLoading}
-      >
-        {isLoading ? "Creating Account..." : "Create Account"}
-      </Button>
-    </form>
+        <Button
+          type="submit"
+          className="w-full bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700 text-white font-medium py-3"
+          disabled={isLoading}
+        >
+          {isLoading ? "Creating Account..." : "Create Account"}
+        </Button>
+      </form>
+    </Card>
   );
 }

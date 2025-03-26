@@ -1,8 +1,7 @@
-
 import { collection, addDoc, getDocs, query, where, Timestamp, updateDoc, doc } from "firebase/firestore";
 import { db } from "@/integrations/firebase/client";
 
-// Function to send a referral email (in a real app, this would connect to a backend)
+// Function to send a referral email
 export const sendReferralEmail = async (
   toEmail: string,
   toName: string,
@@ -11,25 +10,10 @@ export const sendReferralEmail = async (
   customMessage?: string
 ) => {
   try {
-    // Default email template
-    const defaultEmailContent = `Hi ${toName},
+    // Generate default message if none provided
+    const emailContent = customMessage || generateReferralEmailTemplate(toName, fromName, referralCode);
 
-I wanted to share something I've been really happy with – my MYWATER water purification system. It provides clean, great-tasting water right from my tap, and I'm saving money on bottled water.
-
-I'm inviting you to try MYWATER with a special 20% discount! Just use this link: https://mywater.com/refer?code=${referralCode} when you purchase.
-
-If you decide to get a MYWATER system, you'll also get the chance to refer 3 friends and earn a free replacement cartridge for yourself!
-
-Check it out here: https://mywater.com/products
-
-Best,
-${fromName}`;
-
-    // Use custom message if provided, otherwise use default
-    const emailContent = customMessage || defaultEmailContent;
-
-    // In a real app, this would connect to an email sending service
-    // For now, we'll store it in Firestore for demonstration
+    // Store in Firestore for record-keeping and future processing
     const emailDocRef = await addDoc(collection(db, "emails_to_send"), {
       to: toEmail,
       to_name: toName,
@@ -40,11 +24,13 @@ ${fromName}`;
       html_body: emailContent.replace(/\n/g, "<br>"),
       created_at: new Date(),
       status: "pending",
-      type: "referral"
+      type: "referral",
+      referral_code: referralCode
     });
 
     console.log("Email stored in Firestore with ID:", emailDocRef.id);
     
+    // In a real app, this would trigger a cloud function or webhook to send the email
     // For demonstration, we'll immediately mark it as "sent"
     await updateDoc(emailDocRef, {
       status: "sent",
@@ -59,7 +45,6 @@ ${fromName}`;
 };
 
 // Function to check for pending emails and mark them as sent
-// In a real app, this would be a background job or cloud function
 export const processPendingEmails = async () => {
   try {
     const emailsQuery = query(
@@ -70,10 +55,8 @@ export const processPendingEmails = async () => {
     const emailsSnapshot = await getDocs(emailsQuery);
     
     for (const emailDoc of emailsSnapshot.docs) {
-      const emailData = emailDoc.data();
-      
       // In a real app, this would connect to an email sending service
-      console.log(`Email would be sent to ${emailData.to} with subject: ${emailData.subject}`);
+      console.log(`Processing email to ${emailDoc.data().to}`);
       
       // Mark as sent
       await updateDoc(doc(db, "emails_to_send", emailDoc.id), {
@@ -95,7 +78,7 @@ export const generateReferralEmailTemplate = (
   fromName: string,
   referralCode: string
 ) => {
-  return `Hi ${toName},
+  return `Hi ${toName || "[Friend's Name]"},
 
 I wanted to share something I've been really happy with – my MYWATER water purification system. It provides clean, great-tasting water right from my tap, and I'm saving money on bottled water.
 
@@ -106,5 +89,5 @@ If you decide to get a MYWATER system, you'll also get the chance to refer 3 fri
 Check it out here: https://mywater.com/products
 
 Best,
-${fromName}`;
+${fromName || "[Your Name]"}`;
 };

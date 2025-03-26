@@ -1,248 +1,127 @@
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Alert, AlertDescription } from "@/components/ui/alert";
 import { FormInput } from "@/components/shared/FormInput";
-import { useToast } from "@/hooks/use-toast";
-import { Progress } from "@/components/ui/progress";
 import { Textarea } from "@/components/ui/textarea";
-import { 
-  Share2, 
-  Copy, 
-  Mail, 
-  Check, 
-  AlertCircle,
-  Users,
-  Gift,
-  ChevronDown,
-  ChevronUp,
-  Sparkles
-} from "lucide-react";
-import { db } from "@/integrations/firebase/client";
-import { collection, query, where, getDocs, addDoc, updateDoc, doc } from "firebase/firestore";
-import { generateReferralEmailTemplate, sendReferralEmail } from "@/utils/emailUtil";
-import { ReferralProgressChart } from "./ReferralProgressChart";
+import { Share2, Send, Copy, CheckCheck } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+import { sendReferralEmail, generateReferralEmailTemplate } from "@/utils/emailUtil";
+import { DocumentData } from "firebase/firestore";
 
 interface ReferralProgramProps {
-  userData: any;
+  userData: DocumentData | null;
 }
 
 export function ReferralProgram({ userData }: ReferralProgramProps) {
+  const [friendName, setFriendName] = useState("");
+  const [friendEmail, setFriendEmail] = useState("");
+  const [emailMessage, setEmailMessage] = useState("");
+  const [isSending, setIsSending] = useState(false);
+  const [isCopied, setIsCopied] = useState(false);
   const { toast } = useToast();
-  const [isLoading, setIsLoading] = useState(false);
-  const [referralCode, setReferralCode] = useState("");
-  const [referrals, setReferrals] = useState<any[]>([]);
-  const [showEmailForm, setShowEmailForm] = useState(false);
   
-  // Email form state
-  const [referralEmail1, setReferralEmail1] = useState("");
-  const [referralEmail2, setReferralEmail2] = useState("");
-  const [referralEmail3, setReferralEmail3] = useState("");
-  const [referralName1, setReferralName1] = useState("");
-  const [referralName2, setReferralName2] = useState("");
-  const [referralName3, setReferralName3] = useState("");
-  const [emailTemplate, setEmailTemplate] = useState("");
-  
-  // Load referral data
-  useEffect(() => {
-    if (!userData?.uid) return;
-    
-    const fetchReferralData = async () => {
-      try {
-        // Get referral code
-        const codeQuery = query(
-          collection(db, "referral_codes"),
-          where("user_id", "==", userData.uid)
-        );
-        
-        const codeSnapshot = await getDocs(codeQuery);
-        let currentReferralCode = "";
-        
-        if (!codeSnapshot.empty) {
-          currentReferralCode = codeSnapshot.docs[0].data().code;
-          setReferralCode(currentReferralCode);
-        } else {
-          // Create a referral code if none exists
-          const firstName = userData.first_name || "";
-          const lastName = userData.last_name || "";
-          const newCode = `${firstName.toLowerCase().substring(0, 3)}${lastName.toLowerCase().substring(0, 3)}${Math.floor(Math.random() * 10000)}`;
-          
-          await addDoc(collection(db, "referral_codes"), {
-            user_id: userData.uid,
-            code: newCode,
-            created_at: new Date()
-          });
-          
-          currentReferralCode = newCode;
-          setReferralCode(newCode);
-        }
-        
-        // Get referrals
-        const referralsQuery = query(
-          collection(db, "referrals"),
-          where("referrer_id", "==", userData.uid)
-        );
-        
-        const referralsSnapshot = await getDocs(referralsQuery);
-        
-        if (!referralsSnapshot.empty) {
-          setReferrals(referralsSnapshot.docs.map(doc => ({
-            id: doc.id,
-            ...doc.data()
-          })));
-        }
-        
-        // Generate email template
-        const template = generateReferralEmailTemplate(
-          "[Friend's Name]", 
-          userData.first_name + " " + userData.last_name, 
-          currentReferralCode
-        );
-        setEmailTemplate(template);
-      } catch (error) {
-        console.error("Error fetching referral data:", error);
-      }
-    };
-    
-    fetchReferralData();
-  }, [userData]);
-  
-  const handleCopyReferralLink = () => {
-    const referralLink = `https://mywater.com/refer?code=${referralCode}`;
-    navigator.clipboard.writeText(referralLink);
-    
-    toast({
-      title: "Link Copied",
-      description: "Referral link has been copied to clipboard",
-    });
+  const referralCode = userData?.referral_code || "MYWATER20";
+  const userName = `${userData?.first_name || ""} ${userData?.last_name || ""}`.trim();
+
+  // Generate default email template when component loads or friend name changes
+  const generateDefaultEmail = () => {
+    const template = `Hi ${friendName || "[Friend's Name]"},
+
+I wanted to share something I've been really happy with – my MYWATER water purification system. It provides clean, great-tasting water right from my tap, and I'm saving money on bottled water.
+
+I'm inviting you to try MYWATER with a special 20% discount! Just use this link: https://mywater.com/refer?code=${referralCode} when you purchase.
+
+If you decide to get a MYWATER system, you'll also get the chance to refer 3 friends and earn a free replacement cartridge for yourself!
+
+Check it out here: https://mywater.com/products
+
+Best,
+${userName || "[Your Name]"}`;
+
+    return template;
   };
-  
-  const handleSendEmails = async () => {
-    setIsLoading(true);
-    
+
+  // Set default template when friend name changes
+  const handleFriendNameChange = (value: string) => {
+    setFriendName(value);
+    if (emailMessage === "" || !emailMessage) {
+      setEmailMessage(generateDefaultEmail());
+    } else {
+      // Update only the greeting line
+      setEmailMessage(prev => 
+        prev.replace(/^Hi.*?,/m, `Hi ${value || "[Friend's Name]"},`)
+      );
+    }
+  };
+
+  // Handle sending the referral email
+  const handleSendEmail = async () => {
+    if (!friendEmail || !friendName) {
+      toast({
+        title: "Missing information",
+        description: "Please fill in your friend's name and email.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setIsSending(true);
     try {
-      const emails = [
-        { email: referralEmail1, name: referralName1 },
-        { email: referralEmail2, name: referralName2 },
-        { email: referralEmail3, name: referralName3 }
-      ].filter(e => e.email && e.name);
-      
-      if (emails.length === 0) {
-        toast({
-          title: "No recipients specified",
-          description: "Please add at least one email and name",
-          variant: "destructive",
-        });
-        return;
-      }
-      
-      // Store the referral data in Firebase
-      for (const { email, name } of emails) {
-        // Create referral record
-        await addDoc(collection(db, "referrals"), {
-          referrer_id: userData.uid,
-          referrer_name: `${userData.first_name} ${userData.last_name}`,
-          referral_email: email,
-          referral_name: name,
-          referral_code: referralCode,
-          status: "pending",
-          created_at: new Date(),
-          updated_at: new Date()
-        });
-        
-        // Send personalized email
-        let personalizedEmail = emailTemplate;
-        personalizedEmail = personalizedEmail.replace(/\[Friend's Name\]/g, name);
-        
-        // Send the email
-        await sendReferralEmail(
-          email,
-          name,
-          `${userData.first_name} ${userData.last_name}`,
-          referralCode,
-          personalizedEmail
-        );
-      }
-      
-      // Update referrals list
-      const referralsQuery = query(
-        collection(db, "referrals"),
-        where("referrer_id", "==", userData.uid)
+      const success = await sendReferralEmail(
+        friendEmail,
+        friendName,
+        userName,
+        referralCode,
+        emailMessage
       );
       
-      const referralsSnapshot = await getDocs(referralsQuery);
-      
-      if (!referralsSnapshot.empty) {
-        setReferrals(referralsSnapshot.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data()
-        })));
+      if (success) {
+        toast({
+          title: "Referral sent!",
+          description: `Your invitation was sent to ${friendName}.`,
+          variant: "default"
+        });
+        // Reset form fields
+        setFriendName("");
+        setFriendEmail("");
+        setEmailMessage("");
+      } else {
+        throw new Error("Failed to send email");
       }
-      
-      toast({
-        title: "Invitations Sent",
-        description: `Successfully sent ${emails.length} invitation${emails.length === 1 ? "" : "s"}`,
-      });
-      
-      // Reset form
-      setReferralEmail1("");
-      setReferralEmail2("");
-      setReferralEmail3("");
-      setReferralName1("");
-      setReferralName2("");
-      setReferralName3("");
-      setShowEmailForm(false);
-      
     } catch (error) {
-      console.error("Error sending invitations:", error);
       toast({
-        title: "Error",
-        description: "Failed to send invitations. Please try again.",
-        variant: "destructive",
+        title: "Error sending referral",
+        description: "There was a problem sending your invitation. Please try again.",
+        variant: "destructive"
       });
     } finally {
-      setIsLoading(false);
+      setIsSending(false);
     }
   };
-  
-  const handleClaimReward = async () => {
-    if (!userData?.id) return;
+
+  // Copy referral link to clipboard
+  const copyReferralLink = () => {
+    const referralLink = `https://mywater.com/refer?code=${referralCode}`;
+    navigator.clipboard.writeText(referralLink);
+    setIsCopied(true);
+    toast({
+      title: "Copied!",
+      description: "Referral link copied to clipboard",
+    });
     
-    setIsLoading(true);
-    
-    try {
-      const userDocRef = doc(db, "app_users_privat", userData.id);
-      
-      await updateDoc(userDocRef, {
-        referral_reward_claimed: true,
-        updated_at: new Date()
-      });
-      
-      // Update local userData
-      userData.referral_reward_claimed = true;
-      
-      toast({
-        title: "Reward Claimed",
-        description: "Your free cartridge reward has been claimed. We'll send it to your address!",
-      });
-    } catch (error) {
-      console.error("Error claiming reward:", error);
-      toast({
-        title: "Error",
-        description: "Failed to claim reward. Please try again.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsLoading(false);
-    }
+    setTimeout(() => setIsCopied(false), 3000);
   };
-  
-  // Count completed referrals
-  const completedReferrals = referrals.filter(ref => ref.status === "purchased").length;
-  const referralProgress = (completedReferrals / 3) * 100;
-  const hasEarnedReward = completedReferrals >= 3;
-  
+
+  // Reset email message to default template
+  const resetEmailTemplate = () => {
+    setEmailMessage(generateDefaultEmail());
+    toast({
+      title: "Template reset",
+      description: "The email message has been reset to the default template",
+    });
+  };
+
   return (
     <div className="space-y-6">
       <Card className="bg-spotify-darker border-spotify-accent">
@@ -252,226 +131,112 @@ export function ReferralProgram({ userData }: ReferralProgramProps) {
             Referral Program
           </CardTitle>
           <CardDescription>
-            Refer friends and earn a free replacement cartridge
+            Invite friends to try MYWATER and earn rewards when they purchase
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="space-y-6">
-            {/* Progress Tracker */}
-            <div className="space-y-2">
-              <div className="flex justify-between items-center">
-                <h3 className="text-white font-medium">Your Referral Progress</h3>
-                <p className="text-gray-400 text-sm">{completedReferrals}/3 Friends Purchased</p>
+          <div className="mb-4">
+            <p className="text-sm text-gray-400 mb-2">Your Referral Status</p>
+            <div className="flex items-center gap-2">
+              <div className="w-full bg-gray-700 h-2.5 rounded-full">
+                <div 
+                  className="bg-gradient-to-r from-cyan-500 to-blue-600 h-2.5 rounded-full" 
+                  style={{ width: `${Math.min(100, ((userData?.referrals_converted || 0) / 3) * 100)}%` }}
+                ></div>
               </div>
+              <span className="text-sm font-medium text-white whitespace-nowrap">
+                {userData?.referrals_converted || 0}/3
+              </span>
+            </div>
+            <p className="text-xs text-gray-400 mt-1">
+              Refer 3 friends who purchase to earn a free replacement cartridge
+            </p>
+          </div>
+
+          <div className="flex items-center gap-2 mb-6 p-3 bg-spotify-dark rounded-lg">
+            <div className="flex-1">
+              <p className="text-sm text-gray-400">Your Referral Code</p>
+              <p className="text-lg font-mono font-bold">{referralCode}</p>
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={copyReferralLink}
+              className="gap-2"
+            >
+              {isCopied ? (
+                <>
+                  <CheckCheck className="h-4 w-4" />
+                  Copied
+                </>
+              ) : (
+                <>
+                  <Copy className="h-4 w-4" />
+                  Copy Link
+                </>
+              )}
+            </Button>
+          </div>
+
+          <div className="space-y-4">
+            <h3 className="text-lg font-medium mb-2">Send Referral Invitation</h3>
+            
+            <div className="flex flex-col md:flex-row gap-4">
+              <FormInput
+                label="Friend's Name"
+                value={friendName}
+                onChange={handleFriendNameChange}
+                placeholder="John Doe"
+                className="flex-1"
+              />
               
-              {/* Visual representation with the new bar chart */}
-              <div className="h-12 w-full">
-                <ReferralProgressChart referrals={completedReferrals} />
-              </div>
-              
-              <p className="text-sm text-gray-400">
-                Refer 3 friends who purchase a MYWATER purifier and earn a free replacement cartridge!
-              </p>
+              <FormInput
+                label="Friend's Email"
+                type="email"
+                value={friendEmail}
+                onChange={setFriendEmail}
+                placeholder="friend@example.com"
+                className="flex-1"
+              />
             </div>
             
-            {/* Reward Alert */}
-            {hasEarnedReward && !userData?.referral_reward_claimed && (
-              <Alert className="border-green-500 bg-green-500/10">
-                <div className="flex items-start gap-2">
-                  <Sparkles className="h-4 w-4 text-green-500 mt-0.5" />
-                  <div className="flex-1">
-                    <h4 className="text-green-500 font-medium mb-1">Congratulations! Reward Earned</h4>
-                    <p className="text-sm text-gray-300">
-                      You've successfully referred 3 friends who purchased MYWATER purifiers. 
-                      Claim your free replacement cartridge now!
-                    </p>
-                    <Button 
-                      onClick={handleClaimReward} 
-                      className="mt-3 bg-green-600 hover:bg-green-700 text-white"
-                      disabled={isLoading}
-                    >
-                      <Gift className="h-4 w-4 mr-2" />
-                      Claim Free Cartridge
-                    </Button>
-                  </div>
-                </div>
-              </Alert>
-            )}
-            
-            {userData?.referral_reward_claimed && (
-              <Alert className="border-green-500 bg-green-500/10">
-                <Check className="h-4 w-4 text-green-500" />
-                <AlertDescription className="text-gray-300">
-                  You've claimed your free replacement cartridge! It will be shipped to your address.
-                </AlertDescription>
-              </Alert>
-            )}
-            
-            {/* Referral Link */}
-            <div className="space-y-2 pt-2">
-              <h3 className="text-white font-medium">Your Referral Link</h3>
-              <div className="flex items-center gap-2">
-                <div className="flex-1 bg-spotify-accent rounded-md px-3 py-2 text-gray-300 truncate">
-                  https://mywater.com/refer?code={referralCode}
-                </div>
+            <div>
+              <label htmlFor="email-message" className="block text-sm font-medium text-gray-300 mb-1">
+                Email Message
+              </label>
+              <Textarea
+                id="email-message"
+                value={emailMessage || generateDefaultEmail()}
+                onChange={(e) => setEmailMessage(e.target.value)}
+                rows={10}
+                className="w-full"
+              />
+              <div className="flex justify-end mt-2">
                 <Button 
-                  onClick={handleCopyReferralLink} 
-                  size="sm"
-                  className="bg-mywater-blue hover:bg-mywater-blue/90"
+                  variant="outline" 
+                  size="sm" 
+                  onClick={resetEmailTemplate}
+                  className="text-xs"
                 >
-                  <Copy className="h-4 w-4 mr-2" />
-                  Copy
+                  Reset to Default
                 </Button>
               </div>
-              <p className="text-sm text-gray-400">
-                Share this link with friends. When they purchase a MYWATER purifier using your link, 
-                you'll get credit toward your free cartridge reward.
-              </p>
             </div>
             
-            {/* Email Referral Form Toggle */}
-            <div className="pt-2">
-              <Button
-                variant="outline"
-                onClick={() => setShowEmailForm(!showEmailForm)}
-                className="w-full justify-between border-spotify-accent hover:bg-spotify-accent/30"
-              >
-                <span className="flex items-center">
-                  <Mail className="h-4 w-4 mr-2" />
-                  Send Email Invitations
-                </span>
-                {showEmailForm ? (
-                  <ChevronUp className="h-4 w-4" />
-                ) : (
-                  <ChevronDown className="h-4 w-4" />
-                )}
-              </Button>
-            </div>
-            
-            {/* Email Referral Form */}
-            {showEmailForm && (
-              <div className="space-y-4 pt-2 border-t border-gray-700">
-                <h3 className="text-white font-medium">Invite Friends via Email</h3>
-                
-                {/* Email Template Editor */}
-                <div className="space-y-2">
-                  <label className="text-sm text-gray-400">Personalize Your Invitation</label>
-                  <Textarea 
-                    value={emailTemplate}
-                    onChange={(e) => setEmailTemplate(e.target.value)}
-                    className="h-60 bg-spotify-dark text-gray-300 border-gray-700"
-                  />
-                  <p className="text-xs text-gray-500">
-                    Use [Friend's Name] as a placeholder - it will be replaced with your friend's actual name.
-                  </p>
-                </div>
-                
-                <div className="space-y-4">
-                  {/* Friend 1 */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                    <FormInput
-                      label="Friend's Name"
-                      value={referralName1}
-                      onChange={setReferralName1}
-                      placeholder="John Doe"
-                    />
-                    <FormInput
-                      label="Friend's Email"
-                      type="email"
-                      value={referralEmail1}
-                      onChange={setReferralEmail1}
-                      placeholder="john@example.com"
-                    />
-                  </div>
-                  
-                  {/* Friend 2 */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                    <FormInput
-                      label="Friend's Name"
-                      value={referralName2}
-                      onChange={setReferralName2}
-                      placeholder="Jane Doe"
-                    />
-                    <FormInput
-                      label="Friend's Email"
-                      type="email"
-                      value={referralEmail2}
-                      onChange={setReferralEmail2}
-                      placeholder="jane@example.com"
-                    />
-                  </div>
-                  
-                  {/* Friend 3 */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                    <FormInput
-                      label="Friend's Name"
-                      value={referralName3}
-                      onChange={setReferralName3}
-                      placeholder="Sam Smith"
-                    />
-                    <FormInput
-                      label="Friend's Email"
-                      type="email"
-                      value={referralEmail3}
-                      onChange={setReferralEmail3}
-                      placeholder="sam@example.com"
-                    />
-                  </div>
-                </div>
-                
-                <div className="pt-2">
-                  <Button
-                    onClick={handleSendEmails}
-                    className="bg-mywater-blue hover:bg-mywater-blue/90"
-                    disabled={isLoading}
-                  >
-                    <Mail className="h-4 w-4 mr-2" />
-                    {isLoading ? "Sending..." : "Send Invitations"}
-                  </Button>
-                </div>
-                
-                <Alert className="bg-spotify-dark border-gray-700">
-                  <AlertCircle className="h-4 w-4 text-gray-400" />
-                  <AlertDescription className="text-sm text-gray-400">
-                    We'll send a personalized invitation email with your referral link 
-                    and a 20% discount offer to each friend.
-                  </AlertDescription>
-                </Alert>
-              </div>
-            )}
-            
-            {/* Referrals List */}
-            {referrals.length > 0 && (
-              <div className="space-y-4 pt-4 border-t border-gray-700">
-                <h3 className="text-white font-medium">Your Referrals</h3>
-                
-                <div className="space-y-3">
-                  {referrals.map((referral) => (
-                    <div 
-                      key={referral.id}
-                      className="flex items-center justify-between p-3 rounded-md bg-spotify-dark"
-                    >
-                      <div className="flex items-center gap-3">
-                        <Users className="h-5 w-5 text-gray-500" />
-                        <div>
-                          <p className="text-white">{referral.referral_name}</p>
-                          <p className="text-xs text-gray-400">{referral.referral_email}</p>
-                        </div>
-                      </div>
-                      <div className="text-right">
-                        <span className={`px-2 py-1 rounded-full text-xs ${
-                          referral.status === "purchased" 
-                            ? "bg-green-500/20 text-green-400" 
-                            : "bg-amber-500/20 text-amber-400"
-                        }`}>
-                          {referral.status === "purchased" ? "Purchased" : "Pending"}
-                        </span>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
+            <Button
+              onClick={handleSendEmail}
+              disabled={isSending || !friendEmail || !friendName}
+              className="w-full bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700"
+            >
+              {isSending ? (
+                "Sending..."
+              ) : (
+                <>
+                  <Send className="h-4 w-4 mr-2" />
+                  Send Invitation
+                </>
+              )}
+            </Button>
           </div>
         </CardContent>
       </Card>
