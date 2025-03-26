@@ -16,7 +16,10 @@ export function PrivateUserRegisterForm({ socialEmail = "" }: PrivateUserRegiste
   const [confirmPassword, setConfirmPassword] = useState("");
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
-  const [address, setAddress] = useState("");
+  const [streetAddress, setStreetAddress] = useState("");
+  const [city, setCity] = useState("");
+  const [postalCode, setPostalCode] = useState("");
+  const [country, setCountry] = useState("");
   const [phone, setPhone] = useState("");
   const [purifierModel, setPurifierModel] = useState("");
   const [purchaseDate, setPurchaseDate] = useState<Date | null>(new Date());
@@ -26,11 +29,18 @@ export function PrivateUserRegisterForm({ socialEmail = "" }: PrivateUserRegiste
   const onSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
+    // Construct full address
+    const fullAddress = `${streetAddress}, ${city}, ${postalCode}, ${country}`.trim();
+    
     handleRegister({
       firstName,
       lastName,
       email,
-      address,
+      address: fullAddress,
+      streetAddress,
+      city,
+      postalCode,
+      country,
       phone,
       purchaseDate,
       purifierModel,
@@ -46,7 +56,10 @@ export function PrivateUserRegisterForm({ socialEmail = "" }: PrivateUserRegiste
         firstName={firstName}
         lastName={lastName}
         email={email}
-        address={address}
+        streetAddress={streetAddress}
+        city={city}
+        postalCode={postalCode}
+        country={country}
         phone={phone}
         purchaseDate={purchaseDate}
         password={password}
@@ -54,7 +67,10 @@ export function PrivateUserRegisterForm({ socialEmail = "" }: PrivateUserRegiste
         setFirstName={setFirstName}
         setLastName={setLastName}
         setEmail={setEmail}
-        setAddress={setAddress}
+        setStreetAddress={setStreetAddress}
+        setCity={setCity}
+        setPostalCode={setPostalCode}
+        setCountry={setCountry}
         setPhone={setPhone}
         setPurchaseDate={setPurchaseDate}
         setPassword={setPassword}
@@ -69,7 +85,7 @@ export function PrivateUserRegisterForm({ socialEmail = "" }: PrivateUserRegiste
 
       <Button
         type="submit"
-        className="w-full bg-mywater-blue hover:bg-mywater-blue/90"
+        className="w-full bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700 text-white font-medium py-3"
         disabled={isLoading}
       >
         {isLoading ? "Creating Account..." : "Create Account"}

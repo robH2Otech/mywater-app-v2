@@ -11,7 +11,15 @@ import {
   browserSessionPersistence,
   setPersistence
 } from "firebase/auth";
-import { collection, getDocs, query, where, doc, setDoc } from "firebase/firestore";
+import { 
+  collection, 
+  getDocs, 
+  query, 
+  where, 
+  doc, 
+  setDoc, 
+  getDoc 
+} from "firebase/firestore";
 import { auth, db, currentDomain } from "@/integrations/firebase/client";
 
 /**
@@ -110,7 +118,7 @@ export const verifyPrivateUser = async (uid: string): Promise<boolean> => {
     // First try getting the user directly by UID as document ID (most efficient)
     try {
       const userDocRef = doc(db, "app_users_privat", uid);
-      const userSnapshot = await userDocRef.get();
+      const userSnapshot = await getDoc(userDocRef);
       
       if (userSnapshot.exists()) {
         console.log("User found by direct UID lookup");
@@ -165,7 +173,7 @@ export const handleSocialUserData = async (user: User, provider: string): Promis
     // First check if user already exists by UID as document ID
     try {
       const userDocRef = doc(db, "app_users_privat", user.uid);
-      const userSnapshot = await userDocRef.get();
+      const userSnapshot = await getDoc(userDocRef);
       
       if (userSnapshot.exists()) {
         console.log("User document found by UID");

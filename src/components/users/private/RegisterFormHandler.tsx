@@ -11,6 +11,10 @@ interface RegisterFormHandlerProps {
   lastName: string;
   email: string;
   address: string;
+  streetAddress?: string;
+  city?: string;
+  postalCode?: string;
+  country?: string;
   phone: string;
   purchaseDate: Date | null;
   purifierModel: string;
@@ -29,6 +33,10 @@ export function useRegisterFormHandler() {
     lastName,
     email,
     address,
+    streetAddress,
+    city,
+    postalCode,
+    country,
     phone,
     purchaseDate,
     purifierModel,
@@ -41,6 +49,10 @@ export function useRegisterFormHandler() {
       lastName,
       email: socialEmail || email,
       address,
+      streetAddress,
+      city,
+      postalCode,
+      country,
       purifierModel,
       hasPurchaseDate: !!purchaseDate
     });
@@ -105,16 +117,33 @@ export function useRegisterFormHandler() {
         });
       } else {
         console.log("Creating new user with email/password");
-        // Create user account with email/password
-        const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-        user = userCredential.user;
-        
-        // Update display name
-        await updateProfile(user, {
-          displayName: `${firstName} ${lastName}`
-        });
-        
-        console.log("User created successfully:", user.uid);
+        try {
+          // Create user account with email/password
+          const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+          user = userCredential.user;
+          
+          // Update display name
+          await updateProfile(user, {
+            displayName: `${firstName} ${lastName}`
+          });
+          
+          console.log("User created successfully:", user.uid);
+        } catch (authError: any) {
+          console.error("Auth error during registration:", authError);
+          let errorMessage = "Failed to create account";
+          
+          if (authError.code === 'auth/email-already-in-use') {
+            errorMessage = "An account with this email already exists";
+          } else if (authError.code === 'auth/invalid-email') {
+            errorMessage = "Invalid email address format";
+          } else if (authError.code === 'auth/weak-password') {
+            errorMessage = "Password should be at least 6 characters";
+          } else if (authError.message) {
+            errorMessage = authError.message;
+          }
+          
+          throw new Error(errorMessage);
+        }
       }
       
       // Calculate cartridge replacement date (1 year from purchase)
@@ -130,6 +159,10 @@ export function useRegisterFormHandler() {
         first_name: firstName,
         last_name: lastName,
         address: address,
+        street_address: streetAddress || "",
+        city: city || "",
+        postal_code: postalCode || "",
+        country: country || "",
         phone: phone,
         purifier_model: purifierModel,
         purchase_date: purchaseDate,
@@ -181,13 +214,7 @@ export function useRegisterFormHandler() {
       console.error("Registration error:", error);
       let errorMessage = "Registration failed";
       
-      if (error.code === 'auth/email-already-in-use') {
-        errorMessage = "An account with this email already exists";
-      } else if (error.code === 'auth/invalid-email') {
-        errorMessage = "Invalid email address format";
-      } else if (error.code === 'auth/weak-password') {
-        errorMessage = "Password should be at least 6 characters";
-      } else if (error.message) {
+      if (error.message) {
         errorMessage = error.message;
       }
       

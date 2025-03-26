@@ -6,7 +6,10 @@ interface RegisterFormFieldsProps {
   firstName: string;
   lastName: string;
   email: string;
-  address: string;
+  streetAddress: string;
+  city: string;
+  postalCode: string;
+  country: string;
   phone: string;
   purchaseDate: Date | null;
   password: string;
@@ -14,7 +17,10 @@ interface RegisterFormFieldsProps {
   setFirstName: (value: string) => void;
   setLastName: (value: string) => void;
   setEmail: (value: string) => void;
-  setAddress: (value: string) => void;
+  setStreetAddress: (value: string) => void;
+  setCity: (value: string) => void;
+  setPostalCode: (value: string) => void;
+  setCountry: (value: string) => void;
   setPhone: (value: string) => void;
   setPurchaseDate: (date: Date | null) => void;
   setPassword: (value: string) => void;
@@ -26,7 +32,10 @@ export function RegisterFormFields({
   firstName,
   lastName,
   email,
-  address,
+  streetAddress,
+  city,
+  postalCode,
+  country,
   phone,
   purchaseDate,
   password,
@@ -34,7 +43,10 @@ export function RegisterFormFields({
   setFirstName,
   setLastName,
   setEmail,
-  setAddress,
+  setStreetAddress,
+  setCity,
+  setPostalCode,
+  setCountry,
   setPhone,
   setPurchaseDate,
   setPassword,
@@ -49,12 +61,14 @@ export function RegisterFormFields({
           value={firstName}
           onChange={setFirstName}
           required
+          placeholder="John"
         />
         <FormInput
           label="Last Name"
           value={lastName}
           onChange={setLastName}
           required
+          placeholder="Doe"
         />
       </div>
       
@@ -65,20 +79,47 @@ export function RegisterFormFields({
         onChange={setEmail}
         required
         disabled={!!socialEmail}
+        placeholder="your.email@example.com"
       />
       
       <FormInput
-        label="Address"
-        value={address}
-        onChange={setAddress}
+        label="Street Address"
+        value={streetAddress}
+        onChange={setStreetAddress}
         required
+        placeholder="123 Main Street"
       />
+      
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <FormInput
+          label="City"
+          value={city}
+          onChange={setCity}
+          required
+          placeholder="New York"
+        />
+        <FormInput
+          label="Postal/ZIP Code"
+          value={postalCode}
+          onChange={setPostalCode}
+          required
+          placeholder="10001"
+        />
+        <FormInput
+          label="Country"
+          value={country}
+          onChange={setCountry}
+          required
+          placeholder="United States"
+        />
+      </div>
       
       <FormInput
         label="Phone Number"
         value={phone}
         onChange={setPhone}
         required
+        placeholder="+1 555-123-4567"
       />
       
       <FormDatePicker
@@ -96,6 +137,7 @@ export function RegisterFormFields({
             onChange={setPassword}
             required
             minLength={6}
+            placeholder="Min. 6 characters"
           />
           <FormInput
             label="Confirm Password"
@@ -104,6 +146,7 @@ export function RegisterFormFields({
             onChange={setConfirmPassword}
             required
             minLength={6}
+            placeholder="Confirm your password"
           />
         </div>
       )}

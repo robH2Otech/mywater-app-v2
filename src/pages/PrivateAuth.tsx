@@ -6,6 +6,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { LoginForm } from "@/components/users/private/LoginForm";
 import { PrivateUserRegisterForm } from "@/components/users/private/PrivateUserRegisterForm";
 import { useFirebaseAuth } from "@/hooks/useFirebaseAuth";
+import { Droplets, Home } from "lucide-react";
 
 export function PrivateAuth() {
   const navigate = useNavigate();
@@ -31,10 +32,15 @@ export function PrivateAuth() {
   };
 
   return (
-    <div className="min-h-screen bg-spotify-dark flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gradient-to-b from-spotify-dark to-black flex items-center justify-center p-4">
       <div className="w-full max-w-md space-y-8">
         <div className="text-center">
-          <h2 className="text-3xl font-bold text-white">
+          <div className="flex items-center justify-center mb-4">
+            <div className="bg-gradient-to-r from-cyan-400 to-blue-500 p-3 rounded-full">
+              <Droplets size={32} className="text-white" />
+            </div>
+          </div>
+          <h2 className="text-3xl font-bold text-white bg-gradient-to-r from-cyan-400 to-blue-500 bg-clip-text text-transparent">
             MYWATER Home User Portal
           </h2>
           <p className="mt-2 text-gray-400">
@@ -44,11 +50,24 @@ export function PrivateAuth() {
           </p>
         </div>
 
-        <Card className="p-6 bg-spotify-darker border-spotify-accent shadow-lg">
+        <Card className="p-6 bg-spotify-darker border-spotify-accent shadow-xl rounded-xl overflow-hidden relative">
+          <div className="absolute inset-0 bg-gradient-to-b from-blue-500/5 to-transparent pointer-events-none"></div>
           <Tabs value={authMode} onValueChange={(value) => setAuthMode(value as "login" | "register")}>
-            <TabsList className="grid w-full grid-cols-2 mb-6">
-              <TabsTrigger value="login" onClick={handleLoginTab}>Sign In</TabsTrigger>
-              <TabsTrigger value="register" onClick={handleRegisterTab}>Register</TabsTrigger>
+            <TabsList className="grid w-full grid-cols-2 mb-6 bg-spotify-dark">
+              <TabsTrigger 
+                value="login" 
+                onClick={handleLoginTab}
+                className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-cyan-500 data-[state=active]:to-blue-600 data-[state=active]:text-white"
+              >
+                Sign In
+              </TabsTrigger>
+              <TabsTrigger 
+                value="register" 
+                onClick={handleRegisterTab}
+                className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-cyan-500 data-[state=active]:to-blue-600 data-[state=active]:text-white"
+              >
+                Register
+              </TabsTrigger>
             </TabsList>
 
             <TabsContent value="login">
@@ -74,14 +93,14 @@ export function PrivateAuth() {
               {authMode === "login" ? (
                 <>
                   Don't have an account?{" "}
-                  <Button variant="link" onClick={handleRegisterTab} className="p-0 h-auto text-mywater-blue">
+                  <Button variant="link" onClick={handleRegisterTab} className="p-0 h-auto text-cyan-400 hover:text-cyan-300">
                     Register here
                   </Button>
                 </>
               ) : (
                 <>
                   Already have an account?{" "}
-                  <Button variant="link" onClick={handleLoginTab} className="p-0 h-auto text-mywater-blue">
+                  <Button variant="link" onClick={handleLoginTab} className="p-0 h-auto text-cyan-400 hover:text-cyan-300">
                     Sign in
                   </Button>
                 </>
@@ -96,6 +115,7 @@ export function PrivateAuth() {
             onClick={() => navigate("/")}
             className="text-gray-400 hover:text-gray-300"
           >
+            <Home size={16} className="mr-2" />
             Back to Home
           </Button>
         </div>

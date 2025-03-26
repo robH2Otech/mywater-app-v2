@@ -30,10 +30,10 @@ ${fromName}`;
 
     // In a real app, this would connect to an email sending service
     // For now, we'll store it in Firestore for demonstration
-    await addDoc(collection(db, "emails_to_send"), {
+    const emailDocRef = await addDoc(collection(db, "emails_to_send"), {
       to: toEmail,
       to_name: toName,
-      from: "noreply@mywater.com",
+      from: "referrals@mywater.com",
       from_name: fromName,
       subject: `${fromName} invited you to try MYWATER (20% discount!)`,
       body: emailContent,
@@ -43,6 +43,14 @@ ${fromName}`;
       type: "referral"
     });
 
+    console.log("Email stored in Firestore with ID:", emailDocRef.id);
+    
+    // For demonstration, we'll immediately mark it as "sent"
+    await updateDoc(emailDocRef, {
+      status: "sent",
+      sent_at: new Date()
+    });
+    
     return true;
   } catch (error) {
     console.error("Error sending referral email:", error);
