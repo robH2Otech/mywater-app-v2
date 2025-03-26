@@ -1,8 +1,8 @@
 
-import { collection, addDoc, getDocs, query, where, Timestamp, updateDoc, doc } from "firebase/firestore";
+import { collection, addDoc, getDocs, query, where, updateDoc, doc } from "firebase/firestore";
 import { db } from "@/integrations/firebase/client";
 
-// Function to send a referral email (in a real app, this would connect to a backend)
+// Function to send a referral email
 export const sendReferralEmail = async (
   toEmail: string,
   toName: string,
@@ -11,7 +11,7 @@ export const sendReferralEmail = async (
   customMessage?: string
 ) => {
   try {
-    // Default email template
+    // Default email template if none provided
     const defaultEmailContent = `Hi ${toName},
 
 I wanted to share something I've been really happy with – my MYWATER water purification system. It provides clean, great-tasting water right from my tap, and I'm saving money on bottled water.
@@ -59,7 +59,6 @@ ${fromName}`;
 };
 
 // Function to check for pending emails and mark them as sent
-// In a real app, this would be a background job or cloud function
 export const processPendingEmails = async () => {
   try {
     const emailsQuery = query(
