@@ -29,11 +29,14 @@ export function PrivateUserRegisterForm({ socialEmail = "" }: PrivateUserRegiste
   const onSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
+    // Construct full address
+    const fullAddress = `${streetAddress}, ${city}, ${postalCode}, ${country}`.trim();
+    
     handleRegister({
       firstName,
       lastName,
       email,
-      address: `${streetAddress}, ${city}, ${postalCode}, ${country}`.trim(),
+      address: fullAddress,
       streetAddress,
       city,
       postalCode,
