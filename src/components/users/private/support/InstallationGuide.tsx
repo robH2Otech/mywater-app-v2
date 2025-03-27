@@ -2,7 +2,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
-import { Download, Play, Info, Tool } from "lucide-react";
+import { Download, Play, Info, Wrench } from "lucide-react";
 
 interface InstallationGuideProps {
   purifierModel: string;
@@ -22,7 +22,7 @@ export function InstallationGuide({ purifierModel }: InstallationGuideProps) {
           <Card className="bg-spotify-dark border-spotify-accent">
             <CardHeader>
               <CardTitle className="flex items-center text-lg">
-                <Tool className="h-5 w-5 text-mywater-blue mr-2" />
+                <Wrench className="h-5 w-5 text-mywater-blue mr-2" />
                 Tools and Materials Needed
               </CardTitle>
             </CardHeader>
