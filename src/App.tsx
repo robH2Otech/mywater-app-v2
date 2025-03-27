@@ -1,4 +1,3 @@
-
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
@@ -24,6 +23,7 @@ import { LandingPage } from "./pages/LandingPage";
 import { PrivateAuth } from "./pages/PrivateAuth";
 import { PrivateDashboard } from "./pages/PrivateDashboard";
 import Index from "./pages/Index";
+import ClientRequests from "./pages/ClientRequests";
 
 const queryClient = new QueryClient();
 
@@ -93,121 +93,124 @@ const PrivateProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   return <>{children}</>;
 };
 
-const App = () => (
-  <LanguageProvider>
-    <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
-        <Toaster />
-        <Sonner />
-        <BrowserRouter>
-          <Routes>
-            <Route path="/" element={<LandingPage />} />
-            <Route path="/auth" element={<Auth />} />
-            <Route path="/private-auth" element={<PrivateAuth />} />
-            <Route
-              path="/private-dashboard"
-              element={
-                <PrivateProtectedRoute>
-                  <PrivateDashboard />
-                </PrivateProtectedRoute>
-              }
-            />
-            <Route
-              path="/dashboard"
-              element={
-                <ProtectedRoute>
-                  <Layout>
-                    <Index />
-                  </Layout>
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/units"
-              element={
-                <ProtectedRoute>
-                  <Layout>
-                    <Units />
-                  </Layout>
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/units/:id"
-              element={
-                <ProtectedRoute>
-                  <Layout>
-                    <UnitDetails />
-                  </Layout>
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/filters"
-              element={
-                <ProtectedRoute>
-                  <Layout>
-                    <Filters />
-                  </Layout>
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/uvc"
-              element={
-                <ProtectedRoute>
-                  <Layout>
-                    <UVC />
-                  </Layout>
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/alerts"
-              element={
-                <ProtectedRoute>
-                  <Layout>
-                    <Alerts />
-                  </Layout>
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/analytics"
-              element={
-                <ProtectedRoute>
-                  <Layout>
-                    <Analytics />
-                  </Layout>
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/users"
-              element={
-                <ProtectedRoute>
-                  <Layout>
-                    <Users />
-                  </Layout>
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/settings"
-              element={
-                <ProtectedRoute>
-                  <Layout>
-                    <Settings />
-                  </Layout>
-                </ProtectedRoute>
-              }
-            />
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </BrowserRouter>
-      </TooltipProvider>
-    </QueryClientProvider>
-  </LanguageProvider>
-);
+function App() {
+  return (
+    <LanguageProvider>
+      <QueryClientProvider client={queryClient}>
+        <TooltipProvider>
+          <Toaster />
+          <Sonner />
+          <BrowserRouter>
+            <Routes>
+              <Route path="/" element={<LandingPage />} />
+              <Route path="/auth" element={<Auth />} />
+              <Route path="/private-auth" element={<PrivateAuth />} />
+              <Route
+                path="/private-dashboard"
+                element={
+                  <PrivateProtectedRoute>
+                    <PrivateDashboard />
+                  </PrivateProtectedRoute>
+                }
+              />
+              <Route
+                path="/dashboard"
+                element={
+                  <ProtectedRoute>
+                    <Layout>
+                      <Index />
+                    </Layout>
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/units"
+                element={
+                  <ProtectedRoute>
+                    <Layout>
+                      <Units />
+                    </Layout>
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/units/:id"
+                element={
+                  <ProtectedRoute>
+                    <Layout>
+                      <UnitDetails />
+                    </Layout>
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/filters"
+                element={
+                  <ProtectedRoute>
+                    <Layout>
+                      <Filters />
+                    </Layout>
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/uvc"
+                element={
+                  <ProtectedRoute>
+                    <Layout>
+                      <UVC />
+                    </Layout>
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/alerts"
+                element={
+                  <ProtectedRoute>
+                    <Layout>
+                      <Alerts />
+                    </Layout>
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/analytics"
+                element={
+                  <ProtectedRoute>
+                    <Layout>
+                      <Analytics />
+                    </Layout>
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/users"
+                element={
+                  <ProtectedRoute>
+                    <Layout>
+                      <Users />
+                    </Layout>
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/settings"
+                element={
+                  <ProtectedRoute>
+                    <Layout>
+                      <Settings />
+                    </Layout>
+                  </ProtectedRoute>
+                }
+              />
+              <Route path="/client-requests" element={<ClientRequests />} />
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </BrowserRouter>
+        </TooltipProvider>
+      </QueryClientProvider>
+    </LanguageProvider>
+  );
+}
 
 export default App;

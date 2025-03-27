@@ -43,6 +43,9 @@ const translations: Translations = {
     "nav.analytics": "Analytics",
     "nav.users": "Users",
     "nav.settings": "Settings",
+    "nav.client": {
+      requests: "Client Requests"
+    },
     
     // Units
     "units.title": "Water Units",
@@ -180,6 +183,9 @@ const translations: Translations = {
     "nav.analytics": "Analytique",
     "nav.users": "Utilisateurs",
     "nav.settings": "Paramètres",
+    "nav.client": {
+      requests: "Demandes clients"
+    },
     
     // Units
     "units.title": "Unités d'eau",

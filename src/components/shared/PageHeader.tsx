@@ -1,27 +1,25 @@
 
-import { Button } from "@/components/ui/button";
-import { Plus } from "lucide-react";
+import React from 'react';
+import { LucideIcon } from 'lucide-react';
 
-interface PageHeaderProps {
+export interface PageHeaderProps {
   title: string;
-  description: string;
-  onAddClick?: () => void;
-  addButtonText?: string;
+  description?: string;
+  icon?: LucideIcon;
+  children?: React.ReactNode;
 }
 
-export function PageHeader({ title, description, onAddClick, addButtonText }: PageHeaderProps) {
+export function PageHeader({ title, description, icon: Icon, children }: PageHeaderProps) {
   return (
-    <div className="flex justify-between items-center">
-      <div>
-        <h1 className="text-2xl font-bold text-white">{title}</h1>
-        <p className="text-gray-400">{description}</p>
+    <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 mb-4">
+      <div className="flex items-center gap-3">
+        {Icon && <Icon className="h-8 w-8 text-primary" />}
+        <div>
+          <h1 className="text-2xl font-bold text-white">{title}</h1>
+          {description && <p className="text-gray-400">{description}</p>}
+        </div>
       </div>
-      {onAddClick && (
-        <Button onClick={onAddClick} className="bg-mywater-blue hover:bg-mywater-blue/90">
-          <Plus className="h-4 w-4 mr-2" />
-          {addButtonText}
-        </Button>
-      )}
+      {children && <div className="flex flex-wrap items-center gap-2 mt-2 md:mt-0">{children}</div>}
     </div>
   );
 }

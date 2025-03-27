@@ -1,5 +1,5 @@
 
-import { Home, Droplets, Filter, Bell, BarChart2, Users, Settings, Lightbulb, X } from "lucide-react";
+import { Home, Droplets, Filter, Bell, BarChart2, Users, Settings, Lightbulb, X, MessageSquare } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -21,6 +21,7 @@ export const Sidebar = ({ isMobile, closeSidebar }: SidebarProps) => {
     { name: t("nav.alerts"), icon: Bell, path: "/alerts" },
     { name: t("nav.analytics"), icon: BarChart2, path: "/analytics" },
     { name: t("nav.users"), icon: Users, path: "/users" },
+    { name: t("nav.client.requests"), icon: MessageSquare, path: "/client-requests" },
     { name: t("nav.settings"), icon: Settings, path: "/settings" },
   ];
 
