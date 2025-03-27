@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from "react";
-import { collection, query, getDocs, doc, updateDoc, orderBy, where } from "firebase/firestore";
+import { collection, query, getDocs, doc, updateDoc, orderBy, where, DocumentData, Timestamp } from "firebase/firestore";
 import { db } from "@/integrations/firebase/client";
 import { PageHeader } from "@/components/shared/PageHeader";
 import { Card } from "@/components/ui/card";
@@ -66,12 +66,21 @@ export default function ClientRequests() {
       const requestsData: SupportRequest[] = [];
       
       querySnapshot.forEach((doc) => {
-        const data = doc.data();
+        const data = doc.data() as DocumentData;
+        const createdAt = data.created_at as Timestamp;
+        
         requestsData.push({
           id: doc.id,
-          ...data,
-          created_at: data.created_at.toDate(),
-        } as SupportRequest);
+          user_id: data.user_id || "",
+          user_name: data.user_name || "",
+          user_email: data.user_email || "",
+          subject: data.subject || "",
+          message: data.message || "",
+          support_type: data.support_type || "",
+          purifier_model: data.purifier_model || "",
+          status: (data.status as "new" | "in_progress" | "resolved") || "new",
+          created_at: createdAt ? createdAt.toDate() : new Date(),
+        });
       });
       
       setRequests(requestsData);
