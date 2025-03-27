@@ -1,4 +1,3 @@
-
 import {
   ChevronsLeft,
   ChevronsRight,
@@ -15,12 +14,7 @@ import { cn } from "@/lib/utils"
 import { useSidebar } from "@/hooks/use-sidebar"
 import { Logo } from "./Logo"
 
-interface SidebarProps {
-  isMobile?: boolean;
-  closeSidebar?: () => void;
-}
-
-export function Sidebar({ isMobile, closeSidebar }: SidebarProps) {
+export function Sidebar() {
   const { collapsed, setCollapsed } = useSidebar()
   const location = useLocation();
   const pathname = location.pathname;
@@ -30,13 +24,6 @@ export function Sidebar({ isMobile, closeSidebar }: SidebarProps) {
     // Check if the current route is part of the business section
     setIsBusiness(pathname.startsWith('/business'));
   }, [pathname]);
-
-  // Handle menu item click on mobile
-  const handleMenuItemClick = () => {
-    if (isMobile && closeSidebar) {
-      closeSidebar();
-    }
-  };
 
   return (
     <div
@@ -64,7 +51,6 @@ export function Sidebar({ isMobile, closeSidebar }: SidebarProps) {
                 "flex items-center gap-3 rounded-lg px-3 py-2 text-gray-300 transition-all hover:text-white",
                 pathname === "/PrivateDashboard" && "bg-spotify-accent text-white"
               )}
-              onClick={handleMenuItemClick}
             >
               <Home className="h-4 w-4" />
               <span>Home</span>
@@ -75,7 +61,6 @@ export function Sidebar({ isMobile, closeSidebar }: SidebarProps) {
                 "flex items-center gap-3 rounded-lg px-3 py-2 text-gray-300 transition-all hover:text-white",
                 pathname === "/profile" && "bg-spotify-accent text-white"
               )}
-              onClick={handleMenuItemClick}
             >
               <User className="h-4 w-4" />
               <span>Profile</span>
@@ -86,7 +71,6 @@ export function Sidebar({ isMobile, closeSidebar }: SidebarProps) {
                 "flex items-center gap-3 rounded-lg px-3 py-2 text-gray-300 transition-all hover:text-white",
                 pathname === "/settings" && "bg-spotify-accent text-white"
               )}
-              onClick={handleMenuItemClick}
             >
               <Settings className="h-4 w-4" />
               <span>Settings</span>
@@ -98,7 +82,6 @@ export function Sidebar({ isMobile, closeSidebar }: SidebarProps) {
                 "flex items-center gap-3 rounded-lg px-3 py-2 text-gray-300 transition-all hover:text-white",
                 pathname === "/client-requests" && "bg-spotify-accent text-white"
               )}
-              onClick={handleMenuItemClick}
             >
               <Inbox className="h-4 w-4" />
               <span>Client Requests</span>
@@ -117,7 +100,6 @@ export function Sidebar({ isMobile, closeSidebar }: SidebarProps) {
                   "flex items-center gap-3 rounded-lg px-3 py-2 text-gray-300 transition-all hover:text-white",
                   pathname === "/business/units" && "bg-spotify-accent text-white"
                 )}
-                onClick={handleMenuItemClick}
               >
                 <File className="h-4 w-4" />
                 <span>Units</span>

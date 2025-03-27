@@ -34,10 +34,7 @@ export const Layout = ({ children }: LayoutProps) => {
                   ${isMobile && !showMobileSidebar ? "-translate-x-full" : "translate-x-0"} 
                   transition-transform duration-300 ease-in-out h-screen`}
       >
-        <Sidebar 
-          isMobile={isMobile} 
-          closeSidebar={toggleMobileSidebar}
-        />
+        <Sidebar isMobile={isMobile} closeSidebar={toggleMobileSidebar} />
       </div>
 
       {/* Main content */}
