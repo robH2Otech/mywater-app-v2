@@ -5,9 +5,10 @@ import { FormInput } from "@/components/shared/FormInput";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { Send, Loader2 } from "lucide-react";
-import { collection, addDoc } from "firebase/firestore";
+import { Send, Loader2, CheckCircle } from "lucide-react";
+import { collection, addDoc, serverTimestamp } from "firebase/firestore";
 import { db } from "@/integrations/firebase/client";
+import { sendSupportRequestEmail } from "@/utils/emailUtil";
 
 interface SupportContactFormProps {
   userData: any;
@@ -19,6 +20,7 @@ export function SupportContactForm({ userData }: SupportContactFormProps) {
   const [subject, setSubject] = useState("");
   const [message, setMessage] = useState("");
   const [supportType, setSupportType] = useState("technical");
+  const [isSuccess, setIsSuccess] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -36,7 +38,7 @@ export function SupportContactForm({ userData }: SupportContactFormProps) {
     
     try {
       // Save support request to Firestore
-      await addDoc(collection(db, "support_requests"), {
+      const docRef = await addDoc(collection(db, "support_requests"), {
         user_id: userData.uid,
         user_name: `${userData.first_name} ${userData.last_name}`,
         user_email: userData.email,
@@ -45,18 +47,34 @@ export function SupportContactForm({ userData }: SupportContactFormProps) {
         support_type: supportType,
         purifier_model: userData.purifier_model,
         status: "new",
-        created_at: new Date(),
+        created_at: serverTimestamp(),
       });
+      
+      // Send notification email to support team
+      await sendSupportRequestEmail(
+        userData.email,
+        `${userData.first_name} ${userData.last_name}`,
+        subject,
+        supportType,
+        message,
+        docRef.id
+      );
       
       // Reset form
       setSubject("");
       setMessage("");
       setSupportType("technical");
+      setIsSuccess(true);
       
       toast({
         title: "Request submitted",
         description: "Your support request has been submitted successfully. Our team will contact you shortly.",
       });
+      
+      // Reset success state after 5 seconds
+      setTimeout(() => {
+        setIsSuccess(false);
+      }, 5000);
     } catch (error) {
       console.error("Error submitting support request:", error);
       toast({
@@ -68,6 +86,24 @@ export function SupportContactForm({ userData }: SupportContactFormProps) {
       setIsLoading(false);
     }
   };
+
+  if (isSuccess) {
+    return (
+      <div className="p-6 bg-spotify-darker rounded-lg text-center space-y-4">
+        <CheckCircle className="h-16 w-16 text-green-500 mx-auto" />
+        <h2 className="text-xl font-semibold text-white">Request Submitted</h2>
+        <p className="text-gray-400">
+          Your support request has been submitted successfully. Our team will contact you shortly.
+        </p>
+        <Button 
+          onClick={() => setIsSuccess(false)}
+          className="mt-4 bg-mywater-blue hover:bg-mywater-blue/90"
+        >
+          Submit Another Request
+        </Button>
+      </div>
+    );
+  }
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6 p-4 bg-spotify-darker rounded-lg">

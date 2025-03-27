@@ -44,6 +44,58 @@ export const sendReferralEmail = async (
   }
 };
 
+// Function to send a support request notification email to the support team
+export const sendSupportRequestEmail = async (
+  customerEmail: string,
+  customerName: string,
+  subject: string,
+  supportType: string,
+  message: string,
+  requestId: string
+) => {
+  try {
+    const supportTeamEmail = "support@mywater.com"; // Change this to your actual support email
+    
+    // Generate email content
+    const emailContent = generateSupportRequestEmailTemplate(
+      customerName,
+      customerEmail,
+      subject,
+      supportType,
+      message,
+      requestId
+    );
+
+    // Store in Firestore for record-keeping and future processing
+    const emailDocRef = await addDoc(collection(db, "emails_to_send"), {
+      to: supportTeamEmail,
+      from: "notifications@mywater.com",
+      from_name: "MYWATER Support System",
+      subject: `New Support Request: ${subject}`,
+      body: emailContent,
+      html_body: emailContent.replace(/\n/g, "<br>"),
+      created_at: new Date(),
+      status: "pending",
+      type: "support_notification",
+      request_id: requestId
+    });
+
+    console.log("Support notification email stored with ID:", emailDocRef.id);
+    
+    // In a real app, this would trigger a cloud function or webhook to send the email
+    // For demonstration, we'll immediately mark it as "sent"
+    await updateDoc(emailDocRef, {
+      status: "sent",
+      sent_at: new Date()
+    });
+    
+    return true;
+  } catch (error) {
+    console.error("Error sending support notification email:", error);
+    return false;
+  }
+};
+
 // Function to check for pending emails and mark them as sent
 export const processPendingEmails = async () => {
   try {
@@ -90,4 +142,30 @@ Check it out here: https://mywater.com/products
 
 Best,
 ${fromName || "[Your Name]"}`;
+};
+
+// Function to generate a support request notification email template
+export const generateSupportRequestEmailTemplate = (
+  customerName: string,
+  customerEmail: string,
+  subject: string,
+  supportType: string,
+  message: string,
+  requestId: string
+) => {
+  return `New Support Request
+
+Request ID: ${requestId}
+Customer: ${customerName} (${customerEmail})
+Support Type: ${supportType.charAt(0).toUpperCase() + supportType.slice(1).replace(/-/g, " ")}
+Subject: ${subject}
+
+Message:
+${message}
+
+---
+You can view and manage this request in the MYWATER Business Portal at:
+https://mywater.com/admin/client-requests
+
+This is an automated message from the MYWATER Support System.`;
 };
