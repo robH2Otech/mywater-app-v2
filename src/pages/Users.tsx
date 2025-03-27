@@ -11,10 +11,11 @@ import { collection, getDocs } from "firebase/firestore";
 import { db } from "@/integrations/firebase/client";
 import { Card } from "@/components/ui/card";
 import { Users as UsersIcon } from "lucide-react";
+import { User } from "@/types/users";
 
 export const Users = () => {
   const { toast } = useToast();
-  const [selectedUser, setSelectedUser] = useState<any>(null);
+  const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [isAddUserOpen, setIsAddUserOpen] = useState(false);
 
   const { data: users = [], isLoading: unitsLoading, error: unitsError } = useQuery({
@@ -27,8 +28,13 @@ export const Users = () => {
         const usersSnapshot = await getDocs(usersCollection);
         const usersList = usersSnapshot.docs.map(doc => ({
           id: doc.id,
+          first_name: doc.data().first_name || "",
+          last_name: doc.data().last_name || "",
+          email: doc.data().email || "",
+          role: doc.data().role || "user",
+          status: doc.data().status || "active",
           ...doc.data()
-        }));
+        })) as User[];
         
         console.log("Users data:", usersList);
         return usersList;
