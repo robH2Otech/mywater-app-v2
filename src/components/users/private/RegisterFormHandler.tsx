@@ -3,7 +3,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { createUserWithEmailAndPassword, updateProfile } from "firebase/auth";
-import { collection, doc, setDoc } from "firebase/firestore";
+import { collection, doc, getDocs, query, setDoc, where } from "firebase/firestore";
 import { auth, db } from "@/integrations/firebase/client";
 
 interface RegisterFormHandlerProps {
@@ -97,6 +97,16 @@ export function useRegisterFormHandler() {
     setIsLoading(true);
     
     try {
+      // Check if email already exists
+      const emailToCheck = socialEmail || email;
+      const usersRef = collection(db, "app_users_privat");
+      const q = query(usersRef, where("email", "==", emailToCheck));
+      const querySnapshot = await getDocs(q);
+      
+      if (!querySnapshot.empty) {
+        throw new Error("An account with this email already exists");
+      }
+      
       // Determine if we're using social login or email/password
       let user;
       

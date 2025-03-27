@@ -1,7 +1,6 @@
 
-import { User, Home, Phone, Mail, Calendar, Edit } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { format } from "date-fns";
+import { Edit } from "lucide-react";
 
 interface PrivateUserProfileDisplayProps {
   userData: any;
@@ -9,95 +8,77 @@ interface PrivateUserProfileDisplayProps {
 }
 
 export function PrivateUserProfileDisplay({ userData, onEdit }: PrivateUserProfileDisplayProps) {
-  // Format dates
-  const formattedPurchaseDate = userData?.purchase_date 
-    ? format(userData.purchase_date.toDate(), 'MMMM d, yyyy')
-    : 'Not available';
-  
-  const formattedReplacementDate = userData?.cartridge_replacement_date 
-    ? format(userData.cartridge_replacement_date.toDate(), 'MMMM d, yyyy')
-    : 'Not available';
-  
+  if (!userData) {
+    return <p className="text-gray-400">Loading profile data...</p>;
+  }
+
   return (
     <div className="space-y-6">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* Personal Information */}
-        <div className="space-y-4">
-          <h3 className="text-lg font-semibold text-white">Personal Information</h3>
-          
-          <div className="space-y-3">
-            <div className="flex items-start gap-3">
-              <User className="h-5 w-5 text-gray-400 mt-0.5" />
-              <div>
-                <p className="text-sm text-gray-400">Name</p>
-                <p className="text-white">{userData?.first_name} {userData?.last_name}</p>
-              </div>
-            </div>
-            
-            <div className="flex items-start gap-3">
-              <Mail className="h-5 w-5 text-gray-400 mt-0.5" />
-              <div>
-                <p className="text-sm text-gray-400">Email</p>
-                <p className="text-white">{userData?.email}</p>
-              </div>
-            </div>
-            
-            <div className="flex items-start gap-3">
-              <Home className="h-5 w-5 text-gray-400 mt-0.5" />
-              <div>
-                <p className="text-sm text-gray-400">Address</p>
-                <p className="text-white">{userData?.address || "Not provided"}</p>
-              </div>
-            </div>
-            
-            <div className="flex items-start gap-3">
-              <Phone className="h-5 w-5 text-gray-400 mt-0.5" />
-              <div>
-                <p className="text-sm text-gray-400">Phone</p>
-                <p className="text-white">{userData?.phone || "Not provided"}</p>
-              </div>
-            </div>
+      <div className="space-y-2">
+        <h3 className="text-lg font-medium text-white">Personal Information</h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <p className="text-sm text-gray-400">Name</p>
+            <p className="text-white">{`${userData.first_name || ''} ${userData.last_name || ''}`}</p>
           </div>
-        </div>
-        
-        {/* Purifier Information */}
-        <div className="space-y-4">
-          <h3 className="text-lg font-semibold text-white">Purifier Information</h3>
-          
-          <div className="space-y-3">
-            <div className="flex items-start gap-3">
-              <div>
-                <p className="text-sm text-gray-400">Model</p>
-                <p className="text-white">{userData?.purifier_model || "Not available"}</p>
-              </div>
-            </div>
-            
-            <div className="flex items-start gap-3">
-              <Calendar className="h-5 w-5 text-gray-400 mt-0.5" />
-              <div>
-                <p className="text-sm text-gray-400">Purchase Date</p>
-                <p className="text-white">{formattedPurchaseDate}</p>
-              </div>
-            </div>
-            
-            <div className="flex items-start gap-3">
-              <Calendar className="h-5 w-5 text-gray-400 mt-0.5" />
-              <div>
-                <p className="text-sm text-gray-400">Cartridge Replacement Due</p>
-                <p className="text-white">{formattedReplacementDate}</p>
-              </div>
-            </div>
+          <div>
+            <p className="text-sm text-gray-400">Email Address</p>
+            <p className="text-white">{userData.email || ''}</p>
+          </div>
+          <div>
+            <p className="text-sm text-gray-400">Phone Number</p>
+            <p className="text-white">{userData.phone || ''}</p>
           </div>
         </div>
       </div>
       
-      <div className="flex justify-end">
+      <div className="space-y-2">
+        <h3 className="text-lg font-medium text-white">Address</h3>
+        <div>
+          <p className="text-sm text-gray-400">Street Address</p>
+          <p className="text-white">{userData.street_address || ''}</p>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div>
+            <p className="text-sm text-gray-400">City</p>
+            <p className="text-white">{userData.city || ''}</p>
+          </div>
+          <div>
+            <p className="text-sm text-gray-400">Post Code</p>
+            <p className="text-white">{userData.postal_code || ''}</p>
+          </div>
+          <div>
+            <p className="text-sm text-gray-400">Country</p>
+            <p className="text-white">{userData.country || ''}</p>
+          </div>
+        </div>
+      </div>
+      
+      <div className="space-y-2">
+        <h3 className="text-lg font-medium text-white">System Information</h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <p className="text-sm text-gray-400">Purifier Model</p>
+            <p className="text-white">{userData.purifier_model || ''}</p>
+          </div>
+          <div>
+            <p className="text-sm text-gray-400">Purchase Date</p>
+            <p className="text-white">
+              {userData.purchase_date 
+                ? new Date(userData.purchase_date.seconds * 1000).toLocaleDateString() 
+                : ''}
+            </p>
+          </div>
+        </div>
+      </div>
+      
+      <div className="flex justify-end mt-6">
         <Button 
           onClick={onEdit}
-          className="bg-spotify-accent hover:bg-spotify-accent-hover"
+          className="bg-mywater-blue hover:bg-mywater-blue/90"
         >
           <Edit className="h-4 w-4 mr-2" />
-          Edit Contact Info
+          Edit Profile
         </Button>
       </div>
     </div>

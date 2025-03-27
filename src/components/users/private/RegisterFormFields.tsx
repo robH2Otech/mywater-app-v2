@@ -61,14 +61,14 @@ export function RegisterFormFields({
           value={firstName}
           onChange={setFirstName}
           required
-          placeholder="John"
+          placeholder="Jean"
         />
         <FormInput
           label="Last Name"
           value={lastName}
           onChange={setLastName}
           required
-          placeholder="Doe"
+          placeholder="Dupont"
         />
       </div>
       
@@ -79,7 +79,7 @@ export function RegisterFormFields({
         onChange={setEmail}
         required
         disabled={!!socialEmail}
-        placeholder="your.email@example.com"
+        placeholder="jean.dupont@example.fr"
       />
       
       <FormInput
@@ -87,7 +87,7 @@ export function RegisterFormFields({
         value={streetAddress}
         onChange={setStreetAddress}
         required
-        placeholder="123 Main Street"
+        placeholder="15 Rue de la Paix"
       />
       
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -96,21 +96,21 @@ export function RegisterFormFields({
           value={city}
           onChange={setCity}
           required
-          placeholder="New York"
+          placeholder="Paris"
         />
         <FormInput
-          label="Postal/ZIP Code"
+          label="Post Code"
           value={postalCode}
           onChange={setPostalCode}
           required
-          placeholder="10001"
+          placeholder="75001"
         />
         <FormInput
           label="Country"
           value={country}
           onChange={setCountry}
           required
-          placeholder="United States"
+          placeholder="France"
         />
       </div>
       
@@ -119,7 +119,7 @@ export function RegisterFormFields({
         value={phone}
         onChange={setPhone}
         required
-        placeholder="+1 555-123-4567"
+        placeholder="+33 1 23 45 67 89"
       />
       
       <FormDatePicker

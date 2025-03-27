@@ -18,9 +18,12 @@ export function PrivateUserEditForm({ userData, onCancel, onSave }: PrivateUserE
   const [isLoading, setIsLoading] = useState(false);
   
   // Edit form state
-  const [address, setAddress] = useState(userData?.address || "");
-  const [phone, setPhone] = useState(userData?.phone || "");
   const [email, setEmail] = useState(userData?.email || "");
+  const [streetAddress, setStreetAddress] = useState(userData?.street_address || "");
+  const [city, setCity] = useState(userData?.city || "");
+  const [postalCode, setPostalCode] = useState(userData?.postal_code || "");
+  const [country, setCountry] = useState(userData?.country || "");
+  const [phone, setPhone] = useState(userData?.phone || "");
   
   const handleSave = async () => {
     if (!userData?.id || !userData?.uid) {
@@ -35,22 +38,32 @@ export function PrivateUserEditForm({ userData, onCancel, onSave }: PrivateUserE
     setIsLoading(true);
     
     try {
+      // Construct full address
+      const fullAddress = `${streetAddress}, ${city}, ${postalCode}, ${country}`.trim();
+      
       // Determine which collection to use
-      const isNewCollection = userData.id.startsWith('app_users_privat_');
-      const collectionName = isNewCollection ? "app_users_privat" : "private_users";
+      const collectionName = "app_users_privat";
       
       // Update in the appropriate collection
-      const userDocRef = doc(db, collectionName, userData.id);
+      const userDocRef = doc(db, collectionName, userData.uid);
       
       await updateDoc(userDocRef, {
-        address,
-        phone,
         email,
-        updated_at: new Date().toISOString()
+        address: fullAddress,
+        street_address: streetAddress,
+        city,
+        postal_code: postalCode,
+        country,
+        phone,
+        updated_at: new Date()
       });
       
       // Return updated data to parent component
-      onSave({ address, phone, email });
+      onSave({ 
+        address: fullAddress, 
+        phone, 
+        email 
+      });
       
       toast({
         title: "Profile Updated",
@@ -78,10 +91,28 @@ export function PrivateUserEditForm({ userData, onCancel, onSave }: PrivateUserE
       />
       
       <FormInput
-        label="Address"
-        value={address}
-        onChange={setAddress}
+        label="Street Address"
+        value={streetAddress}
+        onChange={setStreetAddress}
       />
+      
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <FormInput
+          label="City"
+          value={city}
+          onChange={setCity}
+        />
+        <FormInput
+          label="Post Code"
+          value={postalCode}
+          onChange={setPostalCode}
+        />
+        <FormInput
+          label="Country"
+          value={country}
+          onChange={setCountry}
+        />
+      </div>
       
       <FormInput
         label="Phone Number"
