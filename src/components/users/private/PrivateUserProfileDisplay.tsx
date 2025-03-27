@@ -65,7 +65,9 @@ export function PrivateUserProfileDisplay({ userData, onEdit }: PrivateUserProfi
             <p className="text-sm text-gray-400">Purchase Date</p>
             <p className="text-white">
               {userData.purchase_date 
-                ? new Date(userData.purchase_date.seconds * 1000).toLocaleDateString() 
+                ? (userData.purchase_date.toDate 
+                   ? new Date(userData.purchase_date.toDate()).toLocaleDateString() 
+                   : new Date(userData.purchase_date).toLocaleDateString())
                 : ''}
             </p>
           </div>

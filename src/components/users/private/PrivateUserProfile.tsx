@@ -23,13 +23,9 @@ export function PrivateUserProfile({ userData }: PrivateUserProfileProps) {
     setIsEditing(false);
   };
   
-  const handleSave = (updatedData: { address: string; phone: string; email: string }) => {
+  const handleSave = (updatedData: any) => {
     // Update local userData
-    setLocalUserData({
-      ...localUserData,
-      ...updatedData
-    });
-    
+    setLocalUserData(updatedData);
     setIsEditing(false);
   };
   

@@ -2,95 +2,38 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
-import { createUserWithEmailAndPassword, updateProfile } from "firebase/auth";
-import { collection, doc, getDocs, query, setDoc, where } from "firebase/firestore";
-import { auth, db } from "@/integrations/firebase/client";
-
-interface RegisterFormHandlerProps {
-  firstName: string;
-  lastName: string;
-  email: string;
-  address: string;
-  streetAddress?: string;
-  city?: string;
-  postalCode?: string;
-  country?: string;
-  phone: string;
-  purchaseDate: Date | null;
-  purifierModel: string;
-  password: string;
-  confirmPassword: string;
-  socialEmail?: string;
-}
+import { auth } from "@/integrations/firebase/client";
+import { 
+  RegisterUserData, 
+  validateRegistrationForm, 
+  checkEmailExists, 
+  createUserAccount, 
+  updateUserProfile,
+  storeUserData,
+  createReferralCode
+} from "@/utils/auth/registerHelpers";
 
 export function useRegisterFormHandler() {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
 
-  const handleRegister = async ({
-    firstName,
-    lastName,
-    email,
-    address,
-    streetAddress,
-    city,
-    postalCode,
-    country,
-    phone,
-    purchaseDate,
-    purifierModel,
-    password,
-    confirmPassword,
-    socialEmail = ""
-  }: RegisterFormHandlerProps) => {
+  const handleRegister = async (userData: RegisterUserData) => {
     console.log("Starting registration process", {
-      firstName,
-      lastName,
-      email: socialEmail || email,
-      address,
-      streetAddress,
-      city,
-      postalCode,
-      country,
-      purifierModel,
-      hasPurchaseDate: !!purchaseDate
+      firstName: userData.firstName,
+      lastName: userData.lastName,
+      email: userData.socialEmail || userData.email,
+      address: userData.address,
+      streetAddress: userData.streetAddress,
+      city: userData.city,
+      postalCode: userData.postalCode,
+      country: userData.country,
+      purifierModel: userData.purifierModel,
+      hasPurchaseDate: !!userData.purchaseDate
     });
     
     // Validate form
-    if (!firstName || !lastName) {
-      toast({
-        title: "Missing information",
-        description: "Please provide your first and last name.",
-        variant: "destructive",
-      });
-      return;
-    }
-    
-    if (!socialEmail && (!password || password !== confirmPassword)) {
-      toast({
-        title: "Password error",
-        description: "Please make sure your passwords match.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    if (!purifierModel) {
-      toast({
-        title: "Purifier model required",
-        description: "Please select your water purifier model.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    if (!purchaseDate) {
-      toast({
-        title: "Purchase date required",
-        description: "Please select when you purchased your water purifier.",
-        variant: "destructive",
-      });
+    if (!validateRegistrationForm(userData)) {
       return;
     }
 
@@ -98,20 +41,18 @@ export function useRegisterFormHandler() {
     
     try {
       // Check if email already exists
-      const emailToCheck = socialEmail || email;
-      const usersRef = collection(db, "app_users_privat");
-      const q = query(usersRef, where("email", "==", emailToCheck));
-      const querySnapshot = await getDocs(q);
+      const emailToCheck = userData.socialEmail || userData.email;
+      const emailExists = await checkEmailExists(emailToCheck);
       
-      if (!querySnapshot.empty) {
+      if (emailExists) {
         throw new Error("An account with this email already exists");
       }
       
       // Determine if we're using social login or email/password
       let user;
       
-      if (socialEmail) {
-        console.log("Using social login with email:", socialEmail);
+      if (userData.socialEmail) {
+        console.log("Using social login with email:", userData.socialEmail);
         // User is already authenticated via social login
         user = auth.currentUser;
         
@@ -122,95 +63,30 @@ export function useRegisterFormHandler() {
         
         // Update user profile if needed
         console.log("Updating social user profile");
-        await updateProfile(user, {
-          displayName: `${firstName} ${lastName}`
-        });
+        await updateUserProfile(user, userData.firstName, userData.lastName);
       } else {
         console.log("Creating new user with email/password");
         try {
           // Create user account with email/password
-          const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-          user = userCredential.user;
+          user = await createUserAccount(userData.email, userData.password);
           
           // Update display name
-          await updateProfile(user, {
-            displayName: `${firstName} ${lastName}`
-          });
+          await updateUserProfile(user, userData.firstName, userData.lastName);
           
           console.log("User created successfully:", user.uid);
         } catch (authError: any) {
-          console.error("Auth error during registration:", authError);
-          let errorMessage = "Failed to create account";
-          
-          if (authError.code === 'auth/email-already-in-use') {
-            errorMessage = "An account with this email already exists";
-          } else if (authError.code === 'auth/invalid-email') {
-            errorMessage = "Invalid email address format";
-          } else if (authError.code === 'auth/weak-password') {
-            errorMessage = "Password should be at least 6 characters";
-          } else if (authError.message) {
-            errorMessage = authError.message;
-          }
-          
-          throw new Error(errorMessage);
+          throw authError;
         }
       }
       
-      // Calculate cartridge replacement date (1 year from purchase)
-      const replacementDate = new Date(purchaseDate!);
-      replacementDate.setFullYear(replacementDate.getFullYear() + 1);
-      
       console.log("Storing user data in Firestore");
       
-      // Store additional user data in app_users_privat collection
-      const userData = {
-        uid: user.uid,
-        email: user.email,
-        first_name: firstName,
-        last_name: lastName,
-        address: address,
-        street_address: streetAddress || "",
-        city: city || "",
-        postal_code: postalCode || "",
-        country: country || "",
-        phone: phone,
-        purifier_model: purifierModel,
-        purchase_date: purchaseDate,
-        cartridge_replacement_date: replacementDate,
-        referrals_count: 0,
-        referrals_converted: 0,
-        referral_reward_earned: false,
-        referral_reward_claimed: false,
-        created_at: new Date(),
-        updated_at: new Date(),
-        needs_profile_completion: false
-      };
-      
-      // Use user.uid as the document ID for easier retrieval
-      try {
-        const userDocRef = doc(db, "app_users_privat", user.uid);
-        await setDoc(userDocRef, userData);
-        console.log("User data stored successfully with UID as doc ID");
-      } catch (firestoreError) {
-        console.error("Error saving user data to Firestore:", firestoreError);
-        throw new Error("Failed to save your profile. Please try again.");
-      }
+      // Store user data in Firestore
+      await storeUserData(userData, user.uid);
       
       // Create a unique referral code
-      const referralCode = `${firstName.toLowerCase().substring(0, 3)}${lastName.toLowerCase().substring(0, 3)}${Math.floor(Math.random() * 10000)}`;
-      
-      console.log("Creating referral code:", referralCode);
-      try {
-        const referralDocRef = doc(collection(db, "referral_codes"));
-        await setDoc(referralDocRef, {
-          user_id: user.uid,
-          code: referralCode,
-          created_at: new Date()
-        });
-      } catch (referralError) {
-        console.error("Error creating referral code:", referralError);
-        // Don't throw here, as the main account is already created
-      }
+      console.log("Creating referral code");
+      await createReferralCode(user.uid, userData.firstName, userData.lastName);
       
       toast({
         title: "Account created successfully",

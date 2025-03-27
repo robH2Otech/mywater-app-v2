@@ -9,6 +9,8 @@ import { LoadingSkeleton } from "@/components/shared/LoadingSkeleton";
 import { UsersList } from "@/components/users/UsersList";
 import { collection, getDocs } from "firebase/firestore";
 import { db } from "@/integrations/firebase/client";
+import { Card } from "@/components/ui/card";
+import { Users as UsersIcon } from "lucide-react";
 
 export const Users = () => {
   const { toast } = useToast();
@@ -59,16 +61,23 @@ export const Users = () => {
         addButtonText="Add User"
       />
       
-      {users.length === 0 ? (
-        <div className="text-center text-gray-400 py-8">
-          No users found. Click "Add User" to create one.
+      <Card className="p-6 bg-spotify-darker border-spotify-accent">
+        <div className="flex items-center mb-4">
+          <UsersIcon className="h-5 w-5 text-mywater-blue mr-2" />
+          <h2 className="text-xl font-semibold text-white">System Users</h2>
         </div>
-      ) : (
-        <UsersList
-          users={users}
-          onUserClick={setSelectedUser}
-        />
-      )}
+        
+        {users.length === 0 ? (
+          <div className="text-center text-gray-400 py-8">
+            No users found. Click "Add User" to create one.
+          </div>
+        ) : (
+          <UsersList
+            users={users}
+            onUserClick={setSelectedUser}
+          />
+        )}
+      </Card>
 
       <AddUserDialog 
         open={isAddUserOpen}
@@ -83,4 +92,4 @@ export const Users = () => {
       />
     </div>
   );
-};
+}

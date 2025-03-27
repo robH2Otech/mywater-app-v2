@@ -10,7 +10,7 @@ import { db } from "@/integrations/firebase/client";
 interface PrivateUserEditFormProps {
   userData: any;
   onCancel: () => void;
-  onSave: (updatedData: { address: string; phone: string; email: string }) => void;
+  onSave: (updatedData: any) => void;
 }
 
 export function PrivateUserEditForm({ userData, onCancel, onSave }: PrivateUserEditFormProps) {
@@ -18,6 +18,8 @@ export function PrivateUserEditForm({ userData, onCancel, onSave }: PrivateUserE
   const [isLoading, setIsLoading] = useState(false);
   
   // Edit form state
+  const [firstName, setFirstName] = useState(userData?.first_name || "");
+  const [lastName, setLastName] = useState(userData?.last_name || "");
   const [email, setEmail] = useState(userData?.email || "");
   const [streetAddress, setStreetAddress] = useState(userData?.street_address || "");
   const [city, setCity] = useState(userData?.city || "");
@@ -26,7 +28,7 @@ export function PrivateUserEditForm({ userData, onCancel, onSave }: PrivateUserE
   const [phone, setPhone] = useState(userData?.phone || "");
   
   const handleSave = async () => {
-    if (!userData?.id || !userData?.uid) {
+    if (!userData?.uid) {
       toast({
         title: "Error",
         description: "Could not update profile: User data not found",
@@ -38,31 +40,30 @@ export function PrivateUserEditForm({ userData, onCancel, onSave }: PrivateUserE
     setIsLoading(true);
     
     try {
-      // Construct full address
-      const fullAddress = `${streetAddress}, ${city}, ${postalCode}, ${country}`.trim();
-      
       // Determine which collection to use
       const collectionName = "app_users_privat";
       
       // Update in the appropriate collection
       const userDocRef = doc(db, collectionName, userData.uid);
       
-      await updateDoc(userDocRef, {
+      const updatedData = {
+        first_name: firstName,
+        last_name: lastName,
         email,
-        address: fullAddress,
         street_address: streetAddress,
         city,
         postal_code: postalCode,
         country,
         phone,
         updated_at: new Date()
-      });
+      };
+      
+      await updateDoc(userDocRef, updatedData);
       
       // Return updated data to parent component
-      onSave({ 
-        address: fullAddress, 
-        phone, 
-        email 
+      onSave({
+        ...userData,
+        ...updatedData
       });
       
       toast({
@@ -83,17 +84,34 @@ export function PrivateUserEditForm({ userData, onCancel, onSave }: PrivateUserE
 
   return (
     <div className="space-y-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <FormInput
+          label="First Name"
+          value={firstName}
+          onChange={setFirstName}
+          placeholder="Jean"
+        />
+        <FormInput
+          label="Last Name"
+          value={lastName}
+          onChange={setLastName}
+          placeholder="Dupont"
+        />
+      </div>
+      
       <FormInput
         label="Email Address"
         type="email"
         value={email}
         onChange={setEmail}
+        placeholder="jean.dupont@example.fr"
       />
       
       <FormInput
         label="Street Address"
         value={streetAddress}
         onChange={setStreetAddress}
+        placeholder="15 Rue de la Paix"
       />
       
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -101,16 +119,19 @@ export function PrivateUserEditForm({ userData, onCancel, onSave }: PrivateUserE
           label="City"
           value={city}
           onChange={setCity}
+          placeholder="Paris"
         />
         <FormInput
           label="Post Code"
           value={postalCode}
           onChange={setPostalCode}
+          placeholder="75001"
         />
         <FormInput
           label="Country"
           value={country}
           onChange={setCountry}
+          placeholder="France"
         />
       </div>
       
@@ -118,6 +139,7 @@ export function PrivateUserEditForm({ userData, onCancel, onSave }: PrivateUserE
         label="Phone Number"
         value={phone}
         onChange={setPhone}
+        placeholder="+33 1 23 45 67 89"
       />
       
       <div className="flex gap-3 justify-end mt-6">

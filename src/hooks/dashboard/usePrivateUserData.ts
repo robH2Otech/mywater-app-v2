@@ -4,10 +4,11 @@ import { useNavigate } from "react-router-dom";
 import { auth, db } from "@/integrations/firebase/client";
 import { collection, query, where, getDocs, DocumentData, doc, getDoc } from "firebase/firestore";
 import { addDays, format, isBefore, differenceInDays } from "date-fns";
+import { PrivateUser } from "@/types/privateUser";
 
 export function usePrivateUserData() {
   const navigate = useNavigate();
-  const [userData, setUserData] = useState<DocumentData | null>(null);
+  const [userData, setUserData] = useState<PrivateUser | null>(null);
   const [loading, setLoading] = useState(true);
   
   useEffect(() => {
@@ -26,11 +27,24 @@ export function usePrivateUserData() {
         
         if (userDoc.exists()) {
           // Set user data
+          const docData = userDoc.data();
           setUserData({
             id: userDoc.id,
             uid: user.uid,
-            ...userDoc.data()
-          });
+            ...docData,
+            purchase_date: docData.purchase_date?.toDate ? 
+              docData.purchase_date.toDate() : 
+              docData.purchase_date ? new Date(docData.purchase_date) : null,
+            cartridge_replacement_date: docData.cartridge_replacement_date?.toDate ? 
+              docData.cartridge_replacement_date.toDate() : 
+              docData.cartridge_replacement_date ? new Date(docData.cartridge_replacement_date) : null,
+            created_at: docData.created_at?.toDate ? 
+              docData.created_at.toDate() : 
+              docData.created_at ? new Date(docData.created_at) : null,
+            updated_at: docData.updated_at?.toDate ? 
+              docData.updated_at.toDate() : 
+              docData.updated_at ? new Date(docData.updated_at) : null
+          } as PrivateUser);
         } else {
           // Fallback to query
           // Get private user data
@@ -47,10 +61,23 @@ export function usePrivateUserData() {
           }
           
           // Set user data
+          const docData = userSnapshot.docs[0].data();
           setUserData({
             id: userSnapshot.docs[0].id,
-            ...userSnapshot.docs[0].data()
-          });
+            ...docData,
+            purchase_date: docData.purchase_date?.toDate ? 
+              docData.purchase_date.toDate() : 
+              docData.purchase_date ? new Date(docData.purchase_date) : null,
+            cartridge_replacement_date: docData.cartridge_replacement_date?.toDate ? 
+              docData.cartridge_replacement_date.toDate() : 
+              docData.cartridge_replacement_date ? new Date(docData.cartridge_replacement_date) : null,
+            created_at: docData.created_at?.toDate ? 
+              docData.created_at.toDate() : 
+              docData.created_at ? new Date(docData.created_at) : null,
+            updated_at: docData.updated_at?.toDate ? 
+              docData.updated_at.toDate() : 
+              docData.updated_at ? new Date(docData.updated_at) : null
+          } as PrivateUser);
         }
         
       } catch (error) {
@@ -67,9 +94,7 @@ export function usePrivateUserData() {
   const getDaysUntilReplacement = () => {
     if (!userData?.cartridge_replacement_date) return null;
     
-    const replacementDate = userData.cartridge_replacement_date.toDate 
-      ? userData.cartridge_replacement_date.toDate() 
-      : new Date(userData.cartridge_replacement_date);
+    const replacementDate = userData.cartridge_replacement_date;
     const today = new Date();
     
     return differenceInDays(replacementDate, today);
@@ -81,26 +106,15 @@ export function usePrivateUserData() {
   
   // Format replacement date
   const formattedReplacementDate = userData?.cartridge_replacement_date
-    ? format(
-        userData.cartridge_replacement_date.toDate 
-          ? userData.cartridge_replacement_date.toDate() 
-          : new Date(userData.cartridge_replacement_date), 
-        'MMMM d, yyyy'
-      )
+    ? format(userData.cartridge_replacement_date, 'MMMM d, yyyy')
     : 'Not available';
   
   // Calculate cartridge usage percentage
   const calculateCartridgeUsage = () => {
     if (!userData?.purchase_date || !userData?.cartridge_replacement_date) return 0;
     
-    const purchaseDate = userData.purchase_date.toDate 
-      ? userData.purchase_date.toDate() 
-      : new Date(userData.purchase_date);
-    
-    const replacementDate = userData.cartridge_replacement_date.toDate 
-      ? userData.cartridge_replacement_date.toDate() 
-      : new Date(userData.cartridge_replacement_date);
-      
+    const purchaseDate = userData.purchase_date;
+    const replacementDate = userData.cartridge_replacement_date;
     const today = new Date();
     
     // Total days in cartridge lifecycle (typically 365 days)
