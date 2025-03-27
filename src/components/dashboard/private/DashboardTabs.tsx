@@ -3,7 +3,7 @@ import { PrivateUserProfile } from "@/components/users/private/PrivateUserProfil
 import { ReferralProgram } from "@/components/users/private/ReferralProgram";
 import { SupportContactForm } from "@/components/users/private/support/SupportContactForm";
 import { InstallationGuide } from "@/components/users/private/support/InstallationGuide";
-import { Share2, UserCircle, HelpCircle, Wrench } from "lucide-react";
+import { Share2, UserCircle, HelpCircle } from "lucide-react";
 import { Tabs, TabsList } from "@/components/ui/tabs";
 import { useState } from "react";
 import { DocumentData } from "firebase/firestore";
@@ -17,6 +17,7 @@ interface DashboardTabsProps {
 
 export function DashboardTabs({ userData }: DashboardTabsProps) {
   const [activeTab, setActiveTab] = useState("profile");
+  const [supportView, setSupportView] = useState<"contact" | "installation">("contact");
   
   return (
     <div className="space-y-6">
@@ -34,13 +35,8 @@ export function DashboardTabs({ userData }: DashboardTabsProps) {
               icon={Share2} 
             />
             <TabTriggerItem 
-              value="installation" 
-              label="Installation Guide" 
-              icon={Wrench} 
-            />
-            <TabTriggerItem 
               value="support" 
-              label="Contact Support" 
+              label="Installation & Support" 
               icon={HelpCircle} 
             />
           </TabsList>
@@ -53,12 +49,37 @@ export function DashboardTabs({ userData }: DashboardTabsProps) {
             <ReferralProgram userData={userData} />
           </TabContentItem>
           
-          <TabContentItem value="installation">
-            <InstallationGuide purifierModel={userData?.purifier_model || "MYWATER System"} />
-          </TabContentItem>
-          
           <TabContentItem value="support">
-            <SupportContactForm userData={userData} />
+            <div className="space-y-6">
+              <div className="flex justify-center gap-4 mb-4">
+                <button
+                  onClick={() => setSupportView("contact")}
+                  className={`px-4 py-2 rounded-md ${
+                    supportView === "contact" 
+                      ? "bg-mywater-blue text-white" 
+                      : "bg-spotify-dark text-gray-300 hover:bg-spotify-accent"
+                  }`}
+                >
+                  Contact Support
+                </button>
+                <button
+                  onClick={() => setSupportView("installation")}
+                  className={`px-4 py-2 rounded-md ${
+                    supportView === "installation" 
+                      ? "bg-mywater-blue text-white" 
+                      : "bg-spotify-dark text-gray-300 hover:bg-spotify-accent"
+                  }`}
+                >
+                  Installation Guide
+                </button>
+              </div>
+              
+              {supportView === "contact" ? (
+                <SupportContactForm userData={userData} />
+              ) : (
+                <InstallationGuide purifierModel={userData?.purifier_model || "MYWATER System"} />
+              )}
+            </div>
           </TabContentItem>
         </Tabs>
       </Card>
