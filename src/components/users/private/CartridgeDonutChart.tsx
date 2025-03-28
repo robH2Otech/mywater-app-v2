@@ -10,7 +10,7 @@ export const CartridgeDonutChart: React.FC<CartridgeDonutChartProps> = ({ percen
   const remainingPercentage = 100 - percentage;
   
   // Calculate stroke dash arrays for the donut segments
-  const circumference = 2 * Math.PI * 20; // Increased radius to make chart bigger
+  const circumference = 2 * Math.PI * 20; // Circle circumference
   const usedStrokeDasharray = `${(percentage * circumference) / 100} ${circumference}`;
   const remainingStrokeDasharray = `${(remainingPercentage * circumference) / 100} ${circumference}`;
 

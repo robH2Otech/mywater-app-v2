@@ -44,113 +44,108 @@ export function PrivateUserProfileDisplay({
         </Button>
       </div>
       
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2 space-y-6">
-          <Card className="bg-spotify-accent/10 border border-spotify-accent/30">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-lg flex items-center gap-2">
-                <User className="h-5 w-5 text-mywater-blue" />
-                Contact Information
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div className="space-y-2">
-                  <p className="text-sm font-medium text-gray-400">Full Name</p>
-                  <p className="text-lg text-white">{`${userData.first_name || ''} ${userData.last_name || ''}`}</p>
-                </div>
-                <div className="space-y-2">
-                  <p className="text-sm font-medium text-gray-400">Email Address</p>
-                  <p className="text-lg text-white">{userData.email || ''}</p>
-                </div>
-                <div className="space-y-2">
-                  <p className="text-sm font-medium text-gray-400">Phone Number</p>
-                  <p className="text-lg text-white">{userData.phone || ''}</p>
-                </div>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        {/* Contact Information Card */}
+        <Card className="bg-spotify-accent/10 border border-spotify-accent/30">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-lg flex items-center gap-2">
+              <User className="h-5 w-5 text-mywater-blue" />
+              Contact Information
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <p className="text-sm font-medium text-gray-400">Full Name</p>
+                <p className="text-base text-white">{`${userData.first_name || ''} ${userData.last_name || ''}`}</p>
               </div>
-            </CardContent>
-          </Card>
-          
-          <Card className="bg-spotify-accent/10 border border-spotify-accent/30">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-lg flex items-center gap-2">
-                <Home className="h-5 w-5 text-mywater-blue" />
-                Address Information
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                <div className="space-y-2">
-                  <p className="text-sm font-medium text-gray-400">Street Address</p>
-                  <p className="text-lg text-white">{userData.street_address || ''}</p>
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                  <div className="space-y-2">
-                    <p className="text-sm font-medium text-gray-400">City</p>
-                    <p className="text-lg text-white">{userData.city || ''}</p>
-                  </div>
-                  <div className="space-y-2">
-                    <p className="text-sm font-medium text-gray-400">Post Code</p>
-                    <p className="text-lg text-white">{userData.postal_code || ''}</p>
-                  </div>
-                  <div className="space-y-2">
-                    <p className="text-sm font-medium text-gray-400">Country</p>
-                    <p className="text-lg text-white">{userData.country || ''}</p>
-                  </div>
-                </div>
+              <div className="space-y-2">
+                <p className="text-sm font-medium text-gray-400">Email Address</p>
+                <p className="text-base text-white">{userData.email || ''}</p>
               </div>
-            </CardContent>
-          </Card>
-        </div>
+              <div className="space-y-2">
+                <p className="text-sm font-medium text-gray-400">Phone Number</p>
+                <p className="text-base text-white">{userData.phone || ''}</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
         
-        <div className="lg:col-span-1">
-          <Card className="bg-spotify-accent/10 border border-spotify-accent/30 h-full">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-lg flex items-center gap-2">
-                <Monitor className="h-5 w-5 text-mywater-blue" />
-                System Information
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="flex flex-col h-full">
-                <div className="grid grid-cols-1 gap-4">
-                  <div className="space-y-2">
-                    <p className="text-sm font-medium text-gray-400">Purifier Model</p>
-                    <p className="text-lg text-white">{userData.purifier_model || ''}</p>
-                  </div>
-                  <div className="space-y-2">
-                    <p className="text-sm font-medium text-gray-400">Purchase Date</p>
-                    <p className="text-lg text-white">
-                      {userData.purchase_date 
-                        ? (userData.purchase_date.toDate 
-                           ? new Date(userData.purchase_date.toDate()).toLocaleDateString() 
-                           : new Date(userData.purchase_date).toLocaleDateString())
-                        : ''}
-                    </p>
-                  </div>
-                  <div className="space-y-2">
-                    <p className="text-sm font-medium text-gray-400">Purchase Price</p>
-                    <p className="text-lg text-white">{userData.purchase_price ? `$${userData.purchase_price}` : 'N/A'}</p>
-                  </div>
-                </div>
-                
-                <div className="mt-4 flex-1 flex flex-col items-center justify-center">
-                  <p className="text-sm font-medium text-gray-400 mb-2">Cartridge Life Remaining</p>
-                  <div className="w-32 h-32">
-                    <CartridgeDonutChart percentage={cartridgeUsagePercent} />
-                  </div>
-                  <p className="text-sm text-center mt-2 text-gray-400">
-                    Next replacement: {userData?.cartridge_replacement_date 
-                      ? (userData.cartridge_replacement_date.toDate 
-                         ? new Date(userData.cartridge_replacement_date.toDate()).toLocaleDateString() 
-                         : new Date(userData.cartridge_replacement_date).toLocaleDateString())
-                      : 'Not set'}
-                  </p>
-                </div>
+        {/* Address Information Card */}
+        <Card className="bg-spotify-accent/10 border border-spotify-accent/30">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-lg flex items-center gap-2">
+              <Home className="h-5 w-5 text-mywater-blue" />
+              Address Information
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <p className="text-sm font-medium text-gray-400">Street Address</p>
+                <p className="text-base text-white">{userData.street_address || ''}</p>
               </div>
-            </CardContent>
-          </Card>
-        </div>
+              <div className="space-y-2">
+                <p className="text-sm font-medium text-gray-400">City</p>
+                <p className="text-base text-white">{userData.city || ''}</p>
+              </div>
+              <div className="space-y-2">
+                <p className="text-sm font-medium text-gray-400">Postal Code</p>
+                <p className="text-base text-white">{userData.postal_code || ''}</p>
+              </div>
+              <div className="space-y-2">
+                <p className="text-sm font-medium text-gray-400">Country</p>
+                <p className="text-base text-white">{userData.country || ''}</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        
+        {/* System Information Card */}
+        <Card className="bg-spotify-accent/10 border border-spotify-accent/30">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-lg flex items-center gap-2">
+              <Monitor className="h-5 w-5 text-mywater-blue" />
+              System Information
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <p className="text-sm font-medium text-gray-400">Purifier Model</p>
+                <p className="text-base text-white">{userData.purifier_model || ''}</p>
+              </div>
+              <div className="space-y-2">
+                <p className="text-sm font-medium text-gray-400">Purchase Date</p>
+                <p className="text-base text-white">
+                  {userData.purchase_date 
+                    ? (userData.purchase_date.toDate 
+                       ? new Date(userData.purchase_date.toDate()).toLocaleDateString() 
+                       : new Date(userData.purchase_date).toLocaleDateString())
+                    : ''}
+                </p>
+              </div>
+              <div className="space-y-2">
+                <p className="text-sm font-medium text-gray-400">Purchase Price</p>
+                <p className="text-base text-white">{userData.purchase_price ? `$${userData.purchase_price}` : 'N/A'}</p>
+              </div>
+              
+              <div className="mt-4">
+                <p className="text-sm font-medium text-gray-400 mb-2">Cartridge Life Remaining</p>
+                <div className="w-24 h-24 mx-auto">
+                  <CartridgeDonutChart percentage={cartridgeUsagePercent} />
+                </div>
+                <p className="text-xs text-center mt-2 text-gray-400">
+                  Next replacement: {userData?.cartridge_replacement_date 
+                    ? (userData.cartridge_replacement_date.toDate 
+                       ? new Date(userData.cartridge_replacement_date.toDate()).toLocaleDateString() 
+                       : new Date(userData.cartridge_replacement_date).toLocaleDateString())
+                    : 'Not set'}
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
       </div>
     </div>
   );
