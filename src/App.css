@@ -122,3 +122,17 @@
 .scrollable-form > div {
   padding: 4px;
 }
+
+/* Fix for black screen in preview mode */
+body, html {
+  background-color: #121212;
+  color: white;
+  margin: 0;
+  padding: 0;
+  min-height: 100%;
+  width: 100%;
+}
+
+.min-h-screen {
+  min-height: 100vh;
+}
