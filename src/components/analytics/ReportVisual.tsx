@@ -8,6 +8,7 @@ import { format } from "date-fns";
 import { getDateRangeForReportType } from "@/utils/reportGenerator";
 import { toast } from "@/components/ui/use-toast";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { formatDecimal } from "@/utils/measurements/formatUtils";
 
 // Import our components
 import { ReportSummaryCard } from "./reports/ReportSummaryCard";
@@ -35,25 +36,25 @@ export function ReportVisual({ unit, reportType, metrics }: ReportVisualProps) {
   const isMobile = useIsMobile();
   const { startDate, endDate } = getDateRangeForReportType(reportType);
   
-  // Ensure all numeric values are properly formatted
+  // Ensure all numeric values are properly formatted with 2 decimal places
   const formattedMetrics = {
     ...metrics,
-    totalVolume: Number(metrics.totalVolume.toFixed(2)),
-    avgVolume: Number(metrics.avgVolume.toFixed(2)),
-    maxVolume: Number(metrics.maxVolume.toFixed(2)),
-    avgTemperature: Number(metrics.avgTemperature.toFixed(1)),
-    totalUvcHours: Number(metrics.totalUvcHours.toFixed(1)),
+    totalVolume: Number(formatDecimal(metrics.totalVolume)),
+    avgVolume: Number(formatDecimal(metrics.avgVolume)),
+    maxVolume: Number(formatDecimal(metrics.maxVolume)),
+    avgTemperature: Number(formatDecimal(metrics.avgTemperature)),
+    totalUvcHours: Number(formatDecimal(metrics.totalUvcHours)),
   };
   
-  // Ensure unit data is formatted correctly
+  // Ensure unit data is formatted correctly with 2 decimal places
   const formattedUnit = {
     ...unit,
     total_volume: typeof unit.total_volume === 'number' 
-      ? Number(unit.total_volume.toFixed(2)) 
-      : Number((parseFloat(unit.total_volume as string || '0')).toFixed(2)),
+      ? Number(formatDecimal(unit.total_volume)) 
+      : Number(formatDecimal(unit.total_volume as string || '0')),
     uvc_hours: typeof unit.uvc_hours === 'number' 
-      ? Number(unit.uvc_hours.toFixed(1)) 
-      : Number((parseFloat(unit.uvc_hours as string || '0')).toFixed(1)),
+      ? Number(formatDecimal(unit.uvc_hours)) 
+      : Number(formatDecimal(unit.uvc_hours as string || '0')),
   };
   
   const handleGenerateVisualPDF = async () => {

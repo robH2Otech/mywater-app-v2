@@ -5,6 +5,7 @@ import { useState, useEffect } from "react";
 import { doc, getDoc, collection, query, where, orderBy, limit, getDocs } from "firebase/firestore";
 import { db } from "@/integrations/firebase/client";
 import { useToast } from "@/hooks/use-toast";
+import { formatDecimal } from "@/utils/measurements/formatUtils";
 import { UVCProgressBar } from "./UVCProgressBar";
 import { UVCDialogForm } from "./UVCDialogForm";
 import { UVCDialogActions } from "./UVCDialogActions";
@@ -88,12 +89,12 @@ export function UVCDetailsDialog({ unit, open, onOpenChange, onSave }: UVCDetail
             }
             
             setFormData({
-              uvc_hours: totalUvcHours.toFixed(1),
+              uvc_hours: formatDecimal(totalUvcHours),
               uvc_installation_date: latestData.uvc_installation_date ? new Date(latestData.uvc_installation_date) : null,
             });
             
             console.log(`UVCDetailsDialog - Setting form data for unit ${unit.id}:`, {
-              uvc_hours: totalUvcHours.toFixed(1),
+              uvc_hours: formatDecimal(totalUvcHours),
               uvc_installation_date: latestData.uvc_installation_date
             });
           } else {
@@ -101,7 +102,7 @@ export function UVCDetailsDialog({ unit, open, onOpenChange, onSave }: UVCDetail
             console.log(`UVCDetailsDialog - Unit ${unit.id} not found in Firestore, using props data:`, unit);
             
             setFormData({
-              uvc_hours: parseFloat(unit.uvc_hours || 0).toFixed(1),
+              uvc_hours: formatDecimal(unit.uvc_hours || 0),
               uvc_installation_date: unit.uvc_installation_date ? new Date(unit.uvc_installation_date) : null,
             });
           }
@@ -115,7 +116,7 @@ export function UVCDetailsDialog({ unit, open, onOpenChange, onSave }: UVCDetail
           
           // Fallback to the data passed in props
           setFormData({
-            uvc_hours: parseFloat(unit.uvc_hours || 0).toFixed(1),
+            uvc_hours: formatDecimal(unit.uvc_hours || 0),
             uvc_installation_date: unit.uvc_installation_date ? new Date(unit.uvc_installation_date) : null,
           });
         } finally {

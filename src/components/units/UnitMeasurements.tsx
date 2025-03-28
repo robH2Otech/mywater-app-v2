@@ -24,17 +24,19 @@ export function UnitMeasurements({ unitId }: UnitMeasurementsProps) {
         // Get timestamp directly - it should already be formatted by useRealtimeMeasurements
         const timestamp = measurement.timestamp || "Invalid date";
           
-        // Format volume with whole numbers
+        // Format volume with 2 decimal places
         const volume = typeof measurement.volume === 'number' 
-          ? Math.round(measurement.volume) 
+          ? measurement.volume.toFixed(2) 
           : "N/A";
           
+        // Format temperature with 2 decimal places
         const temperature = typeof measurement.temperature === 'number' 
-          ? Math.round(measurement.temperature) 
+          ? measurement.temperature.toFixed(2) 
           : "N/A";
           
+        // Format UVC hours with 2 decimal places
         const uvcHours = measurement.uvc_hours !== undefined && typeof measurement.uvc_hours === 'number'
-          ? Math.round(measurement.uvc_hours)
+          ? measurement.uvc_hours.toFixed(2)
           : "N/A";
 
         return (

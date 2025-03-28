@@ -1,5 +1,6 @@
 
 import { MAX_UVC_HOURS, WARNING_THRESHOLD, URGENT_THRESHOLD } from "@/utils/uvcStatusUtils";
+import { formatDecimal } from "@/utils/measurements/formatUtils";
 
 interface UVCProgressBarProps {
   hours: string | number;
@@ -28,6 +29,12 @@ export function UVCProgressBar({ hours }: UVCProgressBarProps) {
     return 'bg-mywater-blue';
   };
 
+  // Format hours with 2 decimal places
+  const formatHours = () => {
+    const numericHours = typeof hours === 'string' ? parseFloat(hours) : hours;
+    return formatDecimal(numericHours);
+  };
+
   return (
     <div className="text-center mb-4">
       <div className="text-3xl font-bold flex justify-center items-end gap-2">
@@ -41,7 +48,7 @@ export function UVCProgressBar({ hours }: UVCProgressBarProps) {
         ></div>
       </div>
       <div className="text-sm text-gray-400 mt-2">
-        {Math.round(typeof hours === 'string' ? parseFloat(hours) : hours)} / {Math.round(MAX_UVC_HOURS)} hours
+        {formatHours()} / {formatDecimal(MAX_UVC_HOURS)} hours
       </div>
     </div>
   );

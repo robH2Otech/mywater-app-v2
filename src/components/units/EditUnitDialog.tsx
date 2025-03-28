@@ -9,6 +9,7 @@ import { doc, updateDoc, collection, addDoc } from "firebase/firestore";
 import { db } from "@/integrations/firebase/client";
 import { determineUnitStatus, createAlertMessage } from "@/utils/unitStatusUtils";
 import { determineUVCStatus, createUVCAlertMessage } from "@/utils/uvcStatusUtils";
+import { formatDecimal } from "@/utils/measurements/formatUtils";
 
 interface EditUnitDialogProps {
   unit: {
@@ -39,14 +40,14 @@ export function EditUnitDialog({ unit, open, onOpenChange }: EditUnitDialogProps
   const [formData, setFormData] = useState({
     name: unit.name,
     location: unit.location || "",
-    total_volume: unit.total_volume?.toString() || "",
+    total_volume: unit.total_volume ? formatDecimal(unit.total_volume) : "0.00",
     status: unit.status || "active",
     contact_name: unit.contact_name || "",
     contact_email: unit.contact_email || "",
     contact_phone: unit.contact_phone || "",
     next_maintenance: unit.next_maintenance ? new Date(unit.next_maintenance) : null,
     setup_date: unit.setup_date ? new Date(unit.setup_date) : null,
-    uvc_hours: unit.uvc_hours?.toString() || "",
+    uvc_hours: unit.uvc_hours ? formatDecimal(unit.uvc_hours) : "0.00",
     eid: unit.eid || "",
     iccid: unit.iccid || "",
   });

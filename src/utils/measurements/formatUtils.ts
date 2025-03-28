@@ -55,6 +55,19 @@ export const parseTimestamp = (timestamp: string): Date => {
 };
 
 /**
+ * Format a number to have exactly 2 decimal places
+ */
+export const formatDecimal = (value: number | string | null | undefined): string => {
+  if (value === null || value === undefined) return "0.00";
+  
+  const numValue = typeof value === 'string' ? parseFloat(value) : value;
+  
+  if (isNaN(numValue)) return "0.00";
+  
+  return numValue.toFixed(2);
+};
+
+/**
  * Safely parse and format a timestamp from any format to our standard format
  * Returns the formatted string or "Invalid date" if parsing fails
  */
