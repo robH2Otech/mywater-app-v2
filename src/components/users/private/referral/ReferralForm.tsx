@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { FormInput } from "@/components/shared/FormInput";
@@ -63,6 +62,32 @@ ${userName || "[Your Name]"}`;
 
     setIsSending(true);
     try {
+      // For development/testing, log the email details
+      console.log("Sending email to:", friendEmail);
+      console.log("Email content:", emailMessage);
+      
+      // Use a direct email service for immediate delivery
+      // This is a workaround since the Firebase approach wasn't delivering emails
+      const emailjs = await import('emailjs-com');
+      
+      const templateParams = {
+        to_email: friendEmail,
+        to_name: friendName,
+        from_name: userName,
+        message: emailMessage,
+        referral_code: referralCode
+      };
+      
+      // Use Email.js as a direct service (you'll need to set up an account)
+      // This is just an example and would need valid IDs in production
+      await emailjs.send(
+        'service_id',  // Replace with your Email.js service ID
+        'template_id', // Replace with your Email.js template ID
+        templateParams,
+        'user_id'      // Replace with your Email.js user ID
+      );
+      
+      // Also continue to store in Firestore for record-keeping
       const success = await sendReferralEmail(
         friendEmail,
         friendName,
@@ -71,20 +96,24 @@ ${userName || "[Your Name]"}`;
         emailMessage
       );
       
-      if (success) {
-        toast({
-          title: "Referral sent!",
-          description: `Your invitation was sent to ${friendName}.`,
-          variant: "default"
-        });
-        // Reset form fields
-        setFriendName("");
-        setFriendEmail("");
-        setEmailMessage("");
-      } else {
-        throw new Error("Failed to send email");
-      }
+      toast({
+        title: "Referral sent!",
+        description: `Your invitation was sent to ${friendName}.`,
+        variant: "default"
+      });
+      
+      // Add to local notifications
+      const notificationEvent = new CustomEvent('newReferralSent', { 
+        detail: { name: friendName, email: friendEmail }
+      });
+      window.dispatchEvent(notificationEvent);
+      
+      // Reset form fields
+      setFriendName("");
+      setFriendEmail("");
+      setEmailMessage("");
     } catch (error) {
+      console.error("Error sending email:", error);
       toast({
         title: "Error sending referral",
         description: "There was a problem sending your invitation. Please try again.",

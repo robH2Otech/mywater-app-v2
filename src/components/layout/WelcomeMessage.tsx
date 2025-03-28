@@ -23,7 +23,7 @@ export const WelcomeMessage = ({ firstName, lastName }: WelcomeMessageProps) => 
   
   return (
     <div className="text-white text-2xl font-medium">
-      Hey {displayName}, welcome back!
+      Hey {displayName}, welcome back to MYWATER portal!
     </div>
   );
 };
