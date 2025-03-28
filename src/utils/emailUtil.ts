@@ -1,3 +1,4 @@
+
 import { collection, addDoc, getDocs, query, where, Timestamp, updateDoc, doc } from "firebase/firestore";
 import { db } from "@/integrations/firebase/client";
 
@@ -31,7 +32,28 @@ export const sendReferralEmail = async (
     console.log("Email stored in Firestore with ID:", emailDocRef.id);
     
     // In a real app, this would trigger a cloud function or webhook to send the email
-    // For demonstration, we'll immediately mark it as "sent"
+    // Let's trigger email sending directly for demonstration
+    await fetch('https://api.emailjs.com/api/v1.0/email/send', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        service_id: 'default_service',
+        template_id: 'mywater_referral',
+        user_id: 'user_id', // This would normally be your EmailJS user ID
+        template_params: {
+          to_email: toEmail,
+          to_name: toName,
+          from_name: fromName,
+          message: emailContent,
+          referral_code: referralCode,
+          subject: `${fromName} invited you to try MYWATER (20% discount!)`
+        }
+      }),
+    });
+
+    // Mark as sent in Firestore
     await updateDoc(emailDocRef, {
       status: "sent",
       sent_at: new Date()
@@ -55,14 +77,44 @@ export const processPendingEmails = async () => {
     const emailsSnapshot = await getDocs(emailsQuery);
     
     for (const emailDoc of emailsSnapshot.docs) {
-      // In a real app, this would connect to an email sending service
-      console.log(`Processing email to ${emailDoc.data().to}`);
+      // Process each pending email
+      const emailData = emailDoc.data();
       
-      // Mark as sent
-      await updateDoc(doc(db, "emails_to_send", emailDoc.id), {
-        status: "sent",
-        sent_at: new Date()
-      });
+      // Attempt to send via email service
+      try {
+        await fetch('https://api.emailjs.com/api/v1.0/email/send', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            service_id: 'default_service',
+            template_id: 'mywater_referral',
+            user_id: 'user_id', // This would normally be your EmailJS user ID
+            template_params: {
+              to_email: emailData.to,
+              to_name: emailData.to_name,
+              from_name: emailData.from_name,
+              message: emailData.body,
+              referral_code: emailData.referral_code,
+              subject: emailData.subject
+            }
+          }),
+        });
+        
+        // Mark as sent
+        await updateDoc(doc(db, "emails_to_send", emailDoc.id), {
+          status: "sent",
+          sent_at: new Date()
+        });
+      } catch (sendError) {
+        console.error("Error sending email:", sendError);
+        // Mark as failed
+        await updateDoc(doc(db, "emails_to_send", emailDoc.id), {
+          status: "failed",
+          error: String(sendError)
+        });
+      }
     }
     
     return emailsSnapshot.docs.length;

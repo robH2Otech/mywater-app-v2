@@ -4,6 +4,7 @@ import { Card } from "@/components/ui/card";
 import { PrivateUserEditForm } from "./PrivateUserEditForm";
 import { PrivateUserProfileDisplay } from "./PrivateUserProfileDisplay";
 import { PrivateUser } from "@/types/privateUser";
+import { useCartridgeCalculations } from "@/hooks/dashboard/useCartridgeCalculations";
 
 interface PrivateUserProfileProps {
   userData: PrivateUser | any;
@@ -12,6 +13,8 @@ interface PrivateUserProfileProps {
 export function PrivateUserProfile({ userData }: PrivateUserProfileProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [localUserData, setLocalUserData] = useState(userData);
+  
+  const { cartridgeUsagePercent } = useCartridgeCalculations(localUserData);
   
   const handleEdit = () => {
     setIsEditing(true);
@@ -39,6 +42,7 @@ export function PrivateUserProfile({ userData }: PrivateUserProfileProps) {
         <PrivateUserProfileDisplay 
           userData={localUserData}
           onEdit={handleEdit}
+          cartridgeUsagePercent={cartridgeUsagePercent}
         />
       )}
     </div>
