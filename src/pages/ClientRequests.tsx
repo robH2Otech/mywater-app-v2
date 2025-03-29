@@ -206,6 +206,12 @@ function ClientRequestsContent() {
         const createdAt = data.created_at as Timestamp;
         const createdDate = createdAt ? createdAt.toDate() : new Date();
         
+        // Ensure status is one of the allowed types
+        let status = data.status || "new";
+        if (status !== "new" && status !== "in_progress" && status !== "resolved") {
+          status = "new"; // Default to "new" if it's an invalid status
+        }
+        
         const requestData: SupportRequest = {
           id: doc.id,
           user_id: data.user_id || "",
@@ -215,7 +221,7 @@ function ClientRequestsContent() {
           message: data.message || "",
           support_type: data.support_type || "",
           purifier_model: data.purifier_model || "",
-          status: (data.status as "new" | "in_progress" | "resolved") || "new",
+          status: status as "new" | "in_progress" | "resolved",
           created_at: createdDate,
           comments: data.comments || [],
           assigned_to: data.assigned_to || "",
@@ -322,7 +328,7 @@ function ClientRequestsContent() {
         // Get existing comments or initialize empty array
         const existingComments = selectedRequest.comments || [];
         
-        const updatedRequest = { 
+        const updatedRequest: SupportRequest = { 
           ...selectedRequest,
           comments: [...existingComments, comment],
           assigned_to: assignedTo || selectedRequest.assigned_to,
@@ -371,7 +377,7 @@ function ClientRequestsContent() {
               ...request, 
               comments: [...(request.comments || []), comment],
               assigned_to: assignedTo || request.assigned_to,
-              status: "in_progress"
+              status: "in_progress" as const
             } 
           : request
       ));
@@ -436,7 +442,7 @@ function ClientRequestsContent() {
       const docRef = await addDoc(collection(db, "support_requests"), newRequest);
       
       // Add to local state with the new ID
-      const requestWithId = {
+      const requestWithId: SupportRequest = {
         ...newRequest,
         id: docRef.id
       };
