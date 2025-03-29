@@ -23,8 +23,8 @@ export function PrivateUserProfileDisplay({
   const isMyWaterHero = (userData?.referrals_converted || 0) >= 3;
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between mb-4">
+    <div className="space-y-4">
+      <div className="flex items-center justify-between mb-2">
         <div className="flex items-center gap-2">
           <h3 className="text-xl font-semibold text-white">My Information</h3>
           {isMyWaterHero && (
@@ -44,28 +44,28 @@ export function PrivateUserProfileDisplay({
         </Button>
       </div>
       
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {/* Contact Information Card */}
         <Card className="bg-spotify-accent/10 border border-spotify-accent/30">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-lg flex items-center gap-2">
-              <User className="h-5 w-5 text-mywater-blue" />
+          <CardHeader className="pb-2 px-4 pt-4">
+            <CardTitle className="text-md flex items-center gap-2">
+              <User className="h-4 w-4 text-mywater-blue" />
               Contact Information
             </CardTitle>
           </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <p className="text-sm font-medium text-gray-400">Full Name</p>
-                <p className="text-base text-white">{`${userData.first_name || ''} ${userData.last_name || ''}`}</p>
+          <CardContent className="px-4 pb-4 pt-0">
+            <div className="space-y-3">
+              <div className="space-y-1">
+                <p className="text-xs font-medium text-gray-400">Full Name</p>
+                <p className="text-sm text-white">{`${userData.first_name || ''} ${userData.last_name || ''}`}</p>
               </div>
-              <div className="space-y-2">
-                <p className="text-sm font-medium text-gray-400">Email Address</p>
-                <p className="text-base text-white">{userData.email || ''}</p>
+              <div className="space-y-1">
+                <p className="text-xs font-medium text-gray-400">Email Address</p>
+                <p className="text-sm text-white truncate">{userData.email || ''}</p>
               </div>
-              <div className="space-y-2">
-                <p className="text-sm font-medium text-gray-400">Phone Number</p>
-                <p className="text-base text-white">{userData.phone || ''}</p>
+              <div className="space-y-1">
+                <p className="text-xs font-medium text-gray-400">Phone Number</p>
+                <p className="text-sm text-white">{userData.phone || ''}</p>
               </div>
             </div>
           </CardContent>
@@ -73,29 +73,31 @@ export function PrivateUserProfileDisplay({
         
         {/* Address Information Card */}
         <Card className="bg-spotify-accent/10 border border-spotify-accent/30">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-lg flex items-center gap-2">
-              <Home className="h-5 w-5 text-mywater-blue" />
+          <CardHeader className="pb-2 px-4 pt-4">
+            <CardTitle className="text-md flex items-center gap-2">
+              <Home className="h-4 w-4 text-mywater-blue" />
               Address Information
             </CardTitle>
           </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <p className="text-sm font-medium text-gray-400">Street Address</p>
-                <p className="text-base text-white">{userData.street_address || ''}</p>
+          <CardContent className="px-4 pb-4 pt-0">
+            <div className="space-y-3">
+              <div className="space-y-1">
+                <p className="text-xs font-medium text-gray-400">Street Address</p>
+                <p className="text-sm text-white">{userData.street_address || ''}</p>
               </div>
-              <div className="space-y-2">
-                <p className="text-sm font-medium text-gray-400">City</p>
-                <p className="text-base text-white">{userData.city || ''}</p>
+              <div className="space-y-1">
+                <p className="text-xs font-medium text-gray-400">City</p>
+                <p className="text-sm text-white">{userData.city || ''}</p>
               </div>
-              <div className="space-y-2">
-                <p className="text-sm font-medium text-gray-400">Postal Code</p>
-                <p className="text-base text-white">{userData.postal_code || ''}</p>
-              </div>
-              <div className="space-y-2">
-                <p className="text-sm font-medium text-gray-400">Country</p>
-                <p className="text-base text-white">{userData.country || ''}</p>
+              <div className="grid grid-cols-2 gap-2">
+                <div className="space-y-1">
+                  <p className="text-xs font-medium text-gray-400">Postal Code</p>
+                  <p className="text-sm text-white">{userData.postal_code || ''}</p>
+                </div>
+                <div className="space-y-1">
+                  <p className="text-xs font-medium text-gray-400">Country</p>
+                  <p className="text-sm text-white">{userData.country || ''}</p>
+                </div>
               </div>
             </div>
           </CardContent>
@@ -103,39 +105,41 @@ export function PrivateUserProfileDisplay({
         
         {/* System Information Card */}
         <Card className="bg-spotify-accent/10 border border-spotify-accent/30">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-lg flex items-center gap-2">
-              <Monitor className="h-5 w-5 text-mywater-blue" />
+          <CardHeader className="pb-2 px-4 pt-4">
+            <CardTitle className="text-md flex items-center gap-2">
+              <Monitor className="h-4 w-4 text-mywater-blue" />
               System Information
             </CardTitle>
           </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <p className="text-sm font-medium text-gray-400">Purifier Model</p>
-                <p className="text-base text-white">{userData.purifier_model || ''}</p>
-              </div>
-              <div className="space-y-2">
-                <p className="text-sm font-medium text-gray-400">Purchase Date</p>
-                <p className="text-base text-white">
-                  {userData.purchase_date 
-                    ? (userData.purchase_date.toDate 
-                       ? new Date(userData.purchase_date.toDate()).toLocaleDateString() 
-                       : new Date(userData.purchase_date).toLocaleDateString())
-                    : ''}
-                </p>
-              </div>
-              <div className="space-y-2">
-                <p className="text-sm font-medium text-gray-400">Purchase Price</p>
-                <p className="text-base text-white">{userData.purchase_price ? `$${userData.purchase_price}` : 'N/A'}</p>
+          <CardContent className="px-4 pb-4 pt-0">
+            <div className="flex flex-col md:flex-row gap-4">
+              <div className="space-y-3 md:w-1/2">
+                <div className="space-y-1">
+                  <p className="text-xs font-medium text-gray-400">Purifier Model</p>
+                  <p className="text-sm text-white">{userData.purifier_model || ''}</p>
+                </div>
+                <div className="space-y-1">
+                  <p className="text-xs font-medium text-gray-400">Purchase Date</p>
+                  <p className="text-sm text-white">
+                    {userData.purchase_date 
+                      ? (userData.purchase_date.toDate 
+                         ? new Date(userData.purchase_date.toDate()).toLocaleDateString() 
+                         : new Date(userData.purchase_date).toLocaleDateString())
+                      : ''}
+                  </p>
+                </div>
+                <div className="space-y-1">
+                  <p className="text-xs font-medium text-gray-400">Purchase Price</p>
+                  <p className="text-sm text-white">{userData.purchase_price ? `$${userData.purchase_price}` : 'N/A'}</p>
+                </div>
               </div>
               
-              <div className="mt-4">
-                <p className="text-sm font-medium text-gray-400 mb-2">Cartridge Life Remaining</p>
-                <div className="w-24 h-24 mx-auto">
+              <div className="md:w-1/2">
+                <p className="text-xs font-medium text-gray-400 mb-1 text-center">Cartridge Life</p>
+                <div className="w-28 h-28 mx-auto">
                   <CartridgeDonutChart percentage={cartridgeUsagePercent} />
                 </div>
-                <p className="text-xs text-center mt-2 text-gray-400">
+                <p className="text-[10px] text-center mt-1 text-gray-400">
                   Next replacement: {userData?.cartridge_replacement_date 
                     ? (userData.cartridge_replacement_date.toDate 
                        ? new Date(userData.cartridge_replacement_date.toDate()).toLocaleDateString() 

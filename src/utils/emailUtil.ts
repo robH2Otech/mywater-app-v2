@@ -25,7 +25,7 @@ export const sendReferralEmail = async (
     const emailDocRef = await addDoc(collection(db, "emails_to_send"), {
       to: toEmail,
       to_name: toName,
-      from: "referrals@mywater.com",
+      from: "contact@mywatertechnologies.com",
       from_name: fromName,
       subject: `${fromName} invited you to try MYWATER (20% discount!)`,
       body: emailContent,
@@ -181,7 +181,8 @@ export const sendEmailDirect = async (
       to_name: toName,
       from_name: fromName,
       message: message,
-      subject: subject
+      subject: subject,
+      from_email: "contact@mywatertechnologies.com"
     };
     
     const response = await emailjs.send(
@@ -202,7 +203,8 @@ export const sendEmailDirect = async (
       toName,
       fromName,
       subject,
-      message
+      message,
+      from: "contact@mywatertechnologies.com"
     });
     
     // For development only - simulate email delivery

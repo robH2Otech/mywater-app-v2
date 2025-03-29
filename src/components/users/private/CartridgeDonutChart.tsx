@@ -7,7 +7,14 @@ interface CartridgeDonutChartProps {
 
 export const CartridgeDonutChart: React.FC<CartridgeDonutChartProps> = ({ percentage }) => {
   // Calculate remaining percentage (what's left in the cartridge)
-  const remainingPercentage = 100 - percentage;
+  const remainingPercentage = Math.max(0, Math.min(100 - percentage, 100));
+  
+  // Determine colors based on percentage
+  const getColor = () => {
+    if (percentage >= 80) return "#ea384c"; // Red for high usage
+    if (percentage >= 50) return "#f97316"; // Orange for medium usage
+    return "#1EAEDB"; // Blue for low usage
+  };
   
   // Calculate stroke dash arrays for the donut segments
   const circumference = 2 * Math.PI * 20; // Circle circumference
@@ -27,20 +34,20 @@ export const CartridgeDonutChart: React.FC<CartridgeDonutChartProps> = ({ percen
           strokeWidth="5"
         />
         
-        {/* Red portion (used percentage) */}
+        {/* Used portion with dynamic color */}
         <circle
           cx="25"
           cy="25"
           r="20"
           fill="transparent"
-          stroke="#ea384c"
+          stroke={getColor()}
           strokeWidth="5"
           strokeDasharray={usedStrokeDasharray}
           strokeDashoffset="0"
           transform="rotate(-90 25 25)"
         />
         
-        {/* Blue portion (remaining percentage) */}
+        {/* Remaining portion (blue) */}
         <circle
           cx="25"
           cy="25"
@@ -59,11 +66,22 @@ export const CartridgeDonutChart: React.FC<CartridgeDonutChartProps> = ({ percen
           y="25"
           textAnchor="middle"
           dominantBaseline="middle"
-          fontSize="11"
+          fontSize="10"
           fontWeight="bold"
           fill="#fff"
         >
-          {remainingPercentage}%
+          {remainingPercentage.toFixed(0)}%
+        </text>
+        
+        <text
+          x="25"
+          y="32"
+          textAnchor="middle"
+          dominantBaseline="middle"
+          fontSize="6"
+          fill="#aaa"
+        >
+          remaining
         </text>
         
         {/* Optional inner circle for better visual effect */}

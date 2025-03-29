@@ -23,16 +23,16 @@ export function DashboardHeader({
   cartridgeUsagePercent
 }: DashboardHeaderProps) {
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
       {/* Cartridge Status Card */}
       <Card className="glass hover:bg-spotify-accent/40 transition-colors">
-        <CardContent className="p-6 flex items-center gap-4">
-          <div className="h-12 w-12 rounded-full bg-spotify-dark flex items-center justify-center">
-            <Filter className="h-6 w-6 text-mywater-blue" />
+        <CardContent className="p-4 flex items-center gap-3">
+          <div className="h-10 w-10 rounded-full bg-spotify-dark flex items-center justify-center">
+            <Filter className="h-5 w-5 text-mywater-blue" />
           </div>
           <div>
-            <p className="text-sm text-gray-400">Cartridge Status</p>
-            <p className={`text-lg font-medium ${
+            <p className="text-xs text-gray-400">Cartridge Status</p>
+            <p className={`text-sm font-medium ${
               isReplacementOverdue 
                 ? "text-red-400" 
                 : isReplacementDueSoon 
@@ -51,13 +51,13 @@ export function DashboardHeader({
 
       {/* Purchase Date Card */}
       <Card className="glass hover:bg-spotify-accent/40 transition-colors">
-        <CardContent className="p-6 flex items-center gap-4">
-          <div className="h-12 w-12 rounded-full bg-spotify-dark flex items-center justify-center">
-            <Calendar className="h-6 w-6 text-purple-400" />
+        <CardContent className="p-4 flex items-center gap-3">
+          <div className="h-10 w-10 rounded-full bg-spotify-dark flex items-center justify-center">
+            <Calendar className="h-5 w-5 text-purple-400" />
           </div>
           <div>
-            <p className="text-sm text-gray-400">Purchased On</p>
-            <p className="text-lg font-medium">
+            <p className="text-xs text-gray-400">Purchased On</p>
+            <p className="text-sm font-medium">
               {userData?.purchase_date 
                 ? new Date(userData.purchase_date).toLocaleDateString() 
                 : "Not available"}
@@ -68,26 +68,26 @@ export function DashboardHeader({
 
       {/* Model Card */}
       <Card className="glass hover:bg-spotify-accent/40 transition-colors">
-        <CardContent className="p-6 flex items-center gap-4">
-          <div className="h-12 w-12 rounded-full bg-spotify-dark flex items-center justify-center">
-            <Droplets className="h-6 w-6 text-cyan-400" />
+        <CardContent className="p-4 flex items-center gap-3">
+          <div className="h-10 w-10 rounded-full bg-spotify-dark flex items-center justify-center">
+            <Droplets className="h-5 w-5 text-cyan-400" />
           </div>
           <div>
-            <p className="text-sm text-gray-400">Purifier Model</p>
-            <p className="text-lg font-medium">{userData?.purifier_model || "Standard"}</p>
+            <p className="text-xs text-gray-400">Purifier Model</p>
+            <p className="text-sm font-medium">{userData?.purifier_model || "Standard"}</p>
           </div>
         </CardContent>
       </Card>
 
       {/* Referral Card */}
       <Card className="glass hover:bg-spotify-accent/40 transition-colors">
-        <CardContent className="p-6 flex items-center gap-4">
-          <div className="h-12 w-12 rounded-full bg-spotify-dark flex items-center justify-center">
-            <Share2 className="h-6 w-6 text-green-400" />
+        <CardContent className="p-4 flex items-center gap-3">
+          <div className="h-10 w-10 rounded-full bg-spotify-dark flex items-center justify-center">
+            <Share2 className="h-5 w-5 text-green-400" />
           </div>
           <div>
-            <p className="text-sm text-gray-400">Referral Program</p>
-            <p className="text-lg font-medium">{userData?.referrals_converted || 0}/3 Referrals</p>
+            <p className="text-xs text-gray-400">Referral Program</p>
+            <p className="text-sm font-medium">{userData?.referrals_converted || 0}/3 Referrals</p>
           </div>
         </CardContent>
       </Card>
