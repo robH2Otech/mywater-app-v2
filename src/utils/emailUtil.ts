@@ -1,21 +1,15 @@
-
 import { collection, addDoc, getDocs, query, where, updateDoc, doc } from "firebase/firestore";
 import { db } from "@/integrations/firebase/client";
 import emailjs from 'emailjs-com';
 
 // EmailJS configuration
-// These would typically come from environment variables
 const EMAILJS_SERVICE_ID = 'service_mywater';
 const EMAILJS_TEMPLATE_ID = 'template_referral';
-
-// IMPORTANT: Replace this with your actual EmailJS User ID
-// Instructions:
-// 1. Sign up at https://www.emailjs.com/
-// 2. Get your User ID from Account > API Keys
-// 3. Replace the string below with your actual User ID
 const EMAILJS_USER_ID = 'YOUR_EMAILJS_USER_ID'; 
 
-// Function to send a referral email
+/**
+ * Sends a referral email to the specified recipient
+ */
 export const sendReferralEmail = async (
   toEmail: string,
   toName: string,
@@ -27,7 +21,7 @@ export const sendReferralEmail = async (
     // Generate default message if none provided
     const emailContent = customMessage || generateReferralEmailTemplate(toName, fromName, referralCode);
 
-    // Store in Firestore for record-keeping and future processing
+    // Store in Firestore for record-keeping
     const emailDocRef = await addDoc(collection(db, "emails_to_send"), {
       to: toEmail,
       to_name: toName,
@@ -37,7 +31,7 @@ export const sendReferralEmail = async (
       body: emailContent,
       html_body: emailContent.replace(/\n/g, "<br>"),
       created_at: new Date(),
-      status: "pending", // Mark as pending until sent
+      status: "pending",
       type: "referral",
       referral_code: referralCode
     });
@@ -46,25 +40,16 @@ export const sendReferralEmail = async (
     
     // Send the email using EmailJS
     try {
-      const templateParams = {
-        to_email: toEmail,
-        to_name: toName,
-        from_name: fromName,
-        message: emailContent,
-        subject: `${fromName} invited you to try MYWATER (20% discount!)`,
-        referral_code: referralCode
-      };
-      
-      const response = await emailjs.send(
-        EMAILJS_SERVICE_ID,
-        EMAILJS_TEMPLATE_ID,
-        templateParams,
-        EMAILJS_USER_ID
+      const response = await sendEmailWithEmailJS(
+        toEmail,
+        toName,
+        fromName,
+        `${fromName} invited you to try MYWATER (20% discount!)`,
+        emailContent,
+        { referral_code: referralCode }
       );
       
-      console.log('Email sent successfully:', response);
-      
-      // Update the status in Firestore
+      // Update status in Firestore
       await updateDoc(doc(db, "emails_to_send", emailDocRef.id), {
         status: "sent",
         sent_at: new Date()
@@ -74,13 +59,13 @@ export const sendReferralEmail = async (
     } catch (emailError) {
       console.error("Error sending email with EmailJS:", emailError);
       
-      // Update the status in Firestore to failed
+      // Update status in Firestore to failed
       await updateDoc(doc(db, "emails_to_send", emailDocRef.id), {
         status: "failed",
         error: String(emailError)
       });
       
-      // Use the direct method as fallback
+      // Use direct method as fallback
       return await sendEmailDirect(
         toEmail,
         toName,
@@ -95,7 +80,9 @@ export const sendReferralEmail = async (
   }
 };
 
-// Function to check for pending emails and mark them as sent
+/**
+ * Processes any pending emails in the Firestore collection
+ */
 export const processPendingEmails = async () => {
   try {
     const emailsQuery = query(
@@ -107,25 +94,17 @@ export const processPendingEmails = async () => {
     let processedCount = 0;
     
     for (const emailDoc of emailsSnapshot.docs) {
-      // Process each pending email
       const emailData = emailDoc.data();
       
       try {
-        // Use EmailJS to send the email
-        const templateParams = {
-          to_email: emailData.to,
-          to_name: emailData.to_name,
-          from_name: emailData.from_name,
-          message: emailData.body,
-          subject: emailData.subject,
-          referral_code: emailData.referral_code
-        };
-        
-        await emailjs.send(
-          EMAILJS_SERVICE_ID,
-          EMAILJS_TEMPLATE_ID,
-          templateParams,
-          EMAILJS_USER_ID
+        // Send the email using EmailJS
+        await sendEmailWithEmailJS(
+          emailData.to,
+          emailData.to_name,
+          emailData.from_name,
+          emailData.subject,
+          emailData.body,
+          { referral_code: emailData.referral_code }
         );
         
         // Mark as sent
@@ -152,7 +131,9 @@ export const processPendingEmails = async () => {
   }
 };
 
-// Function to generate a personalized referral email template
+/**
+ * Generates a template for referral emails
+ */
 export const generateReferralEmailTemplate = (
   toName: string,
   fromName: string,
@@ -172,7 +153,38 @@ Best,
 ${fromName || "[Your Name]"}`;
 };
 
-// Create a function to directly send emails
+/**
+ * Helper function to send emails using EmailJS
+ */
+const sendEmailWithEmailJS = async (
+  toEmail: string,
+  toName: string,
+  fromName: string,
+  subject: string,
+  message: string,
+  additionalParams: Record<string, any> = {}
+) => {
+  const templateParams = {
+    to_email: toEmail,
+    to_name: toName,
+    from_name: fromName,
+    message: message,
+    subject: subject,
+    from_email: "contact@mywatertechnologies.com",
+    ...additionalParams
+  };
+  
+  return await emailjs.send(
+    EMAILJS_SERVICE_ID,
+    EMAILJS_TEMPLATE_ID,
+    templateParams,
+    EMAILJS_USER_ID
+  );
+};
+
+/**
+ * Sends an email directly to the recipient
+ */
 export const sendEmailDirect = async (
   toEmail: string,
   toName: string,
@@ -182,23 +194,8 @@ export const sendEmailDirect = async (
 ) => {
   // Try to use EmailJS if available
   try {
-    const templateParams = {
-      to_email: toEmail,
-      to_name: toName,
-      from_name: fromName,
-      message: message,
-      subject: subject,
-      from_email: "contact@mywatertechnologies.com"
-    };
-    
-    const response = await emailjs.send(
-      EMAILJS_SERVICE_ID,
-      EMAILJS_TEMPLATE_ID,
-      templateParams,
-      EMAILJS_USER_ID
-    );
-    
-    console.log('Email sent successfully via EmailJS:', response);
+    await sendEmailWithEmailJS(toEmail, toName, fromName, subject, message);
+    console.log('Email sent successfully via EmailJS');
     return true;
   } catch (emailJsError) {
     console.error("Error sending via EmailJS:", emailJsError);

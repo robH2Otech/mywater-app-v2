@@ -1,31 +1,30 @@
 
 import { useState, useEffect } from "react";
-import { collection, query, getDocs, doc, updateDoc, orderBy, limit, where, DocumentData, Timestamp, addDoc } from "firebase/firestore";
+import { collection, query, getDocs, doc, updateDoc, orderBy, limit, where, Timestamp, addDoc } from "firebase/firestore";
 import { db } from "@/integrations/firebase/client";
 import { Layout } from "@/components/layout/Layout";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tabs, TabsList } from "@/components/ui/tabs";
 import { 
-  MessageSquare, 
-  Clock, 
-  CheckCircle, 
-  Filter as FilterIcon, 
   RefreshCw, 
-  Mail,
-  User,
   Plus,
-  Send,
   Loader2
 } from "lucide-react";
-import { format } from "date-fns";
 import { useToast } from "@/hooks/use-toast";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { FormInput } from "@/components/shared/FormInput";
-import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { sendEmailDirect } from "@/utils/emailUtil";
+import { RequestsTabTrigger } from "@/components/requests/RequestsTabTrigger";
+import { RequestCard } from "@/components/requests/RequestCard";
+import { CommentDialog } from "@/components/requests/CommentDialog";
+import { CreateRequestDialog, RequestFormData } from "@/components/requests/CreateRequestDialog";
+import { NoRequestsFound } from "@/components/requests/NoRequestsFound";
+
+interface Comment {
+  id: string;
+  author: string;
+  content: string;
+  created_at: Date;
+}
 
 interface SupportRequest {
   id: string;
@@ -42,13 +41,6 @@ interface SupportRequest {
   assigned_to?: string;
 }
 
-interface Comment {
-  id: string;
-  author: string;
-  content: string;
-  created_at: Date;
-}
-
 function ClientRequestsContent() {
   const [requests, setRequests] = useState<SupportRequest[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -56,22 +48,9 @@ function ClientRequestsContent() {
   const [selectedRequest, setSelectedRequest] = useState<SupportRequest | null>(null);
   const [showCommentDialog, setShowCommentDialog] = useState(false);
   const [showCreateRequestDialog, setShowCreateRequestDialog] = useState(false);
-  const [newComment, setNewComment] = useState("");
-  const [assignedTechnician, setAssignedTechnician] = useState("");
-  const [commentAuthor, setCommentAuthor] = useState("");
+  const [isSubmittingRequest, setIsSubmittingRequest] = useState(false);
   const { toast } = useToast();
   
-  // New request form state
-  const [newRequestForm, setNewRequestForm] = useState({
-    user_name: "",
-    user_email: "",
-    subject: "",
-    message: "",
-    support_type: "technical",
-    purifier_model: "MYWATER X1"
-  });
-  const [isSubmittingRequest, setIsSubmittingRequest] = useState(false);
-
   useEffect(() => {
     fetchRequests();
   }, [activeFilter]);
@@ -121,7 +100,7 @@ function ClientRequestsContent() {
       const otherRequests: SupportRequest[] = [];
       
       querySnapshot.forEach((doc) => {
-        const data = doc.data() as DocumentData;
+        const data = doc.data();
         const createdAt = data.created_at as Timestamp;
         const createdDate = createdAt ? createdAt.toDate() : new Date();
         
@@ -195,8 +174,8 @@ function ClientRequestsContent() {
     }
   };
 
-  const handleAddComment = async () => {
-    if (!selectedRequest || !newComment.trim()) return;
+  const handleAddComment = async (commentText: string, author: string, assignedTo: string) => {
+    if (!selectedRequest) return;
 
     try {
       const requestRef = doc(db, "support_requests", selectedRequest.id);
@@ -204,8 +183,8 @@ function ClientRequestsContent() {
       // Create new comment
       const comment = {
         id: Date.now().toString(),
-        author: commentAuthor || "Admin",
-        content: newComment,
+        author: author || "Admin",
+        content: commentText,
         created_at: new Date()
       };
       
@@ -215,7 +194,7 @@ function ClientRequestsContent() {
       // Update request with new comment and assigned technician
       await updateDoc(requestRef, { 
         comments: [...existingComments, comment],
-        assigned_to: assignedTechnician || null,
+        assigned_to: assignedTo || null,
         status: "in_progress", // Ensure status is in_progress
       });
       
@@ -225,15 +204,13 @@ function ClientRequestsContent() {
           ? { 
               ...request, 
               comments: [...(request.comments || []), comment],
-              assigned_to: assignedTechnician || request.assigned_to,
+              assigned_to: assignedTo || request.assigned_to,
               status: "in_progress"
             } 
           : request
       ));
       
-      // Reset form
-      setNewComment("");
-      setAssignedTechnician("");
+      // Close dialog
       setShowCommentDialog(false);
       
       toast({
@@ -248,7 +225,7 @@ function ClientRequestsContent() {
           selectedRequest.user_name,
           "MYWATER Support",
           `Update on your support request: ${selectedRequest.subject}`,
-          `Dear ${selectedRequest.user_name},\n\nYour support request has been updated. A technician has been assigned to your case.\n\nComment: ${newComment}\n\nThank you for your patience,\nMYWATER Support Team`
+          `Dear ${selectedRequest.user_name},\n\nYour support request has been updated. A technician has been assigned to your case.\n\nComment: ${commentText}\n\nThank you for your patience,\nMYWATER Support Team`
         );
       } catch (emailError) {
         console.error("Failed to send email notification:", emailError);
@@ -264,8 +241,8 @@ function ClientRequestsContent() {
     }
   };
 
-  const handleCreateRequest = async () => {
-    if (!newRequestForm.user_name || !newRequestForm.user_email || !newRequestForm.subject || !newRequestForm.message) {
+  const handleCreateRequest = async (formData: RequestFormData) => {
+    if (!formData.user_name || !formData.user_email || !formData.subject || !formData.message) {
       toast({
         title: "Missing information",
         description: "Please fill all required fields",
@@ -280,12 +257,12 @@ function ClientRequestsContent() {
       // Add new request to Firestore
       const newRequest = {
         user_id: Date.now().toString(), // Placeholder ID
-        user_name: newRequestForm.user_name,
-        user_email: newRequestForm.user_email,
-        subject: newRequestForm.subject,
-        message: newRequestForm.message,
-        support_type: newRequestForm.support_type,
-        purifier_model: newRequestForm.purifier_model,
+        user_name: formData.user_name,
+        user_email: formData.user_email,
+        subject: formData.subject,
+        message: formData.message,
+        support_type: formData.support_type,
+        purifier_model: formData.purifier_model,
         status: "new" as const,
         created_at: new Date()
       };
@@ -299,17 +276,8 @@ function ClientRequestsContent() {
       };
       
       setRequests(prev => [requestWithId, ...prev]);
-
-      // Reset form and close dialog
-      setNewRequestForm({
-        user_name: "",
-        user_email: "",
-        subject: "",
-        message: "",
-        support_type: "technical",
-        purifier_model: "MYWATER X1"
-      });
       
+      // Close dialog
       setShowCreateRequestDialog(false);
       
       toast({
@@ -357,6 +325,17 @@ function ClientRequestsContent() {
     }
   };
 
+  const handleRequestAction = (action: 'status' | 'email' | 'comment', request: SupportRequest, newStatus?: "new" | "in_progress" | "resolved") => {
+    if (action === 'status' && newStatus) {
+      updateRequestStatus(request.id, newStatus);
+    } else if (action === 'email') {
+      handleReplyByEmail(request);
+    } else if (action === 'comment') {
+      setSelectedRequest(request);
+      setShowCommentDialog(true);
+    }
+  };
+
   return (
     <div className="space-y-4 md:space-y-6 animate-fadeIn p-2 md:p-0">
       <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-3">
@@ -391,22 +370,10 @@ function ClientRequestsContent() {
           className="w-full mb-4"
         >
           <TabsList className="bg-spotify-dark mb-4">
-            <TabsTrigger value="new" className="flex items-center gap-2">
-              <MessageSquare className="h-4 w-4" />
-              New
-            </TabsTrigger>
-            <TabsTrigger value="in_progress" className="flex items-center gap-2">
-              <Clock className="h-4 w-4" />
-              In Progress
-            </TabsTrigger>
-            <TabsTrigger value="resolved" className="flex items-center gap-2">
-              <CheckCircle className="h-4 w-4" />
-              Resolved
-            </TabsTrigger>
-            <TabsTrigger value="all" className="flex items-center gap-2">
-              <FilterIcon className="h-4 w-4" />
-              All Requests
-            </TabsTrigger>
+            <RequestsTabTrigger value="new" label="New" />
+            <RequestsTabTrigger value="in_progress" label="In Progress" />
+            <RequestsTabTrigger value="resolved" label="Resolved" />
+            <RequestsTabTrigger value="all" label="All Requests" />
           </TabsList>
         </Tabs>
         
@@ -419,314 +386,33 @@ function ClientRequestsContent() {
         ) : requests.length > 0 ? (
           <div className="space-y-4">
             {requests.map((request) => (
-              <div 
-                key={request.id}
-                className="bg-spotify-accent/20 p-4 rounded-md border border-spotify-accent/30 hover:border-spotify-accent/60 transition-colors"
-              >
-                <div className="flex justify-between items-start">
-                  <div>
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <h3 className="text-lg font-medium text-white">{request.subject}</h3>
-                      <Badge variant={
-                        request.status === "new" 
-                          ? "default" 
-                          : request.status === "in_progress" 
-                            ? "secondary" 
-                            : "outline"
-                      }>
-                        {request.support_type}
-                      </Badge>
-                      <Badge variant={
-                        request.status === "new" 
-                          ? "destructive" 
-                          : request.status === "in_progress" 
-                            ? "default" 
-                            : "secondary"
-                      }>
-                        {request.status.replace("_", " ")}
-                      </Badge>
-                    </div>
-                    <p className="text-sm text-gray-400">
-                      From: {request.user_name} ({request.user_email})
-                    </p>
-                    <p className="text-sm text-gray-400 mt-1">
-                      Model: {request.purifier_model}
-                    </p>
-                    {request.assigned_to && (
-                      <p className="text-sm text-mywater-blue mt-1 flex items-center">
-                        <User className="h-3 w-3 mr-1" />
-                        Assigned to: {request.assigned_to}
-                      </p>
-                    )}
-                  </div>
-                  <span className="text-xs text-gray-400">
-                    {format(request.created_at, "MM/dd/yyyy, h:mm:ss a")}
-                  </span>
-                </div>
-                
-                <p className="mt-2 text-white/80 line-clamp-2">{request.message}</p>
-                
-                {/* Display comments if any */}
-                {request.comments && request.comments.length > 0 && (
-                  <div className="mt-3 border-t border-gray-700 pt-3">
-                    <h4 className="text-sm font-medium text-gray-400 mb-2">Comments:</h4>
-                    <div className="space-y-2 max-h-60 overflow-y-auto">
-                      {request.comments.map((comment) => (
-                        <div key={comment.id} className="bg-spotify-accent/40 p-2 rounded text-sm">
-                          <div className="flex justify-between items-center">
-                            <span className="font-medium text-mywater-blue">{comment.author}</span>
-                            <span className="text-xs text-gray-500">
-                              {comment.created_at instanceof Date 
-                                ? format(comment.created_at, "MM/dd/yyyy, h:mm a")
-                                : "Unknown date"}
-                            </span>
-                          </div>
-                          <p className="text-white/90 mt-1">{comment.content}</p>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-                
-                <div className="mt-4 flex justify-end gap-2 flex-wrap">
-                  {request.status !== "in_progress" && (
-                    <Button 
-                      size="sm" 
-                      variant="outline"
-                      onClick={() => {
-                        setSelectedRequest(request);
-                        setShowCommentDialog(true);
-                        updateRequestStatus(request.id, "in_progress");
-                      }}
-                    >
-                      <Clock className="h-4 w-4 mr-2" />
-                      Mark In Progress
-                    </Button>
-                  )}
-                  
-                  {request.status !== "resolved" && (
-                    <Button 
-                      size="sm" 
-                      variant="outline"
-                      onClick={() => updateRequestStatus(request.id, "resolved")}
-                    >
-                      <CheckCircle className="h-4 w-4 mr-2" />
-                      Mark Resolved
-                    </Button>
-                  )}
-                  
-                  <Button 
-                    size="sm" 
-                    variant="default"
-                    className="bg-mywater-blue hover:bg-mywater-blue/90"
-                    onClick={() => handleReplyByEmail(request)}
-                  >
-                    <Mail className="h-4 w-4 mr-2" />
-                    Reply by Email
-                  </Button>
-                  
-                  {request.status === "in_progress" && (
-                    <Button 
-                      size="sm" 
-                      variant="secondary"
-                      onClick={() => {
-                        setSelectedRequest(request);
-                        setShowCommentDialog(true);
-                      }}
-                    >
-                      <MessageSquare className="h-4 w-4 mr-2" />
-                      Add Comment
-                    </Button>
-                  )}
-                </div>
-              </div>
+              <RequestCard 
+                key={request.id} 
+                request={request} 
+                onAction={handleRequestAction} 
+              />
             ))}
           </div>
         ) : (
-          <div className="bg-spotify-accent/20 p-8 rounded-md text-center">
-            <MessageSquare className="h-12 w-12 text-gray-500 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-white">No support requests found</h3>
-            <p className="text-gray-400 mt-1">
-              {activeFilter === "all" 
-                ? "There are no support requests in the system yet." 
-                : `There are no ${activeFilter.replace("_", " ")} support requests.`}
-            </p>
-          </div>
+          <NoRequestsFound filterType={activeFilter} />
         )}
       </Card>
       
       {/* Comment Dialog */}
-      <Dialog open={showCommentDialog} onOpenChange={setShowCommentDialog}>
-        <DialogContent className="bg-spotify-darker border-spotify-accent">
-          <DialogHeader>
-            <DialogTitle>
-              {selectedRequest?.status === "in_progress" 
-                ? "Add Comment" 
-                : "Mark as In Progress"}
-            </DialogTitle>
-          </DialogHeader>
-          
-          <div className="space-y-4">
-            <FormInput
-              label="Your Name"
-              value={commentAuthor}
-              onChange={setCommentAuthor}
-              placeholder="Enter your name"
-            />
-            
-            <div className="space-y-2">
-              <label className="text-sm text-gray-400">Assign to Technician</label>
-              <Select value={assignedTechnician} onValueChange={setAssignedTechnician}>
-                <SelectTrigger className="bg-spotify-accent border-spotify-accent-hover text-white">
-                  <SelectValue placeholder="Select a technician" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="John Smith">John Smith</SelectItem>
-                  <SelectItem value="Emma Johnson">Emma Johnson</SelectItem>
-                  <SelectItem value="Michael Davis">Michael Davis</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            
-            <div className="space-y-2">
-              <label className="text-sm text-gray-400">Comment</label>
-              <Textarea
-                value={newComment}
-                onChange={(e) => setNewComment(e.target.value)}
-                placeholder="Add your comments or instructions here..."
-                className="bg-spotify-accent border-spotify-accent-hover text-white min-h-[100px]"
-              />
-            </div>
-            
-            <div className="flex justify-end gap-2">
-              <Button 
-                variant="outline" 
-                onClick={() => setShowCommentDialog(false)}
-              >
-                Cancel
-              </Button>
-              <Button 
-                onClick={handleAddComment}
-                disabled={!newComment.trim()}
-              >
-                Save
-              </Button>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
+      <CommentDialog
+        open={showCommentDialog}
+        onOpenChange={setShowCommentDialog}
+        selectedRequest={selectedRequest}
+        onSaveComment={handleAddComment}
+      />
       
       {/* Create Request Dialog */}
-      <Dialog open={showCreateRequestDialog} onOpenChange={setShowCreateRequestDialog}>
-        <DialogContent className="bg-spotify-darker border-spotify-accent max-w-lg">
-          <DialogHeader>
-            <DialogTitle>Create Support Request</DialogTitle>
-          </DialogHeader>
-          
-          <div className="space-y-4 py-2">
-            <div className="grid grid-cols-2 gap-4">
-              <FormInput
-                label="Name"
-                value={newRequestForm.user_name}
-                onChange={(value) => setNewRequestForm({...newRequestForm, user_name: value})}
-                placeholder="Client name"
-                required
-              />
-              
-              <FormInput
-                label="Email"
-                type="email"
-                value={newRequestForm.user_email}
-                onChange={(value) => setNewRequestForm({...newRequestForm, user_email: value})}
-                placeholder="client@example.com"
-                required
-              />
-            </div>
-            
-            <div className="space-y-2">
-              <label className="text-sm text-gray-400">Support Type</label>
-              <Select 
-                value={newRequestForm.support_type} 
-                onValueChange={(value) => setNewRequestForm({...newRequestForm, support_type: value})}
-              >
-                <SelectTrigger className="bg-spotify-accent border-spotify-accent-hover text-white">
-                  <SelectValue placeholder="Select support type" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="technical">Technical Support</SelectItem>
-                  <SelectItem value="installation">Installation Assistance</SelectItem>
-                  <SelectItem value="maintenance">Maintenance Help</SelectItem>
-                  <SelectItem value="order">Order Inquiry</SelectItem>
-                  <SelectItem value="other">Other</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            
-            <div className="space-y-2">
-              <label className="text-sm text-gray-400">Purifier Model</label>
-              <Select 
-                value={newRequestForm.purifier_model} 
-                onValueChange={(value) => setNewRequestForm({...newRequestForm, purifier_model: value})}
-              >
-                <SelectTrigger className="bg-spotify-accent border-spotify-accent-hover text-white">
-                  <SelectValue placeholder="Select purifier model" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="MYWATER X1">MYWATER X1</SelectItem>
-                  <SelectItem value="MYWATER X2">MYWATER X2</SelectItem>
-                  <SelectItem value="MYWATER Pro">MYWATER Pro</SelectItem>
-                  <SelectItem value="MYWATER Ultra">MYWATER Ultra</SelectItem>
-                  <SelectItem value="Other">Other</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            
-            <FormInput
-              label="Subject"
-              value={newRequestForm.subject}
-              onChange={(value) => setNewRequestForm({...newRequestForm, subject: value})}
-              placeholder="Brief description of the issue"
-              required
-            />
-            
-            <div className="space-y-2">
-              <label className="text-sm text-gray-400">Message</label>
-              <Textarea
-                value={newRequestForm.message}
-                onChange={(e) => setNewRequestForm({...newRequestForm, message: e.target.value})}
-                placeholder="Detailed description of the issue..."
-                className="bg-spotify-accent border-spotify-accent-hover text-white min-h-[120px]"
-                required
-              />
-            </div>
-          </div>
-          
-          <div className="flex justify-end gap-2 mt-2">
-            <Button 
-              variant="outline" 
-              onClick={() => setShowCreateRequestDialog(false)}
-            >
-              Cancel
-            </Button>
-            <Button 
-              onClick={handleCreateRequest}
-              disabled={isSubmittingRequest}
-            >
-              {isSubmittingRequest ? (
-                <>
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  Submitting...
-                </>
-              ) : (
-                <>
-                  <Send className="h-4 w-4 mr-2" />
-                  Submit Request
-                </>
-              )}
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
+      <CreateRequestDialog
+        open={showCreateRequestDialog}
+        onOpenChange={setShowCreateRequestDialog}
+        onSubmit={handleCreateRequest}
+        isSubmitting={isSubmittingRequest}
+      />
     </div>
   );
 }

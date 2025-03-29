@@ -57,7 +57,7 @@ export function LandingPage() {
         {/* Hero Section */}
         <div className="text-center space-y-4">
           <h1 className="text-4xl md:text-5xl font-bold text-white">
-            Welcome to <span className="text-mywater-blue">MYWATER</span>
+            Welcome to <span className="text-mywater-blue">MYWATER app</span>
           </h1>
           <p className="text-lg text-gray-400 max-w-2xl mx-auto">
             Find your way towards a healthy and sustainable future!

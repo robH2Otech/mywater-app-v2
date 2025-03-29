@@ -27,29 +27,33 @@ export function UserCard({ user, onClick }: UserCardProps) {
       onClick={onClick}
     >
       <CardContent className="p-4">
-        <div className="flex items-center space-x-3">
-          <UserAvatar 
-            firstName={user.first_name} 
-            lastName={user.last_name}
-            className="h-12 w-12 flex-shrink-0"
-            showMenu={false}
-          />
-          <div className="min-w-0 flex-1">
-            <div className="flex items-center gap-2">
-              <h3 className="text-lg font-medium text-white truncate">{user.first_name} {user.last_name}</h3>
-              <span className={`text-xs px-2 py-0.5 rounded ${getRoleBadgeColor(user.role)} text-white uppercase`}>
+        <div className="flex flex-col space-y-3">
+          <div className="flex items-center space-x-3">
+            <UserAvatar 
+              firstName={user.first_name} 
+              lastName={user.last_name}
+              className="h-12 w-12 flex-shrink-0"
+              showMenu={false}
+            />
+            <div className="min-w-0 flex-1">
+              <h3 className="text-lg font-medium text-white truncate">
+                {user.first_name} {user.last_name}
+              </h3>
+              <span className={`text-xs px-2 py-0.5 rounded ${getRoleBadgeColor(user.role)} text-white uppercase inline-block mt-1`}>
                 {user.role}
               </span>
             </div>
-            
-            <div className="mt-1 flex items-center text-sm text-gray-400">
-              <MailCheck className="h-3 w-3 mr-1 flex-shrink-0" />
+          </div>
+          
+          <div className="pl-2">
+            <div className="flex items-center text-sm text-gray-400">
+              <MailCheck className="h-3 w-3 mr-2 flex-shrink-0" />
               <span className="truncate">{user.email}</span>
             </div>
             
             {user.phone && (
-              <div className="mt-1 flex items-center text-sm text-gray-400">
-                <PhoneCall className="h-3 w-3 mr-1 flex-shrink-0" />
+              <div className="flex items-center text-sm text-gray-400 mt-1">
+                <PhoneCall className="h-3 w-3 mr-2 flex-shrink-0" />
                 <span className="truncate">{user.phone}</span>
               </div>
             )}
