@@ -10,10 +10,24 @@ import { WelcomeMessage } from "@/components/layout/WelcomeMessage";
 import { collection, getDocs, query, where } from "firebase/firestore";
 import { db } from "@/integrations/firebase/client";
 import { formatThousands } from "@/utils/measurements/formatUtils";
+import { useEffect, useState } from "react";
 
 const Index = () => {
+  const [totalVolume, setTotalVolume] = useState(0);
+  const [percentageIncrease, setPercentageIncrease] = useState(13.2); // Default value
+  
   // Get units data
   const { data: units = [], isLoading: unitsLoading } = useUnits();
+  
+  // Calculate total volume whenever units data changes
+  useEffect(() => {
+    if (units && units.length > 0) {
+      const calculatedVolume = units.reduce((sum, unit) => {
+        return sum + (typeof unit.total_volume === 'number' ? unit.total_volume : 0);
+      }, 0);
+      setTotalVolume(calculatedVolume);
+    }
+  }, [units]);
   
   // Get active alerts count
   const { data: activeAlerts = [], isLoading: alertsLoading } = useQuery({
@@ -64,45 +78,17 @@ const Index = () => {
     },
   });
   
-  // Calculate the total volume for today
-  const { data: totalVolumeData, isLoading: volumeLoading } = useQuery({
-    queryKey: ["total-volume-today"],
-    queryFn: async () => {
-      try {
-        // Calculate total from all units
-        const totalVolume = units.reduce((sum, unit) => {
-          return sum + (typeof unit.total_volume === 'number' ? unit.total_volume : 0);
-        }, 0);
-        
-        // For the percentage increase, we would need historical data
-        // Using a random percentage increase for demonstration
-        const percentageIncrease = 13.2;
-        
-        return {
-          volume: totalVolume,
-          percentageIncrease
-        };
-      } catch (error) {
-        console.error("Error calculating total volume:", error);
-        return { volume: 0, percentageIncrease: 0 };
-      }
-    },
-    enabled: !unitsLoading,
-  });
-  
-  const isLoading = unitsLoading || alertsLoading || filtersLoading || volumeLoading;
+  const isLoading = unitsLoading || alertsLoading || filtersLoading;
   
   // Format volume with commas for thousands
-  const formattedVolume = totalVolumeData?.volume
-    ? `${formatThousands(totalVolumeData.volume)} m`
-    : "0 m";
+  const formattedVolume = totalVolume ? `${formatThousands(totalVolume)} m` : "0 m";
     
   // Format percentage with + sign if positive and 1 decimal place
-  const formattedPercentage = totalVolumeData?.percentageIncrease
-    ? `${totalVolumeData.percentageIncrease > 0 ? '+' : ''}${totalVolumeData.percentageIncrease.toFixed(1)}%`
+  const formattedPercentage = percentageIncrease
+    ? `${percentageIncrease > 0 ? '+' : ''}${percentageIncrease.toFixed(1)}%`
     : "0%";
   
-  const percentageColor = totalVolumeData?.percentageIncrease && totalVolumeData.percentageIncrease > 0
+  const percentageColor = percentageIncrease && percentageIncrease > 0
     ? "text-mywater-blue"
     : "text-red-500";
 

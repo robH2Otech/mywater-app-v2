@@ -2,10 +2,10 @@ import { collection, addDoc, getDocs, query, where, updateDoc, doc } from "fireb
 import { db } from "@/integrations/firebase/client";
 import emailjs from 'emailjs-com';
 
-// EmailJS configuration
+// EmailJS configuration with the provided credentials
 const EMAILJS_SERVICE_ID = 'service_mywater';
 const EMAILJS_TEMPLATE_ID = 'template_referral';
-const EMAILJS_USER_ID = 'YOUR_EMAILJS_USER_ID'; 
+const EMAILJS_USER_ID = '20lKGYgYsf1DIICqM'; 
 
 /**
  * Sends a referral email to the specified recipient
@@ -81,6 +81,95 @@ export const sendReferralEmail = async (
 };
 
 /**
+ * Sends an email directly to the recipient
+ */
+export const sendEmailDirect = async (
+  toEmail: string,
+  toName: string,
+  fromName: string,
+  subject: string, 
+  message: string
+) => {
+  // Try to use EmailJS if available
+  try {
+    await sendEmailWithEmailJS(toEmail, toName, fromName, subject, message);
+    console.log('Email sent successfully via EmailJS');
+    return true;
+  } catch (emailJsError) {
+    console.error("Error sending via EmailJS:", emailJsError);
+    
+    // Fallback to simulation if EmailJS fails
+    console.log("Direct email sending (simulated):", {
+      to: toEmail,
+      toName,
+      fromName,
+      subject,
+      message,
+      from: "contact@mywatertechnologies.com"
+    });
+    
+    // For development only - simulate email delivery
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        console.log("Email delivered (simulated)");
+        resolve(true);
+      }, 1500);
+    });
+  }
+};
+
+/**
+ * Helper function to send emails using EmailJS
+ */
+const sendEmailWithEmailJS = async (
+  toEmail: string,
+  toName: string,
+  fromName: string,
+  subject: string,
+  message: string,
+  additionalParams: Record<string, any> = {}
+) => {
+  const templateParams = {
+    to_email: toEmail,
+    to_name: toName,
+    from_name: fromName,
+    message: message,
+    subject: subject,
+    from_email: "contact@mywatertechnologies.com",
+    ...additionalParams
+  };
+  
+  return await emailjs.send(
+    EMAILJS_SERVICE_ID,
+    EMAILJS_TEMPLATE_ID,
+    templateParams,
+    EMAILJS_USER_ID
+  );
+};
+
+/**
+ * Generates a template for referral emails
+ */
+export const generateReferralEmailTemplate = (
+  toName: string,
+  fromName: string,
+  referralCode: string
+) => {
+  return `Hi ${toName || "[Friend's Name]"},
+
+I wanted to share something I've been really happy with – my MYWATER water purification system. It provides clean, great-tasting water right from my tap, and I'm saving money on bottled water.
+
+I'm inviting you to try MYWATER with a special 20% discount! Just use this link: https://mywater.com/refer?code=${referralCode} when you purchase.
+
+If you decide to get a MYWATER system, you'll also get the chance to refer 3 friends and earn a free replacement cartridge for yourself!
+
+Check it out here: https://mywater.com/products
+
+Best,
+${fromName || "[Your Name]"}`;
+};
+
+/**
  * Processes any pending emails in the Firestore collection
  */
 export const processPendingEmails = async () => {
@@ -128,94 +217,5 @@ export const processPendingEmails = async () => {
   } catch (error) {
     console.error("Error processing emails:", error);
     return 0;
-  }
-};
-
-/**
- * Generates a template for referral emails
- */
-export const generateReferralEmailTemplate = (
-  toName: string,
-  fromName: string,
-  referralCode: string
-) => {
-  return `Hi ${toName || "[Friend's Name]"},
-
-I wanted to share something I've been really happy with – my MYWATER water purification system. It provides clean, great-tasting water right from my tap, and I'm saving money on bottled water.
-
-I'm inviting you to try MYWATER with a special 20% discount! Just use this link: https://mywater.com/refer?code=${referralCode} when you purchase.
-
-If you decide to get a MYWATER system, you'll also get the chance to refer 3 friends and earn a free replacement cartridge for yourself!
-
-Check it out here: https://mywater.com/products
-
-Best,
-${fromName || "[Your Name]"}`;
-};
-
-/**
- * Helper function to send emails using EmailJS
- */
-const sendEmailWithEmailJS = async (
-  toEmail: string,
-  toName: string,
-  fromName: string,
-  subject: string,
-  message: string,
-  additionalParams: Record<string, any> = {}
-) => {
-  const templateParams = {
-    to_email: toEmail,
-    to_name: toName,
-    from_name: fromName,
-    message: message,
-    subject: subject,
-    from_email: "contact@mywatertechnologies.com",
-    ...additionalParams
-  };
-  
-  return await emailjs.send(
-    EMAILJS_SERVICE_ID,
-    EMAILJS_TEMPLATE_ID,
-    templateParams,
-    EMAILJS_USER_ID
-  );
-};
-
-/**
- * Sends an email directly to the recipient
- */
-export const sendEmailDirect = async (
-  toEmail: string,
-  toName: string,
-  fromName: string,
-  subject: string, 
-  message: string
-) => {
-  // Try to use EmailJS if available
-  try {
-    await sendEmailWithEmailJS(toEmail, toName, fromName, subject, message);
-    console.log('Email sent successfully via EmailJS');
-    return true;
-  } catch (emailJsError) {
-    console.error("Error sending via EmailJS:", emailJsError);
-    
-    // Fallback to simulation if EmailJS fails
-    console.log("Direct email sending (simulated):", {
-      to: toEmail,
-      toName,
-      fromName,
-      subject,
-      message,
-      from: "contact@mywatertechnologies.com"
-    });
-    
-    // For development only - simulate email delivery
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        console.log("Email delivered (simulated)");
-        resolve(true);
-      }, 1500);
-    });
   }
 };

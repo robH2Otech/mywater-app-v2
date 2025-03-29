@@ -7,8 +7,7 @@ import {
   YAxis,
   CartesianGrid,
   Tooltip,
-  ResponsiveContainer,
-  LabelList
+  ResponsiveContainer
 } from "recharts";
 import { useEffect, useState } from "react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -16,7 +15,6 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { subDays, subHours, format, parseISO } from "date-fns";
 import { collection, query, where, orderBy, getDocs, Timestamp } from "firebase/firestore";
 import { db } from "@/integrations/firebase/client";
-import { ChartContainer, ChartTooltipContent } from "@/components/ui/chart";
 
 // Define time range options
 type TimeRange = "24h" | "7d" | "30d" | "6m";
@@ -213,9 +211,7 @@ export const WaterUsageChart = ({ units = [] }: WaterUsageChartProps) => {
                 dataKey="volume" 
                 fill="#39afcd"
                 radius={[4, 4, 0, 0]}
-              >
-                <LabelList dataKey="volume" position="top" fill="#fff" formatter={(value: number) => `${value}`} />
-              </Bar>
+              />
             </BarChart>
           </ResponsiveContainer>
         )}
