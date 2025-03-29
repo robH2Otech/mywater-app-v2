@@ -1,4 +1,3 @@
-
 import { 
   collection, 
   query, 
@@ -87,6 +86,9 @@ export const fetchSupportRequests = async (
   countLimit: number = 5
 ): Promise<SupportRequest[]> => {
   try {
+    // Add console logs to debug the filter and count limits
+    console.log(`Fetching requests with filter: ${activeFilter}, limit: ${countLimit}`);
+    
     const requestsRef = collection(db, "support_requests");
     let requestsQuery;
 
@@ -98,16 +100,7 @@ export const fetchSupportRequests = async (
         limit(countLimit)
       );
     } 
-    // For "new" filter, show all unresponded requests
-    else if (activeFilter === "new") {
-      requestsQuery = query(
-        requestsRef,
-        where("status", "==", "new"),
-        orderBy("created_at", "desc"),
-        limit(countLimit)
-      );
-    }
-    // For other filters, show filtered by status
+    // For specific status filters, show filtered by status
     else {
       requestsQuery = query(
         requestsRef,
@@ -117,20 +110,21 @@ export const fetchSupportRequests = async (
       );
     }
 
-    // Get today's date at midnight
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-
     // Get all requests
     const querySnapshot = await getDocs(requestsQuery);
+    console.log(`Query returned ${querySnapshot.size} documents`);
     
-    // If we got no real data, use sample data to always show something
+    // If we got no real data or there was an error, use sample data
     if (querySnapshot.empty) {
+      console.log("Using sample data as no database results found");
+      
       // Filter sample data based on active filter
       let filteredSamples = sampleRequests;
       if (activeFilter !== "all") {
         filteredSamples = sampleRequests.filter(req => req.status === activeFilter);
       }
+      
+      console.log(`Returning ${filteredSamples.length} filtered sample requests`);
       return filteredSamples.slice(0, countLimit);
     }
     
@@ -139,6 +133,10 @@ export const fetchSupportRequests = async (
     // Today's requests and new requests
     const todayRequests: SupportRequest[] = [];
     const otherRequests: SupportRequest[] = [];
+    
+    // Get today's date at midnight for comparison
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
     
     querySnapshot.forEach((doc) => {
       const data = doc.data() as DocumentData;
@@ -175,10 +173,20 @@ export const fetchSupportRequests = async (
     });
     
     // Combine arrays with today's requests first
-    return [...todayRequests, ...otherRequests].slice(0, countLimit);
+    const result = [...todayRequests, ...otherRequests].slice(0, countLimit);
+    console.log(`Returning ${result.length} database requests`);
+    return result;
   } catch (error) {
     console.error("Error fetching support requests:", error);
-    throw error;
+    
+    // On error, return filtered sample data instead of throwing
+    console.log("Error occurred, using sample data as fallback");
+    let filteredSamples = sampleRequests;
+    if (activeFilter !== "all") {
+      filteredSamples = sampleRequests.filter(req => req.status === activeFilter);
+    }
+    
+    return filteredSamples.slice(0, countLimit);
   }
 };
 

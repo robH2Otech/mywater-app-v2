@@ -13,7 +13,7 @@ import {
 export function useClientRequests() {
   const [requests, setRequests] = useState<SupportRequest[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [activeFilter, setActiveFilter] = useState<string>("new");
+  const [activeFilter, setActiveFilter] = useState<string>("all"); // Default to "all" for better initial display
   const [selectedRequest, setSelectedRequest] = useState<SupportRequest | null>(null);
   const [showCommentDialog, setShowCommentDialog] = useState(false);
   const [showCreateRequestDialog, setShowCreateRequestDialog] = useState(false);
@@ -21,14 +21,17 @@ export function useClientRequests() {
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
   
-  // Initial data load - show last 3 requests when opened
+  // Initial data load - show all requests when opened to ensure something displays
   useEffect(() => {
-    fetchRequests(3);
+    fetchRequests(5);
   }, []);
   
   // Filter change
   useEffect(() => {
-    fetchRequests();
+    if (activeFilter) {
+      console.log(`Active filter changed to: ${activeFilter}`);
+      fetchRequests();
+    }
   }, [activeFilter]);
 
   const fetchRequests = async (count?: number) => {
@@ -36,8 +39,17 @@ export function useClientRequests() {
     setError(null);
     
     try {
-      const requestsData = await fetchSupportRequests(activeFilter, count);
+      console.log(`Fetching requests with filter: ${activeFilter}, count: ${count || 5}`);
+      const requestsData = await fetchSupportRequests(activeFilter, count || 5);
+      
+      if (requestsData.length === 0) {
+        console.log("No requests found for the current filter");
+      } else {
+        console.log(`Successfully fetched ${requestsData.length} requests`);
+      }
+      
       setRequests(requestsData);
+      setError(null); // Clear any previous errors
     } catch (error) {
       console.error("Error fetching support requests:", error);
       setError("Failed to load support requests");
@@ -49,6 +61,11 @@ export function useClientRequests() {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleFilterChange = (filter: string) => {
+    console.log(`Changing filter from ${activeFilter} to ${filter}`);
+    setActiveFilter(filter);
   };
 
   const handleUpdateRequestStatus = async (id: string, status: "new" | "in_progress" | "resolved") => {
@@ -183,7 +200,7 @@ export function useClientRequests() {
     isLoading,
     error,
     activeFilter,
-    setActiveFilter,
+    setActiveFilter: handleFilterChange,
     selectedRequest,
     showCommentDialog,
     setShowCommentDialog,

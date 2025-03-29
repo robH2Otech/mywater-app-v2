@@ -5,6 +5,7 @@ import { CreateRequestDialog } from "@/components/requests/CreateRequestDialog";
 import { RequestsHeader } from "@/components/requests/RequestsHeader";
 import { RequestsList } from "@/components/requests/RequestsList";
 import { useClientRequests } from "@/hooks/useClientRequests";
+import { useEffect } from "react";
 
 export function ClientRequestsContent() {
   const {
@@ -25,10 +26,21 @@ export function ClientRequestsContent() {
     handleRequestAction
   } = useClientRequests();
 
+  // Add a retry handler to refresh the data and clear errors
+  const handleRetry = () => {
+    console.log("Retry requested - refreshing data");
+    fetchRequests();
+  };
+
+  // Log the current state for debugging
+  useEffect(() => {
+    console.log(`ClientRequestsContent - Requests count: ${requests?.length || 0}, Filter: ${activeFilter}, Error: ${error ? 'Yes' : 'No'}`);
+  }, [requests, activeFilter, error]);
+
   return (
     <div className="space-y-4 md:space-y-6 animate-fadeIn p-2 md:p-0">
       <RequestsHeader 
-        onRefresh={() => fetchRequests()}
+        onRefresh={handleRetry}
         onCreateRequest={() => setShowCreateRequestDialog(true)}
       />
       
@@ -39,7 +51,7 @@ export function ClientRequestsContent() {
           error={error}
           activeFilter={activeFilter}
           onFilterChange={setActiveFilter}
-          onRetry={() => fetchRequests()}
+          onRetry={handleRetry}
           onAction={handleRequestAction}
         />
       </Card>

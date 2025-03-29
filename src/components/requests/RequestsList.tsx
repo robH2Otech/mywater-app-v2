@@ -5,6 +5,8 @@ import { RequestsTabTrigger } from "@/components/requests/RequestsTabTrigger";
 import { RequestCard } from "@/components/requests/RequestCard";
 import { NoRequestsFound } from "@/components/requests/NoRequestsFound";
 import { LoadingSkeleton } from "@/components/shared/LoadingSkeleton";
+import { AlertCircle } from "lucide-react";
+import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 
 interface RequestsListProps {
   requests: SupportRequest[];
@@ -25,10 +27,13 @@ export function RequestsList({
   onRetry,
   onAction
 }: RequestsListProps) {
+  // Debug info
+  console.log(`RequestsList: activeFilter=${activeFilter}, isLoading=${isLoading}, error=${error}, requests.length=${requests?.length || 0}`);
+  
   return (
     <>
       <Tabs 
-        defaultValue="new" 
+        defaultValue={activeFilter} 
         value={activeFilter}
         onValueChange={onFilterChange}
         className="w-full mb-4"
@@ -44,13 +49,20 @@ export function RequestsList({
       {isLoading ? (
         <LoadingSkeleton />
       ) : error ? (
-        <NoRequestsFound 
-          filterType={activeFilter} 
-          error={true} 
-          errorMessage={error} 
-          retryFunction={onRetry}
-        />
-      ) : requests.length > 0 ? (
+        <Alert variant="destructive" className="bg-red-900/20 border border-red-900/30">
+          <AlertCircle className="h-5 w-5 text-red-400" />
+          <AlertTitle className="text-lg font-medium text-white">Error</AlertTitle>
+          <AlertDescription className="text-gray-400">
+            {error}
+            <button 
+              onClick={onRetry}
+              className="ml-2 text-mywater-blue hover:text-mywater-blue/80 underline"
+            >
+              Try again
+            </button>
+          </AlertDescription>
+        </Alert>
+      ) : requests && requests.length > 0 ? (
         <div className="space-y-4">
           {requests.map((request) => (
             <RequestCard 
