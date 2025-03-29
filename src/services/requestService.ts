@@ -13,7 +13,7 @@ import {
   DocumentData 
 } from "firebase/firestore";
 import { db } from "@/integrations/firebase/client";
-import { sendEmailDirect } from "@/utils/emailUtil";
+import { sendEmailDirect } from "@/utils/email";  // Updated import path
 import { SupportRequest, Comment, RequestFormData } from "@/types/supportRequests";
 
 // Sample data to ensure we always show some requests

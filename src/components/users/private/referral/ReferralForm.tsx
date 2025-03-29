@@ -4,7 +4,7 @@ import { FormInput } from "@/components/shared/FormInput";
 import { Textarea } from "@/components/ui/textarea";
 import { Send } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { sendReferralEmail } from "@/utils/emailUtil";
+import { sendReferralEmail } from "@/utils/email";  // Updated import path
 
 interface ReferralFormProps {
   userName: string;
@@ -18,7 +18,6 @@ export function ReferralForm({ userName, referralCode }: ReferralFormProps) {
   const [isSending, setIsSending] = useState(false);
   const { toast } = useToast();
   
-  // Generate default email template when component loads or friend name changes
   const generateDefaultEmail = () => {
     const template = `Hi ${friendName || "[Friend's Name]"},
 
@@ -36,20 +35,17 @@ ${userName || "[Your Name]"}`;
     return template;
   };
 
-  // Set default template when friend name changes
   const handleFriendNameChange = (value: string) => {
     setFriendName(value);
     if (emailMessage === "" || !emailMessage) {
       setEmailMessage(generateDefaultEmail());
     } else {
-      // Update only the greeting line
       setEmailMessage(prev => 
         prev.replace(/^Hi.*?,/m, `Hi ${value || "[Friend's Name]"},`)
       );
     }
   };
 
-  // Handle sending the referral email
   const handleSendEmail = async () => {
     if (!friendEmail || !friendName) {
       toast({
@@ -62,12 +58,9 @@ ${userName || "[Your Name]"}`;
 
     setIsSending(true);
     try {
-      // For development/testing, log the email details
       console.log("Sending email to:", friendEmail);
       console.log("Email content:", emailMessage);
       
-      // Use a direct email service for immediate delivery
-      // This is a workaround since the Firebase approach wasn't delivering emails
       const emailjs = await import('emailjs-com');
       
       const templateParams = {
@@ -78,8 +71,6 @@ ${userName || "[Your Name]"}`;
         referral_code: referralCode
       };
       
-      // Use Email.js as a direct service (you'll need to set up an account)
-      // This is just an example and would need valid IDs in production
       await emailjs.send(
         'service_id',  // Replace with your Email.js service ID
         'template_id', // Replace with your Email.js template ID
@@ -87,7 +78,6 @@ ${userName || "[Your Name]"}`;
         'user_id'      // Replace with your Email.js user ID
       );
       
-      // Also continue to store in Firestore for record-keeping
       const success = await sendReferralEmail(
         friendEmail,
         friendName,
@@ -102,13 +92,11 @@ ${userName || "[Your Name]"}`;
         variant: "default"
       });
       
-      // Add to local notifications
       const notificationEvent = new CustomEvent('newReferralSent', { 
         detail: { name: friendName, email: friendEmail }
       });
       window.dispatchEvent(notificationEvent);
       
-      // Reset form fields
       setFriendName("");
       setFriendEmail("");
       setEmailMessage("");
@@ -124,7 +112,6 @@ ${userName || "[Your Name]"}`;
     }
   };
 
-  // Reset email message to default template
   const resetEmailTemplate = () => {
     setEmailMessage(generateDefaultEmail());
     toast({
