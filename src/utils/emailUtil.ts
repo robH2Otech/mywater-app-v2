@@ -2,10 +2,13 @@ import { collection, addDoc, getDocs, query, where, updateDoc, doc } from "fireb
 import { db } from "@/integrations/firebase/client";
 import emailjs from 'emailjs-com';
 
-// EmailJS configuration with the provided credentials
-const EMAILJS_SERVICE_ID = 'service_mywater';
-const EMAILJS_TEMPLATE_ID = 'template_referral';
-const EMAILJS_USER_ID = '20lKGYgYsf1DIICqM'; 
+// EmailJS configuration
+// Update with the correct values from image
+const EMAILJS_CONFIG = {
+  SERVICE_ID: 'service_mywater',
+  TEMPLATE_ID: 'template_referral',
+  USER_ID: '20lKGYgYsf1DIICqM'
+};
 
 /**
  * Sends a referral email to the specified recipient
@@ -140,10 +143,10 @@ const sendEmailWithEmailJS = async (
   };
   
   return await emailjs.send(
-    EMAILJS_SERVICE_ID,
-    EMAILJS_TEMPLATE_ID,
+    EMAILJS_CONFIG.SERVICE_ID,
+    EMAILJS_CONFIG.TEMPLATE_ID,
     templateParams,
-    EMAILJS_USER_ID
+    EMAILJS_CONFIG.USER_ID
   );
 };
 

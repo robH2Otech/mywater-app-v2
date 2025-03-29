@@ -11,22 +11,37 @@ import { collection, getDocs, query, where } from "firebase/firestore";
 import { db } from "@/integrations/firebase/client";
 import { formatThousands } from "@/utils/measurements/formatUtils";
 import { useEffect, useState } from "react";
+import { fetchUnitTotalVolumes } from "@/utils/measurements/unitVolumeUtils";
 
 const Index = () => {
   const [totalVolume, setTotalVolume] = useState(0);
-  const [percentageIncrease, setPercentageIncrease] = useState(13.2); // Default value
+  const [percentageIncrease, setPercentageIncrease] = useState(13.2);
+  const [isVolumeLoading, setIsVolumeLoading] = useState(true);
   
   // Get units data
   const { data: units = [], isLoading: unitsLoading } = useUnits();
   
-  // Calculate total volume whenever units data changes
+  // Fetch total volumes immediately on component mount
   useEffect(() => {
-    if (units && units.length > 0) {
-      const calculatedVolume = units.reduce((sum, unit) => {
-        return sum + (typeof unit.total_volume === 'number' ? unit.total_volume : 0);
-      }, 0);
-      setTotalVolume(calculatedVolume);
-    }
+    const loadTotalVolumes = async () => {
+      if (units && units.length > 0) {
+        setIsVolumeLoading(true);
+        try {
+          // Get all unit volumes directly from their documents
+          const totalVol = await fetchUnitTotalVolumes(units.map(unit => unit.id));
+          setTotalVolume(totalVol);
+        } catch (error) {
+          console.error("Error fetching total volumes:", error);
+        } finally {
+          setIsVolumeLoading(false);
+        }
+      } else {
+        setTotalVolume(0);
+        setIsVolumeLoading(false);
+      }
+    };
+    
+    loadTotalVolumes();
   }, [units]);
   
   // Get active alerts count
@@ -78,7 +93,7 @@ const Index = () => {
     },
   });
   
-  const isLoading = unitsLoading || alertsLoading || filtersLoading;
+  const isLoading = unitsLoading || alertsLoading || filtersLoading || isVolumeLoading;
   
   // Format volume with commas for thousands
   const formattedVolume = totalVolume ? `${formatThousands(totalVolume)} m` : "0 m";

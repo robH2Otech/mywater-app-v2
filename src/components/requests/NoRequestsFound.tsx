@@ -1,22 +1,37 @@
 
-import { MessageSquare } from "lucide-react";
+import { AlertCircle, MessageSquare } from "lucide-react";
+import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 
 interface NoRequestsFoundProps {
   filterType: string;
   error?: boolean;
   errorMessage?: string;
+  retryFunction?: () => void;
 }
 
-export function NoRequestsFound({ filterType, error = false, errorMessage }: NoRequestsFoundProps) {
+export function NoRequestsFound({ 
+  filterType, 
+  error = false, 
+  errorMessage,
+  retryFunction
+}: NoRequestsFoundProps) {
   if (error) {
     return (
-      <div className="bg-red-900/20 p-8 rounded-md text-center border border-red-900/30">
-        <MessageSquare className="h-12 w-12 text-red-400 mx-auto mb-4" />
-        <h3 className="text-lg font-medium text-white">Error</h3>
-        <p className="text-gray-400 mt-1">
+      <Alert variant="destructive" className="bg-red-900/20 border border-red-900/30">
+        <AlertCircle className="h-5 w-5 text-red-400" />
+        <AlertTitle className="text-lg font-medium text-white">Error</AlertTitle>
+        <AlertDescription className="text-gray-400">
           {errorMessage || "Failed to load support requests"}
-        </p>
-      </div>
+          {retryFunction && (
+            <button 
+              onClick={retryFunction}
+              className="ml-2 text-mywater-blue hover:text-mywater-blue/80 underline"
+            >
+              Try again
+            </button>
+          )}
+        </AlertDescription>
+      </Alert>
     );
   }
 
