@@ -1,12 +1,14 @@
+
 import { Card } from "@/components/ui/card";
 import {
-  AreaChart,
-  Area,
+  BarChart,
+  Bar,
   XAxis,
   YAxis,
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
+  LabelList
 } from "recharts";
 import { useEffect, useState } from "react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -38,39 +40,11 @@ export const WaterUsageChart = ({ units = [] }: WaterUsageChartProps) => {
     setIsLoading(true);
     
     try {
-      // Calculate start date based on selected time range
+      // For now we'll focus on hourly data for last 12 hours
       const endDate = new Date();
-      let startDate: Date;
-      let formatPattern: string;
-      let groupByField: string;
+      const startDate = subHours(endDate, 12);
+      const formatPattern = "HH:mm"; // Hour format
       
-      switch (range) {
-        case "24h":
-          startDate = subHours(endDate, 24);
-          formatPattern = "HH:mm"; // Hour format
-          groupByField = "hour";
-          break;
-        case "7d":
-          startDate = subDays(endDate, 7);
-          formatPattern = "MMM dd"; // Month day format
-          groupByField = "day";
-          break;
-        case "30d":
-          startDate = subDays(endDate, 30);
-          formatPattern = "MMM dd"; // Month day format
-          groupByField = "day";
-          break;
-        case "6m":
-          startDate = subDays(endDate, 180);
-          formatPattern = "MMM yyyy"; // Month year format
-          groupByField = "month";
-          break;
-        default:
-          startDate = subHours(endDate, 24);
-          formatPattern = "HH:mm";
-          groupByField = "hour";
-      }
-
       const startTimestamp = Timestamp.fromDate(startDate);
       const endTimestamp = Timestamp.fromDate(endDate);
       
@@ -125,7 +99,7 @@ export const WaterUsageChart = ({ units = [] }: WaterUsageChartProps) => {
         });
       }
       
-      // Group measurements by time period based on selected range
+      // Group measurements by hour
       const groupedData = new Map();
       
       allMeasurements.forEach(measurement => {
@@ -134,13 +108,13 @@ export const WaterUsageChart = ({ units = [] }: WaterUsageChartProps) => {
         if (!groupedData.has(formattedDate)) {
           groupedData.set(formattedDate, {
             name: formattedDate,
-            value: 0
+            volume: 0
           });
         }
         
         // Accumulate volume for this time period
         const entry = groupedData.get(formattedDate);
-        entry.value += measurement.volume;
+        entry.volume += measurement.volume;
       });
       
       // Convert to array for chart and sort chronologically
@@ -150,73 +124,34 @@ export const WaterUsageChart = ({ units = [] }: WaterUsageChartProps) => {
       
       // Ensure we have data - use placeholder if empty
       if (sortedData.length === 0) {
-        return generatePlaceholderData(range);
+        return generatePlaceholderData();
       }
       
-      return sortedData;
+      // Format volumes to 1 decimal place
+      return sortedData.map(item => ({
+        ...item,
+        volume: Number(item.volume.toFixed(1))
+      }));
     } catch (error) {
       console.error("Error fetching measurements for chart:", error);
-      return generatePlaceholderData(range);
+      return generatePlaceholderData();
     } finally {
       setIsLoading(false);
     }
   };
 
-  // Generate placeholder data when no measurements are available
-  const generatePlaceholderData = (range: TimeRange) => {
+  // Generate placeholder data for hourly volumes (last 12 hours)
+  const generatePlaceholderData = () => {
     const endDate = new Date();
-    let dataPoints: any[] = [];
+    const dataPoints = [];
     
-    switch (range) {
-      case "24h":
-        // Generate hourly data for last 24 hours
-        for (let i = 0; i < 24; i++) {
-          const date = subHours(endDate, 24 - i);
-          dataPoints.push({
-            name: format(date, "HH:mm"),
-            value: Math.floor(Math.random() * 50) + 10
-          });
-        }
-        break;
-      case "7d":
-        // Generate daily data for last 7 days
-        for (let i = 0; i < 7; i++) {
-          const date = subDays(endDate, 7 - i);
-          dataPoints.push({
-            name: format(date, "MMM dd"),
-            value: Math.floor(Math.random() * 200) + 50
-          });
-        }
-        break;
-      case "30d":
-        // Generate data for last 30 days (showing 10 points)
-        for (let i = 0; i < 10; i++) {
-          const date = subDays(endDate, 30 - (i * 3));
-          dataPoints.push({
-            name: format(date, "MMM dd"),
-            value: Math.floor(Math.random() * 500) + 100
-          });
-        }
-        break;
-      case "6m":
-        // Generate monthly data for last 6 months
-        for (let i = 0; i < 6; i++) {
-          const date = subDays(endDate, 180 - (i * 30));
-          dataPoints.push({
-            name: format(date, "MMM yyyy"),
-            value: Math.floor(Math.random() * 2000) + 400
-          });
-        }
-        break;
-      default:
-        // Default 24h data
-        for (let i = 0; i < 24; i++) {
-          const date = subHours(endDate, 24 - i);
-          dataPoints.push({
-            name: format(date, "HH:mm"),
-            value: Math.floor(Math.random() * 50) + 10
-          });
-        }
+    // Generate hourly data for last 12 hours
+    for (let i = 0; i < 12; i++) {
+      const date = subHours(endDate, 12 - i);
+      dataPoints.push({
+        name: format(date, "HH:mm"),
+        volume: Number((Math.random() * 5 + 1).toFixed(1))
+      });
     }
     
     return dataPoints;
@@ -231,17 +166,6 @@ export const WaterUsageChart = ({ units = [] }: WaterUsageChartProps) => {
     
     updateChartData();
   }, [timeRange, units]);
-
-  // Get appropriate time range label
-  const getTimeRangeLabel = (range: TimeRange) => {
-    switch (range) {
-      case "24h": return t("chart.24hours");
-      case "7d": return t("chart.7days");
-      case "30d": return t("chart.30days");
-      case "6m": return t("chart.6months");
-      default: return t("chart.24hours");
-    }
-  };
 
   return (
     <Card className="p-6 glass lg:col-span-2">
@@ -269,52 +193,31 @@ export const WaterUsageChart = ({ units = [] }: WaterUsageChartProps) => {
             <p>{t("chart.loading")}</p>
           </div>
         ) : (
-          <ChartContainer 
-            config={{
-              waterUsage: { 
-                label: getTimeRangeLabel(timeRange), 
-                color: "#39afcd" 
-              }
-            }}
-            className="h-full"
-          >
-            <AreaChart data={chartData}>
-              <defs>
-                <linearGradient id="colorValue" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#39afcd" stopOpacity={0.3} />
-                  <stop offset="95%" stopColor="#39afcd" stopOpacity={0} />
-                </linearGradient>
-              </defs>
+          <ResponsiveContainer width="100%" height="100%">
+            <BarChart data={chartData} margin={{ top: 20, right: 30, left: 20, bottom: 20 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="#282828" />
               <XAxis 
                 dataKey="name" 
                 stroke="#666" 
                 tickMargin={10}
-                tickFormatter={(value) => value}
               />
               <YAxis 
                 stroke="#666"
                 tickFormatter={(value) => `${value} m³`}
               />
               <Tooltip
-                content={({ active, payload }) => (
-                  <ChartTooltipContent
-                    active={active}
-                    payload={payload}
-                    labelFormatter={() => `${getTimeRangeLabel(timeRange)}`}
-                  />
-                )}
+                formatter={(value: number) => [`${value} m³`, 'Volume']}
+                contentStyle={{ backgroundColor: '#222', border: '1px solid #444', color: '#fff' }}
               />
-              <Area
-                type="monotone"
-                dataKey="value"
-                name="waterUsage"
-                stroke="#39afcd"
-                fillOpacity={1}
-                fill="url(#colorValue)"
-              />
-            </AreaChart>
-          </ChartContainer>
+              <Bar 
+                dataKey="volume" 
+                fill="#39afcd"
+                radius={[4, 4, 0, 0]}
+              >
+                <LabelList dataKey="volume" position="top" fill="#fff" formatter={(value: number) => `${value}`} />
+              </Bar>
+            </BarChart>
+          </ResponsiveContainer>
         )}
       </div>
     </Card>

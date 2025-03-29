@@ -55,16 +55,29 @@ export const parseTimestamp = (timestamp: string): Date => {
 };
 
 /**
- * Format a number to have exactly 2 decimal places
+ * Format a number to have exactly 1 decimal place
  */
 export const formatDecimal = (value: number | string | null | undefined): string => {
-  if (value === null || value === undefined) return "0.00";
+  if (value === null || value === undefined) return "0.0";
   
   const numValue = typeof value === 'string' ? parseFloat(value) : value;
   
-  if (isNaN(numValue)) return "0.00";
+  if (isNaN(numValue)) return "0.0";
   
-  return numValue.toFixed(2);
+  return numValue.toFixed(1);
+};
+
+/**
+ * Format a number with commas for thousands and no decimals
+ */
+export const formatThousands = (value: number | string | null | undefined): string => {
+  if (value === null || value === undefined) return "0";
+  
+  const numValue = typeof value === 'string' ? parseFloat(value) : value;
+  
+  if (isNaN(numValue)) return "0";
+  
+  return Math.round(numValue).toLocaleString('en-US');
 };
 
 /**

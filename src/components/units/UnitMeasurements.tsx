@@ -24,19 +24,19 @@ export function UnitMeasurements({ unitId }: UnitMeasurementsProps) {
         // Get timestamp directly - it should already be formatted by useRealtimeMeasurements
         const timestamp = measurement.timestamp || "Invalid date";
           
-        // Format volume with 2 decimal places
+        // Format volume with 1 decimal place
         const volume = typeof measurement.volume === 'number' 
-          ? measurement.volume.toFixed(2) 
+          ? measurement.volume.toFixed(1) 
           : "N/A";
           
-        // Format temperature with 2 decimal places
+        // Format temperature with 1 decimal place
         const temperature = typeof measurement.temperature === 'number' 
-          ? measurement.temperature.toFixed(2) 
+          ? `${measurement.temperature.toFixed(1)}°C` 
           : "N/A";
           
-        // Format UVC hours with 2 decimal places
+        // Format UVC hours with 1 decimal place
         const uvcHours = measurement.uvc_hours !== undefined && typeof measurement.uvc_hours === 'number'
-          ? measurement.uvc_hours.toFixed(2)
+          ? measurement.uvc_hours.toFixed(1)
           : "N/A";
 
         return (
@@ -94,7 +94,7 @@ export function UnitMeasurements({ unitId }: UnitMeasurementsProps) {
               <TableRow className="border-b border-spotify-accent">
                 <TableHead className="text-left text-gray-400">Timestamp</TableHead>
                 <TableHead className="text-right text-gray-400">Volume (m³)</TableHead>
-                <TableHead className="text-right text-gray-400">Temperature (°C)</TableHead>
+                <TableHead className="text-right text-gray-400">Temperature</TableHead>
                 <TableHead className="text-right text-gray-400">UVC Hours</TableHead>
               </TableRow>
             </TableHeader>

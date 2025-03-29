@@ -29,10 +29,11 @@ export function UVCProgressBar({ hours }: UVCProgressBarProps) {
     return 'bg-mywater-blue';
   };
 
-  // Format hours with 2 decimal places
+  // Format hours with 1 decimal place
   const formatHours = () => {
     const numericHours = typeof hours === 'string' ? parseFloat(hours) : hours;
-    return formatDecimal(numericHours);
+    if (isNaN(numericHours)) return "0.0";
+    return numericHours.toFixed(1);
   };
 
   return (
@@ -48,7 +49,7 @@ export function UVCProgressBar({ hours }: UVCProgressBarProps) {
         ></div>
       </div>
       <div className="text-sm text-gray-400 mt-2">
-        {formatHours()} / {formatDecimal(MAX_UVC_HOURS)} hours
+        {formatHours()} / {MAX_UVC_HOURS.toFixed(1)} hours
       </div>
     </div>
   );

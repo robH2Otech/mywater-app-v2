@@ -9,6 +9,7 @@ import { WaterUsageChart } from "@/components/dashboard/WaterUsageChart";
 import { WelcomeMessage } from "@/components/layout/WelcomeMessage";
 import { collection, getDocs, query, where } from "firebase/firestore";
 import { db } from "@/integrations/firebase/client";
+import { formatThousands } from "@/utils/measurements/formatUtils";
 
 const Index = () => {
   // Get units data
@@ -91,12 +92,12 @@ const Index = () => {
   
   const isLoading = unitsLoading || alertsLoading || filtersLoading || volumeLoading;
   
-  // Prepare volume display with m³ superscript
+  // Format volume with commas for thousands
   const formattedVolume = totalVolumeData?.volume
-    ? `${totalVolumeData.volume.toLocaleString()} m`
+    ? `${formatThousands(totalVolumeData.volume)} m`
     : "0 m";
     
-  // Format percentage with + sign if positive
+  // Format percentage with + sign if positive and 1 decimal place
   const formattedPercentage = totalVolumeData?.percentageIncrease
     ? `${totalVolumeData.percentageIncrease > 0 ? '+' : ''}${totalVolumeData.percentageIncrease.toFixed(1)}%`
     : "0%";

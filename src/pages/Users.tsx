@@ -51,15 +51,37 @@ export const Users = () => {
   });
 
   if (unitsError) {
-    return <div>Error loading users. Please try again.</div>;
+    return (
+      <div className="space-y-6 animate-fadeIn p-2 md:p-0">
+        <PageHeader
+          title="Users"
+          description="Manage system users and permissions"
+          onAddClick={() => setIsAddUserOpen(true)}
+          addButtonText="Add User"
+        />
+        <div className="bg-spotify-darker border-spotify-accent p-6 rounded-lg">
+          <div className="text-red-400">Error loading users. Please try again.</div>
+        </div>
+      </div>
+    );
   }
 
   if (unitsLoading) {
-    return <LoadingSkeleton />;
+    return (
+      <div className="space-y-6 animate-fadeIn p-2 md:p-0">
+        <PageHeader
+          title="Users"
+          description="Manage system users and permissions"
+          onAddClick={() => setIsAddUserOpen(true)}
+          addButtonText="Add User"
+        />
+        <LoadingSkeleton />
+      </div>
+    );
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 animate-fadeIn p-2 md:p-0">
       <PageHeader
         title="Users"
         description="Manage system users and permissions"

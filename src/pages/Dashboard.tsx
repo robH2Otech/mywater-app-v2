@@ -9,6 +9,7 @@ import { db } from "@/integrations/firebase/client";
 import { UnitData } from "@/types/analytics";
 import { determineUnitStatus } from "@/utils/unitStatusUtils";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { formatThousands } from "@/utils/measurements/formatUtils";
 
 export const Dashboard = () => {
   const { t } = useLanguage();
@@ -98,7 +99,7 @@ export const Dashboard = () => {
         />
         <StatCard
           title={t("dashboard.volume.today")}
-          value={`${calculateTotalVolume(units)} m³`}
+          value={`${formatThousands(calculateTotalVolume(units))} m³`}
           icon={Activity}
           link="/analytics"
           subValue={`${units.length > 0 ? '↑ 13.2%' : '-'}`}
@@ -114,7 +115,7 @@ export const Dashboard = () => {
 };
 
 // Enhanced helper function to calculate total volume from all units
-function calculateTotalVolume(units: UnitData[]): string {
+function calculateTotalVolume(units: UnitData[]): number {
   const total = units.reduce((sum, unit) => {
     // Ensure we're working with numbers
     let volume = 0;
@@ -131,6 +132,5 @@ function calculateTotalVolume(units: UnitData[]): string {
     return sum + volume;
   }, 0);
   
-  // Format with whole numbers only
-  return Math.round(total).toLocaleString();
+  return total;
 }
