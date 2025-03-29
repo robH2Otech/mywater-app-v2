@@ -59,9 +59,6 @@ export function LandingPage() {
           <h1 className="text-4xl md:text-5xl font-bold text-white">
             Welcome to <span className="text-mywater-blue">MYWATER</span>
           </h1>
-          <p className="text-xl text-gray-300 max-w-2xl mx-auto font-medium">
-            {t("dashboard.welcome")}
-          </p>
           <p className="text-lg text-gray-400 max-w-2xl mx-auto">
             Find your way towards a healthy and sustainable future!
           </p>

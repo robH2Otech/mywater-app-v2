@@ -78,7 +78,7 @@ export function UserDetailsDialog({ user, open, onOpenChange, currentUserRole = 
         throw new Error("Only Super Admins can edit user details");
       }
 
-      const userDocRef = doc(db, "app_users", user.id);
+      const userDocRef = doc(db, "app_users_business", user.id);
       await updateDoc(userDocRef, {
         ...formData,
         updated_at: new Date().toISOString()
@@ -116,20 +116,20 @@ export function UserDetailsDialog({ user, open, onOpenChange, currentUserRole = 
 
     switch (action) {
       case 'email':
-        subject = `Message from MYWATER Technologies`;
+        subject = `Message from MYWATER`;
         body = `Hello ${fullName},\n\n`;
         break;
       case 'report':
-        subject = `Your Latest Report from MYWATER Technologies`;
-        body = `Hello ${fullName},\n\nPlease find attached your latest report from MYWATER Technologies.\n\nBest regards,\nMYWATER Technologies Team`;
+        subject = `Your Latest Report from MYWATER`;
+        body = `Hello ${fullName},\n\nPlease find attached your latest report from MYWATER.\n\nBest regards,\nMYWATER Team`;
         break;
       case 'reminder':
-        subject = `Reminder from MYWATER Technologies`;
-        body = `Hello ${fullName},\n\nThis is a friendly reminder about your upcoming service appointment.\n\nBest regards,\nMYWATER Technologies Team`;
+        subject = `Reminder from MYWATER`;
+        body = `Hello ${fullName},\n\nThis is a friendly reminder about your upcoming service appointment.\n\nBest regards,\nMYWATER Team`;
         break;
       case 'invoice':
-        subject = `Invoice from MYWATER Technologies`;
-        body = `Hello ${fullName},\n\nPlease find attached your latest invoice from MYWATER Technologies.\n\nBest regards,\nMYWATER Technologies Team`;
+        subject = `Invoice from MYWATER`;
+        body = `Hello ${fullName},\n\nPlease find attached your latest invoice from MYWATER.\n\nBest regards,\nMYWATER Team`;
         break;
     }
 

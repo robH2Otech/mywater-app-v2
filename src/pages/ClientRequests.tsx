@@ -15,7 +15,9 @@ import {
   RefreshCw, 
   Mail,
   User,
-  Plus
+  Plus,
+  Send,
+  Loader2
 } from "lucide-react";
 import { format } from "date-fns";
 import { useToast } from "@/hooks/use-toast";
@@ -53,17 +55,22 @@ function ClientRequestsContent() {
   const [activeFilter, setActiveFilter] = useState<string>("new");
   const [selectedRequest, setSelectedRequest] = useState<SupportRequest | null>(null);
   const [showCommentDialog, setShowCommentDialog] = useState(false);
+  const [showCreateRequestDialog, setShowCreateRequestDialog] = useState(false);
   const [newComment, setNewComment] = useState("");
   const [assignedTechnician, setAssignedTechnician] = useState("");
   const [commentAuthor, setCommentAuthor] = useState("");
   const { toast } = useToast();
-
-  // Simulated technicians data
-  const technicians = [
-    { id: "tech1", name: "John Smith" },
-    { id: "tech2", name: "Emma Johnson" },
-    { id: "tech3", name: "Michael Davis" },
-  ];
+  
+  // New request form state
+  const [newRequestForm, setNewRequestForm] = useState({
+    user_name: "",
+    user_email: "",
+    subject: "",
+    message: "",
+    support_type: "technical",
+    purifier_model: "MYWATER X1"
+  });
+  const [isSubmittingRequest, setIsSubmittingRequest] = useState(false);
 
   useEffect(() => {
     fetchRequests();
@@ -257,6 +264,74 @@ function ClientRequestsContent() {
     }
   };
 
+  const handleCreateRequest = async () => {
+    if (!newRequestForm.user_name || !newRequestForm.user_email || !newRequestForm.subject || !newRequestForm.message) {
+      toast({
+        title: "Missing information",
+        description: "Please fill all required fields",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setIsSubmittingRequest(true);
+
+    try {
+      // Add new request to Firestore
+      const newRequest = {
+        user_id: Date.now().toString(), // Placeholder ID
+        user_name: newRequestForm.user_name,
+        user_email: newRequestForm.user_email,
+        subject: newRequestForm.subject,
+        message: newRequestForm.message,
+        support_type: newRequestForm.support_type,
+        purifier_model: newRequestForm.purifier_model,
+        status: "new" as const,
+        created_at: new Date()
+      };
+
+      const docRef = await addDoc(collection(db, "support_requests"), newRequest);
+      
+      // Add to local state with the new ID
+      const requestWithId = {
+        ...newRequest,
+        id: docRef.id
+      };
+      
+      setRequests(prev => [requestWithId, ...prev]);
+
+      // Reset form and close dialog
+      setNewRequestForm({
+        user_name: "",
+        user_email: "",
+        subject: "",
+        message: "",
+        support_type: "technical",
+        purifier_model: "MYWATER X1"
+      });
+      
+      setShowCreateRequestDialog(false);
+      
+      toast({
+        title: "Request created",
+        description: "Support request has been successfully created",
+      });
+      
+      // Refresh to ensure we have the most up-to-date data
+      fetchRequests();
+      
+    } catch (error) {
+      console.error("Error creating support request:", error);
+      toast({
+        title: "Error",
+        description: "Failed to create support request",
+        variant: "destructive"
+      });
+    } finally {
+      setIsSubmittingRequest(false);
+    }
+  };
+
   const handleReplyByEmail = async (request: SupportRequest) => {
     try {
       // Send email
@@ -300,6 +375,7 @@ function ClientRequestsContent() {
           </Button>
           <Button 
             className="bg-mywater-blue hover:bg-mywater-blue/90 w-full md:w-auto"
+            onClick={() => setShowCreateRequestDialog(true)}
           >
             <Plus className="h-4 w-4 mr-2" />
             Create Request
@@ -505,11 +581,9 @@ function ClientRequestsContent() {
                   <SelectValue placeholder="Select a technician" />
                 </SelectTrigger>
                 <SelectContent>
-                  {technicians.map(tech => (
-                    <SelectItem key={tech.id} value={tech.name}>
-                      {tech.name}
-                    </SelectItem>
-                  ))}
+                  <SelectItem value="John Smith">John Smith</SelectItem>
+                  <SelectItem value="Emma Johnson">Emma Johnson</SelectItem>
+                  <SelectItem value="Michael Davis">Michael Davis</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -538,6 +612,118 @@ function ClientRequestsContent() {
                 Save
               </Button>
             </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+      
+      {/* Create Request Dialog */}
+      <Dialog open={showCreateRequestDialog} onOpenChange={setShowCreateRequestDialog}>
+        <DialogContent className="bg-spotify-darker border-spotify-accent max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Create Support Request</DialogTitle>
+          </DialogHeader>
+          
+          <div className="space-y-4 py-2">
+            <div className="grid grid-cols-2 gap-4">
+              <FormInput
+                label="Name"
+                value={newRequestForm.user_name}
+                onChange={(value) => setNewRequestForm({...newRequestForm, user_name: value})}
+                placeholder="Client name"
+                required
+              />
+              
+              <FormInput
+                label="Email"
+                type="email"
+                value={newRequestForm.user_email}
+                onChange={(value) => setNewRequestForm({...newRequestForm, user_email: value})}
+                placeholder="client@example.com"
+                required
+              />
+            </div>
+            
+            <div className="space-y-2">
+              <label className="text-sm text-gray-400">Support Type</label>
+              <Select 
+                value={newRequestForm.support_type} 
+                onValueChange={(value) => setNewRequestForm({...newRequestForm, support_type: value})}
+              >
+                <SelectTrigger className="bg-spotify-accent border-spotify-accent-hover text-white">
+                  <SelectValue placeholder="Select support type" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="technical">Technical Support</SelectItem>
+                  <SelectItem value="installation">Installation Assistance</SelectItem>
+                  <SelectItem value="maintenance">Maintenance Help</SelectItem>
+                  <SelectItem value="order">Order Inquiry</SelectItem>
+                  <SelectItem value="other">Other</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            
+            <div className="space-y-2">
+              <label className="text-sm text-gray-400">Purifier Model</label>
+              <Select 
+                value={newRequestForm.purifier_model} 
+                onValueChange={(value) => setNewRequestForm({...newRequestForm, purifier_model: value})}
+              >
+                <SelectTrigger className="bg-spotify-accent border-spotify-accent-hover text-white">
+                  <SelectValue placeholder="Select purifier model" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="MYWATER X1">MYWATER X1</SelectItem>
+                  <SelectItem value="MYWATER X2">MYWATER X2</SelectItem>
+                  <SelectItem value="MYWATER Pro">MYWATER Pro</SelectItem>
+                  <SelectItem value="MYWATER Ultra">MYWATER Ultra</SelectItem>
+                  <SelectItem value="Other">Other</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            
+            <FormInput
+              label="Subject"
+              value={newRequestForm.subject}
+              onChange={(value) => setNewRequestForm({...newRequestForm, subject: value})}
+              placeholder="Brief description of the issue"
+              required
+            />
+            
+            <div className="space-y-2">
+              <label className="text-sm text-gray-400">Message</label>
+              <Textarea
+                value={newRequestForm.message}
+                onChange={(e) => setNewRequestForm({...newRequestForm, message: e.target.value})}
+                placeholder="Detailed description of the issue..."
+                className="bg-spotify-accent border-spotify-accent-hover text-white min-h-[120px]"
+                required
+              />
+            </div>
+          </div>
+          
+          <div className="flex justify-end gap-2 mt-2">
+            <Button 
+              variant="outline" 
+              onClick={() => setShowCreateRequestDialog(false)}
+            >
+              Cancel
+            </Button>
+            <Button 
+              onClick={handleCreateRequest}
+              disabled={isSubmittingRequest}
+            >
+              {isSubmittingRequest ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Submitting...
+                </>
+              ) : (
+                <>
+                  <Send className="h-4 w-4 mr-2" />
+                  Submit Request
+                </>
+              )}
+            </Button>
           </div>
         </DialogContent>
       </Dialog>

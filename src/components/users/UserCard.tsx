@@ -2,8 +2,7 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { User, UserRole } from "@/types/users";
 import { UserAvatar } from "@/components/layout/UserAvatar";
-import { UserPlus, MailCheck, PhoneCall, Building, Badge } from "lucide-react";
-import { formatDistanceToNow } from "date-fns";
+import { MailCheck, PhoneCall } from "lucide-react";
 
 interface UserCardProps {
   user: User;
@@ -21,17 +20,6 @@ export function UserCard({ user, onClick }: UserCardProps) {
       default: return "bg-green-500";
     }
   };
-  
-  // Get formatted date
-  const getFormattedDate = (date: string | Date) => {
-    if (!date) return "N/A";
-    try {
-      const dateObj = typeof date === 'string' ? new Date(date) : date;
-      return formatDistanceToNow(dateObj, { addSuffix: true });
-    } catch (e) {
-      return "Invalid date";
-    }
-  };
 
   return (
     <Card 
@@ -39,53 +27,30 @@ export function UserCard({ user, onClick }: UserCardProps) {
       onClick={onClick}
     >
       <CardContent className="p-4">
-        <div className="flex flex-col md:flex-row justify-between md:items-start gap-4">
-          <div className="flex items-start space-x-3 overflow-hidden">
-            <UserAvatar 
-              firstName={user.first_name} 
-              lastName={user.last_name}
-              className="h-12 w-12 flex-shrink-0"
-              showMenu={false}
-            />
-            <div className="min-w-0 overflow-hidden"> {/* Added min-w-0 to ensure flex child can shrink */}
-              <div className="flex items-center flex-wrap gap-2">
-                <h3 className="text-lg font-medium text-white">{user.first_name} {user.last_name}</h3>
-                <div className="flex items-center gap-2">
-                  <div className={`h-2 w-2 rounded-full ${user.status === 'active' ? 'bg-green-500' : user.status === 'pending' ? 'bg-amber-500' : 'bg-red-500'}`}></div>
-                  <span className={`text-xs px-2 py-0.5 rounded ${getRoleBadgeColor(user.role)} text-white uppercase`}>
-                    {user.role}
-                  </span>
-                </div>
-              </div>
-              <div className="mt-1 flex items-center text-sm text-gray-400">
-                <MailCheck className="h-3 w-3 mr-1 flex-shrink-0" />
-                <span className="truncate">{user.email}</span>
-              </div>
-              
-              {user.phone && (
-                <div className="mt-1 flex items-center text-sm text-gray-400">
-                  <PhoneCall className="h-3 w-3 mr-1 flex-shrink-0" />
-                  <span className="truncate">{user.phone}</span>
-                </div>
-              )}
+        <div className="flex items-center space-x-3">
+          <UserAvatar 
+            firstName={user.first_name} 
+            lastName={user.last_name}
+            className="h-12 w-12 flex-shrink-0"
+            showMenu={false}
+          />
+          <div className="min-w-0 flex-1">
+            <div className="flex items-center gap-2">
+              <h3 className="text-lg font-medium text-white truncate">{user.first_name} {user.last_name}</h3>
+              <span className={`text-xs px-2 py-0.5 rounded ${getRoleBadgeColor(user.role)} text-white uppercase`}>
+                {user.role}
+              </span>
             </div>
-          </div>
-          
-          <div className="flex-shrink-0 space-y-1 mt-1 md:mt-0">
-            <span className="text-xs text-gray-400 flex items-center justify-end">
-              <UserPlus className="h-3 w-3 mr-1" />
-              {getFormattedDate(user.created_at || new Date())}
-            </span>
-            {user.company && (
-              <div className="text-xs text-gray-400 flex items-center justify-end">
-                <Building className="h-3 w-3 mr-1" />
-                <span className="truncate max-w-[120px] inline-block">{user.company}</span>
-              </div>
-            )}
-            {user.job_title && (
-              <div className="text-xs text-gray-400 flex items-center justify-end">
-                <Badge className="h-3 w-3 mr-1" />
-                <span className="truncate max-w-[120px] inline-block">{user.job_title}</span>
+            
+            <div className="mt-1 flex items-center text-sm text-gray-400">
+              <MailCheck className="h-3 w-3 mr-1 flex-shrink-0" />
+              <span className="truncate">{user.email}</span>
+            </div>
+            
+            {user.phone && (
+              <div className="mt-1 flex items-center text-sm text-gray-400">
+                <PhoneCall className="h-3 w-3 mr-1 flex-shrink-0" />
+                <span className="truncate">{user.phone}</span>
               </div>
             )}
           </div>

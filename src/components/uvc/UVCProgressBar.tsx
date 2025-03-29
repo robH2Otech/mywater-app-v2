@@ -33,7 +33,7 @@ export function UVCProgressBar({ hours }: UVCProgressBarProps) {
   const formatHours = () => {
     const numericHours = typeof hours === 'string' ? parseFloat(hours) : hours;
     if (isNaN(numericHours)) return "0.00";
-    return formatDecimal(numericHours, 2);
+    return formatDecimal(numericHours);
   };
 
   return (
@@ -49,7 +49,7 @@ export function UVCProgressBar({ hours }: UVCProgressBarProps) {
         ></div>
       </div>
       <div className="text-sm text-gray-400 mt-2">
-        {formatHours()} / {formatDecimal(MAX_UVC_HOURS, 2)} hours
+        {formatHours()} / {formatDecimal(MAX_UVC_HOURS)} hours
       </div>
     </div>
   );
