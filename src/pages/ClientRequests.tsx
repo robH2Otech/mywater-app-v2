@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from "react";
-import { collection, query, getDocs, doc, updateDoc, orderBy, limit, where, Timestamp, addDoc } from "firebase/firestore";
+import { collection, query, getDocs, doc, updateDoc, orderBy, limit, where, Timestamp, addDoc, DocumentData } from "firebase/firestore";
 import { db } from "@/integrations/firebase/client";
 import { Layout } from "@/components/layout/Layout";
 import { Card } from "@/components/ui/card";
@@ -100,11 +100,11 @@ function ClientRequestsContent() {
       const otherRequests: SupportRequest[] = [];
       
       querySnapshot.forEach((doc) => {
-        const data = doc.data();
+        const data = doc.data() as DocumentData;
         const createdAt = data.created_at as Timestamp;
         const createdDate = createdAt ? createdAt.toDate() : new Date();
         
-        const requestData = {
+        const requestData: SupportRequest = {
           id: doc.id,
           user_id: data.user_id || "",
           user_name: data.user_name || "",
