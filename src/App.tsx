@@ -1,3 +1,4 @@
+
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
@@ -203,7 +204,14 @@ function App() {
                   </ProtectedRoute>
                 }
               />
-              <Route path="/client-requests" element={<ClientRequests />} />
+              <Route 
+                path="/client-requests" 
+                element={
+                  <ProtectedRoute>
+                    <ClientRequests />
+                  </ProtectedRoute>
+                } 
+              />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>

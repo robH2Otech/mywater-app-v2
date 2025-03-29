@@ -3,11 +3,17 @@ import { collection, addDoc, getDocs, query, where, updateDoc, doc } from "fireb
 import { db } from "@/integrations/firebase/client";
 import emailjs from 'emailjs-com';
 
-// Your EmailJS service ID, template ID, and user ID
+// EmailJS configuration
 // These would typically come from environment variables
 const EMAILJS_SERVICE_ID = 'service_mywater';
 const EMAILJS_TEMPLATE_ID = 'template_referral';
-const EMAILJS_USER_ID = 'YOUR_EMAILJS_USER_ID'; // Replace with your actual User ID
+
+// IMPORTANT: Replace this with your actual EmailJS User ID
+// Instructions:
+// 1. Sign up at https://www.emailjs.com/
+// 2. Get your User ID from Account > API Keys
+// 3. Replace the string below with your actual User ID
+const EMAILJS_USER_ID = 'YOUR_EMAILJS_USER_ID'; 
 
 // Function to send a referral email
 export const sendReferralEmail = async (
@@ -166,7 +172,7 @@ Best,
 ${fromName || "[Your Name]"}`;
 };
 
-// Create a function to directly send emails (for development purposes)
+// Create a function to directly send emails
 export const sendEmailDirect = async (
   toEmail: string,
   toName: string,

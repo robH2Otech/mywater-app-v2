@@ -4,11 +4,13 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ArrowRight, Droplet, Shield, Users } from "lucide-react";
+import { ArrowRight, Droplet, Shield, Users, Globe } from "lucide-react";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 export function LandingPage() {
   const navigate = useNavigate();
   const [selectedOption, setSelectedOption] = useState<string>("private");
+  const { language, setLanguage, t } = useLanguage();
 
   const handleContinue = () => {
     if (selectedOption === "business") {
@@ -30,14 +32,35 @@ export function LandingPage() {
         <div className="absolute inset-0 bg-gradient-to-t from-spotify-dark to-transparent opacity-90"></div>
       </div>
 
+      {/* Language Selector */}
+      <div className="absolute top-4 right-4 z-20">
+        <div className="flex items-center gap-2 bg-spotify-darker/80 p-2 rounded-md">
+          <Globe className="h-4 w-4 text-gray-400" />
+          <div className="flex space-x-1">
+            <button 
+              className={`px-2 py-1 rounded text-sm ${language === 'en' ? 'bg-mywater-blue text-white' : 'text-gray-400 hover:text-white'}`}
+              onClick={() => setLanguage('en')}
+            >
+              EN
+            </button>
+            <button 
+              className={`px-2 py-1 rounded text-sm ${language === 'fr' ? 'bg-mywater-blue text-white' : 'text-gray-400 hover:text-white'}`}
+              onClick={() => setLanguage('fr')}
+            >
+              FR
+            </button>
+          </div>
+        </div>
+      </div>
+
       <div className="max-w-3xl w-full space-y-8 z-10">
         {/* Hero Section */}
         <div className="text-center space-y-4">
           <h1 className="text-4xl md:text-5xl font-bold text-white">
-            Welcome to <span className="text-mywater-blue">MYWATER</span> Technologies app
+            Welcome to <span className="text-mywater-blue">MYWATER</span>
           </h1>
           <p className="text-xl text-gray-300 max-w-2xl mx-auto font-medium">
-            REVOLUTIONISE WATER, ONE DROP AT A TIME
+            {t("dashboard.welcome")}
           </p>
           <p className="text-lg text-gray-400 max-w-2xl mx-auto">
             Find your way towards a healthy and sustainable future!
@@ -47,8 +70,8 @@ export function LandingPage() {
         {/* Option Cards */}
         <Tabs defaultValue="private" className="w-full" onValueChange={setSelectedOption}>
           <TabsList className="grid grid-cols-2 mb-6">
-            <TabsTrigger value="private">Home User</TabsTrigger>
-            <TabsTrigger value="business">Business Client</TabsTrigger>
+            <TabsTrigger value="private">{t("private_user")}</TabsTrigger>
+            <TabsTrigger value="business">{t("business_client")}</TabsTrigger>
           </TabsList>
           
           <TabsContent value="private" className="space-y-4">
@@ -56,25 +79,25 @@ export function LandingPage() {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Droplet className="h-5 w-5 text-mywater-blue" />
-                  Home Water Purification
+                  {t("home_water_purification")}
                 </CardTitle>
                 <CardDescription>
-                  For home users with MYWATER purification products
+                  {t("home_user_description")}
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 <ul className="space-y-2">
                   <li className="flex items-start gap-2">
                     <Shield className="h-5 w-5 text-mywater-blue shrink-0 mt-0.5" />
-                    <span>Track your purifier's maintenance schedule</span>
+                    <span>{t("track_maintenance")}</span>
                   </li>
                   <li className="flex items-start gap-2">
                     <Shield className="h-5 w-5 text-mywater-blue shrink-0 mt-0.5" />
-                    <span>Refer friends and earn free replacement cartridges</span>
+                    <span>{t("refer_friends")}</span>
                   </li>
                   <li className="flex items-start gap-2">
                     <Shield className="h-5 w-5 text-mywater-blue shrink-0 mt-0.5" />
-                    <span>Get timely reminders for cartridge replacements</span>
+                    <span>{t("get_reminders")}</span>
                   </li>
                 </ul>
               </CardContent>
@@ -86,25 +109,25 @@ export function LandingPage() {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Users className="h-5 w-5 text-mywater-blue" />
-                  Business Water Management
+                  {t("business_water_management")}
                 </CardTitle>
                 <CardDescription>
-                  For commercial clients managing multiple water purification units
+                  {t("business_description")}
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 <ul className="space-y-2">
                   <li className="flex items-start gap-2">
                     <Shield className="h-5 w-5 text-mywater-blue shrink-0 mt-0.5" />
-                    <span>Monitor and manage multiple water purification units</span>
+                    <span>{t("monitor_units")}</span>
                   </li>
                   <li className="flex items-start gap-2">
                     <Shield className="h-5 w-5 text-mywater-blue shrink-0 mt-0.5" />
-                    <span>Advanced analytics and reporting tools</span>
+                    <span>{t("advanced_analytics")}</span>
                   </li>
                   <li className="flex items-start gap-2">
                     <Shield className="h-5 w-5 text-mywater-blue shrink-0 mt-0.5" />
-                    <span>Technical support and service management</span>
+                    <span>{t("technical_support")}</span>
                   </li>
                 </ul>
               </CardContent>
@@ -117,12 +140,12 @@ export function LandingPage() {
           className="w-full md:w-auto md:min-w-44 mx-auto bg-mywater-blue hover:bg-mywater-blue/90 flex items-center gap-2"
           size="lg"
         >
-          Continue
+          {t("continue")}
           <ArrowRight className="h-4 w-4" />
         </Button>
 
         <div className="pt-8 text-center text-sm text-gray-500">
-          <p>© 2025 MYWATER Technologies. All rights reserved.</p>
+          <p>© 2025 MYWATER. All rights reserved.</p>
         </div>
       </div>
     </div>

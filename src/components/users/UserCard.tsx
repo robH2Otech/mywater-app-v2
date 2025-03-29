@@ -40,14 +40,14 @@ export function UserCard({ user, onClick }: UserCardProps) {
     >
       <CardContent className="p-4">
         <div className="flex flex-col md:flex-row justify-between md:items-start gap-4">
-          <div className="flex items-start space-x-3">
+          <div className="flex items-start space-x-3 overflow-hidden">
             <UserAvatar 
               firstName={user.first_name} 
               lastName={user.last_name}
               className="h-12 w-12 flex-shrink-0"
               showMenu={false}
             />
-            <div className="overflow-hidden">
+            <div className="min-w-0 overflow-hidden"> {/* Added min-w-0 to ensure flex child can shrink */}
               <div className="flex items-center flex-wrap gap-2">
                 <h3 className="text-lg font-medium text-white">{user.first_name} {user.last_name}</h3>
                 <div className="flex items-center gap-2">
@@ -57,13 +57,13 @@ export function UserCard({ user, onClick }: UserCardProps) {
                   </span>
                 </div>
               </div>
-              <div className="mt-1 flex items-center text-sm text-gray-400 truncate">
+              <div className="mt-1 flex items-center text-sm text-gray-400">
                 <MailCheck className="h-3 w-3 mr-1 flex-shrink-0" />
                 <span className="truncate">{user.email}</span>
               </div>
               
               {user.phone && (
-                <div className="mt-1 flex items-center text-sm text-gray-400 truncate">
+                <div className="mt-1 flex items-center text-sm text-gray-400">
                   <PhoneCall className="h-3 w-3 mr-1 flex-shrink-0" />
                   <span className="truncate">{user.phone}</span>
                 </div>
@@ -71,7 +71,7 @@ export function UserCard({ user, onClick }: UserCardProps) {
             </div>
           </div>
           
-          <div className="text-right flex-shrink-0 space-y-1 mt-1 md:mt-0">
+          <div className="flex-shrink-0 space-y-1 mt-1 md:mt-0">
             <span className="text-xs text-gray-400 flex items-center justify-end">
               <UserPlus className="h-3 w-3 mr-1" />
               {getFormattedDate(user.created_at || new Date())}
@@ -79,13 +79,13 @@ export function UserCard({ user, onClick }: UserCardProps) {
             {user.company && (
               <div className="text-xs text-gray-400 flex items-center justify-end">
                 <Building className="h-3 w-3 mr-1" />
-                <span className="truncate max-w-[120px]">{user.company}</span>
+                <span className="truncate max-w-[120px] inline-block">{user.company}</span>
               </div>
             )}
             {user.job_title && (
               <div className="text-xs text-gray-400 flex items-center justify-end">
                 <Badge className="h-3 w-3 mr-1" />
-                <span className="truncate max-w-[120px]">{user.job_title}</span>
+                <span className="truncate max-w-[120px] inline-block">{user.job_title}</span>
               </div>
             )}
           </div>

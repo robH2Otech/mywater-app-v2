@@ -1,8 +1,8 @@
 
 import { useState, useEffect } from "react";
-import { collection, query, getDocs, doc, updateDoc, orderBy, limit, DocumentData, Timestamp, addDoc } from "firebase/firestore";
+import { collection, query, getDocs, doc, updateDoc, orderBy, limit, where, DocumentData, Timestamp, addDoc } from "firebase/firestore";
 import { db } from "@/integrations/firebase/client";
-import { PageHeader } from "@/components/shared/PageHeader";
+import { Layout } from "@/components/layout/Layout";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -14,7 +14,8 @@ import {
   Filter as FilterIcon, 
   RefreshCw, 
   Mail,
-  User
+  User,
+  Plus
 } from "lucide-react";
 import { format } from "date-fns";
 import { useToast } from "@/hooks/use-toast";
@@ -46,7 +47,7 @@ interface Comment {
   created_at: Date;
 }
 
-export default function ClientRequests() {
+function ClientRequestsContent() {
   const [requests, setRequests] = useState<SupportRequest[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [activeFilter, setActiveFilter] = useState<string>("new");
@@ -71,50 +72,77 @@ export default function ClientRequests() {
   const fetchRequests = async () => {
     setIsLoading(true);
     try {
-      let q;
-      // Modified query to avoid requiring composite index
+      const requestsRef = collection(db, "support_requests");
+      let requestsQuery;
+
+      // For "all" filter, show most recent 20
       if (activeFilter === "all") {
-        q = query(
-          collection(db, "support_requests"),
+        requestsQuery = query(
+          requestsRef,
           orderBy("created_at", "desc"),
           limit(20)
         );
-      } else {
-        // This simpler query should work without a composite index
-        q = query(
-          collection(db, "support_requests"),
+      } 
+      // For "new" filter, show all unresponded requests
+      else if (activeFilter === "new") {
+        requestsQuery = query(
+          requestsRef,
+          where("status", "==", "new"),
+          orderBy("created_at", "desc")
+        );
+      }
+      // For other filters, show filtered by status
+      else {
+        requestsQuery = query(
+          requestsRef,
+          where("status", "==", activeFilter),
           orderBy("created_at", "desc"),
           limit(5)
         );
       }
 
-      const querySnapshot = await getDocs(q);
+      // Get today's date at midnight
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+
+      // Get all requests
+      const querySnapshot = await getDocs(requestsQuery);
       const requestsData: SupportRequest[] = [];
+      
+      // Today's requests and new requests
+      const todayRequests: SupportRequest[] = [];
+      const otherRequests: SupportRequest[] = [];
       
       querySnapshot.forEach((doc) => {
         const data = doc.data() as DocumentData;
         const createdAt = data.created_at as Timestamp;
+        const createdDate = createdAt ? createdAt.toDate() : new Date();
         
-        // Only include requests matching the filter (if not "all")
-        if (activeFilter === "all" || data.status === activeFilter) {
-          requestsData.push({
-            id: doc.id,
-            user_id: data.user_id || "",
-            user_name: data.user_name || "",
-            user_email: data.user_email || "",
-            subject: data.subject || "",
-            message: data.message || "",
-            support_type: data.support_type || "",
-            purifier_model: data.purifier_model || "",
-            status: (data.status as "new" | "in_progress" | "resolved") || "new",
-            created_at: createdAt ? createdAt.toDate() : new Date(),
-            comments: data.comments || [],
-            assigned_to: data.assigned_to || "",
-          });
+        const requestData = {
+          id: doc.id,
+          user_id: data.user_id || "",
+          user_name: data.user_name || "",
+          user_email: data.user_email || "",
+          subject: data.subject || "",
+          message: data.message || "",
+          support_type: data.support_type || "",
+          purifier_model: data.purifier_model || "",
+          status: (data.status as "new" | "in_progress" | "resolved") || "new",
+          created_at: createdDate,
+          comments: data.comments || [],
+          assigned_to: data.assigned_to || "",
+        };
+        
+        // If today's request, add to today array
+        if (createdDate >= today) {
+          todayRequests.push(requestData);
+        } else {
+          otherRequests.push(requestData);
         }
       });
       
-      setRequests(requestsData);
+      // Combine arrays with today's requests first
+      setRequests([...todayRequests, ...otherRequests]);
     } catch (error) {
       console.error("Error fetching support requests:", error);
       toast({
@@ -206,7 +234,7 @@ export default function ClientRequests() {
         description: "Your comment has been added to the request",
       });
       
-      // Optionally, send an email notification to the user
+      // Send an email notification to the user
       try {
         await sendEmailDirect(
           selectedRequest.user_email,
@@ -231,7 +259,7 @@ export default function ClientRequests() {
 
   const handleReplyByEmail = async (request: SupportRequest) => {
     try {
-      // Simulate email sending
+      // Send email
       await sendEmailDirect(
         request.user_email,
         request.user_name,
@@ -255,54 +283,59 @@ export default function ClientRequests() {
   };
 
   return (
-    <div className="space-y-6">
-      <PageHeader 
-        title="Client Support Requests" 
-        description="Manage and respond to client support requests"
-        icon={MessageSquare}
-      />
-      
-      <Card className="p-4 bg-spotify-darker">
-        <div className="flex items-center justify-between mb-4">
-          <Tabs 
-            defaultValue="new" 
-            value={activeFilter}
-            onValueChange={setActiveFilter}
-            className="w-full"
-          >
-            <TabsList className="bg-spotify-dark">
-              <TabsTrigger value="new" className="flex items-center gap-2">
-                <MessageSquare className="h-4 w-4" />
-                New
-              </TabsTrigger>
-              <TabsTrigger value="in_progress" className="flex items-center gap-2">
-                <Clock className="h-4 w-4" />
-                In Progress
-              </TabsTrigger>
-              <TabsTrigger value="resolved" className="flex items-center gap-2">
-                <CheckCircle className="h-4 w-4" />
-                Resolved
-              </TabsTrigger>
-              <TabsTrigger value="all" className="flex items-center gap-2">
-                <FilterIcon className="h-4 w-4" />
-                All Requests
-              </TabsTrigger>
-            </TabsList>
-          </Tabs>
-          
+    <div className="space-y-4 md:space-y-6 animate-fadeIn p-2 md:p-0">
+      <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-3">
+        <div>
+          <h1 className="text-xl md:text-2xl font-bold text-white">Client Support Requests</h1>
+          <p className="text-sm md:text-base text-gray-400">Manage and respond to client support requests</p>
+        </div>
+        <div className="flex gap-2">
           <Button 
             onClick={fetchRequests}
             variant="outline" 
-            size="sm"
-            className="ml-2"
+            className="w-full md:w-auto"
           >
             <RefreshCw className="h-4 w-4 mr-2" />
             Refresh
           </Button>
+          <Button 
+            className="bg-mywater-blue hover:bg-mywater-blue/90 w-full md:w-auto"
+          >
+            <Plus className="h-4 w-4 mr-2" />
+            Create Request
+          </Button>
         </div>
+      </div>
+      
+      <Card className="p-4 bg-spotify-darker">
+        <Tabs 
+          defaultValue="new" 
+          value={activeFilter}
+          onValueChange={setActiveFilter}
+          className="w-full mb-4"
+        >
+          <TabsList className="bg-spotify-dark mb-4">
+            <TabsTrigger value="new" className="flex items-center gap-2">
+              <MessageSquare className="h-4 w-4" />
+              New
+            </TabsTrigger>
+            <TabsTrigger value="in_progress" className="flex items-center gap-2">
+              <Clock className="h-4 w-4" />
+              In Progress
+            </TabsTrigger>
+            <TabsTrigger value="resolved" className="flex items-center gap-2">
+              <CheckCircle className="h-4 w-4" />
+              Resolved
+            </TabsTrigger>
+            <TabsTrigger value="all" className="flex items-center gap-2">
+              <FilterIcon className="h-4 w-4" />
+              All Requests
+            </TabsTrigger>
+          </TabsList>
+        </Tabs>
         
         {isLoading ? (
-          <div className="space-y-2">
+          <div className="grid grid-cols-1 gap-4">
             {[1, 2, 3].map((i) => (
               <div key={i} className="bg-spotify-accent/20 p-4 rounded-md animate-pulse h-24"></div>
             ))}
@@ -316,7 +349,7 @@ export default function ClientRequests() {
               >
                 <div className="flex justify-between items-start">
                   <div>
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 flex-wrap">
                       <h3 className="text-lg font-medium text-white">{request.subject}</h3>
                       <Badge variant={
                         request.status === "new" 
@@ -355,13 +388,13 @@ export default function ClientRequests() {
                   </span>
                 </div>
                 
-                <p className="mt-2 text-white/80">{request.message}</p>
+                <p className="mt-2 text-white/80 line-clamp-2">{request.message}</p>
                 
                 {/* Display comments if any */}
                 {request.comments && request.comments.length > 0 && (
                   <div className="mt-3 border-t border-gray-700 pt-3">
                     <h4 className="text-sm font-medium text-gray-400 mb-2">Comments:</h4>
-                    <div className="space-y-2">
+                    <div className="space-y-2 max-h-60 overflow-y-auto">
                       {request.comments.map((comment) => (
                         <div key={comment.id} className="bg-spotify-accent/40 p-2 rounded text-sm">
                           <div className="flex justify-between items-center">
@@ -379,7 +412,7 @@ export default function ClientRequests() {
                   </div>
                 )}
                 
-                <div className="mt-4 flex justify-end gap-2">
+                <div className="mt-4 flex justify-end gap-2 flex-wrap">
                   {request.status !== "in_progress" && (
                     <Button 
                       size="sm" 
@@ -509,5 +542,13 @@ export default function ClientRequests() {
         </DialogContent>
       </Dialog>
     </div>
+  );
+}
+
+export default function ClientRequests() {
+  return (
+    <Layout>
+      <ClientRequestsContent />
+    </Layout>
   );
 }

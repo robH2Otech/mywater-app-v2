@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useState, useEffect, ReactNode } from "react";
 
 // Available languages
@@ -162,6 +163,21 @@ const translations: Translations = {
     "dashboard.filter.changes": "Filter Changes Required",
     "dashboard.active.alerts": "Active Alerts",
     "dashboard.volume.today": "Total Volume Today",
+    
+    // Landing page
+    "private_user": "Home User",
+    "business_client": "Business Client",
+    "home_water_purification": "Home Water Purification",
+    "home_user_description": "For home users with MYWATER purification products",
+    "business_water_management": "Business Water Management",
+    "business_description": "For commercial clients managing multiple water purification units",
+    "track_maintenance": "Track your purifier's maintenance schedule",
+    "refer_friends": "Refer friends and earn free replacement cartridges",
+    "get_reminders": "Get timely reminders for cartridge replacements",
+    "monitor_units": "Monitor and manage multiple water purification units",
+    "advanced_analytics": "Advanced analytics and reporting tools",
+    "technical_support": "Technical support and service management",
+    "continue": "Continue",
   },
   fr: {
     // Dashboard
@@ -300,6 +316,21 @@ const translations: Translations = {
     "dashboard.filter.changes": "Changements de filtre requis",
     "dashboard.active.alerts": "Alertes actives",
     "dashboard.volume.today": "Volume total aujourd'hui",
+    
+    // Landing page
+    "private_user": "Utilisateur Particulier",
+    "business_client": "Client Professionnel",
+    "home_water_purification": "Purification d'Eau Domestique",
+    "home_user_description": "Pour les utilisateurs particuliers avec des produits de purification MYWATER",
+    "business_water_management": "Gestion de l'Eau Professionnelle",
+    "business_description": "Pour les clients commerciaux gérant plusieurs unités de purification d'eau",
+    "track_maintenance": "Suivez le calendrier d'entretien de votre purificateur",
+    "refer_friends": "Parrainez des amis et gagnez des cartouches de remplacement gratuites",
+    "get_reminders": "Recevez des rappels pour les remplacements de cartouches",
+    "monitor_units": "Surveillez et gérez plusieurs unités de purification d'eau",
+    "advanced_analytics": "Outils d'analyse et de rapports avancés",
+    "technical_support": "Support technique et gestion des services",
+    "continue": "Continuer",
   }
 };
 

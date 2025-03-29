@@ -18,8 +18,8 @@ export const WelcomeMessage = ({ firstName, lastName }: WelcomeMessageProps) => 
     );
   }
   
-  // Format the name: use first name only
-  const displayName = firstName.charAt(0).toUpperCase() + firstName.slice(1);
+  // Format the name: use first name only, properly capitalized
+  const displayName = firstName.charAt(0).toUpperCase() + firstName.slice(1).toLowerCase();
   
   return (
     <div className="text-white text-2xl font-medium">
