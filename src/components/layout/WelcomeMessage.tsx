@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { auth } from "@/integrations/firebase/client";
 import { collection, query, where, getDocs } from "firebase/firestore";
@@ -5,6 +6,7 @@ import { db } from "@/integrations/firebase/client";
 
 interface WelcomeMessageProps {
   firstName?: string;
+  // We're not adding lastName here since we only need firstName for the message
 }
 
 export function WelcomeMessage({ firstName }: WelcomeMessageProps) {

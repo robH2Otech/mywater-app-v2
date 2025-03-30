@@ -100,7 +100,7 @@ export const Header = ({ children }: HeaderProps) => {
     <header className="h-16 bg-spotify-darker border-b border-white/10 flex items-center justify-between px-6">
       <div className="flex items-center">
         {children}
-        <WelcomeMessage firstName={firstName} lastName={lastName} />
+        <WelcomeMessage firstName={firstName} />
       </div>
       <div className="flex items-center gap-4">
         <NotificationsMenu />
