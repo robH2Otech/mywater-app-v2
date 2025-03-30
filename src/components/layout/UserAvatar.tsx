@@ -5,10 +5,24 @@ import { auth } from "@/integrations/firebase/client";
 import { collection, query, where, getDocs } from "firebase/firestore";
 import { db } from "@/integrations/firebase/client";
 
-export function UserAvatar() {
+interface UserAvatarProps {
+  firstName?: string;
+  lastName?: string;
+  className?: string;
+  showMenu?: boolean;
+}
+
+export function UserAvatar({ firstName, lastName, className = "h-9 w-9", showMenu = true }: UserAvatarProps) {
   const [initials, setInitials] = useState<string>("U");
   
   useEffect(() => {
+    // If firstName and lastName are provided via props, use them directly
+    if (firstName && lastName) {
+      const userInitials = `${firstName.charAt(0)}${lastName.charAt(0)}`;
+      setInitials(userInitials.toUpperCase());
+      return;
+    }
+    
     // Check if we have cached initials
     const cachedInitials = sessionStorage.getItem('userInitials');
     if (cachedInitials) {
@@ -78,10 +92,10 @@ export function UserAvatar() {
     };
     
     fetchUserInitials();
-  }, []);
+  }, [firstName, lastName]);
   
   return (
-    <Avatar className="h-9 w-9">
+    <Avatar className={className}>
       <AvatarFallback className="bg-mywater-blue">{initials}</AvatarFallback>
     </Avatar>
   );

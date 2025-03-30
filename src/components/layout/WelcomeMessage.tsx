@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { auth } from "@/integrations/firebase/client";
 import { collection, query, where, getDocs } from "firebase/firestore";
@@ -5,9 +6,10 @@ import { db } from "@/integrations/firebase/client";
 
 interface WelcomeMessageProps {
   firstName?: string;
+  lastName?: string;
 }
 
-export function WelcomeMessage({ firstName }: WelcomeMessageProps) {
+export function WelcomeMessage({ firstName, lastName }: WelcomeMessageProps) {
   const [userName, setUserName] = useState<string>("");
   
   useEffect(() => {
