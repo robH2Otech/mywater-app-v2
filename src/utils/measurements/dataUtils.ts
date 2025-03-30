@@ -1,4 +1,3 @@
-
 import { collection, doc, addDoc, getDocs, query, orderBy, limit, getDoc, updateDoc, serverTimestamp } from "firebase/firestore";
 import { db } from "@/integrations/firebase/client";
 import { Measurement } from './types';

@@ -45,16 +45,21 @@ export function useRealtimeMeasurements(unitId: string, count: number = 24) {
             setMeasurements(measurementsData);
             setIsLoading(false);
             
-            // Update the unit's total_volume with the latest volume measurement
+            // Update the unit's total_volume with the latest cumulative volume measurement
             if (measurementsData.length > 0) {
               // Get first item (most recent) to use for updates
               const latestMeasurement = measurementsData[0]; 
-              const latestVolume = latestMeasurement.volume;
               
-              console.log(`Latest measurement for unit ${unitId}: volume=${latestVolume}, UVC hours=${latestMeasurement.uvc_hours}`);
+              // Use cumulative_volume instead of volume for the update
+              // This ensures we maintain correct total after power loss/restart
+              const latestCumulativeVolume = typeof latestMeasurement.cumulative_volume === 'number'
+                ? latestMeasurement.cumulative_volume
+                : latestMeasurement.volume; // Fallback to volume if cumulative not available
               
-              // Update unit with latest volume
-              await updateUnitTotalVolume(unitId, latestVolume);
+              console.log(`Latest measurement for unit ${unitId}: cumulative volume=${latestCumulativeVolume}, UVC hours=${latestMeasurement.uvc_hours}`);
+              
+              // Update unit with latest cumulative volume
+              await updateUnitTotalVolume(unitId, latestCumulativeVolume);
               
               // Invalidate queries to refresh UI across the entire app
               queryClient.invalidateQueries({ queryKey: ['units'] });

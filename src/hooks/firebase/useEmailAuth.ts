@@ -26,8 +26,7 @@ export function useEmailAuth() {
         const user = userCredential.user;
         
         // Check if user exists in private users collection
-        // The collection name should be "app_users_privat" which seems to have a typo
-        // It should match the name in the Firebase console (app_users_privat not app_users_private)
+        // The collection name is "app_users_privat" in Firebase
         const isPrivateUser = await verifyPrivateUser(user.uid);
         
         if (!isPrivateUser) {

@@ -24,10 +24,13 @@ export function UnitMeasurements({ unitId }: UnitMeasurementsProps) {
         // Get timestamp directly - it should already be formatted by useRealtimeMeasurements
         const timestamp = measurement.timestamp || "Invalid date";
           
-        // Format volume with 1 decimal place
-        const volume = typeof measurement.volume === 'number' 
-          ? measurement.volume.toFixed(1) 
-          : "N/A";
+        // Use cumulative_volume for display instead of individual volume
+        // This ensures we see the total volume increasing correctly
+        const volume = typeof measurement.cumulative_volume === 'number' 
+          ? measurement.cumulative_volume.toFixed(1) 
+          : typeof measurement.volume === 'number'
+            ? measurement.volume.toFixed(1)
+            : "N/A";
           
         // Format temperature with 1 decimal place
         const temperature = typeof measurement.temperature === 'number' 

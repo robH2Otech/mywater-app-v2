@@ -134,7 +134,7 @@ export const verifyPrivateUser = async (uid: string): Promise<boolean> => {
     
     // First try getting the user directly by UID as document ID (most efficient)
     try {
-      // Fix the typo in the collection name
+      // The correct collection name is "app_users_privat" in Firebase
       const userDocRef = doc(db, "app_users_privat", uid);
       const userSnapshot = await getDoc(userDocRef);
       
@@ -147,7 +147,7 @@ export const verifyPrivateUser = async (uid: string): Promise<boolean> => {
     }
     
     // Check if user exists in app_users_privat collection using a query
-    // Fix the typo in the collection name
+    // The correct collection name is "app_users_privat" in Firebase
     const privateUsersRef = collection(db, "app_users_privat");
     const q = query(privateUsersRef, where("uid", "==", uid));
     const querySnapshot = await getDocs(q);
