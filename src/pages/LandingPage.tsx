@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -60,7 +59,7 @@ export function LandingPage() {
             Welcome to <span className="text-mywater-blue">MYWATER app</span>
           </h1>
           <p className="text-lg text-gray-400 max-w-2xl mx-auto">
-            Find your way towards a healthy and sustainable future!
+            Stay informed, save money, drink cleaner water.
           </p>
         </div>
 

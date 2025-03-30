@@ -6,7 +6,6 @@ import { Card } from "@/components/ui/card";
 import { RecentAlerts } from "@/components/dashboard/RecentAlerts";
 import { StatCard } from "@/components/dashboard/StatCard";
 import { WaterUsageChart } from "@/components/dashboard/WaterUsageChart";
-import { WelcomeMessage } from "@/components/layout/WelcomeMessage";
 import { collection, getDocs, query, where } from "firebase/firestore";
 import { db } from "@/integrations/firebase/client";
 import { formatThousands } from "@/utils/measurements/formatUtils";
@@ -109,8 +108,7 @@ const Index = () => {
 
   return (
     <div className="space-y-6">
-      {/* Welcome message */}
-      <WelcomeMessage firstName="" />
+      {/* Remove the duplicated WelcomeMessage component - it's already in the Header */}
       
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">

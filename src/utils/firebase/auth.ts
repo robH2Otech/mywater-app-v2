@@ -1,4 +1,3 @@
-
 import { 
   User,
   UserCredential,
@@ -135,7 +134,8 @@ export const verifyPrivateUser = async (uid: string): Promise<boolean> => {
     
     // First try getting the user directly by UID as document ID (most efficient)
     try {
-      const userDocRef = doc(db, "app_users_private", uid);
+      // Fix the typo in the collection name
+      const userDocRef = doc(db, "app_users_privat", uid);
       const userSnapshot = await getDoc(userDocRef);
       
       if (userSnapshot.exists()) {
@@ -146,13 +146,14 @@ export const verifyPrivateUser = async (uid: string): Promise<boolean> => {
       console.log("Direct UID lookup failed, falling back to query");
     }
     
-    // Check if user exists in app_users_private collection using a query
-    const privateUsersRef = collection(db, "app_users_private");
+    // Check if user exists in app_users_privat collection using a query
+    // Fix the typo in the collection name
+    const privateUsersRef = collection(db, "app_users_privat");
     const q = query(privateUsersRef, where("uid", "==", uid));
     const querySnapshot = await getDocs(q);
     
     if (!querySnapshot.empty) {
-      console.log("User found in app_users_private collection by query");
+      console.log("User found in app_users_privat collection by query");
       
       // For performance reasons, we should update the document ID to match the UID
       const userDoc = querySnapshot.docs[0];
@@ -161,7 +162,7 @@ export const verifyPrivateUser = async (uid: string): Promise<boolean> => {
       // If the document ID is not the same as UID, create a new document with UID as ID
       if (userDoc.id !== uid) {
         console.log("Updating user document to use UID as document ID");
-        await setDoc(doc(db, "app_users_private", uid), {
+        await setDoc(doc(db, "app_users_privat", uid), {
           ...userData,
           updated_at: new Date()
         });
@@ -179,7 +180,7 @@ export const verifyPrivateUser = async (uid: string): Promise<boolean> => {
       console.log("User found in old private_users collection, migrating...");
       // Migrate to new collection - use UID as document ID for easier retrieval
       const userData = oldSnapshot.docs[0].data();
-      await setDoc(doc(db, "app_users_private", uid), {
+      await setDoc(doc(db, "app_users_privat", uid), {
         ...userData,
         migrated_at: new Date(),
         updated_at: new Date()
@@ -205,7 +206,7 @@ export const handleSocialUserData = async (user: User, provider: string): Promis
     
     // First check if user already exists by UID as document ID
     try {
-      const userDocRef = doc(db, "app_users_private", user.uid);
+      const userDocRef = doc(db, "app_users_privat", user.uid);
       const userSnapshot = await getDoc(userDocRef);
       
       if (userSnapshot.exists()) {
@@ -217,7 +218,7 @@ export const handleSocialUserData = async (user: User, provider: string): Promis
     }
     
     // Also check by uid field
-    const privateUsersRef = collection(db, "app_users_private");
+    const privateUsersRef = collection(db, "app_users_privat");
     const q = query(privateUsersRef, where("uid", "==", user.uid));
     const querySnapshot = await getDocs(q);
     
@@ -232,7 +233,7 @@ export const handleSocialUserData = async (user: User, provider: string): Promis
       
       // Create temporary user data - will need to be completed with registration form
       // Use UID as document ID for easier retrieval
-      await setDoc(doc(db, "app_users_private", user.uid), {
+      await setDoc(doc(db, "app_users_privat", user.uid), {
         uid: user.uid,
         email: user.email,
         first_name: firstName,
@@ -243,7 +244,7 @@ export const handleSocialUserData = async (user: User, provider: string): Promis
         needs_profile_completion: true  // Flag to indicate registration needs to be completed
       });
     } else {
-      console.log("User already exists in app_users_private collection");
+      console.log("User already exists in app_users_privat collection");
     }
   } catch (error) {
     console.error("Error handling social user data:", error);

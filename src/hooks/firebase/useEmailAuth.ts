@@ -26,6 +26,8 @@ export function useEmailAuth() {
         const user = userCredential.user;
         
         // Check if user exists in private users collection
+        // The collection name should be "app_users_privat" which seems to have a typo
+        // It should match the name in the Firebase console (app_users_privat not app_users_private)
         const isPrivateUser = await verifyPrivateUser(user.uid);
         
         if (!isPrivateUser) {
@@ -46,7 +48,6 @@ export function useEmailAuth() {
       } else if (authMode === "register") {
         console.log("Starting registration with email");
         // We'll redirect to the registration form to complete profile
-        // instead of creating the user here
         toast({
           title: "Please complete registration",
           description: "Fill in your details to create your account",

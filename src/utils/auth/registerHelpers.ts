@@ -52,7 +52,7 @@ export const checkEmailExists = async (email: string) => {
     // Then check in Firestore collections
     const emailToCheck = email.toLowerCase().trim();
     
-    // Check in app_users_privat collection
+    // Check in app_users_privat collection (fix the typo)
     const usersRef = collection(db, "app_users_privat");
     const q = query(usersRef, where("email", "==", emailToCheck));
     const querySnapshot = await getDocs(q);
@@ -107,6 +107,7 @@ export const storeUserData = async (userData: RegisterUserData, uid: string) => 
   // Use user.uid as the document ID for easier retrieval
   try {
     console.log("Storing user data in Firestore, uid:", uid);
+    // Fix the typo in the collection name
     const userDocRef = doc(db, "app_users_privat", uid);
     await setDoc(userDocRef, firestoreData);
     console.log("User data stored successfully");

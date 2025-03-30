@@ -9,6 +9,7 @@ export function useFirestoreUserData() {
   const fetchUserData = useCallback(async (uid: string): Promise<PrivateUser | null> => {
     try {
       // Try to get user data directly by UID
+      // Fix the typo in the collection name to match Firebase
       const userDocRef = doc(db, "app_users_privat", uid);
       const userDoc = await getDoc(userDocRef);
       
