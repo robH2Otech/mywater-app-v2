@@ -1,8 +1,8 @@
 
 import { toast } from "@/hooks/use-toast";
 import { auth, db } from "@/integrations/firebase/client";
-import { collection, doc, getDocs, query, setDoc, where } from "firebase/firestore";
-import { createUserWithEmailAndPassword, updateProfile } from "firebase/auth";
+import { collection, doc, getDocs, query, setDoc, where, getDoc } from "firebase/firestore";
+import { createUserWithEmailAndPassword, updateProfile, fetchSignInMethodsForEmail } from "firebase/auth";
 import { 
   validateUserData, 
   handleAuthErrors,
@@ -33,21 +33,51 @@ export const validateRegistrationForm = (userData: RegisterUserData) => {
 
 export const checkEmailExists = async (email: string) => {
   console.log("Checking if email exists:", email);
+  
+  if (!email) {
+    console.error("Empty email provided to checkEmailExists");
+    return false;
+  }
+  
   try {
-    // First, check in auth users (this is more reliable)
-    const usersRef = collection(db, "app_users_privat");
-    const q = query(usersRef, where("email", "==", email.toLowerCase().trim()));
+    // First check in Firebase Auth directly - this is the most reliable method
+    const signInMethods = await fetchSignInMethodsForEmail(auth, email.toLowerCase().trim());
+    console.log("Sign in methods for email:", signInMethods);
     
-    console.log("Executing Firestore query for email:", email);
+    if (signInMethods && signInMethods.length > 0) {
+      console.log("Email exists in Firebase Auth:", email);
+      return true;
+    }
+    
+    // Then check in Firestore collections
+    const emailToCheck = email.toLowerCase().trim();
+    
+    // Check in app_users_privat collection
+    const usersRef = collection(db, "app_users_privat");
+    const q = query(usersRef, where("email", "==", emailToCheck));
     const querySnapshot = await getDocs(q);
     
-    const exists = !querySnapshot.empty;
-    console.log("Email exists in Firestore?", exists, "Documents found:", querySnapshot.size);
+    if (!querySnapshot.empty) {
+      console.log("Email exists in app_users_privat collection:", email);
+      return true;
+    }
     
-    return exists;
+    // Check in alternate collections for legacy support
+    const privateUsersRef = collection(db, "private_users");
+    const q2 = query(privateUsersRef, where("email", "==", emailToCheck));
+    const querySnapshot2 = await getDocs(q2);
+    
+    if (!querySnapshot2.empty) {
+      console.log("Email exists in private_users collection:", email);
+      return true;
+    }
+    
+    // If we got here, email doesn't exist
+    console.log("Email does not exist in any collection:", email);
+    return false;
   } catch (error) {
     console.error("Error checking email existence:", error);
-    // If there's an error checking, assume it doesn't exist to prevent blocking registration
+    // In case of error, we'll err on the side of caution and allow registration
     return false;
   }
 };

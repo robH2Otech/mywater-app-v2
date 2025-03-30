@@ -7,15 +7,12 @@ import {
   SelectValue 
 } from "@/components/ui/select";
 
-// Sample purifier models - this would come from a database in production
+// Updated purifier models list as requested
 const PURIFIER_MODELS = [
   "MYWATER Home Basic",
   "MYWATER Home Plus",
   "MYWATER Home Premium",
-  "MYWATER Under-Sink Basic",
-  "MYWATER Under-Sink Advanced",
-  "MYWATER Countertop Standard",
-  "MYWATER Countertop Premium"
+  "MYWATER Home Pro"
 ];
 
 interface PurifierModelSelectProps {

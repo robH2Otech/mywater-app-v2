@@ -9,7 +9,8 @@ import {
   signInWithPopup,
   signOut,
   browserSessionPersistence,
-  setPersistence
+  setPersistence,
+  fetchSignInMethodsForEmail
 } from "firebase/auth";
 import { 
   collection, 
@@ -18,7 +19,9 @@ import {
   where, 
   doc, 
   setDoc, 
-  getDoc 
+  getDoc,
+  Timestamp,
+  serverTimestamp
 } from "firebase/firestore";
 import { auth, db, currentDomain } from "@/integrations/firebase/client";
 
@@ -45,6 +48,12 @@ export const loginWithEmail = async (email: string, password: string): Promise<U
 export const registerWithEmail = async (email: string, password: string): Promise<UserCredential> => {
   try {
     console.log("Attempting email registration for:", email);
+    
+    // First check if this email is already in use
+    const signInMethods = await fetchSignInMethodsForEmail(auth, email.toLowerCase().trim());
+    if (signInMethods && signInMethods.length > 0) {
+      throw new Error("An account with this email already exists");
+    }
     
     // Set session persistence to prevent issues in iframe environments
     await setPersistence(auth, browserSessionPersistence);
@@ -115,6 +124,11 @@ export const verifyPrivateUser = async (uid: string): Promise<boolean> => {
   try {
     console.log("Verifying private user with UID:", uid);
     
+    if (!uid) {
+      console.error("Invalid UID provided for verification");
+      return false;
+    }
+    
     // First try getting the user directly by UID as document ID (most efficient)
     try {
       const userDocRef = doc(db, "app_users_privat", uid);
@@ -128,37 +142,52 @@ export const verifyPrivateUser = async (uid: string): Promise<boolean> => {
       console.log("Direct UID lookup failed, falling back to query");
     }
     
-    // Check if user exists in app_users_privat collection
+    // Check if user exists in app_users_privat collection using a query
     const privateUsersRef = collection(db, "app_users_privat");
     const q = query(privateUsersRef, where("uid", "==", uid));
     const querySnapshot = await getDocs(q);
     
-    if (querySnapshot.empty) {
-      // Check old collection as fallback
-      const oldPrivateUsersRef = collection(db, "private_users");
-      const oldQuery = query(oldPrivateUsersRef, where("uid", "==", uid));
-      const oldSnapshot = await getDocs(oldQuery);
+    if (!querySnapshot.empty) {
+      console.log("User found in app_users_privat collection by query");
       
-      if (oldSnapshot.empty) {
-        console.log("User not found in any collection");
-        return false;
-      } else {
-        console.log("User found in old private_users collection, migrating...");
-        // Migrate to new collection - use UID as document ID for easier retrieval
-        const userData = oldSnapshot.docs[0].data();
+      // For performance reasons, we should update the document ID to match the UID
+      const userDoc = querySnapshot.docs[0];
+      const userData = userDoc.data();
+      
+      // If the document ID is not the same as UID, create a new document with UID as ID
+      if (userDoc.id !== uid) {
+        console.log("Updating user document to use UID as document ID");
         await setDoc(doc(db, "app_users_privat", uid), {
           ...userData,
-          migrated_at: new Date()
+          updated_at: new Date()
         });
-        return true;
       }
+      
+      return true;
     }
     
-    console.log("User found in app_users_privat collection");
-    return true;
+    // Check old collection as fallback
+    const oldPrivateUsersRef = collection(db, "private_users");
+    const oldQuery = query(oldPrivateUsersRef, where("uid", "==", uid));
+    const oldSnapshot = await getDocs(oldQuery);
+    
+    if (!oldSnapshot.empty) {
+      console.log("User found in old private_users collection, migrating...");
+      // Migrate to new collection - use UID as document ID for easier retrieval
+      const userData = oldSnapshot.docs[0].data();
+      await setDoc(doc(db, "app_users_privat", uid), {
+        ...userData,
+        migrated_at: new Date(),
+        updated_at: new Date()
+      });
+      return true;
+    }
+    
+    console.log("User not found in any collection");
+    return false;
   } catch (error) {
     console.error("Error verifying private user:", error);
-    throw error;
+    return false;
   }
 };
 
@@ -205,6 +234,7 @@ export const handleSocialUserData = async (user: User, provider: string): Promis
         first_name: firstName,
         last_name: lastName,
         created_at: new Date(),
+        updated_at: new Date(),
         auth_provider: provider,
         needs_profile_completion: true  // Flag to indicate registration needs to be completed
       });

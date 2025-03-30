@@ -15,10 +15,49 @@ export const validateUserData = (userData: RegisterUserData) => {
     return false;
   }
   
+  if (!userData.email && !userData.socialEmail) {
+    toast({
+      title: "Missing information",
+      description: "Email address is required.",
+      variant: "destructive",
+    });
+    return false;
+  }
+  
+  const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  const emailToValidate = userData.socialEmail || userData.email;
+  
+  if (!emailPattern.test(emailToValidate)) {
+    toast({
+      title: "Invalid email",
+      description: "Please provide a valid email address.",
+      variant: "destructive",
+    });
+    return false;
+  }
+  
   if (!userData.socialEmail && (!userData.password || userData.password !== userData.confirmPassword)) {
     toast({
       title: "Password error",
       description: "Please make sure your passwords match.",
+      variant: "destructive",
+    });
+    return false;
+  }
+  
+  if (!userData.socialEmail && userData.password.length < 6) {
+    toast({
+      title: "Password too short",
+      description: "Password must be at least 6 characters long.",
+      variant: "destructive",
+    });
+    return false;
+  }
+
+  if (!userData.phone) {
+    toast({
+      title: "Missing information",
+      description: "Please provide your phone number.",
       variant: "destructive",
     });
     return false;
@@ -37,6 +76,15 @@ export const validateUserData = (userData: RegisterUserData) => {
     toast({
       title: "Purchase date required",
       description: "Please select when you purchased your water purifier.",
+      variant: "destructive",
+    });
+    return false;
+  }
+  
+  if (!userData.streetAddress || !userData.city || !userData.postalCode || !userData.country) {
+    toast({
+      title: "Address information missing",
+      description: "Please provide your complete address.",
       variant: "destructive",
     });
     return false;
@@ -94,7 +142,8 @@ export const prepareUserDataForFirestore = (userData: RegisterUserData, uid: str
     referral_reward_claimed: false,
     created_at: new Date(),
     updated_at: new Date(),
-    needs_profile_completion: false
+    needs_profile_completion: false,
+    registered_with: userData.socialEmail ? "social" : "email"
   };
 };
 

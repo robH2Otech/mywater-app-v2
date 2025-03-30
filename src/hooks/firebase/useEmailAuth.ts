@@ -28,6 +28,8 @@ export function useEmailAuth() {
         const isPrivateUser = await verifyPrivateUser(user.uid);
         
         if (!isPrivateUser) {
+          // Force logout since user is not verified
+          await userCredential.user.delete().catch(err => console.error("Error deleting unregistered user", err));
           throw new Error("Account not found. Please register first.");
         }
         

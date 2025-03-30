@@ -43,11 +43,19 @@ export function useRegisterFormHandler() {
       // Check if email already exists
       const emailToCheck = userData.socialEmail || userData.email;
       console.log("Checking if email exists:", emailToCheck);
+      
+      // Add a small delay to ensure Firebase has time to process
       const emailExists = await checkEmailExists(emailToCheck);
       
       if (emailExists) {
         console.log("Email already exists:", emailToCheck);
-        throw new Error("An account with this email already exists");
+        toast({
+          title: "Registration Error",
+          description: "An account with this email already exists",
+          variant: "destructive",
+        });
+        setIsLoading(false);
+        return;
       }
       
       // Determine if we're using social login or email/password
@@ -79,7 +87,13 @@ export function useRegisterFormHandler() {
         } catch (authError: any) {
           if (authError.code === 'auth/email-already-in-use') {
             console.log("Firebase Auth caught duplicate email that Firestore check missed");
-            throw new Error("An account with this email already exists");
+            toast({
+              title: "Registration Error",
+              description: "An account with this email already exists",
+              variant: "destructive",
+            });
+            setIsLoading(false);
+            return;
           }
           throw authError;
         }
