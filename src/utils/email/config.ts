@@ -5,7 +5,7 @@ import emailjs from 'emailjs-com';
 export const EMAILJS_CONFIG = {
   SERVICE_ID: 'service_mywater',
   TEMPLATE_ID: 'template_referral',
-  USER_ID: '20lKGYgYsf1DIICqM'
+  USER_ID: '20lKGYgYsf1DIICqM' // Replace with actual user ID when in production
 };
 
 /**
@@ -19,20 +19,34 @@ export const sendEmailWithEmailJS = async (
   message: string,
   additionalParams: Record<string, any> = {}
 ) => {
-  const templateParams = {
-    to_email: toEmail,
-    to_name: toName,
-    from_name: fromName,
-    message: message,
-    subject: subject,
-    from_email: "contact@mywatertechnologies.com",
-    ...additionalParams
-  };
-  
-  return await emailjs.send(
-    EMAILJS_CONFIG.SERVICE_ID,
-    EMAILJS_CONFIG.TEMPLATE_ID,
-    templateParams,
-    EMAILJS_CONFIG.USER_ID
-  );
+  try {
+    // Initialize EmailJS with user ID
+    emailjs.init(EMAILJS_CONFIG.USER_ID);
+    
+    const templateParams = {
+      to_email: toEmail,
+      to_name: toName,
+      from_name: fromName,
+      message: message,
+      subject: subject,
+      from_email: "contact@mywatertechnologies.com",
+      ...additionalParams
+    };
+    
+    console.log("Sending email with params:", {
+      serviceId: EMAILJS_CONFIG.SERVICE_ID,
+      templateId: EMAILJS_CONFIG.TEMPLATE_ID, 
+      params: templateParams
+    });
+    
+    return await emailjs.send(
+      EMAILJS_CONFIG.SERVICE_ID,
+      EMAILJS_CONFIG.TEMPLATE_ID,
+      templateParams,
+      EMAILJS_CONFIG.USER_ID
+    );
+  } catch (error) {
+    console.error("Error sending email with EmailJS:", error);
+    throw error;
+  }
 };

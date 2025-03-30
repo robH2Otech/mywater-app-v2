@@ -4,6 +4,16 @@ import { useEffect, useState } from "react";
 import { auth } from "@/integrations/firebase/client";
 import { collection, query, where, getDocs } from "firebase/firestore";
 import { db } from "@/integrations/firebase/client";
+import { 
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger
+} from "@/components/ui/dropdown-menu";
+import { LogOut, User } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { logoutUser } from "@/utils/firebase/auth";
+import { useToast } from "@/hooks/use-toast";
 
 interface UserAvatarProps {
   firstName?: string;
@@ -14,6 +24,8 @@ interface UserAvatarProps {
 
 export function UserAvatar({ firstName, lastName, className = "h-9 w-9", showMenu = true }: UserAvatarProps) {
   const [initials, setInitials] = useState<string>("U");
+  const navigate = useNavigate();
+  const { toast } = useToast();
   
   useEffect(() => {
     // If firstName and lastName are provided via props, use them directly
@@ -94,9 +106,58 @@ export function UserAvatar({ firstName, lastName, className = "h-9 w-9", showMen
     fetchUserInitials();
   }, [firstName, lastName]);
   
+  const handleSignOut = async () => {
+    try {
+      await logoutUser();
+      
+      // Clear session storage
+      sessionStorage.removeItem('userDisplayName');
+      sessionStorage.removeItem('userInitials');
+      
+      toast({
+        title: "Logged out successfully",
+        description: "You have been signed out of your account",
+      });
+      
+      // Navigate to home page
+      navigate("/");
+    } catch (error) {
+      console.error("Error signing out:", error);
+      toast({
+        title: "Error signing out",
+        description: "There was a problem signing you out. Please try again.",
+        variant: "destructive"
+      });
+    }
+  };
+  
+  if (!showMenu) {
+    return (
+      <Avatar className={className}>
+        <AvatarFallback className="bg-mywater-blue">{initials}</AvatarFallback>
+      </Avatar>
+    );
+  }
+  
   return (
-    <Avatar className={className}>
-      <AvatarFallback className="bg-mywater-blue">{initials}</AvatarFallback>
-    </Avatar>
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <button className="focus:outline-none">
+          <Avatar className={className}>
+            <AvatarFallback className="bg-mywater-blue">{initials}</AvatarFallback>
+          </Avatar>
+        </button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end">
+        <DropdownMenuItem className="cursor-pointer" onClick={() => navigate("/private-dashboard")}>
+          <User className="mr-2 h-4 w-4" />
+          <span>My Profile</span>
+        </DropdownMenuItem>
+        <DropdownMenuItem className="cursor-pointer text-red-500" onClick={handleSignOut}>
+          <LogOut className="mr-2 h-4 w-4" />
+          <span>Log Out</span>
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 }

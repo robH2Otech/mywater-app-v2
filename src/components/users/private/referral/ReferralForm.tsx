@@ -1,10 +1,11 @@
+
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { FormInput } from "@/components/shared/FormInput";
 import { Textarea } from "@/components/ui/textarea";
 import { Send } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { sendReferralEmail } from "@/utils/email";  // Updated import path
+import { sendReferralEmail } from "@/utils/email";
 
 interface ReferralFormProps {
   userName: string;
@@ -58,25 +59,7 @@ ${userName || "[Your Name]"}`;
 
     setIsSending(true);
     try {
-      console.log("Sending email to:", friendEmail);
-      console.log("Email content:", emailMessage);
-      
-      const emailjs = await import('emailjs-com');
-      
-      const templateParams = {
-        to_email: friendEmail,
-        to_name: friendName,
-        from_name: userName,
-        message: emailMessage,
-        referral_code: referralCode
-      };
-      
-      await emailjs.send(
-        'service_id',  // Replace with your Email.js service ID
-        'template_id', // Replace with your Email.js template ID
-        templateParams,
-        'user_id'      // Replace with your Email.js user ID
-      );
+      console.log("Sending referral email to:", friendEmail);
       
       const success = await sendReferralEmail(
         friendEmail,
@@ -86,20 +69,25 @@ ${userName || "[Your Name]"}`;
         emailMessage
       );
       
-      toast({
-        title: "Referral sent!",
-        description: `Your invitation was sent to ${friendName}.`,
-        variant: "default"
-      });
-      
-      const notificationEvent = new CustomEvent('newReferralSent', { 
-        detail: { name: friendName, email: friendEmail }
-      });
-      window.dispatchEvent(notificationEvent);
-      
-      setFriendName("");
-      setFriendEmail("");
-      setEmailMessage("");
+      if (success) {
+        toast({
+          title: "Referral sent!",
+          description: `Your invitation was sent to ${friendName}.`,
+        });
+        
+        // Trigger notification event
+        const notificationEvent = new CustomEvent('newReferralSent', { 
+          detail: { name: friendName, email: friendEmail }
+        });
+        window.dispatchEvent(notificationEvent);
+        
+        // Reset form
+        setFriendName("");
+        setFriendEmail("");
+        setEmailMessage("");
+      } else {
+        throw new Error("Failed to send email");
+      }
     } catch (error) {
       console.error("Error sending email:", error);
       toast({
