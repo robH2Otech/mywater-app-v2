@@ -42,9 +42,11 @@ export function useRegisterFormHandler() {
     try {
       // Check if email already exists
       const emailToCheck = userData.socialEmail || userData.email;
+      console.log("Checking if email exists:", emailToCheck);
       const emailExists = await checkEmailExists(emailToCheck);
       
       if (emailExists) {
+        console.log("Email already exists:", emailToCheck);
         throw new Error("An account with this email already exists");
       }
       
@@ -75,6 +77,10 @@ export function useRegisterFormHandler() {
           
           console.log("User created successfully:", user.uid);
         } catch (authError: any) {
+          if (authError.code === 'auth/email-already-in-use') {
+            console.log("Firebase Auth caught duplicate email that Firestore check missed");
+            throw new Error("An account with this email already exists");
+          }
           throw authError;
         }
       }

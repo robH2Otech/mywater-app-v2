@@ -12,7 +12,7 @@ import {
 import { useEffect, useState } from "react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { subDays, subHours, format, parseISO } from "date-fns";
+import { subDays, subHours, subMonths, format, parseISO } from "date-fns";
 import { collection, query, where, orderBy, getDocs, Timestamp } from "firebase/firestore";
 import { db } from "@/integrations/firebase/client";
 
@@ -36,12 +36,35 @@ export const WaterUsageChart = ({ units = [] }: WaterUsageChartProps) => {
     }
 
     setIsLoading(true);
+    console.log(`Fetching measurements for time range: ${range}`);
     
     try {
-      // For now we'll focus on hourly data for last 12 hours
+      // Calculate date range based on selected timeRange
       const endDate = new Date();
-      const startDate = subHours(endDate, 12);
-      const formatPattern = "HH:mm"; // Hour format
+      let startDate: Date;
+      let formatPattern: string;
+      
+      switch (range) {
+        case "7d":
+          startDate = subDays(endDate, 7);
+          formatPattern = "MMM dd"; // Jun 15 format
+          break;
+        case "30d":
+          startDate = subDays(endDate, 30);
+          formatPattern = "MMM dd"; // Jun 15 format
+          break;
+        case "6m":
+          startDate = subMonths(endDate, 6);
+          formatPattern = "MMM yyyy"; // Jun 2023 format
+          break;
+        case "24h":
+        default:
+          startDate = subHours(endDate, 24);
+          formatPattern = "HH:mm"; // Hour format
+          break;
+      }
+      
+      console.log(`Date range: ${startDate.toISOString()} to ${endDate.toISOString()}`);
       
       const startTimestamp = Timestamp.fromDate(startDate);
       const endTimestamp = Timestamp.fromDate(endDate);
@@ -58,6 +81,8 @@ export const WaterUsageChart = ({ units = [] }: WaterUsageChartProps) => {
           ? `units/${unit.id}/data` 
           : `units/${unit.id}/measurements`;
         
+        console.log(`Querying measurements for unit ${unit.id} from ${collectionPath}`);
+        
         // Query measurements for this unit within the date range
         const q = query(
           collection(db, collectionPath),
@@ -67,6 +92,7 @@ export const WaterUsageChart = ({ units = [] }: WaterUsageChartProps) => {
         );
         
         const querySnapshot = await getDocs(q);
+        console.log(`Found ${querySnapshot.size} measurements for unit ${unit.id}`);
         
         // Map documents to proper format and add to collection
         querySnapshot.docs.forEach(doc => {
@@ -97,7 +123,7 @@ export const WaterUsageChart = ({ units = [] }: WaterUsageChartProps) => {
         });
       }
       
-      // Group measurements by hour
+      // Group measurements based on the time range
       const groupedData = new Map();
       
       allMeasurements.forEach(measurement => {
@@ -120,9 +146,11 @@ export const WaterUsageChart = ({ units = [] }: WaterUsageChartProps) => {
         return a.name.localeCompare(b.name);
       });
       
+      console.log(`Generated ${sortedData.length} data points for chart`);
+      
       // Ensure we have data - use placeholder if empty
       if (sortedData.length === 0) {
-        return generatePlaceholderData();
+        return generatePlaceholderData(range);
       }
       
       // Format volumes to 1 decimal place
@@ -132,26 +160,63 @@ export const WaterUsageChart = ({ units = [] }: WaterUsageChartProps) => {
       }));
     } catch (error) {
       console.error("Error fetching measurements for chart:", error);
-      return generatePlaceholderData();
+      return generatePlaceholderData(range);
     } finally {
       setIsLoading(false);
     }
   };
 
-  // Generate placeholder data for hourly volumes (last 12 hours)
-  const generatePlaceholderData = () => {
+  // Generate placeholder data for different time ranges
+  const generatePlaceholderData = (range: TimeRange) => {
+    console.log(`Generating placeholder data for ${range}`);
     const endDate = new Date();
     const dataPoints = [];
     
-    // Generate hourly data for last 12 hours
-    for (let i = 0; i < 12; i++) {
-      const date = subHours(endDate, 12 - i);
-      dataPoints.push({
-        name: format(date, "HH:mm"),
-        volume: Number((Math.random() * 5 + 1).toFixed(1))
-      });
+    switch (range) {
+      case "7d":
+        // Generate daily data for last 7 days with varying volumes
+        for (let i = 0; i < 7; i++) {
+          const date = subDays(endDate, 6 - i);
+          dataPoints.push({
+            name: format(date, "MMM dd"),
+            volume: Number((Math.random() * 15 + 5 * (i + 1)).toFixed(1))
+          });
+        }
+        break;
+      case "30d":
+        // Generate several data points across 30 days with varying volumes
+        for (let i = 0; i < 10; i++) {
+          const date = subDays(endDate, 30 - (i * 3));
+          dataPoints.push({
+            name: format(date, "MMM dd"),
+            volume: Number((Math.random() * 30 + 30).toFixed(1))
+          });
+        }
+        break;
+      case "6m":
+        // Generate monthly data for last 6 months with varying volumes
+        for (let i = 0; i < 6; i++) {
+          const date = subMonths(endDate, 5 - i);
+          dataPoints.push({
+            name: format(date, "MMM yyyy"),
+            volume: Number((Math.random() * 100 + 150).toFixed(1))
+          });
+        }
+        break;
+      case "24h":
+      default:
+        // Generate hourly data for last 24 hours
+        for (let i = 0; i < 12; i++) {
+          const date = subHours(endDate, 12 - i);
+          dataPoints.push({
+            name: format(date, "HH:mm"),
+            volume: Number((Math.random() * 5 + 1).toFixed(1))
+          });
+        }
+        break;
     }
     
+    console.log(`Generated ${dataPoints.length} placeholder data points for ${range}`);
     return dataPoints;
   };
 

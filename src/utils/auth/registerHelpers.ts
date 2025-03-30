@@ -32,18 +32,34 @@ export const validateRegistrationForm = (userData: RegisterUserData) => {
 };
 
 export const checkEmailExists = async (email: string) => {
-  const usersRef = collection(db, "app_users_privat");
-  const q = query(usersRef, where("email", "==", email));
-  const querySnapshot = await getDocs(q);
-  
-  return !querySnapshot.empty;
+  console.log("Checking if email exists:", email);
+  try {
+    // First, check in auth users (this is more reliable)
+    const usersRef = collection(db, "app_users_privat");
+    const q = query(usersRef, where("email", "==", email.toLowerCase().trim()));
+    
+    console.log("Executing Firestore query for email:", email);
+    const querySnapshot = await getDocs(q);
+    
+    const exists = !querySnapshot.empty;
+    console.log("Email exists in Firestore?", exists, "Documents found:", querySnapshot.size);
+    
+    return exists;
+  } catch (error) {
+    console.error("Error checking email existence:", error);
+    // If there's an error checking, assume it doesn't exist to prevent blocking registration
+    return false;
+  }
 };
 
 export const createUserAccount = async (email: string, password: string) => {
   try {
-    const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+    console.log("Creating user account for email:", email);
+    const userCredential = await createUserWithEmailAndPassword(auth, email.toLowerCase().trim(), password);
+    console.log("User account created successfully");
     return userCredential.user;
   } catch (authError: any) {
+    console.error("Error creating user account:", authError);
     throw handleAuthErrors(authError);
   }
 };
@@ -52,6 +68,7 @@ export const updateUserProfile = async (user: any, firstName: string, lastName: 
   await updateProfile(user, {
     displayName: `${firstName} ${lastName}`
   });
+  console.log("User profile updated with display name:", `${firstName} ${lastName}`);
 };
 
 export const storeUserData = async (userData: RegisterUserData, uid: string) => {
@@ -59,8 +76,10 @@ export const storeUserData = async (userData: RegisterUserData, uid: string) => 
   
   // Use user.uid as the document ID for easier retrieval
   try {
+    console.log("Storing user data in Firestore, uid:", uid);
     const userDocRef = doc(db, "app_users_privat", uid);
     await setDoc(userDocRef, firestoreData);
+    console.log("User data stored successfully");
     return firestoreData;
   } catch (firestoreError) {
     console.error("Error saving user data to Firestore:", firestoreError);
@@ -72,12 +91,14 @@ export const createReferralCode = async (userId: string, firstName: string, last
   const referralCode = generateReferralCode(firstName, lastName);
   
   try {
+    console.log("Creating referral code for user:", userId);
     const referralDocRef = doc(collection(db, "referral_codes"));
     await setDoc(referralDocRef, {
       user_id: userId,
       code: referralCode,
       created_at: new Date()
     });
+    console.log("Referral code created:", referralCode);
     return referralCode;
   } catch (referralError) {
     console.error("Error creating referral code:", referralError);
