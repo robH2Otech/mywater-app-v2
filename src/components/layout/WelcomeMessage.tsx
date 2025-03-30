@@ -1,29 +1,85 @@
-
-import { useLanguage } from "@/contexts/LanguageContext";
+import { useEffect, useState } from "react";
+import { auth } from "@/integrations/firebase/client";
+import { collection, query, where, getDocs } from "firebase/firestore";
+import { db } from "@/integrations/firebase/client";
 
 interface WelcomeMessageProps {
   firstName?: string;
-  lastName?: string;
 }
 
-export const WelcomeMessage = ({ firstName, lastName }: WelcomeMessageProps) => {
-  const { t } = useLanguage();
+export function WelcomeMessage({ firstName }: WelcomeMessageProps) {
+  const [userName, setUserName] = useState<string>("");
   
-  // If no firstName is provided, return a default message
-  if (!firstName) {
-    return (
-      <div className="text-white text-2xl font-medium">
-        {t("dashboard.welcome")}
-      </div>
-    );
+  useEffect(() => {
+    // Check if we already have the name in session storage
+    const storedName = sessionStorage.getItem('userDisplayName');
+    
+    if (storedName) {
+      setUserName(storedName);
+      return;
+    }
+    
+    // If firstName prop is provided, use it
+    if (firstName) {
+      setUserName(firstName);
+      return;
+    }
+    
+    // Otherwise, fetch the user's name from Firestore
+    const fetchUserName = async () => {
+      const currentUser = auth.currentUser;
+      
+      if (!currentUser) {
+        return;
+      }
+      
+      try {
+        // Try to get user from private users collection
+        const privateUsersRef = collection(db, "app_users_private");
+        const q = query(privateUsersRef, where("id", "==", currentUser.uid));
+        const querySnapshot = await getDocs(q);
+        
+        if (!querySnapshot.empty) {
+          const userData = querySnapshot.docs[0].data();
+          const name = userData.first_name || userData.firstName || "";
+          setUserName(name);
+          sessionStorage.setItem('userDisplayName', name);
+          return;
+        }
+        
+        // If not found in private users, check business users
+        const businessUsersRef = collection(db, "app_users_business");
+        const businessQuery = query(businessUsersRef, where("id", "==", currentUser.uid));
+        const businessSnapshot = await getDocs(businessQuery);
+        
+        if (!businessSnapshot.empty) {
+          const userData = businessSnapshot.docs[0].data();
+          const name = userData.first_name || userData.firstName || "";
+          setUserName(name);
+          sessionStorage.setItem('userDisplayName', name);
+          return;
+        }
+        
+        // As a last resort, use the displayName from auth
+        if (currentUser.displayName) {
+          const nameParts = currentUser.displayName.split(' ');
+          setUserName(nameParts[0]);
+          sessionStorage.setItem('userDisplayName', nameParts[0]);
+          return;
+        }
+      } catch (error) {
+        console.error("Error fetching user name:", error);
+      }
+    };
+    
+    fetchUserName();
+  }, [firstName]);
+  
+  if (!userName) {
+    return <h1 className="text-2xl font-bold mb-6">Welcome to MYWATER!</h1>;
   }
   
-  // Format the name: use first name only, properly capitalized
-  const displayName = firstName.charAt(0).toUpperCase() + firstName.slice(1).toLowerCase();
-  
   return (
-    <div className="text-white text-2xl font-medium">
-      Hey {displayName}, welcome back to MYWATER app!
-    </div>
+    <h1 className="text-2xl font-bold mb-6">Hey {userName}, welcome back to MYWATER app!</h1>
   );
-};
+}

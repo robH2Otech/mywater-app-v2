@@ -1,91 +1,88 @@
 
-import { LogOut } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { useNavigate } from "react-router-dom";
-import { toast } from "sonner";
-import { logoutUser } from "@/utils/firebase/auth";
+import { useEffect, useState } from "react";
+import { auth } from "@/integrations/firebase/client";
+import { collection, query, where, getDocs } from "firebase/firestore";
+import { db } from "@/integrations/firebase/client";
 
-interface UserAvatarProps {
-  firstName: string;
-  lastName: string;
-  className?: string;
-  showMenu?: boolean;
-}
-
-export const UserAvatar = ({ 
-  firstName, 
-  lastName, 
-  className = "",
-  showMenu = true
-}: UserAvatarProps) => {
-  const navigate = useNavigate();
-
-  const handleLogout = async () => {
-    try {
-      await logoutUser();
-      toast.success("Logged out successfully");
-      navigate("/"); // Navigate to landing page
-    } catch (error) {
-      console.error("Error logging out:", error);
-      toast.error("Failed to log out");
-    }
-  };
-
-  const getInitials = () => {
-    // Trim and check for non-empty strings to avoid initials like "U"
-    const firstInitial = firstName && firstName.trim() ? firstName.trim().charAt(0).toUpperCase() : "";
-    const lastInitial = lastName && lastName.trim() ? lastName.trim().charAt(0).toUpperCase() : "";
-    
-    // If both initials are available, use them
-    if (firstInitial && lastInitial) {
-      return `${firstInitial}${lastInitial}`;
+export function UserAvatar() {
+  const [initials, setInitials] = useState<string>("U");
+  
+  useEffect(() => {
+    // Check if we have cached initials
+    const cachedInitials = sessionStorage.getItem('userInitials');
+    if (cachedInitials) {
+      setInitials(cachedInitials);
+      return;
     }
     
-    // If only first name is available, use first 2 letters
-    if (firstInitial && !lastInitial && firstName.length > 1) {
-      return `${firstName.substring(0, 2).toUpperCase()}`;
-    }
+    const fetchUserInitials = async () => {
+      const currentUser = auth.currentUser;
+      
+      if (!currentUser) {
+        return;
+      }
+      
+      try {
+        // First check private users collection
+        const privateUsersRef = collection(db, "app_users_private");
+        const q = query(privateUsersRef, where("id", "==", currentUser.uid));
+        const querySnapshot = await getDocs(q);
+        
+        if (!querySnapshot.empty) {
+          const userData = querySnapshot.docs[0].data();
+          const firstName = userData.first_name || userData.firstName || "";
+          const lastName = userData.last_name || userData.lastName || "";
+          
+          if (firstName && lastName) {
+            const userInitials = `${firstName.charAt(0)}${lastName.charAt(0)}`;
+            setInitials(userInitials.toUpperCase());
+            sessionStorage.setItem('userInitials', userInitials.toUpperCase());
+            return;
+          }
+        }
+        
+        // If not found, check business users
+        const businessUsersRef = collection(db, "app_users_business");
+        const businessQuery = query(businessUsersRef, where("id", "==", currentUser.uid));
+        const businessSnapshot = await getDocs(businessQuery);
+        
+        if (!businessSnapshot.empty) {
+          const userData = businessSnapshot.docs[0].data();
+          const firstName = userData.first_name || userData.firstName || "";
+          const lastName = userData.last_name || userData.lastName || "";
+          
+          if (firstName && lastName) {
+            const userInitials = `${firstName.charAt(0)}${lastName.charAt(0)}`;
+            setInitials(userInitials.toUpperCase());
+            sessionStorage.setItem('userInitials', userInitials.toUpperCase());
+            return;
+          }
+        }
+        
+        // As a last resort, use displayName from auth
+        if (currentUser.displayName) {
+          const nameParts = currentUser.displayName.split(' ');
+          if (nameParts.length >= 2) {
+            const userInitials = `${nameParts[0].charAt(0)}${nameParts[1].charAt(0)}`;
+            setInitials(userInitials.toUpperCase());
+            sessionStorage.setItem('userInitials', userInitials.toUpperCase());
+          } else if (nameParts.length === 1) {
+            setInitials(nameParts[0].charAt(0).toUpperCase());
+            sessionStorage.setItem('userInitials', nameParts[0].charAt(0).toUpperCase());
+          }
+        }
+      } catch (error) {
+        console.error("Error fetching user data for avatar:", error);
+      }
+    };
     
-    // Default fallback
-    return firstInitial || lastInitial || "U";
-  };
-
-  // If we don't need the dropdown menu
-  if (!showMenu) {
-    return (
-      <Avatar className={`h-12 w-12 ${className}`}>
-        <AvatarFallback className="bg-mywater-blue text-white">
-          {getInitials()}
-        </AvatarFallback>
-      </Avatar>
-    );
-  }
-
-  // With dropdown menu
+    fetchUserInitials();
+  }, []);
+  
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Avatar className={`h-8 w-8 cursor-pointer hover:opacity-80 transition-opacity ${className}`}>
-          <AvatarFallback className="bg-mywater-blue text-white">
-            {getInitials()}
-          </AvatarFallback>
-        </Avatar>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="bg-spotify-darker border-spotify-accent">
-        <DropdownMenuItem 
-          onClick={handleLogout}
-          className="text-white hover:bg-spotify-accent cursor-pointer"
-        >
-          <LogOut className="mr-2 h-4 w-4" />
-          <span>Log out</span>
-        </DropdownMenuItem>
-      </DropdownMenuContent>
-    </DropdownMenu>
+    <Avatar className="h-9 w-9">
+      <AvatarFallback className="bg-mywater-blue">{initials}</AvatarFallback>
+    </Avatar>
   );
-};
+}

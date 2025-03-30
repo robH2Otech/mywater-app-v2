@@ -13,6 +13,7 @@ export function useEmailAuth() {
   const [isLoading, setIsLoading] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [userDisplayName, setUserDisplayName] = useState("");
   
   const handleEmailAuth = async (e: React.FormEvent, authMode: "login" | "register") => {
     e.preventDefault();
@@ -34,6 +35,13 @@ export function useEmailAuth() {
         }
         
         console.log("Private user signed in:", user.uid);
+        // Store user display name from the auth object if available
+        if (user.displayName) {
+          setUserDisplayName(user.displayName);
+          // Store in session storage for persistence
+          sessionStorage.setItem('userDisplayName', user.displayName);
+        }
+        
         navigate("/private-dashboard");
       } else if (authMode === "register") {
         console.log("Starting registration with email");
@@ -61,6 +69,7 @@ export function useEmailAuth() {
     isLoading,
     email,
     password,
+    userDisplayName,
     setEmail,
     setPassword,
     handleEmailAuth
