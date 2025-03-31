@@ -92,7 +92,7 @@ ${userName || "[Your Name]"}`;
       console.error("Error sending email:", error);
       toast({
         title: "Error sending referral",
-        description: "There was a problem sending your invitation. Please try again.",
+        description: "There was a problem sending your invitation. Please try again later.",
         variant: "destructive"
       });
     } finally {

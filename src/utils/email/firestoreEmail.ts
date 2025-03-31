@@ -20,6 +20,8 @@ export const processPendingEmails = async () => {
       const emailData = emailDoc.data();
       
       try {
+        console.log(`Processing email ${emailDoc.id} to ${emailData.to}`);
+        
         // Send the email using EmailJS
         await sendEmailWithEmailJS(
           emailData.to,
@@ -37,12 +39,19 @@ export const processPendingEmails = async () => {
         });
         
         processedCount++;
+        console.log(`Email ${emailDoc.id} sent successfully`);
       } catch (sendError) {
-        console.error("Error processing email:", sendError);
-        // Mark as failed
+        console.error(`Error processing email ${emailDoc.id}:`, sendError);
+        
+        // Convert error to string to prevent [object Object] in Firestore
+        const errorMessage = typeof sendError === 'object' ? 
+          (sendError instanceof Error ? sendError.message : JSON.stringify(sendError)) : 
+          String(sendError);
+        
+        // Mark as failed with proper error message
         await updateDoc(doc(db, "emails_to_send", emailDoc.id), {
           status: "failed",
-          error: String(sendError)
+          error: errorMessage
         });
       }
     }

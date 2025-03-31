@@ -1,3 +1,4 @@
+
 import { collection, addDoc, updateDoc, doc } from "firebase/firestore";
 import { db } from "@/integrations/firebase/client";
 import { sendEmailWithEmailJS } from './config';
@@ -37,6 +38,7 @@ export const sendReferralEmail = async (
     
     // Send the email using EmailJS
     try {
+      // Convert error objects to strings to prevent [object Object] in Firestore
       const response = await sendEmailWithEmailJS(
         toEmail,
         toName,
@@ -52,14 +54,20 @@ export const sendReferralEmail = async (
         sent_at: new Date()
       });
       
+      console.log("Email sent and status updated in Firestore");
       return true;
     } catch (emailError) {
       console.error("Error sending email with EmailJS:", emailError);
       
-      // Update status in Firestore to failed
+      // Convert error object to string to avoid [object Object] in Firestore
+      const errorMessage = typeof emailError === 'object' ? 
+        (emailError instanceof Error ? emailError.message : JSON.stringify(emailError)) : 
+        String(emailError);
+      
+      // Update status in Firestore to failed with proper error message
       await updateDoc(doc(db, "emails_to_send", emailDocRef.id), {
         status: "failed",
-        error: String(emailError)
+        error: errorMessage
       });
       
       // Use direct method as fallback

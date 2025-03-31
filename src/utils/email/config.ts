@@ -5,7 +5,7 @@ import emailjs from 'emailjs-com';
 export const EMAILJS_CONFIG = {
   SERVICE_ID: 'service_mywater',
   TEMPLATE_ID: 'template_referral',
-  USER_ID: '20lKGYgYsf1DIICqM' // Replace with actual user ID when in production
+  USER_ID: '20lKGYgYsf1DIICqM'
 };
 
 /**
@@ -36,15 +36,17 @@ export const sendEmailWithEmailJS = async (
     console.log("Sending email with params:", {
       serviceId: EMAILJS_CONFIG.SERVICE_ID,
       templateId: EMAILJS_CONFIG.TEMPLATE_ID, 
-      params: templateParams
+      params: { ...templateParams }
     });
     
-    return await emailjs.send(
+    const response = await emailjs.send(
       EMAILJS_CONFIG.SERVICE_ID,
       EMAILJS_CONFIG.TEMPLATE_ID,
-      templateParams,
-      EMAILJS_CONFIG.USER_ID
+      templateParams
     );
+    
+    console.log("Email sent successfully:", response);
+    return response;
   } catch (error) {
     console.error("Error sending email with EmailJS:", error);
     throw error;
