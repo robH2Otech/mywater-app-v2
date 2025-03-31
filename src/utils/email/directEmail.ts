@@ -4,71 +4,35 @@ import { EMAILJS_CONFIG, initEmailJS } from './config';
 
 /**
  * Sends an email directly to the recipient
- * Serves as a fallback mechanism when the primary EmailJS method fails
+ * Uses the most basic approach possible
  */
 export const sendEmailDirect = async (
   toEmail: string,
   toName: string,
   fromName: string,
   subject: string, 
-  message: string,
-  additionalParams: Record<string, any> = {}
+  message: string
 ) => {
-  console.log("Attempting to send email via direct method to:", toEmail);
+  console.log("Attempting to send email via simplified direct method to:", toEmail);
   
-  // Try to use EmailJS with a different template/configuration as fallback
   try {
-    // Attempt with alternative template IDs that may be available in the account
-    const alternativeTemplateIds = ['template_basic', 'template_default', 'template_simple'];
-    
-    // Clean HTML tags from message if present
-    const cleanMessage = message.replace(/<br>/g, '\n').replace(/<[^>]*>/g, '');
-    
-    const templateParams = {
-      to_email: toEmail,
-      to_name: toName,
-      from_name: fromName,
-      message: cleanMessage,
-      subject: subject,
-      from_email: "contact@mywatertechnologies.com",
-      ...additionalParams
-    };
-    
     // Initialize EmailJS
     initEmailJS();
     
-    // Try each template ID in sequence
-    for (const templateId of alternativeTemplateIds) {
-      try {
-        console.log(`Attempting fallback email with template: ${templateId}`);
-        
-        // Use the same service ID but different template
-        const response = await emailjs.send(
-          EMAILJS_CONFIG.SERVICE_ID,
-          templateId,
-          templateParams,
-          EMAILJS_CONFIG.PUBLIC_KEY
-        );
-        
-        console.log(`Fallback email sent successfully with template ${templateId}:`, response);
-        return true;
-      } catch (templateError) {
-        console.error(`Error using template ${templateId}:`, templateError);
-      }
-    }
+    // Create the simplest possible template params
+    const simpleParams = {
+      to_email: toEmail,
+      to_name: toName,
+      from_name: fromName,
+      subject: subject,
+      message: message.replace(/<br>/g, '\n').replace(/<[^>]*>/g, '')
+    };
     
-    // If all templates fail, use a direct approach with minimal parameters
+    console.log("Sending direct email with minimal parameters:", simpleParams);
+    
+    // Try sending with different service/template combinations
     try {
-      const simpleParams = {
-        to_email: toEmail,
-        to_name: toName,
-        from_name: fromName,
-        subject: subject,
-        message: `${fromName} has invited you to try MYWATER with a 20% discount! Use code: ${additionalParams.referral_code || 'MYWATER20'} at https://mywater.com/products`,
-      };
-      
-      console.log("Attempting last resort email with minimal parameters");
-      
+      // Try the main service/template
       const response = await emailjs.send(
         EMAILJS_CONFIG.SERVICE_ID,
         EMAILJS_CONFIG.TEMPLATE_ID,
@@ -76,17 +40,52 @@ export const sendEmailDirect = async (
         EMAILJS_CONFIG.PUBLIC_KEY
       );
       
-      console.log("Simple fallback email sent successfully:", response);
+      console.log("Direct email sent successfully:", response);
       return true;
-    } catch (simpleError) {
-      console.error("All EmailJS attempts failed:", simpleError);
+    } catch (mainError) {
+      console.error("Main email attempt failed:", mainError);
       
-      // Log the error details for debugging
-      console.error("Error details:", JSON.stringify(simpleError));
-      return false;
+      // Try with default template
+      try {
+        const response = await emailjs.send(
+          EMAILJS_CONFIG.SERVICE_ID,
+          "template_default",  // Try a different template
+          simpleParams,
+          EMAILJS_CONFIG.PUBLIC_KEY
+        );
+        
+        console.log("Direct email sent successfully with default template:", response);
+        return true;
+      } catch (defaultTemplateError) {
+        console.error("Default template email attempt failed:", defaultTemplateError);
+        
+        // One final attempt with ultra-simplified params
+        try {
+          const ultraSimpleParams = {
+            to_email: toEmail,
+            to_name: toName,
+            from_name: fromName,
+            subject: subject,
+            message: `${fromName} has invited you to try MYWATER with a 20% discount! Visit https://mywater.com/products`
+          };
+          
+          const response = await emailjs.send(
+            EMAILJS_CONFIG.SERVICE_ID,
+            EMAILJS_CONFIG.TEMPLATE_ID,
+            ultraSimpleParams,
+            EMAILJS_CONFIG.PUBLIC_KEY
+          );
+          
+          console.log("Ultra-simple email sent successfully:", response);
+          return true;
+        } catch (ultraSimpleError) {
+          console.error("All email delivery methods failed:", ultraSimpleError);
+          throw ultraSimpleError;
+        }
+      }
     }
   } catch (error) {
     console.error("Direct email method failed completely:", error);
-    return false;
+    throw error;
   }
 };
