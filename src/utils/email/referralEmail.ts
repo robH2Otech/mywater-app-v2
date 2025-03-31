@@ -1,6 +1,7 @@
+
 import { collection, addDoc, updateDoc, doc } from "firebase/firestore";
 import { db } from "@/integrations/firebase/client";
-import { sendEmailWithEmailJS, EMAILJS_CONFIG } from './config';
+import { sendEmailWithEmailJS, EMAILJS_CONFIG, initEmailJS } from './config';
 import { generateReferralEmailTemplate } from './templates';
 import { sendEmailDirect } from './directEmail';
 import emailjs from 'emailjs-com';
@@ -68,9 +69,8 @@ export const sendReferralEmail = async (
         try {
           console.log("Trying direct EmailJS method");
           
-          if (!emailjs.isInitialized) {
-            emailjs.init(EMAILJS_CONFIG.USER_ID);
-          }
+          // Initialize EmailJS if needed
+          initEmailJS();
           
           const cleanMessage = emailContent.replace(/<br>/g, '\n').replace(/<[^>]*>/g, '');
           

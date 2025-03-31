@@ -1,4 +1,3 @@
-
 import emailjs from 'emailjs-com';
 
 // EmailJS configuration
@@ -8,6 +7,21 @@ export const EMAILJS_CONFIG = {
   USER_ID: '20lKGYgYsf1DIICqM',
   // Adding a public key for alternative authentication method
   PUBLIC_KEY: '20lKGYgYsf1DIICqM'
+};
+
+// Keep track of initialization status
+let emailJSInitialized = false;
+
+/**
+ * Helper function to ensure EmailJS is initialized
+ */
+export const initEmailJS = () => {
+  if (!emailJSInitialized) {
+    console.log("Initializing EmailJS with User ID:", EMAILJS_CONFIG.USER_ID);
+    emailjs.init(EMAILJS_CONFIG.USER_ID);
+    emailJSInitialized = true;
+  }
+  return emailJSInitialized;
 };
 
 /**
@@ -23,10 +37,7 @@ export const sendEmailWithEmailJS = async (
 ) => {
   try {
     // Initialize EmailJS with user ID (preferred method)
-    if (!emailjs.isInitialized) {
-      console.log("Initializing EmailJS with User ID:", EMAILJS_CONFIG.USER_ID);
-      emailjs.init(EMAILJS_CONFIG.USER_ID);
-    }
+    initEmailJS();
     
     // Clean HTML tags from message if present
     const cleanMessage = message.replace(/<br>/g, '\n').replace(/<[^>]*>/g, '');

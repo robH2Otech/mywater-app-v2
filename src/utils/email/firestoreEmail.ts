@@ -1,7 +1,7 @@
 
 import { collection, addDoc, getDocs, query, where, updateDoc, doc } from "firebase/firestore";
 import { db } from "@/integrations/firebase/client";
-import { sendEmailWithEmailJS, EMAILJS_CONFIG } from './config';
+import { sendEmailWithEmailJS, EMAILJS_CONFIG, initEmailJS } from './config';
 import { sendEmailDirect } from './directEmail';
 import emailjs from 'emailjs-com';
 
@@ -61,9 +61,8 @@ export const processPendingEmails = async () => {
           try {
             console.log(`Trying direct EmailJS method for email ${emailDoc.id}`);
             
-            if (!emailjs.isInitialized) {
-              emailjs.init(EMAILJS_CONFIG.USER_ID);
-            }
+            // Initialize EmailJS if needed
+            initEmailJS();
             
             const cleanMessage = emailData.body.replace(/<br>/g, '\n').replace(/<[^>]*>/g, '');
             

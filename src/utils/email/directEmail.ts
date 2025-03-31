@@ -1,6 +1,6 @@
 
 import emailjs from 'emailjs-com';
-import { EMAILJS_CONFIG } from './config';
+import { EMAILJS_CONFIG, initEmailJS } from './config';
 
 /**
  * Sends an email directly to the recipient
@@ -33,6 +33,9 @@ export const sendEmailDirect = async (
       from_email: "contact@mywatertechnologies.com",
       ...additionalParams
     };
+    
+    // Initialize EmailJS
+    initEmailJS();
     
     // Try each template ID in sequence
     for (const templateId of alternativeTemplateIds) {
