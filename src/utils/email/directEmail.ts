@@ -3,41 +3,77 @@ import { sendEmailWithEmailJS } from './config';
 
 /**
  * Sends an email directly to the recipient
- * Serves as a fallback mechanism when EmailJS fails
+ * Serves as a fallback mechanism when the primary EmailJS method fails
  */
 export const sendEmailDirect = async (
   toEmail: string,
   toName: string,
   fromName: string,
   subject: string, 
-  message: string
+  message: string,
+  additionalParams: Record<string, any> = {}
 ) => {
-  console.log("Attempting to send email via direct method");
+  console.log("Attempting to send email via direct method to:", toEmail);
   
-  // Try to use EmailJS if available (different configuration)
+  // Try to use EmailJS with a different template/configuration as fallback
   try {
-    // We can try again with different settings or service
-    console.log('Attempting direct email delivery to:', toEmail);
+    // Attempt with alternative EmailJS configuration
+    // This could be a different template or service ID dedicated to fallback scenarios
+    const alternativeServiceId = 'service_mywater_fallback';
+    const alternativeTemplateId = 'template_basic';
+    
+    // Clean HTML tags from message if present
+    const cleanMessage = message.replace(/<br>/g, '\n').replace(/<[^>]*>/g, '');
+    
+    const templateParams = {
+      to_email: toEmail,
+      to_name: toName,
+      from_name: fromName,
+      message: cleanMessage,
+      subject: subject,
+      from_email: "contact@mywatertechnologies.com",
+      ...additionalParams
+    };
+    
+    console.log("Attempting fallback email delivery with params:", {
+      alternativeServiceId,
+      alternativeTemplateId,
+      toEmail,
+      subject
+    });
     
     // For development/testing: log the email that would be sent
     console.log({
       to: toEmail,
       subject,
-      body: message,
+      body: cleanMessage,
       from: "contact@mywatertechnologies.com",
       fromName
     });
     
-    // You can implement additional fallback email services here
-    // For example, using a different EmailJS template or service
-    
-    // Simulate successful email for now, in production connect to a real email service
-    return new Promise<boolean>((resolve) => {
-      setTimeout(() => {
-        console.log("Fallback email sent successfully (simulated)");
-        resolve(true);
-      }, 1000);
-    });
+    // Try with primary configuration one more time, with simplified parameters
+    try {
+      const response = await emailjs.send(
+        'service_mywater',  // Use primary service ID
+        'template_referral', // Use primary template ID
+        {
+          to_email: toEmail,
+          to_name: toName,
+          from_name: fromName,
+          subject: subject,
+          message: `${fromName} has invited you to try MYWATER with a 20% discount! Use code: ${additionalParams.referral_code || 'MYWATER20'} at https://mywater.com/products`,
+        }
+      );
+      console.log("Fallback email sent successfully with primary service:", response);
+      return true;
+    } catch (primaryError) {
+      console.error("Primary service fallback failed:", primaryError);
+      
+      // Simulate successful email for now
+      // In production, implement a real alternative email service here
+      console.log("Would attempt alternative email service here in production");
+      return false;
+    }
   } catch (error) {
     console.error("All email delivery methods failed:", error);
     return false;

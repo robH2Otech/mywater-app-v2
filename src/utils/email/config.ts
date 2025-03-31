@@ -23,11 +23,14 @@ export const sendEmailWithEmailJS = async (
     // Initialize EmailJS with user ID
     emailjs.init(EMAILJS_CONFIG.USER_ID);
     
+    // Clean HTML tags from message if present
+    const cleanMessage = message.replace(/<br>/g, '\n').replace(/<[^>]*>/g, '');
+    
     const templateParams = {
       to_email: toEmail,
       to_name: toName,
       from_name: fromName,
-      message: message,
+      message: cleanMessage,
       subject: subject,
       from_email: "contact@mywatertechnologies.com",
       ...additionalParams
@@ -49,6 +52,13 @@ export const sendEmailWithEmailJS = async (
     return response;
   } catch (error) {
     console.error("Error sending email with EmailJS:", error);
-    throw error;
+    
+    // Convert any error object to a proper string
+    const errorMessage = error instanceof Error 
+      ? error.message 
+      : (typeof error === 'object' ? JSON.stringify(error) : String(error));
+    
+    console.error("Formatted error message:", errorMessage);
+    throw new Error(errorMessage);
   }
 };

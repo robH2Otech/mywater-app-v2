@@ -1,4 +1,3 @@
-
 import { collection, addDoc, updateDoc, doc } from "firebase/firestore";
 import { db } from "@/integrations/firebase/client";
 import { sendEmailWithEmailJS } from './config';
@@ -18,6 +17,7 @@ export const sendReferralEmail = async (
   try {
     // Generate default message if none provided
     const emailContent = customMessage || generateReferralEmailTemplate(toName, fromName, referralCode);
+    const subject = `${fromName} invited you to try MYWATER (20% discount!)`;
 
     // Store in Firestore for record-keeping
     const emailDocRef = await addDoc(collection(db, "emails_to_send"), {
@@ -25,7 +25,7 @@ export const sendReferralEmail = async (
       to_name: toName,
       from: "contact@mywatertechnologies.com",
       from_name: fromName,
-      subject: `${fromName} invited you to try MYWATER (20% discount!)`,
+      subject: subject,
       body: emailContent,
       html_body: emailContent.replace(/\n/g, "<br>"),
       created_at: new Date(),
@@ -38,12 +38,13 @@ export const sendReferralEmail = async (
     
     // Send the email using EmailJS
     try {
-      // Convert error objects to strings to prevent [object Object] in Firestore
+      console.log(`Attempting to send referral email to ${toEmail} from ${fromName}`);
+      
       const response = await sendEmailWithEmailJS(
         toEmail,
         toName,
         fromName,
-        `${fromName} invited you to try MYWATER (20% discount!)`,
+        subject,
         emailContent,
         { referral_code: referralCode }
       );
@@ -54,33 +55,50 @@ export const sendReferralEmail = async (
         sent_at: new Date()
       });
       
-      console.log("Email sent and status updated in Firestore");
+      console.log("Email sent successfully and status updated in Firestore");
       return true;
     } catch (emailError) {
-      console.error("Error sending email with EmailJS:", emailError);
+      console.error("Error sending email with primary method:", emailError);
       
-      // Convert error object to string to avoid [object Object] in Firestore
-      const errorMessage = typeof emailError === 'object' ? 
-        (emailError instanceof Error ? emailError.message : JSON.stringify(emailError)) : 
-        String(emailError);
+      // Convert any error to proper string format for Firestore
+      const errorMessage = emailError instanceof Error 
+        ? emailError.message 
+        : (typeof emailError === 'object' ? JSON.stringify(emailError) : String(emailError));
       
-      // Update status in Firestore to failed with proper error message
+      console.log("Using formatted error message:", errorMessage);
+      
+      // Update status in Firestore with proper error message
       await updateDoc(doc(db, "emails_to_send", emailDocRef.id), {
         status: "failed",
-        error: errorMessage
+        error: errorMessage,
+        error_time: new Date()
       });
       
-      // Use direct method as fallback
-      return await sendEmailDirect(
+      // Try fallback method
+      console.log("Attempting fallback email delivery method");
+      const fallbackSuccess = await sendEmailDirect(
         toEmail,
         toName,
         fromName,
-        `${fromName} invited you to try MYWATER (20% discount!)`,
-        emailContent
+        subject,
+        emailContent,
+        { referral_code: referralCode }
       );
+      
+      if (fallbackSuccess) {
+        await updateDoc(doc(db, "emails_to_send", emailDocRef.id), {
+          status: "sent_via_fallback",
+          sent_at: new Date()
+        });
+        console.log("Email sent via fallback method");
+        return true;
+      }
+      
+      console.error("All email delivery methods failed");
+      return false;
     }
   } catch (error) {
-    console.error("Error sending referral email:", error);
+    console.error("Error in sendReferralEmail function:", error);
     return false;
   }
 };
