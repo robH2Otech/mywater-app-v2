@@ -1,4 +1,5 @@
 
+import emailjs from 'emailjs-com';
 import { sendEmailWithEmailJS } from './config';
 
 /**
