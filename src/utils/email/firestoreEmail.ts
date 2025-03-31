@@ -105,8 +105,7 @@ export const processPendingEmails = async () => {
                 emailData.to_name || emailData.to,
                 emailData.from_name,
                 emailData.subject,
-                emailData.body,
-                { referral_code: emailData.referral_code }
+                emailData.body
               );
               
               if (fallbackSuccess) {
