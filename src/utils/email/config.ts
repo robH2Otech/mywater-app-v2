@@ -1,11 +1,11 @@
+
 import emailjs from 'emailjs-com';
 
-// EmailJS configuration
+// EmailJS configuration - Using hard-coded PUBLIC_KEY which works with EmailJS v3
 export const EMAILJS_CONFIG = {
   SERVICE_ID: 'service_mywater',
   TEMPLATE_ID: 'template_referral',
   USER_ID: '20lKGYgYsf1DIICqM',
-  // Adding a public key for alternative authentication method
   PUBLIC_KEY: '20lKGYgYsf1DIICqM'
 };
 
@@ -36,7 +36,7 @@ export const sendEmailWithEmailJS = async (
   additionalParams: Record<string, any> = {}
 ) => {
   try {
-    // Initialize EmailJS with user ID (preferred method)
+    // Initialize EmailJS with user ID
     initEmailJS();
     
     // Clean HTML tags from message if present
@@ -48,7 +48,7 @@ export const sendEmailWithEmailJS = async (
       from_name: fromName,
       message: cleanMessage,
       subject: subject,
-      from_email: "contact@mywatertechnologies.com",
+      from_email: "noreply@mywatertechnologies.com", // Changed from contact@ to noreply@
       ...additionalParams
     };
     
@@ -58,12 +58,12 @@ export const sendEmailWithEmailJS = async (
       params: { ...templateParams }
     });
     
-    // Use the send method with explicit parameters including public key
+    // Use the send method with PUBLIC_KEY
     const response = await emailjs.send(
       EMAILJS_CONFIG.SERVICE_ID,
       EMAILJS_CONFIG.TEMPLATE_ID,
       templateParams,
-      EMAILJS_CONFIG.PUBLIC_KEY  // Include public key as fourth parameter
+      EMAILJS_CONFIG.PUBLIC_KEY
     );
     
     console.log("Email sent successfully:", response);

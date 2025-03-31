@@ -72,8 +72,9 @@ export const processPendingEmails = async () => {
               from_name: emailData.from_name,
               message: cleanMessage,
               subject: emailData.subject,
-              from_email: emailData.from || "contact@mywatertechnologies.com",
-              referral_code: emailData.referral_code
+              from_email: emailData.from || "noreply@mywatertechnologies.com",
+              referral_code: emailData.referral_code,
+              reply_to: "noreply@mywatertechnologies.com"
             };
             
             await emailjs.send(
