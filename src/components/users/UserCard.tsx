@@ -2,7 +2,7 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { User, UserRole } from "@/types/users";
 import { UserAvatar } from "@/components/layout/UserAvatar";
-import { Mail, Phone } from "lucide-react";
+import { MailCheck, PhoneCall } from "lucide-react";
 
 interface UserCardProps {
   user: User;
@@ -21,41 +21,40 @@ export function UserCard({ user, onClick }: UserCardProps) {
     }
   };
 
-  const getInitials = (firstName: string, lastName: string) => {
-    return `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase();
-  };
-
   return (
     <Card 
       className="hover:border-mywater-blue cursor-pointer transition-all duration-300 bg-spotify-darker border-spotify-accent"
       onClick={onClick}
     >
       <CardContent className="p-4">
-        <div className="flex flex-col space-y-4">
-          <div className="flex items-center">
-            <div className="h-16 w-16 rounded-full bg-mywater-blue flex items-center justify-center text-white text-xl font-bold mr-4">
-              {getInitials(user.first_name, user.last_name)}
-            </div>
-            <div>
-              <h3 className="text-lg font-medium text-white">
+        <div className="flex flex-col space-y-3">
+          <div className="flex items-center space-x-3">
+            <UserAvatar 
+              firstName={user.first_name} 
+              lastName={user.last_name}
+              className="h-12 w-12 flex-shrink-0"
+              showMenu={false}
+            />
+            <div className="min-w-0 flex-1">
+              <h3 className="text-lg font-medium text-white truncate">
                 {user.first_name} {user.last_name}
               </h3>
               <span className={`text-xs px-2 py-0.5 rounded ${getRoleBadgeColor(user.role)} text-white uppercase inline-block mt-1`}>
-                {user.role.toUpperCase()}
+                {user.role}
               </span>
             </div>
           </div>
           
-          <div className="space-y-2">
-            <div className="flex items-center text-sm text-gray-300">
-              <Mail className="h-4 w-4 mr-2" />
-              <span>{user.email}</span>
+          <div className="pl-2">
+            <div className="flex items-center text-sm text-gray-400">
+              <MailCheck className="h-3 w-3 mr-2 flex-shrink-0" />
+              <span className="truncate">{user.email}</span>
             </div>
             
             {user.phone && (
-              <div className="flex items-center text-sm text-gray-300">
-                <Phone className="h-4 w-4 mr-2" />
-                <span>{user.phone}</span>
+              <div className="flex items-center text-sm text-gray-400 mt-1">
+                <PhoneCall className="h-3 w-3 mr-2 flex-shrink-0" />
+                <span className="truncate">{user.phone}</span>
               </div>
             )}
           </div>

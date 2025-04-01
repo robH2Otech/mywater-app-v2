@@ -3,8 +3,6 @@ import { FormInput } from "@/components/shared/FormInput";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { User, UserRole, UserStatus } from "@/types/users";
-import { Save } from "lucide-react";
-import { Button } from "@/components/ui/button";
 
 interface UserFormData {
   first_name: string;
@@ -26,24 +24,21 @@ interface UserDetailsFormProps {
 
 export function UserDetailsForm({ formData, handleInputChange, isEditable }: UserDetailsFormProps) {
   return (
-    <Tabs defaultValue="general" className="w-full">
-      <TabsList className="bg-spotify-accent border-spotify-accent-hover mb-6 w-full">
-        <TabsTrigger 
-          value="general" 
-          className="flex-1 data-[state=active]:bg-mywater-blue data-[state=active]:text-white"
-        >
-          General Information
+    <Tabs defaultValue="basic" className="w-full">
+      <TabsList className="mb-4 bg-spotify-darker border border-spotify-accent">
+        <TabsTrigger value="basic" className="data-[state=active]:bg-spotify-accent data-[state=active]:text-white">
+          Basic Info
         </TabsTrigger>
-        <TabsTrigger 
-          value="access" 
-          className="flex-1 data-[state=active]:bg-mywater-blue data-[state=active]:text-white"
-        >
-          Access & Roles
+        <TabsTrigger value="work" className="data-[state=active]:bg-spotify-accent data-[state=active]:text-white">
+          Work Details
+        </TabsTrigger>
+        <TabsTrigger value="account" className="data-[state=active]:bg-spotify-accent data-[state=active]:text-white">
+          Account Settings
         </TabsTrigger>
       </TabsList>
       
-      <TabsContent value="general" className="pt-2 space-y-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <TabsContent value="basic" className="space-y-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <FormInput
             label="First Name"
             value={formData.first_name}
@@ -72,6 +67,11 @@ export function UserDetailsForm({ formData, handleInputChange, isEditable }: Use
             onChange={(value) => handleInputChange("phone", value)}
             disabled={!isEditable}
           />
+        </div>
+      </TabsContent>
+      
+      <TabsContent value="work" className="space-y-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <FormInput
             label="Company"
             value={formData.company}
@@ -84,11 +84,6 @@ export function UserDetailsForm({ formData, handleInputChange, isEditable }: Use
             onChange={(value) => handleInputChange("job_title", value)}
             disabled={!isEditable}
           />
-        </div>
-      </TabsContent>
-      
-      <TabsContent value="access" className="pt-2 space-y-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="space-y-2">
             <label className="text-sm text-gray-400">Role</label>
             <Select
@@ -107,7 +102,6 @@ export function UserDetailsForm({ formData, handleInputChange, isEditable }: Use
               </SelectContent>
             </Select>
           </div>
-          
           <div className="space-y-2">
             <label className="text-sm text-gray-400">Status</label>
             <Select
@@ -125,15 +119,19 @@ export function UserDetailsForm({ formData, handleInputChange, isEditable }: Use
               </SelectContent>
             </Select>
           </div>
-          
+        </div>
+      </TabsContent>
+      
+      <TabsContent value="account" className="space-y-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <FormInput
             label="Password"
             type="password"
             value={formData.password}
             onChange={(value) => handleInputChange("password", value)}
-            placeholder={formData.password ? "••••••••" : "Enter new password"}
             required={false}
             disabled={!isEditable}
+            className="col-span-1 md:col-span-2"
           />
         </div>
       </TabsContent>

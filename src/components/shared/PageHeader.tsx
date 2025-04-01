@@ -11,7 +11,7 @@ export interface PageHeaderProps {
   children?: React.ReactNode;
   onAddClick?: () => void;
   addButtonText?: string;
-  showAddButton?: boolean;
+  showAddButton?: boolean; // Add this prop to make it optional
 }
 
 export function PageHeader({ 
@@ -21,7 +21,7 @@ export function PageHeader({
   children, 
   onAddClick, 
   addButtonText,
-  showAddButton = true
+  showAddButton = true // Default to true for backward compatibility
 }: PageHeaderProps) {
   return (
     <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 mb-4">
