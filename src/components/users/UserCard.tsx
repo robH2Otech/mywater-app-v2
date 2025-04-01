@@ -1,8 +1,7 @@
 
 import { Card, CardContent } from "@/components/ui/card";
 import { User, UserRole } from "@/types/users";
-import { UserAvatar } from "@/components/layout/UserAvatar";
-import { MailCheck, PhoneCall } from "lucide-react";
+import { Mail, Phone } from "lucide-react";
 
 interface UserCardProps {
   user: User;
@@ -10,16 +9,29 @@ interface UserCardProps {
 }
 
 export function UserCard({ user, onClick }: UserCardProps) {
-  // Map role to badge color
-  const getRoleBadgeColor = (role: UserRole) => {
+  // Map role to badge color and text
+  const getRoleBadge = (role: UserRole) => {
     switch(role) {
-      case "superadmin": return "bg-red-500";
-      case "admin": return "bg-blue-500";
-      case "technician": return "bg-yellow-500";
+      case "superadmin": 
+        return { bg: "bg-green-500", text: "SUPER ADMIN" };
+      case "admin": 
+        return { bg: "bg-blue-500", text: "ADMIN" };
+      case "technician": 
+        return { bg: "bg-yellow-500", text: "TECHNICIAN" };
       case "user": 
-      default: return "bg-green-500";
+      default: 
+        return { bg: "bg-green-500", text: "USER" };
     }
   };
+
+  // Get user initials for the avatar
+  const getInitials = () => {
+    const firstInitial = user.first_name ? user.first_name.charAt(0) : '';
+    const lastInitial = user.last_name ? user.last_name.charAt(0) : '';
+    return (firstInitial + lastInitial).toUpperCase();
+  };
+
+  const roleBadge = getRoleBadge(user.role);
 
   return (
     <Card 
@@ -29,31 +41,30 @@ export function UserCard({ user, onClick }: UserCardProps) {
       <CardContent className="p-4">
         <div className="flex flex-col space-y-3">
           <div className="flex items-center space-x-3">
-            <UserAvatar 
-              firstName={user.first_name} 
-              lastName={user.last_name}
-              className="h-12 w-12 flex-shrink-0"
-              showMenu={false}
-            />
+            <div className="h-14 w-14 rounded-full bg-mywater-blue flex items-center justify-center text-white font-bold text-lg">
+              {getInitials()}
+            </div>
             <div className="min-w-0 flex-1">
-              <h3 className="text-lg font-medium text-white truncate">
+              <h3 className="text-lg font-medium text-white">
                 {user.first_name} {user.last_name}
               </h3>
-              <span className={`text-xs px-2 py-0.5 rounded ${getRoleBadgeColor(user.role)} text-white uppercase inline-block mt-1`}>
-                {user.role}
-              </span>
+              <div className="mt-1">
+                <span className={`text-xs px-2 py-1 rounded ${roleBadge.bg} text-white uppercase inline-block`}>
+                  {roleBadge.text}
+                </span>
+              </div>
             </div>
           </div>
           
           <div className="pl-2">
-            <div className="flex items-center text-sm text-gray-400">
-              <MailCheck className="h-3 w-3 mr-2 flex-shrink-0" />
+            <div className="flex items-center text-sm text-gray-400 mt-1">
+              <Mail className="h-4 w-4 mr-2 flex-shrink-0" />
               <span className="truncate">{user.email}</span>
             </div>
             
             {user.phone && (
               <div className="flex items-center text-sm text-gray-400 mt-1">
-                <PhoneCall className="h-3 w-3 mr-2 flex-shrink-0" />
+                <Phone className="h-4 w-4 mr-2 flex-shrink-0" />
                 <span className="truncate">{user.phone}</span>
               </div>
             )}
