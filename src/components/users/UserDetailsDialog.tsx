@@ -1,16 +1,13 @@
 
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { useState, useEffect } from "react";
-import { useToast } from "@/hooks/use-toast";
-import { useQueryClient } from "@tanstack/react-query";
-import { doc, updateDoc } from "firebase/firestore";
-import { db } from "@/integrations/firebase/client";
-import { User, UserRole, UserStatus } from "@/types/users";
+import { User, UserRole } from "@/types/users";
 import { ScrollableDialogContent } from "@/components/shared/ScrollableDialogContent";
 import { UserDetailsForm } from "./UserDetailsForm";
-import { UserActionButtons } from "./UserActionButtons";
-import { Save, X } from "lucide-react";
+import { UserDialogHeader } from "./UserDialogHeader";
+import { UserDialogFooter } from "./UserDialogFooter";
+import { useDialogConfirmation } from "./DialogConfirmation";
+import { useUserDetailsUpdate, UserFormData } from "@/hooks/users/useUserDetailsUpdate";
 
 interface UserDetailsDialogProps {
   user: User | null;
@@ -19,21 +16,12 @@ interface UserDetailsDialogProps {
   currentUserRole?: UserRole;
 }
 
-interface UserFormData {
-  first_name: string;
-  last_name: string;
-  email: string;
-  phone: string;
-  company: string;
-  job_title: string;
-  role: UserRole;
-  status: UserStatus;
-  password: string;
-}
-
-export function UserDetailsDialog({ user, open, onOpenChange, currentUserRole = "user" }: UserDetailsDialogProps) {
-  const { toast } = useToast();
-  const queryClient = useQueryClient();
+export function UserDetailsDialog({ 
+  user, 
+  open, 
+  onOpenChange, 
+  currentUserRole = "user" 
+}: UserDetailsDialogProps) {
   const [formData, setFormData] = useState<UserFormData>({
     first_name: "",
     last_name: "",
@@ -46,8 +34,8 @@ export function UserDetailsDialog({ user, open, onOpenChange, currentUserRole = 
     password: ""
   });
   const [hasChanges, setHasChanges] = useState(false);
-  const [isSaving, setIsSaving] = useState(false);
-
+  
+  // Update form when user changes
   useEffect(() => {
     if (user) {
       setFormData({
@@ -96,50 +84,19 @@ export function UserDetailsDialog({ user, open, onOpenChange, currentUserRole = 
     });
   };
 
-  const handleSubmit = async () => {
-    try {
-      if (!user?.id) {
-        throw new Error("User ID is required");
-      }
-      
-      if (!isEditable) {
-        throw new Error("You don't have permission to edit user details");
-      }
+  const { handleSubmit, isSaving } = useUserDetailsUpdate(user, () => {
+    setHasChanges(false);
+    onOpenChange(false);
+  });
 
-      setIsSaving(true);
-      
-      const userDocRef = doc(db, "app_users_business", user.id);
-      await updateDoc(userDocRef, {
-        ...formData,
-        updated_at: new Date().toISOString()
-      });
-
-      toast({
-        title: "Success",
-        description: "User details updated successfully",
-      });
-
-      queryClient.invalidateQueries({ queryKey: ["users"] });
-      setHasChanges(false);
-      setIsSaving(false);
-      onOpenChange(false);
-    } catch (error: any) {
-      setIsSaving(false);
-      toast({
-        title: "Error",
-        description: error.message,
-        variant: "destructive",
-      });
-    }
-  };
+  const { handleOpenChange } = useDialogConfirmation({
+    hasChanges,
+    onOpenChange,
+    newOpen: open
+  });
 
   const handleAction = (action: 'email' | 'report' | 'reminder' | 'invoice') => {
     if (!user?.email) {
-      toast({
-        title: "Cannot send email",
-        description: "User email is not available",
-        variant: "destructive",
-      });
       return;
     }
 
@@ -168,37 +125,14 @@ export function UserDetailsDialog({ user, open, onOpenChange, currentUserRole = 
 
     // Open default email client with pre-filled details
     window.location.href = `mailto:${user.email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
-    
-    toast({
-      title: "Email client opened",
-      description: `Preparing to send ${action} to ${user.email}`,
-    });
   };
 
   if (!user) return null;
 
   return (
-    <Dialog open={open} onOpenChange={(newOpen) => {
-      if (!newOpen && hasChanges) {
-        // Confirm before closing with unsaved changes
-        if (window.confirm("You have unsaved changes. Are you sure you want to close?")) {
-          onOpenChange(false);
-        }
-      } else {
-        onOpenChange(newOpen);
-      }
-    }}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent className="sm:max-w-[750px] bg-spotify-darker border-spotify-accent overflow-hidden">
-        <DialogHeader>
-          <DialogTitle className="text-xl font-semibold text-white flex items-center gap-2">
-            User Details
-            {hasChanges && (
-              <span className="text-sm text-yellow-400 font-normal ml-2">
-                (Unsaved changes)
-              </span>
-            )}
-          </DialogTitle>
-        </DialogHeader>
+        <UserDialogHeader hasChanges={hasChanges} />
 
         <ScrollableDialogContent maxHeight="65vh">
           <UserDetailsForm 
@@ -208,31 +142,14 @@ export function UserDetailsDialog({ user, open, onOpenChange, currentUserRole = 
           />
         </ScrollableDialogContent>
 
-        <div className="flex flex-col sm:flex-row sm:justify-between gap-4 mt-6">
-          <UserActionButtons onAction={handleAction} />
-          
-          <div className="flex gap-2 self-end">
-            <Button
-              variant="outline"
-              onClick={() => onOpenChange(false)}
-              className="bg-spotify-accent hover:bg-spotify-accent-hover"
-            >
-              <X size={16} className="mr-1" />
-              Cancel
-            </Button>
-            
-            {isEditable && (
-              <Button
-                onClick={handleSubmit}
-                className={`bg-spotify-green hover:bg-spotify-green/90 ${!hasChanges ? 'opacity-70' : ''}`}
-                disabled={!hasChanges || isSaving}
-              >
-                <Save size={16} className="mr-1" />
-                {isSaving ? 'Saving...' : 'Save Changes'}
-              </Button>
-            )}
-          </div>
-        </div>
+        <UserDialogFooter 
+          onClose={() => onOpenChange(false)}
+          onSave={() => handleSubmit(formData)}
+          hasChanges={hasChanges}
+          isSaving={isSaving}
+          isEditable={isEditable}
+          onAction={handleAction}
+        />
       </DialogContent>
     </Dialog>
   );
