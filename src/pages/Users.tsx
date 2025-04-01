@@ -7,7 +7,7 @@ import { UserDetailsDialog } from "@/components/users/UserDetailsDialog";
 import { PageHeader } from "@/components/shared/PageHeader";
 import { LoadingSkeleton } from "@/components/shared/LoadingSkeleton";
 import { UsersList } from "@/components/users/UsersList";
-import { collection, getDocs, query, where } from "firebase/firestore";
+import { collection, getDocs, query, where, DocumentData } from "firebase/firestore";
 import { db } from "@/integrations/firebase/client";
 import { Card } from "@/components/ui/card";
 import { Users as UsersIcon, ShieldAlert, Shield } from "lucide-react";
@@ -89,15 +89,21 @@ export const Users = () => {
         }
         
         const usersSnapshot = await getDocs(usersQuery);
-        const usersList = usersSnapshot.docs.map(doc => ({
-          id: doc.id,
-          first_name: doc.data().first_name || "",
-          last_name: doc.data().last_name || "",
-          email: doc.data().email || "",
-          role: doc.data().role || "user",
-          status: doc.data().status || "active",
-          ...doc.data()
-        })) as User[];
+        const usersList = usersSnapshot.docs.map(doc => {
+          const data = doc.data() as DocumentData;
+          return {
+            id: doc.id,
+            first_name: data.first_name || "",
+            last_name: data.last_name || "",
+            email: data.email || "",
+            role: data.role || "user",
+            status: data.status || "active",
+            phone: data.phone || "",
+            company: data.company || "",
+            job_title: data.job_title || "",
+            // Add any other properties from the User type
+          } as User;
+        });
         
         console.log("Users data:", usersList);
         return usersList;
