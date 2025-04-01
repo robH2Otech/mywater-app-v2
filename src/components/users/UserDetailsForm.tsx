@@ -3,6 +3,8 @@ import { FormInput } from "@/components/shared/FormInput";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { User, UserRole, UserStatus } from "@/types/users";
+import { Save } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 interface UserFormData {
   first_name: string;
@@ -25,23 +27,23 @@ interface UserDetailsFormProps {
 export function UserDetailsForm({ formData, handleInputChange, isEditable }: UserDetailsFormProps) {
   return (
     <Tabs defaultValue="general" className="w-full">
-      <TabsList className="bg-spotify-accent border-spotify-accent-hover mb-4">
+      <TabsList className="bg-spotify-accent border-spotify-accent-hover mb-6 w-full">
         <TabsTrigger 
           value="general" 
-          className="data-[state=active]:bg-mywater-blue data-[state=active]:text-white"
+          className="flex-1 data-[state=active]:bg-mywater-blue data-[state=active]:text-white"
         >
           General Information
         </TabsTrigger>
         <TabsTrigger 
           value="access" 
-          className="data-[state=active]:bg-mywater-blue data-[state=active]:text-white"
+          className="flex-1 data-[state=active]:bg-mywater-blue data-[state=active]:text-white"
         >
           Access & Roles
         </TabsTrigger>
       </TabsList>
       
-      <TabsContent value="general" className="pt-2">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <TabsContent value="general" className="pt-2 space-y-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <FormInput
             label="First Name"
             value={formData.first_name}
@@ -85,16 +87,8 @@ export function UserDetailsForm({ formData, handleInputChange, isEditable }: Use
         </div>
       </TabsContent>
       
-      <TabsContent value="access" className="pt-2">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <FormInput
-            label="Password"
-            type="password"
-            value={formData.password}
-            onChange={(value) => handleInputChange("password", value)}
-            required={false}
-            disabled={!isEditable}
-          />
+      <TabsContent value="access" className="pt-2 space-y-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="space-y-2">
             <label className="text-sm text-gray-400">Role</label>
             <Select
@@ -113,6 +107,7 @@ export function UserDetailsForm({ formData, handleInputChange, isEditable }: Use
               </SelectContent>
             </Select>
           </div>
+          
           <div className="space-y-2">
             <label className="text-sm text-gray-400">Status</label>
             <Select
@@ -130,6 +125,16 @@ export function UserDetailsForm({ formData, handleInputChange, isEditable }: Use
               </SelectContent>
             </Select>
           </div>
+          
+          <FormInput
+            label="Password"
+            type="password"
+            value={formData.password}
+            onChange={(value) => handleInputChange("password", value)}
+            placeholder={formData.password ? "••••••••" : "Enter new password"}
+            required={false}
+            disabled={!isEditable}
+          />
         </div>
       </TabsContent>
     </Tabs>

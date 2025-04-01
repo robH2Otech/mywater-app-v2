@@ -61,7 +61,7 @@ export function UserDetailsDialog({ user, open, onOpenChange, currentUserRole = 
         job_title: user.job_title || "",
         role: user.role,
         status: user.status,
-        password: user.password || ""
+        password: ""
       };
       
       setFormData(newFormData);
@@ -177,14 +177,14 @@ export function UserDetailsDialog({ user, open, onOpenChange, currentUserRole = 
   return (
     <>
       <Dialog open={open} onOpenChange={handleCloseDialog}>
-        <DialogContent className="sm:max-w-[700px] bg-spotify-darker border-spotify-accent overflow-hidden">
-          <DialogHeader>
+        <DialogContent className="sm:max-w-[800px] bg-spotify-darker border-spotify-accent overflow-hidden p-0">
+          <DialogHeader className="p-6 pb-2">
             <DialogTitle className="text-xl font-semibold text-white">
               User Details
             </DialogTitle>
           </DialogHeader>
 
-          <ScrollableDialogContent maxHeight="65vh">
+          <ScrollableDialogContent maxHeight="70vh" className="px-6">
             <UserDetailsForm 
               formData={formData}
               handleInputChange={handleInputChange}
@@ -192,7 +192,7 @@ export function UserDetailsDialog({ user, open, onOpenChange, currentUserRole = 
             />
           </ScrollableDialogContent>
 
-          <div className="flex flex-col sm:flex-row justify-between gap-3 mt-6">
+          <div className="flex flex-col sm:flex-row justify-between gap-3 mt-2 p-6 pt-3 border-t border-spotify-accent">
             <UserActionButtons onAction={handleAction} />
             <div className="flex gap-2 mt-2 sm:mt-0">
               <Button
