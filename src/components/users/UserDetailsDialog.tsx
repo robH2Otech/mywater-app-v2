@@ -1,7 +1,7 @@
 
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
 import { doc, updateDoc } from "firebase/firestore";
@@ -10,6 +10,8 @@ import { User, UserRole, UserStatus } from "@/types/users";
 import { ScrollableDialogContent } from "@/components/shared/ScrollableDialogContent";
 import { UserDetailsForm } from "./UserDetailsForm";
 import { UserActionButtons } from "./UserActionButtons";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { Save } from "lucide-react";
 
 interface UserDetailsDialogProps {
   user: User | null;
@@ -44,10 +46,13 @@ export function UserDetailsDialog({ user, open, onOpenChange, currentUserRole = 
     status: "active",
     password: ""
   });
+  const [hasChanges, setHasChanges] = useState(false);
+  const [showUnsavedChangesDialog, setShowUnsavedChangesDialog] = useState(false);
+  const initialFormData = useRef<UserFormData | null>(null);
 
   useEffect(() => {
     if (user) {
-      setFormData({
+      const newFormData = {
         first_name: user.first_name,
         last_name: user.last_name,
         email: user.email,
@@ -57,15 +62,38 @@ export function UserDetailsDialog({ user, open, onOpenChange, currentUserRole = 
         role: user.role,
         status: user.status,
         password: user.password || ""
-      });
+      };
+      
+      setFormData(newFormData);
+      initialFormData.current = { ...newFormData };
+      setHasChanges(false);
     }
   }, [user]);
 
-  const isEditable = currentUserRole === "superadmin";
+  const isEditable = currentUserRole === "superadmin" || currentUserRole === "admin";
 
   const handleInputChange = (field: keyof UserFormData, value: string) => {
     if (!isEditable) return;
-    setFormData(prev => ({ ...prev, [field]: value }));
+    
+    setFormData(prev => {
+      const newFormData = { ...prev, [field]: value };
+      // Check if anything has changed from initial values
+      if (initialFormData.current) {
+        const hasAnyChanges = Object.keys(newFormData).some(
+          key => newFormData[key as keyof UserFormData] !== initialFormData.current?.[key as keyof UserFormData]
+        );
+        setHasChanges(hasAnyChanges);
+      }
+      return newFormData;
+    });
+  };
+
+  const handleCloseDialog = () => {
+    if (hasChanges) {
+      setShowUnsavedChangesDialog(true);
+    } else {
+      onOpenChange(false);
+    }
   };
 
   const handleSubmit = async () => {
@@ -75,7 +103,7 @@ export function UserDetailsDialog({ user, open, onOpenChange, currentUserRole = 
       }
       
       if (!isEditable) {
-        throw new Error("Only Super Admins can edit user details");
+        throw new Error("Only Admins and Super Admins can edit user details");
       }
 
       const userDocRef = doc(db, "app_users_business", user.id);
@@ -90,6 +118,8 @@ export function UserDetailsDialog({ user, open, onOpenChange, currentUserRole = 
       });
 
       queryClient.invalidateQueries({ queryKey: ["users"] });
+      initialFormData.current = { ...formData };
+      setHasChanges(false);
       onOpenChange(false);
     } catch (error: any) {
       toast({
@@ -145,43 +175,72 @@ export function UserDetailsDialog({ user, open, onOpenChange, currentUserRole = 
   if (!user) return null;
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[600px] bg-spotify-darker border-spotify-accent overflow-hidden">
-        <DialogHeader>
-          <DialogTitle className="text-xl font-semibold text-white">
-            User Details
-          </DialogTitle>
-        </DialogHeader>
+    <>
+      <Dialog open={open} onOpenChange={handleCloseDialog}>
+        <DialogContent className="sm:max-w-[700px] bg-spotify-darker border-spotify-accent overflow-hidden">
+          <DialogHeader>
+            <DialogTitle className="text-xl font-semibold text-white">
+              User Details
+            </DialogTitle>
+          </DialogHeader>
 
-        <ScrollableDialogContent maxHeight="65vh">
-          <UserDetailsForm 
-            formData={formData}
-            handleInputChange={handleInputChange}
-            isEditable={isEditable}
-          />
-        </ScrollableDialogContent>
+          <ScrollableDialogContent maxHeight="65vh">
+            <UserDetailsForm 
+              formData={formData}
+              handleInputChange={handleInputChange}
+              isEditable={isEditable}
+            />
+          </ScrollableDialogContent>
 
-        <div className="flex justify-between mt-6">
-          <UserActionButtons onAction={handleAction} />
-          <div className="flex gap-2">
-            <Button
-              variant="outline"
-              onClick={() => onOpenChange(false)}
-              className="bg-spotify-accent hover:bg-spotify-accent-hover"
-            >
-              Cancel
-            </Button>
-            {isEditable && (
+          <div className="flex flex-col sm:flex-row justify-between gap-3 mt-6">
+            <UserActionButtons onAction={handleAction} />
+            <div className="flex gap-2 mt-2 sm:mt-0">
               <Button
-                onClick={handleSubmit}
-                className="bg-spotify-green hover:bg-spotify-green/90"
+                variant="outline"
+                onClick={handleCloseDialog}
+                className="bg-spotify-accent hover:bg-spotify-accent-hover"
               >
-                Save Changes
+                Cancel
               </Button>
-            )}
+              {isEditable && (
+                <Button
+                  onClick={handleSubmit}
+                  className="bg-spotify-green hover:bg-spotify-green/90"
+                  disabled={!hasChanges}
+                >
+                  <Save className="h-4 w-4 mr-2" />
+                  Save Changes
+                </Button>
+              )}
+            </div>
           </div>
-        </div>
-      </DialogContent>
-    </Dialog>
+        </DialogContent>
+      </Dialog>
+
+      <AlertDialog open={showUnsavedChangesDialog} onOpenChange={setShowUnsavedChangesDialog}>
+        <AlertDialogContent className="bg-spotify-darker border-spotify-accent text-white">
+          <AlertDialogHeader>
+            <AlertDialogTitle>Unsaved Changes</AlertDialogTitle>
+            <AlertDialogDescription className="text-gray-400">
+              You have unsaved changes. Are you sure you want to close without saving?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="bg-spotify-accent hover:bg-spotify-accent-hover text-white border-none">
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction 
+              className="bg-mywater-blue hover:bg-mywater-blue/90 text-white"
+              onClick={() => {
+                setShowUnsavedChangesDialog(false);
+                onOpenChange(false);
+              }}
+            >
+              Close Without Saving
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
   );
 }

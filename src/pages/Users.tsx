@@ -7,34 +7,62 @@ import { UserDetailsDialog } from "@/components/users/UserDetailsDialog";
 import { PageHeader } from "@/components/shared/PageHeader";
 import { LoadingSkeleton } from "@/components/shared/LoadingSkeleton";
 import { UsersList } from "@/components/users/UsersList";
-import { collection, getDocs } from "firebase/firestore";
+import { collection, getDocs, query, where, DocumentData } from "firebase/firestore";
 import { db } from "@/integrations/firebase/client";
 import { Card } from "@/components/ui/card";
 import { Users as UsersIcon } from "lucide-react";
-import { User } from "@/types/users";
+import { User, UserRole } from "@/types/users";
+import { useFirebaseAuth } from "@/hooks/useFirebaseAuth";
 
 export const Users = () => {
   const { toast } = useToast();
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [isAddUserOpen, setIsAddUserOpen] = useState(false);
+  const { user: currentAuthUser } = useFirebaseAuth();
+  
+  // Get current user's role - in a real app, you'd fetch this from your user profile
+  // For now, we'll default to showing admin UI
+  const currentUserRole: UserRole = "superadmin";
+  
+  // Add a state to track if we're filtering by company
+  const [companyFilter, setCompanyFilter] = useState<string | null>(null);
 
-  const { data: users = [], isLoading: unitsLoading, error: unitsError } = useQuery({
-    queryKey: ["users"],
+  const canEditUsers = currentUserRole === "superadmin" || currentUserRole === "admin";
+  const canAddUsers = currentUserRole === "superadmin" || currentUserRole === "admin";
+
+  const { data: users = [], isLoading: usersLoading, error: usersError } = useQuery({
+    queryKey: ["users", companyFilter],
     queryFn: async () => {
       console.log("Fetching users data from Firebase...");
       try {
-        // Updated to fetch from app_users_business collection
+        // Create a base query for the collection
         const usersCollection = collection(db, "app_users_business");
-        const usersSnapshot = await getDocs(usersCollection);
-        const usersList = usersSnapshot.docs.map(doc => ({
-          id: doc.id,
-          first_name: doc.data().first_name || "",
-          last_name: doc.data().last_name || "",
-          email: doc.data().email || "",
-          role: doc.data().role || "user",
-          status: doc.data().status || "active",
-          ...doc.data()
-        })) as User[];
+        
+        // If we have a company filter and the user isn't an admin/superadmin, apply it
+        let usersQuery;
+        if (companyFilter && currentUserRole !== "superadmin" && currentUserRole !== "admin") {
+          usersQuery = query(usersCollection, where("company", "==", companyFilter));
+        } else {
+          usersQuery = usersCollection;
+        }
+        
+        const usersSnapshot = await getDocs(usersQuery);
+        const usersList = usersSnapshot.docs.map(doc => {
+          const data = doc.data() as DocumentData;
+          return {
+            id: doc.id,
+            first_name: data.first_name || "",
+            last_name: data.last_name || "",
+            email: data.email || "",
+            role: data.role || "user",
+            status: data.status || "active",
+            phone: data.phone || "",
+            company: data.company || "",
+            job_title: data.job_title || "",
+            created_at: data.created_at,
+            updated_at: data.updated_at
+          } as User;
+        });
         
         console.log("Users data:", usersList);
         return usersList;
@@ -50,7 +78,7 @@ export const Users = () => {
     },
   });
 
-  if (unitsError) {
+  if (usersError) {
     return (
       <div className="space-y-6 animate-fadeIn p-2 md:p-0">
         <PageHeader
@@ -58,6 +86,7 @@ export const Users = () => {
           description="Manage system users and permissions"
           onAddClick={() => setIsAddUserOpen(true)}
           addButtonText="Add User"
+          showAddButton={canAddUsers}
         />
         <div className="bg-spotify-darker border-spotify-accent p-6 rounded-lg">
           <div className="text-red-400">Error loading users. Please try again.</div>
@@ -66,7 +95,7 @@ export const Users = () => {
     );
   }
 
-  if (unitsLoading) {
+  if (usersLoading) {
     return (
       <div className="space-y-6 animate-fadeIn p-2 md:p-0">
         <PageHeader
@@ -74,6 +103,7 @@ export const Users = () => {
           description="Manage system users and permissions"
           onAddClick={() => setIsAddUserOpen(true)}
           addButtonText="Add User"
+          showAddButton={canAddUsers}
         />
         <LoadingSkeleton />
       </div>
@@ -87,6 +117,7 @@ export const Users = () => {
         description="Manage system users and permissions"
         onAddClick={() => setIsAddUserOpen(true)}
         addButtonText="Add User"
+        showAddButton={canAddUsers}
       />
       
       <Card className="p-6 bg-spotify-darker border-spotify-accent">
@@ -97,7 +128,7 @@ export const Users = () => {
         
         {users.length === 0 ? (
           <div className="text-center text-gray-400 py-8">
-            No users found. Click "Add User" to create one.
+            No users found. {canAddUsers ? "Click \"Add User\" to create one." : "Contact your administrator for access."}
           </div>
         ) : (
           <UsersList
@@ -107,16 +138,18 @@ export const Users = () => {
         )}
       </Card>
 
-      <AddUserDialog 
-        open={isAddUserOpen}
-        onOpenChange={setIsAddUserOpen}
-      />
+      {canAddUsers && (
+        <AddUserDialog 
+          open={isAddUserOpen}
+          onOpenChange={setIsAddUserOpen}
+        />
+      )}
 
       <UserDetailsDialog
         open={!!selectedUser}
         onOpenChange={(open) => !open && setSelectedUser(null)}
         user={selectedUser}
-        currentUserRole="superadmin" // TODO: Get this from authentication context
+        currentUserRole={currentUserRole}
       />
     </div>
   );

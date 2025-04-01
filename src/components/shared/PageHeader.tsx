@@ -11,6 +11,7 @@ export interface PageHeaderProps {
   children?: React.ReactNode;
   onAddClick?: () => void;
   addButtonText?: string;
+  showAddButton?: boolean;
 }
 
 export function PageHeader({ 
@@ -19,7 +20,8 @@ export function PageHeader({
   icon: Icon, 
   children, 
   onAddClick, 
-  addButtonText 
+  addButtonText,
+  showAddButton = true
 }: PageHeaderProps) {
   return (
     <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 mb-4">
@@ -31,7 +33,7 @@ export function PageHeader({
         </div>
       </div>
       <div className="flex flex-wrap items-center gap-2 mt-2 md:mt-0">
-        {onAddClick && (
+        {onAddClick && showAddButton && (
           <Button onClick={onAddClick} className="bg-mywater-blue hover:bg-mywater-blue/90">
             <Plus className="h-4 w-4 mr-2" />
             {addButtonText || "Add"}
