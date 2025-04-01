@@ -50,7 +50,7 @@ export function BusinessAuthForm({ isLogin, setIsLogin }: BusinessAuthFormProps)
             });
             
             console.log("User migrated during login:", user.email);
-            navigate("/dashboard");
+            navigate("/dashboard"); // Navigate to business dashboard
             return;
           }
           
@@ -64,6 +64,7 @@ export function BusinessAuthForm({ isLogin, setIsLogin }: BusinessAuthFormProps)
         }
         
         console.log("Business user signed in:", user);
+        // Important: Always navigate to /dashboard for business users, not private-dashboard
         navigate("/dashboard");
       } else {
         const userCredential = await createUserWithEmailAndPassword(auth, email, password);

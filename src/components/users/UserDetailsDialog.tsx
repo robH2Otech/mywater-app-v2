@@ -73,6 +73,7 @@ export function UserDetailsDialog({ user, open, onOpenChange, currentUserRole = 
     
     setFormData(prev => {
       const newData = { ...prev, [field]: value };
+      
       // Check if anything has changed
       const originalData = {
         first_name: user?.first_name || "",
@@ -187,7 +188,7 @@ export function UserDetailsDialog({ user, open, onOpenChange, currentUserRole = 
         onOpenChange(newOpen);
       }
     }}>
-      <DialogContent className="sm:max-w-[650px] bg-spotify-darker border-spotify-accent overflow-hidden">
+      <DialogContent className="sm:max-w-[750px] bg-spotify-darker border-spotify-accent overflow-hidden">
         <DialogHeader>
           <DialogTitle className="text-xl font-semibold text-white flex items-center gap-2">
             User Details

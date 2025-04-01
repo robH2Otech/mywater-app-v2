@@ -1,4 +1,3 @@
-
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
@@ -36,17 +35,17 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
     const tempAccess = localStorage.getItem('tempAccess') === 'true';
     setIsTempAccess(tempAccess);
 
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setIsAuthenticated(!!session);
+    const unsubscribe = auth.onAuthStateChanged((user) => {
+      if (user) {
+        setIsAuthenticated(true);
+      } else {
+        supabase.auth.getSession().then(({ data: { session } }) => {
+          setIsAuthenticated(!!session);
+        });
+      }
     });
 
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      setIsAuthenticated(!!session);
-    });
-
-    return () => subscription.unsubscribe();
+    return () => unsubscribe();
   }, []);
 
   if (isAuthenticated === null && !isTempAccess) {
