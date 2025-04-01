@@ -11,6 +11,8 @@ interface UsersContentProps {
 }
 
 export function UsersContent({ users, currentUserRole, onUserClick }: UsersContentProps) {
+  const hasUsers = Array.isArray(users) && users.length > 0;
+  
   return (
     <Card className="p-6 bg-spotify-darker border-spotify-accent">
       <div className="flex items-center mb-4">
@@ -18,7 +20,7 @@ export function UsersContent({ users, currentUserRole, onUserClick }: UsersConte
         <h2 className="text-xl font-medium text-white">System Users</h2>
       </div>
       
-      {users.length === 0 ? (
+      {!hasUsers ? (
         <div className="text-center text-gray-400 py-8">
           No users found. {currentUserRole === "superadmin" || currentUserRole === "admin" 
             ? "Click \"Add User\" to create one." 

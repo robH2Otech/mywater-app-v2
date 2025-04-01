@@ -20,7 +20,7 @@ export function UserCard({ user, onClick }: UserCardProps) {
         return { bg: "bg-yellow-500", text: "TECHNICIAN" };
       case "user": 
       default: 
-        return { bg: "bg-green-500", text: "USER" };
+        return { bg: "bg-gray-500", text: "USER" };
     }
   };
 

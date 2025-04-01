@@ -86,11 +86,12 @@ export function useUsersData() {
             first_name: data.first_name || "",
             last_name: data.last_name || "",
             email: data.email || "",
-            role: data.role || "user",
-            status: data.status || "active",
             phone: data.phone || "",
             company: data.company || "",
             job_title: data.job_title || "",
+            role: data.role || "user",
+            status: data.status || "active",
+            uid: data.uid || "",
             // Add any other properties from the User type
           } as User;
         });
