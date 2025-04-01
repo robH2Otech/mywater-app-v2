@@ -1,21 +1,8 @@
-
 import { DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { UserDetailsForm } from "./UserDetailsForm";
 import { ScrollableDialogContent } from "@/components/shared/ScrollableDialogContent";
-import { UserRole, UserStatus } from "@/types/users";
-
-interface UserFormData {
-  first_name: string;
-  last_name: string;
-  email: string;
-  phone: string;
-  company: string;
-  job_title: string;
-  role: UserRole;
-  status: UserStatus;
-  password: string;
-}
+import { UserFormData } from "@/hooks/users/useUserDetailsUpdate";
 
 interface AddUserDialogContentProps {
   formData: UserFormData;
