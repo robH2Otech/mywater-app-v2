@@ -10,7 +10,6 @@ import { User, UserRole, UserStatus } from "@/types/users";
 import { ScrollableDialogContent } from "@/components/shared/ScrollableDialogContent";
 import { UserDetailsForm } from "./UserDetailsForm";
 import { UserActionButtons } from "./UserActionButtons";
-import { Save, X } from "lucide-react";
 
 interface UserDetailsDialogProps {
   user: User | null;
@@ -45,8 +44,6 @@ export function UserDetailsDialog({ user, open, onOpenChange, currentUserRole = 
     status: "active",
     password: ""
   });
-  const [hasChanges, setHasChanges] = useState(false);
-  const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
     if (user) {
@@ -61,38 +58,14 @@ export function UserDetailsDialog({ user, open, onOpenChange, currentUserRole = 
         status: user.status,
         password: user.password || ""
       });
-      setHasChanges(false);
     }
   }, [user]);
 
-  // Check if user has edit permission based on role
-  const isEditable = currentUserRole === "superadmin" || currentUserRole === "admin";
+  const isEditable = currentUserRole === "superadmin";
 
   const handleInputChange = (field: keyof UserFormData, value: string) => {
     if (!isEditable) return;
-    
-    setFormData(prev => {
-      const newData = { ...prev, [field]: value };
-      // Check if anything has changed
-      const originalData = {
-        first_name: user?.first_name || "",
-        last_name: user?.last_name || "",
-        email: user?.email || "",
-        phone: user?.phone || "",
-        company: user?.company || "",
-        job_title: user?.job_title || "",
-        role: user?.role || "user",
-        status: user?.status || "active",
-        password: user?.password || ""
-      };
-      
-      const hasChanged = Object.keys(newData).some(
-        key => newData[key as keyof UserFormData] !== originalData[key as keyof UserFormData]
-      );
-      
-      setHasChanges(hasChanged);
-      return newData;
-    });
+    setFormData(prev => ({ ...prev, [field]: value }));
   };
 
   const handleSubmit = async () => {
@@ -102,11 +75,9 @@ export function UserDetailsDialog({ user, open, onOpenChange, currentUserRole = 
       }
       
       if (!isEditable) {
-        throw new Error("You don't have permission to edit user details");
+        throw new Error("Only Super Admins can edit user details");
       }
 
-      setIsSaving(true);
-      
       const userDocRef = doc(db, "app_users_business", user.id);
       await updateDoc(userDocRef, {
         ...formData,
@@ -119,11 +90,8 @@ export function UserDetailsDialog({ user, open, onOpenChange, currentUserRole = 
       });
 
       queryClient.invalidateQueries({ queryKey: ["users"] });
-      setHasChanges(false);
-      setIsSaving(false);
       onOpenChange(false);
     } catch (error: any) {
-      setIsSaving(false);
       toast({
         title: "Error",
         description: error.message,
@@ -177,25 +145,11 @@ export function UserDetailsDialog({ user, open, onOpenChange, currentUserRole = 
   if (!user) return null;
 
   return (
-    <Dialog open={open} onOpenChange={(newOpen) => {
-      if (!newOpen && hasChanges) {
-        // Confirm before closing with unsaved changes
-        if (window.confirm("You have unsaved changes. Are you sure you want to close?")) {
-          onOpenChange(false);
-        }
-      } else {
-        onOpenChange(newOpen);
-      }
-    }}>
-      <DialogContent className="sm:max-w-[650px] bg-spotify-darker border-spotify-accent overflow-hidden">
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-[600px] bg-spotify-darker border-spotify-accent overflow-hidden">
         <DialogHeader>
-          <DialogTitle className="text-xl font-semibold text-white flex items-center gap-2">
+          <DialogTitle className="text-xl font-semibold text-white">
             User Details
-            {hasChanges && (
-              <span className="text-sm text-yellow-400 font-normal ml-2">
-                (Unsaved changes)
-              </span>
-            )}
           </DialogTitle>
         </DialogHeader>
 
@@ -207,27 +161,22 @@ export function UserDetailsDialog({ user, open, onOpenChange, currentUserRole = 
           />
         </ScrollableDialogContent>
 
-        <div className="flex flex-col sm:flex-row sm:justify-between gap-4 mt-6">
+        <div className="flex justify-between mt-6">
           <UserActionButtons onAction={handleAction} />
-          
-          <div className="flex gap-2 self-end">
+          <div className="flex gap-2">
             <Button
               variant="outline"
               onClick={() => onOpenChange(false)}
               className="bg-spotify-accent hover:bg-spotify-accent-hover"
             >
-              <X size={16} className="mr-1" />
               Cancel
             </Button>
-            
             {isEditable && (
               <Button
                 onClick={handleSubmit}
-                className={`bg-spotify-green hover:bg-spotify-green/90 ${!hasChanges ? 'opacity-70' : ''}`}
-                disabled={!hasChanges || isSaving}
+                className="bg-spotify-green hover:bg-spotify-green/90"
               >
-                <Save size={16} className="mr-1" />
-                {isSaving ? 'Saving...' : 'Save Changes'}
+                Save Changes
               </Button>
             )}
           </div>
