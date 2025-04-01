@@ -2,7 +2,11 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
-import { loginWithEmail, registerWithEmail, verifyPrivateUser, getAuthErrorMessage } from "@/utils/firebase/auth";
+import { 
+  loginWithEmail, 
+  verifyPrivateUser, 
+  getAuthErrorMessage 
+} from "@/utils/firebase/auth";
 
 /**
  * Hook to handle email-based authentication

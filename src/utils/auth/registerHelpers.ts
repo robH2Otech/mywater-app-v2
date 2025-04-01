@@ -1,4 +1,3 @@
-
 import { toast } from "@/hooks/use-toast";
 import { auth, db } from "@/integrations/firebase/client";
 import { collection, doc, getDocs, query, setDoc, where, getDoc } from "firebase/firestore";
@@ -9,6 +8,7 @@ import {
   prepareUserDataForFirestore,
   generateReferralCode
 } from "./registerHelperUtils";
+import { checkEmailExists as checkFirebaseEmailExists } from "@/utils/firebase/auth";
 
 export interface RegisterUserData {
   firstName: string;
@@ -41,10 +41,8 @@ export const checkEmailExists = async (email: string) => {
   
   try {
     // First check in Firebase Auth directly - this is the most reliable method
-    const signInMethods = await fetchSignInMethodsForEmail(auth, email.toLowerCase().trim());
-    console.log("Sign in methods for email:", signInMethods);
-    
-    if (signInMethods && signInMethods.length > 0) {
+    const authEmailExists = await checkFirebaseEmailExists(email);
+    if (authEmailExists) {
       console.log("Email exists in Firebase Auth:", email);
       return true;
     }
