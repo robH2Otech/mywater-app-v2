@@ -12,7 +12,7 @@ interface ScrollableDialogContentProps {
 export function ScrollableDialogContent({
   children,
   className = "",
-  maxHeight = "70vh"
+  maxHeight = "75vh"
 }: ScrollableDialogContentProps) {
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const isMobile = useIsMobile();
@@ -21,11 +21,13 @@ export function ScrollableDialogContent({
     <div className={`relative w-full ${className}`}>
       <div
         ref={scrollContainerRef}
-        className="scrollable-form overflow-y-auto px-2 pb-4 custom-scrollbar"
+        className="scrollable-form overflow-y-auto px-2 custom-scrollbar"
         style={{ 
           maxHeight,
-          paddingRight: isMobile ? '8px' : '16px',
-          paddingLeft: isMobile ? '8px' : '16px'
+          paddingRight: isMobile ? '12px' : '20px',
+          paddingLeft: isMobile ? '12px' : '20px',
+          paddingBottom: '20px',
+          paddingTop: '10px'
         }}
       >
         {children}

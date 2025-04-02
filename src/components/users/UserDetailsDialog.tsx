@@ -148,14 +148,14 @@ export function UserDetailsDialog({ user, open, onOpenChange, currentUserRole = 
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className={`sm:max-w-[700px] bg-spotify-darker border-spotify-accent overflow-hidden ${isMobile ? 'px-3 py-4' : 'p-6'}`}>
+      <DialogContent className={`${isMobile ? 'w-[95vw] max-w-[95vw]' : 'sm:max-w-[650px] w-full'} bg-spotify-darker border-spotify-accent overflow-hidden ${isMobile ? 'px-3 py-4' : 'p-6'}`}>
         <DialogHeader>
-          <DialogTitle className="text-xl font-semibold text-white">
+          <DialogTitle className="text-xl font-semibold text-white pb-2">
             User Details
           </DialogTitle>
         </DialogHeader>
 
-        <ScrollableDialogContent maxHeight={isMobile ? "60vh" : "70vh"}>
+        <ScrollableDialogContent maxHeight={isMobile ? "60vh" : "65vh"}>
           <UserDetailsForm 
             formData={formData}
             handleInputChange={handleInputChange}
@@ -163,7 +163,7 @@ export function UserDetailsDialog({ user, open, onOpenChange, currentUserRole = 
           />
         </ScrollableDialogContent>
 
-        <div className={`flex ${isMobile ? 'flex-col gap-4' : 'justify-between'} mt-6`}>
+        <div className={`flex ${isMobile ? 'flex-col gap-4' : 'justify-between items-center'} mt-4 pt-2 border-t border-gray-700`}>
           <div className={`${isMobile ? 'order-2' : ''}`}>
             <UserActionButtons onAction={handleAction} />
           </div>

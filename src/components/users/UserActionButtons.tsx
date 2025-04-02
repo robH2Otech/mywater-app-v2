@@ -14,38 +14,38 @@ export function UserActionButtons({ onAction }: UserActionButtonsProps) {
     <div className={`flex ${isMobile ? 'flex-wrap justify-center' : ''} gap-2`}>
       <Button
         variant="outline"
-        size={isMobile ? "sm" : "default"}
+        size="sm"
         onClick={() => onAction('email')}
-        className="bg-spotify-accent hover:bg-spotify-accent-hover border-mywater-blue/20"
+        className="bg-spotify-accent hover:bg-spotify-accent-hover border-mywater-blue/20 h-9"
       >
-        <Mail className="w-4 h-4 mr-2 text-mywater-blue" />
+        <Mail className="w-3.5 h-3.5 mr-1.5 text-mywater-blue" />
         Email
       </Button>
       <Button
         variant="outline"
-        size={isMobile ? "sm" : "default"}
+        size="sm"
         onClick={() => onAction('report')}
-        className="bg-spotify-accent hover:bg-spotify-accent-hover border-mywater-blue/20"
+        className="bg-spotify-accent hover:bg-spotify-accent-hover border-mywater-blue/20 h-9"
       >
-        <FileText className="w-4 h-4 mr-2 text-mywater-blue" />
+        <FileText className="w-3.5 h-3.5 mr-1.5 text-mywater-blue" />
         Send Report
       </Button>
       <Button
         variant="outline"
-        size={isMobile ? "sm" : "default"}
+        size="sm"
         onClick={() => onAction('reminder')}
-        className="bg-spotify-accent hover:bg-spotify-accent-hover border-mywater-blue/20"
+        className="bg-spotify-accent hover:bg-spotify-accent-hover border-mywater-blue/20 h-9"
       >
-        <Bell className="w-4 h-4 mr-2 text-mywater-blue" />
+        <Bell className="w-3.5 h-3.5 mr-1.5 text-mywater-blue" />
         Send Reminder
       </Button>
       <Button
         variant="outline"
-        size={isMobile ? "sm" : "default"}
+        size="sm"
         onClick={() => onAction('invoice')}
-        className="bg-spotify-accent hover:bg-spotify-accent-hover border-mywater-blue/20"
+        className="bg-spotify-accent hover:bg-spotify-accent-hover border-mywater-blue/20 h-9"
       >
-        <Send className="w-4 h-4 mr-2 text-mywater-blue" />
+        <Send className="w-3.5 h-3.5 mr-1.5 text-mywater-blue" />
         Send Invoice
       </Button>
     </div>

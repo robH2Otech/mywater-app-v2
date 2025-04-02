@@ -28,14 +28,14 @@ export function FormInput({
   const isMobile = useIsMobile();
   
   return (
-    <div className={`space-y-2 ${className || ""}`}>
-      <label className="text-sm text-gray-400">{label}{required && <span className="text-red-400 ml-1">*</span>}</label>
+    <div className={`space-y-1.5 ${className || ""}`}>
+      <label className="text-xs font-medium text-gray-400 block">{label}{required && <span className="text-red-400 ml-1">*</span>}</label>
       <Input
         type={type}
         placeholder={placeholder || `Enter ${label.toLowerCase()}`}
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className={`bg-spotify-accent border-spotify-accent-hover text-white ${isMobile ? 'text-base' : 'text-sm'}`}
+        className={`bg-spotify-accent border-spotify-accent-hover text-white ${isMobile ? 'text-base h-9' : 'text-sm h-9'}`}
         required={required}
         minLength={minLength}
         disabled={disabled}

@@ -26,7 +26,7 @@ export function UserDetailsForm({ formData, handleInputChange, isEditable }: Use
   const isMobile = useIsMobile();
   
   return (
-    <div className={`grid ${isMobile ? 'grid-cols-1' : 'grid-cols-2'} gap-4 py-4`}>
+    <div className={`grid ${isMobile ? 'grid-cols-1 gap-3' : 'grid-cols-2 gap-4'} py-2`}>
       <FormInput
         label="First Name"
         value={formData.first_name}
@@ -77,14 +77,14 @@ export function UserDetailsForm({ formData, handleInputChange, isEditable }: Use
         onChange={(value) => handleInputChange("job_title", value)}
         disabled={!isEditable}
       />
-      <div className="space-y-2">
-        <label className="text-sm text-gray-400">Role</label>
+      <div className="space-y-1.5">
+        <label className="text-xs font-medium text-gray-400 block">Role</label>
         <Select
           value={formData.role}
           onValueChange={(value: UserRole) => handleInputChange("role", value)}
           disabled={!isEditable}
         >
-          <SelectTrigger className="bg-spotify-accent border-spotify-accent-hover text-white">
+          <SelectTrigger className="bg-spotify-accent border-spotify-accent-hover text-white h-9">
             <SelectValue placeholder="Select role" />
           </SelectTrigger>
           <SelectContent className="bg-spotify-darker border-spotify-accent-hover">
@@ -95,14 +95,14 @@ export function UserDetailsForm({ formData, handleInputChange, isEditable }: Use
           </SelectContent>
         </Select>
       </div>
-      <div className="space-y-2">
-        <label className="text-sm text-gray-400">Status</label>
+      <div className="space-y-1.5">
+        <label className="text-xs font-medium text-gray-400 block">Status</label>
         <Select
           value={formData.status}
           onValueChange={(value: UserStatus) => handleInputChange("status", value)}
           disabled={!isEditable}
         >
-          <SelectTrigger className="bg-spotify-accent border-spotify-accent-hover text-white">
+          <SelectTrigger className="bg-spotify-accent border-spotify-accent-hover text-white h-9">
             <SelectValue placeholder="Select status" />
           </SelectTrigger>
           <SelectContent className="bg-spotify-darker border-spotify-accent-hover">
