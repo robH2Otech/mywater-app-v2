@@ -23,6 +23,7 @@ interface UnitCardProps {
   uvc_installation_date?: string | null;
   eid?: string | null;
   iccid?: string | null;
+  unit_type?: string | null;
 }
 
 export const UnitCard = ({
@@ -42,6 +43,7 @@ export const UnitCard = ({
   uvc_installation_date,
   eid,
   iccid,
+  unit_type,
 }: UnitCardProps) => {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
 
@@ -125,6 +127,11 @@ export const UnitCard = ({
             <p className="text-sm text-gray-400">
               Last Maintenance: {formatDate(last_maintenance)}
             </p>
+            {unit_type && (
+              <p className="text-sm text-gray-400">
+                Type: {unit_type.toUpperCase()} Unit
+              </p>
+            )}
           </div>
         </Card>
       </Link>
@@ -146,6 +153,7 @@ export const UnitCard = ({
           uvc_installation_date,
           eid,
           iccid,
+          unit_type,
         }}
         open={isEditDialogOpen}
         onOpenChange={setIsEditDialogOpen}

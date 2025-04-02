@@ -28,6 +28,7 @@ interface EditUnitDialogProps {
     uvc_installation_date?: string | null;
     eid?: string | null;
     iccid?: string | null;
+    unit_type?: string | null;
   };
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -50,6 +51,7 @@ export function EditUnitDialog({ unit, open, onOpenChange }: EditUnitDialogProps
     uvc_hours: unit.uvc_hours ? formatDecimal(unit.uvc_hours) : "0.00",
     eid: unit.eid || "",
     iccid: unit.iccid || "",
+    unit_type: unit.unit_type || "uvc", // Default to "uvc" if not specified
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -73,11 +75,12 @@ export function EditUnitDialog({ unit, open, onOpenChange }: EditUnitDialogProps
       // Determine the new status based on the updated volume
       const newStatus = determineUnitStatus(numericVolume);
       
-      // Parse UVC hours if provided
-      const uvcHours = formData.uvc_hours ? parseFloat(formData.uvc_hours) : null;
+      // Parse UVC hours if provided and unit is UVC type
+      let uvcHours = null;
       let uvcStatus = unit.uvc_status;
       
-      if (uvcHours !== null) {
+      if (formData.unit_type === 'uvc' && formData.uvc_hours) {
+        uvcHours = parseFloat(formData.uvc_hours);
         uvcStatus = determineUVCStatus(uvcHours);
       }
       
@@ -95,10 +98,11 @@ export function EditUnitDialog({ unit, open, onOpenChange }: EditUnitDialogProps
         updated_at: new Date().toISOString(),
         eid: formData.eid || null,
         iccid: formData.iccid || null,
+        unit_type: formData.unit_type, // Include unit_type in the update
       };
       
-      // Add UVC fields if hours are provided
-      if (uvcHours !== null) {
+      // Add UVC fields if hours are provided and unit is UVC type
+      if (formData.unit_type === 'uvc' && uvcHours !== null) {
         updateData.uvc_hours = uvcHours;
         updateData.uvc_status = uvcStatus;
         // Use setup_date as UVC installation date if no specific installation date exists
@@ -129,8 +133,8 @@ export function EditUnitDialog({ unit, open, onOpenChange }: EditUnitDialogProps
         }
       }
       
-      // Check if UVC status requires an alert
-      if (uvcHours !== null && uvcStatus && (uvcStatus === 'warning' || uvcStatus === 'urgent')) {
+      // Check if UVC status requires an alert (only for UVC units)
+      if (formData.unit_type === 'uvc' && uvcHours !== null && uvcStatus && (uvcStatus === 'warning' || uvcStatus === 'urgent')) {
         // Only create alert if status changed or was already warning/urgent
         if (unit.uvc_status !== uvcStatus || uvcStatus === 'urgent') {
           const uvcAlertMessage = createUVCAlertMessage(formData.name, uvcHours, uvcStatus);
