@@ -3,6 +3,8 @@ import { FormInput } from "@/components/shared/FormInput";
 import { FormDatePicker } from "@/components/shared/FormDatePicker";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ScrollableDialogContent } from "@/components/shared/ScrollableDialogContent";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Label } from "@/components/ui/label";
 
 interface UnitFormFieldsProps {
   formData: {
@@ -18,6 +20,7 @@ interface UnitFormFieldsProps {
     uvc_hours: string;
     eid: string;
     iccid: string;
+    unit_type: string;
   };
   setFormData: (data: any) => void;
 }
@@ -39,6 +42,26 @@ export function UnitFormFields({ formData, setFormData }: UnitFormFieldsProps) {
           onChange={(value) => setFormData({ ...formData, contact_name: value })}
           placeholder="Enter contact name"
         />
+        
+        {/* Unit Type Selection */}
+        <div className="space-y-2 col-span-1 md:col-span-2">
+          <label className="text-xs font-medium text-gray-400 block">Unit Type</label>
+          <RadioGroup
+            value={formData.unit_type}
+            onValueChange={(value) => setFormData({ ...formData, unit_type: value })}
+            className="flex space-x-6"
+          >
+            <div className="flex items-center space-x-2">
+              <RadioGroupItem value="uvc" id="uvc" className="text-mywater-blue" />
+              <Label htmlFor="uvc" className="text-sm text-white cursor-pointer">UVC Unit</Label>
+            </div>
+            <div className="flex items-center space-x-2">
+              <RadioGroupItem value="drop" id="drop" className="text-mywater-blue" />
+              <Label htmlFor="drop" className="text-sm text-white cursor-pointer">DROP Unit</Label>
+            </div>
+          </RadioGroup>
+        </div>
+
         <FormInput
           label="Location"
           value={formData.location}
@@ -67,13 +90,18 @@ export function UnitFormFields({ formData, setFormData }: UnitFormFieldsProps) {
           onChange={(value) => setFormData({ ...formData, contact_phone: value })}
           placeholder="Enter phone number"
         />
-        <FormInput
-          label="UVC Hours"
-          type="number"
-          value={formData.uvc_hours}
-          onChange={(value) => setFormData({ ...formData, uvc_hours: value })}
-          placeholder="Enter UVC start hours"
-        />
+        
+        {/* Show UVC Hours only for UVC units */}
+        {formData.unit_type === 'uvc' && (
+          <FormInput
+            label="UVC Hours"
+            type="number"
+            value={formData.uvc_hours}
+            onChange={(value) => setFormData({ ...formData, uvc_hours: value })}
+            placeholder="Enter UVC start hours"
+          />
+        )}
+
         <FormDatePicker
           label="Setup Date"
           value={formData.setup_date}
@@ -91,13 +119,13 @@ export function UnitFormFields({ formData, setFormData }: UnitFormFieldsProps) {
           onChange={(value) => setFormData({ ...formData, iccid: value })}
           placeholder="e.g. 8944502701221859223"
         />
-        <div className="space-y-2">
-          <label className="text-sm text-gray-400">Status</label>
+        <div className="space-y-1.5">
+          <label className="text-xs font-medium text-gray-400">Status</label>
           <Select
             value={formData.status}
             onValueChange={(value) => setFormData({ ...formData, status: value })}
           >
-            <SelectTrigger className="bg-spotify-accent border-spotify-accent-hover text-white h-10">
+            <SelectTrigger className="bg-spotify-accent border-spotify-accent-hover text-white h-9">
               <SelectValue placeholder="Select status" />
             </SelectTrigger>
             <SelectContent className="bg-spotify-darker border-spotify-accent">

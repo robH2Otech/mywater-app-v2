@@ -17,6 +17,7 @@ interface AddUnitDialogContentProps {
     uvc_hours: string;
     eid: string;
     iccid: string;
+    unit_type: string;
   };
   setFormData: (data: any) => void;
   onSubmit: (e: React.FormEvent) => Promise<void>;

@@ -20,6 +20,7 @@ interface UnitFormData {
   uvc_hours: string;
   eid: string;
   iccid: string;
+  unit_type: string;
 }
 
 export function useAddUnitForm(onClose: () => void) {
@@ -40,6 +41,7 @@ export function useAddUnitForm(onClose: () => void) {
     uvc_hours: "",
     eid: "",
     iccid: "",
+    unit_type: "uvc", // Default to UVC unit
   });
 
   // Fetch the highest unit number on load
@@ -102,13 +104,17 @@ export function useAddUnitForm(onClose: () => void) {
       const formattedNumber = String(nextUnitNumber).padStart(3, '0');
       const customId = `MYWATER_${formattedNumber}`;
       
-      // Process UVC hours if provided
-      const uvcHours = formData.uvc_hours ? parseFloat(formData.uvc_hours) : 0;
-      const uvcStatus = determineUVCStatus(uvcHours);
+      // Process UVC hours if the unit is a UVC type
+      let uvcHours = 0;
+      let uvcStatus = null;
       
-      // Add unit to Firestore with a custom ID
-      const unitDocRef = doc(db, "units", customId);
-      await setDoc(unitDocRef, {
+      if (formData.unit_type === 'uvc' && formData.uvc_hours) {
+        uvcHours = parseFloat(formData.uvc_hours);
+        uvcStatus = determineUVCStatus(uvcHours);
+      }
+      
+      // Prepare base unit data
+      const unitData: any = {
         name: formData.name,
         location: formData.location || null,
         total_volume: numericVolume,
@@ -118,14 +124,23 @@ export function useAddUnitForm(onClose: () => void) {
         contact_phone: formData.contact_phone || null,
         next_maintenance: formData.next_maintenance?.toISOString() || null,
         setup_date: formData.setup_date?.toISOString() || null,
-        uvc_hours: uvcHours,
-        uvc_status: uvcStatus,
-        uvc_installation_date: formData.setup_date?.toISOString() || null,
         eid: formData.eid || null,
         iccid: formData.iccid || null,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
-      });
+        unit_type: formData.unit_type,
+      };
+
+      // Add UVC-specific data if UVC unit type
+      if (formData.unit_type === 'uvc') {
+        unitData.uvc_hours = uvcHours;
+        unitData.uvc_status = uvcStatus;
+        unitData.uvc_installation_date = formData.setup_date?.toISOString() || null;
+      }
+
+      // Add unit to Firestore with a custom ID
+      const unitDocRef = doc(db, "units", customId);
+      await setDoc(unitDocRef, unitData);
 
       // Check if an alert should be created for unit status
       if (status === 'warning' || status === 'urgent') {
@@ -142,8 +157,8 @@ export function useAddUnitForm(onClose: () => void) {
         });
       }
 
-      // Check if UVC alert should be created
-      if (uvcHours > 0 && (uvcStatus === 'warning' || uvcStatus === 'urgent')) {
+      // Check if UVC alert should be created for UVC units
+      if (formData.unit_type === 'uvc' && uvcHours > 0 && (uvcStatus === 'warning' || uvcStatus === 'urgent')) {
         const uvcAlertMessage = createUVCAlertMessage(formData.name, uvcHours, uvcStatus);
         
         const alertsCollection = collection(db, "alerts");
@@ -158,12 +173,17 @@ export function useAddUnitForm(onClose: () => void) {
 
       // Invalidate and refetch units data
       await queryClient.invalidateQueries({ queryKey: ["units"] });
-      await queryClient.invalidateQueries({ queryKey: ["uvc-units"] });
+      
+      // Only invalidate UVC queries for UVC units
+      if (formData.unit_type === 'uvc') {
+        await queryClient.invalidateQueries({ queryKey: ["uvc-units"] });
+      }
+      
       await queryClient.invalidateQueries({ queryKey: ["alerts"] });
       
       toast({
         title: "Success",
-        description: "Water unit has been added successfully",
+        description: `Water ${formData.unit_type.toUpperCase()} unit has been added successfully`,
       });
       
       // Close dialog and reset form
@@ -181,6 +201,7 @@ export function useAddUnitForm(onClose: () => void) {
         uvc_hours: "",
         eid: "",
         iccid: "",
+        unit_type: "uvc",
       });
     } catch (error) {
       console.error("Error adding unit:", error);
