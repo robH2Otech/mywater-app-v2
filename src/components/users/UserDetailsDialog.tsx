@@ -148,14 +148,14 @@ export function UserDetailsDialog({ user, open, onOpenChange, currentUserRole = 
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className={`${isMobile ? 'w-[95vw] max-w-[95vw]' : 'sm:max-w-[650px] w-full'} bg-spotify-darker border-spotify-accent overflow-hidden ${isMobile ? 'px-3 py-4' : 'p-6'}`}>
-        <DialogHeader>
-          <DialogTitle className="text-xl font-semibold text-white pb-2">
+      <DialogContent className={`${isMobile ? 'w-[90vw] max-w-[90vw]' : 'w-full max-w-[750px]'} bg-spotify-darker border-spotify-accent overflow-hidden ${isMobile ? 'p-3' : 'p-4'}`}>
+        <DialogHeader className="mb-1">
+          <DialogTitle className="text-lg font-semibold text-white">
             User Details
           </DialogTitle>
         </DialogHeader>
 
-        <ScrollableDialogContent maxHeight={isMobile ? "60vh" : "65vh"}>
+        <ScrollableDialogContent maxHeight={isMobile ? "55vh" : "60vh"}>
           <UserDetailsForm 
             formData={formData}
             handleInputChange={handleInputChange}
@@ -163,7 +163,7 @@ export function UserDetailsDialog({ user, open, onOpenChange, currentUserRole = 
           />
         </ScrollableDialogContent>
 
-        <div className={`flex ${isMobile ? 'flex-col gap-4' : 'justify-between items-center'} mt-4 pt-2 border-t border-gray-700`}>
+        <div className={`flex ${isMobile ? 'flex-col gap-3' : 'justify-between items-center'} mt-3 pt-2 border-t border-gray-700`}>
           <div className={`${isMobile ? 'order-2' : ''}`}>
             <UserActionButtons onAction={handleAction} />
           </div>
@@ -171,14 +171,14 @@ export function UserDetailsDialog({ user, open, onOpenChange, currentUserRole = 
             <Button
               variant="outline"
               onClick={() => onOpenChange(false)}
-              className="bg-spotify-accent hover:bg-spotify-accent-hover"
+              className="bg-spotify-accent hover:bg-spotify-accent-hover h-8 text-sm px-3"
             >
               Cancel
             </Button>
             {isEditable && (
               <Button
                 onClick={handleSubmit}
-                className="bg-spotify-green hover:bg-spotify-green/90"
+                className="bg-spotify-green hover:bg-spotify-green/90 h-8 text-sm px-3"
               >
                 Save Changes
               </Button>
