@@ -47,6 +47,12 @@ export const UnitCard = ({
 }: UnitCardProps) => {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
 
+  // Only UVC units should have UVC-specific information displayed
+  const isUVCUnit = unit_type === 'uvc';
+  
+  // DROP units are treated as filter units
+  const isDropUnit = unit_type === 'drop';
+
   const getStatusIcon = () => {
     switch (status) {
       case "urgent":
@@ -129,7 +135,12 @@ export const UnitCard = ({
             </p>
             {unit_type && (
               <p className="text-sm text-gray-400">
-                Type: {unit_type.toUpperCase()} Unit
+                Type: {unit_type.toUpperCase()} {isDropUnit ? 'Filter' : 'Unit'}
+              </p>
+            )}
+            {isUVCUnit && uvc_hours && (
+              <p className="text-sm text-gray-400">
+                UVC Hours: {formatVolume(uvc_hours)}
               </p>
             )}
           </div>
