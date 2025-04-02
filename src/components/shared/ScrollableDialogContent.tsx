@@ -24,10 +24,12 @@ export function ScrollableDialogContent({
         className="scrollable-form overflow-y-auto custom-scrollbar"
         style={{ 
           maxHeight,
-          paddingRight: isMobile ? '8px' : '14px',
-          paddingLeft: isMobile ? '8px' : '14px',
-          paddingBottom: '10px',
-          paddingTop: '6px'
+          paddingRight: isMobile ? '12px' : '18px',
+          paddingLeft: isMobile ? '12px' : '18px',
+          paddingBottom: '15px',
+          paddingTop: '10px',
+          marginRight: '-2px',  // Compensate for scrollbar
+          overflowX: 'hidden'   // Prevent horizontal scroll
         }}
       >
         {children}
