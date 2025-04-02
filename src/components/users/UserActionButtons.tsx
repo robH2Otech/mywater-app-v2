@@ -1,18 +1,20 @@
 
 import { Button } from "@/components/ui/button";
 import { Mail, Send, FileText, Bell } from "lucide-react";
-import { User } from "@/types/users";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface UserActionButtonsProps {
   onAction: (action: 'email' | 'report' | 'reminder' | 'invoice') => void;
 }
 
 export function UserActionButtons({ onAction }: UserActionButtonsProps) {
+  const isMobile = useIsMobile();
+  
   return (
-    <div className="flex gap-2">
+    <div className={`flex ${isMobile ? 'flex-wrap justify-center' : ''} gap-2`}>
       <Button
         variant="outline"
-        size="sm"
+        size={isMobile ? "sm" : "default"}
         onClick={() => onAction('email')}
         className="bg-spotify-accent hover:bg-spotify-accent-hover border-mywater-blue/20"
       >
@@ -21,7 +23,7 @@ export function UserActionButtons({ onAction }: UserActionButtonsProps) {
       </Button>
       <Button
         variant="outline"
-        size="sm"
+        size={isMobile ? "sm" : "default"}
         onClick={() => onAction('report')}
         className="bg-spotify-accent hover:bg-spotify-accent-hover border-mywater-blue/20"
       >
@@ -30,7 +32,7 @@ export function UserActionButtons({ onAction }: UserActionButtonsProps) {
       </Button>
       <Button
         variant="outline"
-        size="sm"
+        size={isMobile ? "sm" : "default"}
         onClick={() => onAction('reminder')}
         className="bg-spotify-accent hover:bg-spotify-accent-hover border-mywater-blue/20"
       >
@@ -39,7 +41,7 @@ export function UserActionButtons({ onAction }: UserActionButtonsProps) {
       </Button>
       <Button
         variant="outline"
-        size="sm"
+        size={isMobile ? "sm" : "default"}
         onClick={() => onAction('invoice')}
         className="bg-spotify-accent hover:bg-spotify-accent-hover border-mywater-blue/20"
       >

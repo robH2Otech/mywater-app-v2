@@ -2,6 +2,7 @@
 import { FormInput } from "@/components/shared/FormInput";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { User, UserRole, UserStatus } from "@/types/users";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface UserFormData {
   first_name: string;
@@ -22,8 +23,10 @@ interface UserDetailsFormProps {
 }
 
 export function UserDetailsForm({ formData, handleInputChange, isEditable }: UserDetailsFormProps) {
+  const isMobile = useIsMobile();
+  
   return (
-    <div className="grid grid-cols-2 gap-4 py-4">
+    <div className={`grid ${isMobile ? 'grid-cols-1' : 'grid-cols-2'} gap-4 py-4`}>
       <FormInput
         label="First Name"
         value={formData.first_name}
@@ -45,6 +48,7 @@ export function UserDetailsForm({ formData, handleInputChange, isEditable }: Use
         onChange={(value) => handleInputChange("email", value)}
         required
         disabled={!isEditable}
+        className={isMobile ? "" : "col-span-2"}
       />
       <FormInput
         label="Password"
@@ -53,6 +57,7 @@ export function UserDetailsForm({ formData, handleInputChange, isEditable }: Use
         onChange={(value) => handleInputChange("password", value)}
         required={false}
         disabled={!isEditable}
+        className={isMobile ? "" : "col-span-2"}
       />
       <FormInput
         label="Phone"

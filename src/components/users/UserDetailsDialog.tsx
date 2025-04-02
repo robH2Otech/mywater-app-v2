@@ -10,6 +10,7 @@ import { User, UserRole, UserStatus } from "@/types/users";
 import { ScrollableDialogContent } from "@/components/shared/ScrollableDialogContent";
 import { UserDetailsForm } from "./UserDetailsForm";
 import { UserActionButtons } from "./UserActionButtons";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface UserDetailsDialogProps {
   user: User | null;
@@ -33,6 +34,7 @@ interface UserFormData {
 export function UserDetailsDialog({ user, open, onOpenChange, currentUserRole = "user" }: UserDetailsDialogProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const isMobile = useIsMobile();
   const [formData, setFormData] = useState<UserFormData>({
     first_name: "",
     last_name: "",
@@ -146,14 +148,14 @@ export function UserDetailsDialog({ user, open, onOpenChange, currentUserRole = 
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[600px] bg-spotify-darker border-spotify-accent overflow-hidden">
+      <DialogContent className={`sm:max-w-[700px] bg-spotify-darker border-spotify-accent overflow-hidden ${isMobile ? 'px-3 py-4' : 'p-6'}`}>
         <DialogHeader>
           <DialogTitle className="text-xl font-semibold text-white">
             User Details
           </DialogTitle>
         </DialogHeader>
 
-        <ScrollableDialogContent maxHeight="65vh">
+        <ScrollableDialogContent maxHeight={isMobile ? "60vh" : "70vh"}>
           <UserDetailsForm 
             formData={formData}
             handleInputChange={handleInputChange}
@@ -161,9 +163,11 @@ export function UserDetailsDialog({ user, open, onOpenChange, currentUserRole = 
           />
         </ScrollableDialogContent>
 
-        <div className="flex justify-between mt-6">
-          <UserActionButtons onAction={handleAction} />
-          <div className="flex gap-2">
+        <div className={`flex ${isMobile ? 'flex-col gap-4' : 'justify-between'} mt-6`}>
+          <div className={`${isMobile ? 'order-2' : ''}`}>
+            <UserActionButtons onAction={handleAction} />
+          </div>
+          <div className={`flex gap-2 ${isMobile ? 'order-1 justify-center' : ''}`}>
             <Button
               variant="outline"
               onClick={() => onOpenChange(false)}

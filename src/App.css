@@ -105,17 +105,32 @@
 
 /* Custom styling for scrollbar */
 .scrollable-form {
-  scrollbar-width: none;
+  scrollbar-width: thin;
   -ms-overflow-style: none;
 }
 
 .scrollable-form::-webkit-scrollbar {
-  display: none;
+  width: 6px;
+  height: 6px;
 }
 
-/* Ensure calendar is interactive */
-.rdp-button, .rdp-day, .rdp-nav_button {
-  pointer-events: auto !important;
+.scrollable-form::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+}
+
+.scrollable-form::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 10px;
+}
+
+.scrollable-form::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+.custom-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.2) rgba(255, 255, 255, 0.1);
 }
 
 /* Ensure dialog content has enough padding */
