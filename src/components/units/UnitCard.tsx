@@ -100,6 +100,10 @@ export const UnitCard = ({
     setIsEditDialogOpen(true);
   };
 
+  const unitTypeLabel = isOfficeUnit ? 'Office Filter' : 
+                        isDropUnit ? 'DROP Filter' : 
+                        'UVC Unit';
+
   return (
     <>
       <Link to={`/units/${id}`} className="block">
@@ -137,7 +141,7 @@ export const UnitCard = ({
             </p>
             {unit_type && (
               <p className="text-sm text-gray-400">
-                Type: {unit_type.toUpperCase()} {isFilterUnit ? 'Filter' : 'Unit'}
+                Type: {unitTypeLabel}
               </p>
             )}
             {isUVCUnit && uvc_hours && (

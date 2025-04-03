@@ -60,7 +60,7 @@ export const WaterUsageChart = ({ units = [] }: WaterUsageChartProps) => {
         case "24h":
         default:
           startDate = subHours(endDate, 24);
-          formatPattern = "HH:mm"; // Hour format
+          formatPattern = "H"; // Just the hour (0-23)
           break;
       }
       
@@ -142,9 +142,18 @@ export const WaterUsageChart = ({ units = [] }: WaterUsageChartProps) => {
       });
       
       // Convert to array for chart and sort chronologically
-      const sortedData = Array.from(groupedData.values()).sort((a, b) => {
-        return a.name.localeCompare(b.name);
-      });
+      let sortedData = Array.from(groupedData.values());
+      
+      // For 24h format, ensure proper sorting by hour
+      if (range === "24h") {
+        sortedData = sortedData.sort((a, b) => {
+          return parseInt(a.name) - parseInt(b.name);
+        });
+      } else {
+        sortedData = sortedData.sort((a, b) => {
+          return a.name.localeCompare(b.name);
+        });
+      }
       
       console.log(`Generated ${sortedData.length} data points for chart`);
       
@@ -205,11 +214,10 @@ export const WaterUsageChart = ({ units = [] }: WaterUsageChartProps) => {
         break;
       case "24h":
       default:
-        // Generate hourly data for last 24 hours
-        for (let i = 0; i < 12; i++) {
-          const date = subHours(endDate, 12 - i);
+        // Generate hourly data for last 24 hours (only hours, no minutes)
+        for (let i = 0; i < 24; i++) {
           dataPoints.push({
-            name: format(date, "HH:mm"),
+            name: i.toString(), // Just hour number as string
             volume: Number((Math.random() * 5 + 1).toFixed(1))
           });
         }

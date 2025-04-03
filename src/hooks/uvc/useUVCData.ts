@@ -1,6 +1,6 @@
 
 import { useQuery } from "@tanstack/react-query";
-import { collection, getDocs } from "firebase/firestore";
+import { collection, getDocs, query, where } from "firebase/firestore";
 import { db } from "@/integrations/firebase/client";
 import { useToast } from "@/hooks/use-toast";
 import { processUnitUVCData } from "./uvcDataUtils";
@@ -15,6 +15,7 @@ export interface UnitWithUVC {
   status?: string;
   total_volume?: number;
   location?: string;
+  unit_type?: string;
   [key: string]: any;
 }
 
@@ -31,7 +32,9 @@ export function useUVCData() {
       try {
         // Get all units
         const unitsCollection = collection(db, "units");
-        const unitsSnapshot = await getDocs(unitsCollection);
+        // Add where clause to only get UVC units
+        const unitsQuery = query(unitsCollection, where("unit_type", "==", "uvc"));
+        const unitsSnapshot = await getDocs(unitsQuery);
         
         // Process each unit and accumulate UVC hours from measurements
         const unitsPromises = unitsSnapshot.docs.map(async (unitDoc) => {

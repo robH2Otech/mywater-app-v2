@@ -26,6 +26,9 @@ interface UnitFormFieldsProps {
 }
 
 export function UnitFormFields({ formData, setFormData }: UnitFormFieldsProps) {
+  // Show/hide UVC hours based on unit type
+  const showUVCFields = formData.unit_type === 'uvc';
+  
   return (
     <ScrollableDialogContent maxHeight="65vh">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-5 p-1">
@@ -43,13 +46,13 @@ export function UnitFormFields({ formData, setFormData }: UnitFormFieldsProps) {
           placeholder="Enter contact name"
         />
         
-        {/* Unit Type Selection - Added Office unit type */}
+        {/* Unit Type Selection */}
         <div className="space-y-2 col-span-1 md:col-span-2">
           <label className="text-xs font-medium text-gray-400 block">Unit Type</label>
           <RadioGroup
             value={formData.unit_type}
             onValueChange={(value) => setFormData({ ...formData, unit_type: value })}
-            className="flex flex-wrap space-x-4 space-y-0"
+            className="flex flex-wrap gap-4 space-y-0"
           >
             <div className="flex items-center space-x-2">
               <RadioGroupItem value="uvc" id="uvc" className="text-mywater-blue" />
@@ -96,7 +99,7 @@ export function UnitFormFields({ formData, setFormData }: UnitFormFieldsProps) {
         />
         
         {/* Show UVC Hours only for UVC units */}
-        {formData.unit_type === 'uvc' && (
+        {showUVCFields && (
           <FormInput
             label="UVC Hours"
             type="number"
