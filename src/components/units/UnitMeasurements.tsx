@@ -1,7 +1,6 @@
 
 import { Card } from "@/components/ui/card";
 import { useRealtimeMeasurements } from "@/hooks/measurements/useRealtimeMeasurements";
-import { ProcessedMeasurement } from "@/utils/measurements/types";
 import {
   Table,
   TableBody,
@@ -47,11 +46,12 @@ export function UnitMeasurements({ unitId }: UnitMeasurementsProps) {
         const currentVolume = typeof measurement.volume === 'number' ? measurement.volume : 0;
         const previousVolume = typeof measurements[index + 1].volume === 'number' ? measurements[index + 1].volume : 0;
         
-        // Calculate the difference in cubic meters
-        const diffInCubicMeters = Math.max(0, currentVolume - previousVolume);
+        // Calculate the difference
+        const volumeDiff = Math.max(0, currentVolume - previousVolume);
         
-        // Convert to liters (1 cubic meter = 1000 liters)
-        hourlyVolume = diffInCubicMeters * 1000;
+        // For UVC units, the values are in cubic meters and need to be converted to liters for display
+        // For DROP and Office units, the values are already in liters
+        hourlyVolume = isUVCUnit ? volumeDiff * 1000 : volumeDiff;
       }
       
       return {
@@ -59,7 +59,7 @@ export function UnitMeasurements({ unitId }: UnitMeasurementsProps) {
         hourlyVolume
       };
     });
-  }, [measurements]);
+  }, [measurements, isUVCUnit]);
 
   const safeRenderMeasurements = (measurements: any[]) => {
     return measurements.map((measurement) => {
@@ -67,15 +67,20 @@ export function UnitMeasurements({ unitId }: UnitMeasurementsProps) {
         // Get timestamp directly - it should already be formatted by useRealtimeMeasurements
         const timestamp = measurement.timestamp || "Invalid date";
           
-        // Convert volume from cubic meters to liters (1 cubic meter = 1000 liters)
-        const cubicMeters = typeof measurement.cumulative_volume === 'number' 
-          ? measurement.cumulative_volume 
-          : typeof measurement.volume === 'number'
-            ? measurement.volume
+        // Handle volume display based on unit type
+        let displayVolume;
+        
+        if (isUVCUnit) {
+          // For UVC units, convert from cubic meters to liters for display
+          const cubicMeters = typeof measurement.volume === 'number' ? measurement.volume : 0;
+          displayVolume = Math.round(cubicMeters * 1000);
+        } else {
+          // For DROP and Office units, the values are already in liters
+          displayVolume = typeof measurement.volume === 'number' 
+            ? Math.round(measurement.volume) 
             : 0;
+        }
             
-        const volumeInLiters = Math.round(cubicMeters * 1000);
-          
         // Format temperature with 1 decimal place
         const temperature = typeof measurement.temperature === 'number' 
           ? `${measurement.temperature.toFixed(1)}°C` 
@@ -92,7 +97,7 @@ export function UnitMeasurements({ unitId }: UnitMeasurementsProps) {
         return (
           <TableRow key={measurement.id} className="hover:bg-spotify-accent/20">
             <TableCell className="text-white">{timestamp}</TableCell>
-            <TableCell className="text-white text-right">{volumeInLiters} L</TableCell>
+            <TableCell className="text-white text-right">{displayVolume} L</TableCell>
             <TableCell className="text-white text-right">{temperature}</TableCell>
             <TableCell className="text-white text-right">{lastColumn}</TableCell>
           </TableRow>
@@ -159,3 +164,4 @@ export function UnitMeasurements({ unitId }: UnitMeasurementsProps) {
     </Card>
   );
 }
+

@@ -110,22 +110,52 @@ export const litersToCubicMeters = (liters: number | string | null | undefined):
 
 /**
  * Calculate the hourly volume change between two measurements
- * Returns volume difference in liters
+ * Returns volume difference in appropriate units (liters for DROP/Office, cubic meters for UVC)
  */
 export const calculateHourlyVolume = (
   currentVolume: number | string | null | undefined, 
-  previousVolume: number | string | null | undefined
+  previousVolume: number | string | null | undefined,
+  isUVCUnit: boolean = false
 ): number => {
   const current = typeof currentVolume === 'string' ? parseFloat(currentVolume) : (currentVolume || 0);
   const previous = typeof previousVolume === 'string' ? parseFloat(previousVolume) : (previousVolume || 0);
   
   if (isNaN(current) || isNaN(previous)) return 0;
   
-  // Calculate difference in cubic meters
-  const diffInCubicMeters = Math.max(0, current - previous);
+  // Calculate difference - for both unit types
+  const volumeDiff = Math.max(0, current - previous);
   
-  // Convert to liters
-  return diffInCubicMeters * 1000;
+  // For UVC units, convert cubic meters to liters for display
+  return isUVCUnit ? volumeDiff * 1000 : volumeDiff;
+};
+
+/**
+ * Format volume based on unit type
+ * UVC units use cubic meters (m³), DROP and Office units use liters (L)
+ */
+export const formatVolumeByUnitType = (
+  volume: number | string | null | undefined,
+  unitType: string | null | undefined
+): string => {
+  if (volume === null || volume === undefined) return "N/A";
+  
+  try {
+    const numVolume = typeof volume === 'string' ? parseFloat(volume) : volume;
+    if (isNaN(numVolume)) return "N/A";
+    
+    const isUVCUnit = unitType === 'uvc';
+    
+    if (isUVCUnit) {
+      // For UVC units, display in cubic meters
+      return `${Math.round(numVolume).toLocaleString()} m³`;
+    } else {
+      // For DROP and Office units, display in liters
+      return `${Math.round(numVolume).toLocaleString()} L`;
+    }
+  } catch (err) {
+    console.error("Error formatting volume:", volume, err);
+    return "N/A";
+  }
 };
 
 /**
@@ -195,3 +225,4 @@ export const safeFormatTimestamp = (timestamp: any): string => {
     return "Invalid date";
   }
 };
+

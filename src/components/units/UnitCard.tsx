@@ -88,7 +88,13 @@ export const UnitCard = ({
     try {
       const numVolume = typeof volume === 'string' ? parseFloat(volume) : volume;
       if (isNaN(numVolume)) return "N/A";
-      return Math.round(numVolume).toLocaleString();
+      
+      // Format based on unit type - UVC units are in m³, DROP and Office units are in L
+      if (isUVCUnit) {
+        return Math.round(numVolume).toLocaleString() + " m³";
+      } else {
+        return Math.round(numVolume).toLocaleString() + " L";
+      }
     } catch (err) {
       console.error("Error formatting volume:", volume, err);
       return "N/A";
@@ -134,7 +140,7 @@ export const UnitCard = ({
           </div>
           <div className="space-y-2">
             <p className="text-sm text-gray-400">
-              Volume: {formatVolume(total_volume)} m³
+              Volume: {formatVolume(total_volume)}
             </p>
             <p className="text-sm text-gray-400">
               Last Maintenance: {formatDate(last_maintenance)}
@@ -178,3 +184,4 @@ export const UnitCard = ({
     </>
   );
 };
+

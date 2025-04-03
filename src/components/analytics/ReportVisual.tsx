@@ -150,7 +150,8 @@ export function ReportVisual({ unit, reportType, metrics }: ReportVisualProps) {
         />
       </div>
       
-      <DailyMeasurementsTable dailyData={metrics.dailyData} />
+      <DailyMeasurementsTable dailyData={metrics.dailyData} unitType={unit.unit_type} />
     </div>
   );
 }
+

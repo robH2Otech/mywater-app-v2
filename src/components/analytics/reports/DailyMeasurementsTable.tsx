@@ -1,7 +1,7 @@
 
 import { Card } from "@/components/ui/card";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { cubicMetersToLiters } from "@/utils/measurements/formatUtils";
+import { formatVolumeByUnitType } from "@/utils/measurements/formatUtils";
 
 interface DailyData {
   date: string;
@@ -12,16 +12,29 @@ interface DailyData {
 
 interface DailyMeasurementsTableProps {
   dailyData: DailyData[];
+  unitType?: string;
 }
 
-export function DailyMeasurementsTable({ dailyData }: DailyMeasurementsTableProps) {
+export function DailyMeasurementsTable({ dailyData, unitType = 'uvc' }: DailyMeasurementsTableProps) {
   const isMobile = useIsMobile();
+  const isUVCUnit = unitType === 'uvc';
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
     return isMobile 
       ? date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })
       : date.toLocaleDateString();
+  };
+
+  const formatVolume = (volume: number) => {
+    // Format volume based on unit type
+    if (isUVCUnit) {
+      // For UVC units, convert to liters for display
+      return `${Math.round(volume * 1000)} L`;
+    } else {
+      // For DROP and Office units, already in liters
+      return `${Math.round(volume)} L`;
+    }
   };
 
   return (
@@ -44,7 +57,7 @@ export function DailyMeasurementsTable({ dailyData }: DailyMeasurementsTableProp
                   {formatDate(day.date)}
                 </td>
                 <td className="px-2 md:px-4 py-2 whitespace-nowrap text-xs md:text-sm">
-                  {Math.round(cubicMetersToLiters(day.volume))} L
+                  {formatVolume(day.volume)}
                 </td>
                 <td className="px-2 md:px-4 py-2 whitespace-nowrap text-xs md:text-sm">
                   {day.avgTemperature.toFixed(1)} °C
@@ -60,3 +73,4 @@ export function DailyMeasurementsTable({ dailyData }: DailyMeasurementsTableProp
     </Card>
   );
 }
+
