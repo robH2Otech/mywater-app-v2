@@ -10,6 +10,10 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { useQuery } from "@tanstack/react-query";
+import { doc, getDoc } from "firebase/firestore";
+import { db } from "@/integrations/firebase/client";
+import { useMemo } from "react";
 
 interface UnitMeasurementsProps {
   unitId: string;
@@ -17,37 +21,80 @@ interface UnitMeasurementsProps {
 
 export function UnitMeasurements({ unitId }: UnitMeasurementsProps) {
   const { measurements, isLoading, error } = useRealtimeMeasurements(unitId);
+  
+  // Fetch unit details to determine unit type
+  const { data: unit } = useQuery({
+    queryKey: ["unit-type", unitId],
+    queryFn: async () => {
+      const unitDoc = await getDoc(doc(db, "units", unitId));
+      return unitDoc.exists() ? unitDoc.data() : null;
+    }
+  });
+  
+  const unitType = unit?.unit_type || 'uvc';
+  const isUVCUnit = unitType === 'uvc';
+  const isFilterUnit = unitType === 'drop' || unitType === 'office';
+  
+  // Calculate last hour volume differences for each measurement
+  const measurementsWithHourlyVolume = useMemo(() => {
+    if (!measurements.length) return [];
+    
+    return measurements.map((measurement, index) => {
+      let hourlyVolume = 0;
+      
+      // If not the last measurement, calculate difference with the next one (measurements are in reverse order)
+      if (index < measurements.length - 1) {
+        const currentVolume = typeof measurement.volume === 'number' ? measurement.volume : 0;
+        const previousVolume = typeof measurements[index + 1].volume === 'number' ? measurements[index + 1].volume : 0;
+        
+        // Calculate the difference in cubic meters
+        const diffInCubicMeters = Math.max(0, currentVolume - previousVolume);
+        
+        // Convert to liters (1 cubic meter = 1000 liters)
+        hourlyVolume = diffInCubicMeters * 1000;
+      }
+      
+      return {
+        ...measurement,
+        hourlyVolume
+      };
+    });
+  }, [measurements]);
 
-  const safeRenderMeasurements = (measurements: ProcessedMeasurement[]) => {
+  const safeRenderMeasurements = (measurements: any[]) => {
     return measurements.map((measurement) => {
       try {
         // Get timestamp directly - it should already be formatted by useRealtimeMeasurements
         const timestamp = measurement.timestamp || "Invalid date";
           
-        // Use cumulative_volume for display instead of individual volume
-        // This ensures we see the total volume increasing correctly
-        const volume = typeof measurement.cumulative_volume === 'number' 
-          ? measurement.cumulative_volume.toFixed(1) 
+        // Convert volume from cubic meters to liters (1 cubic meter = 1000 liters)
+        const cubicMeters = typeof measurement.cumulative_volume === 'number' 
+          ? measurement.cumulative_volume 
           : typeof measurement.volume === 'number'
-            ? measurement.volume.toFixed(1)
-            : "N/A";
+            ? measurement.volume
+            : 0;
+            
+        const volumeInLiters = Math.round(cubicMeters * 1000);
           
         // Format temperature with 1 decimal place
         const temperature = typeof measurement.temperature === 'number' 
           ? `${measurement.temperature.toFixed(1)}°C` 
           : "N/A";
           
-        // Format UVC hours with 1 decimal place
-        const uvcHours = measurement.uvc_hours !== undefined && typeof measurement.uvc_hours === 'number'
-          ? measurement.uvc_hours.toFixed(1)
-          : "N/A";
+        // For UVC units, show UVC hours
+        // For DROP and Office units, show hourly volume in liters
+        const lastColumn = isUVCUnit
+          ? (measurement.uvc_hours !== undefined && typeof measurement.uvc_hours === 'number'
+              ? measurement.uvc_hours.toFixed(1)
+              : "N/A")
+          : `${Math.round(measurement.hourlyVolume)} L`;
 
         return (
           <TableRow key={measurement.id} className="hover:bg-spotify-accent/20">
             <TableCell className="text-white">{timestamp}</TableCell>
-            <TableCell className="text-white text-right">{volume}</TableCell>
+            <TableCell className="text-white text-right">{volumeInLiters} L</TableCell>
             <TableCell className="text-white text-right">{temperature}</TableCell>
-            <TableCell className="text-white text-right">{uvcHours}</TableCell>
+            <TableCell className="text-white text-right">{lastColumn}</TableCell>
           </TableRow>
         );
       } catch (err) {
@@ -96,13 +143,15 @@ export function UnitMeasurements({ unitId }: UnitMeasurementsProps) {
             <TableHeader>
               <TableRow className="border-b border-spotify-accent">
                 <TableHead className="text-left text-gray-400">Timestamp</TableHead>
-                <TableHead className="text-right text-gray-400">Volume (m³)</TableHead>
+                <TableHead className="text-right text-gray-400">Volume (L)</TableHead>
                 <TableHead className="text-right text-gray-400">Temperature</TableHead>
-                <TableHead className="text-right text-gray-400">UVC Hours</TableHead>
+                <TableHead className="text-right text-gray-400">
+                  {isUVCUnit ? "UVC Hours" : "Last hour volume (L)"}
+                </TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {safeRenderMeasurements(measurements)}
+              {safeRenderMeasurements(measurementsWithHourlyVolume)}
             </TableBody>
           </Table>
         </div>

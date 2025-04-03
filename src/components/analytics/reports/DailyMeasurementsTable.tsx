@@ -1,6 +1,7 @@
 
 import { Card } from "@/components/ui/card";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { cubicMetersToLiters } from "@/utils/measurements/formatUtils";
 
 interface DailyData {
   date: string;
@@ -31,7 +32,7 @@ export function DailyMeasurementsTable({ dailyData }: DailyMeasurementsTableProp
           <thead>
             <tr>
               <th className="px-2 md:px-4 py-2 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Date</th>
-              <th className="px-2 md:px-4 py-2 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Volume</th>
+              <th className="px-2 md:px-4 py-2 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Volume (L)</th>
               <th className="px-2 md:px-4 py-2 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">{isMobile ? "Temp" : "Avg. Temperature"}</th>
               <th className="px-2 md:px-4 py-2 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">UVC Hours</th>
             </tr>
@@ -43,7 +44,7 @@ export function DailyMeasurementsTable({ dailyData }: DailyMeasurementsTableProp
                   {formatDate(day.date)}
                 </td>
                 <td className="px-2 md:px-4 py-2 whitespace-nowrap text-xs md:text-sm">
-                  {day.volume.toFixed(1)} m³
+                  {Math.round(cubicMetersToLiters(day.volume))} L
                 </td>
                 <td className="px-2 md:px-4 py-2 whitespace-nowrap text-xs md:text-sm">
                   {day.avgTemperature.toFixed(1)} °C

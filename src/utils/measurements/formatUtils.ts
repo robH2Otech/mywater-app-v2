@@ -81,6 +81,54 @@ export const formatThousands = (value: number | string | null | undefined): stri
 };
 
 /**
+ * Convert cubic meters to liters
+ * 1 cubic meter = 1000 liters
+ */
+export const cubicMetersToLiters = (cubicMeters: number | string | null | undefined): number => {
+  if (cubicMeters === null || cubicMeters === undefined) return 0;
+  
+  const numValue = typeof cubicMeters === 'string' ? parseFloat(cubicMeters) : cubicMeters;
+  
+  if (isNaN(numValue)) return 0;
+  
+  return numValue * 1000;
+};
+
+/**
+ * Convert liters to cubic meters
+ * 1000 liters = 1 cubic meter
+ */
+export const litersToCubicMeters = (liters: number | string | null | undefined): number => {
+  if (liters === null || liters === undefined) return 0;
+  
+  const numValue = typeof liters === 'string' ? parseFloat(liters) : liters;
+  
+  if (isNaN(numValue)) return 0;
+  
+  return numValue / 1000;
+};
+
+/**
+ * Calculate the hourly volume change between two measurements
+ * Returns volume difference in liters
+ */
+export const calculateHourlyVolume = (
+  currentVolume: number | string | null | undefined, 
+  previousVolume: number | string | null | undefined
+): number => {
+  const current = typeof currentVolume === 'string' ? parseFloat(currentVolume) : (currentVolume || 0);
+  const previous = typeof previousVolume === 'string' ? parseFloat(previousVolume) : (previousVolume || 0);
+  
+  if (isNaN(current) || isNaN(previous)) return 0;
+  
+  // Calculate difference in cubic meters
+  const diffInCubicMeters = Math.max(0, current - previous);
+  
+  // Convert to liters
+  return diffInCubicMeters * 1000;
+};
+
+/**
  * Safely parse and format a timestamp from any format to our standard format
  * Returns the formatted string or "Invalid date" if parsing fails
  */

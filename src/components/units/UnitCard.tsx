@@ -50,8 +50,10 @@ export const UnitCard = ({
   // Only UVC units should have UVC-specific information displayed
   const isUVCUnit = unit_type === 'uvc';
   
-  // DROP units are treated as filter units
+  // DROP and Office units are treated as filter units
   const isDropUnit = unit_type === 'drop';
+  const isOfficeUnit = unit_type === 'office';
+  const isFilterUnit = isDropUnit || isOfficeUnit;
 
   const getStatusIcon = () => {
     switch (status) {
@@ -135,7 +137,7 @@ export const UnitCard = ({
             </p>
             {unit_type && (
               <p className="text-sm text-gray-400">
-                Type: {unit_type.toUpperCase()} {isDropUnit ? 'Filter' : 'Unit'}
+                Type: {unit_type.toUpperCase()} {isFilterUnit ? 'Filter' : 'Unit'}
               </p>
             )}
             {isUVCUnit && uvc_hours && (

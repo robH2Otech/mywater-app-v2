@@ -43,13 +43,13 @@ export function UnitFormFields({ formData, setFormData }: UnitFormFieldsProps) {
           placeholder="Enter contact name"
         />
         
-        {/* Unit Type Selection */}
+        {/* Unit Type Selection - Added Office unit type */}
         <div className="space-y-2 col-span-1 md:col-span-2">
           <label className="text-xs font-medium text-gray-400 block">Unit Type</label>
           <RadioGroup
             value={formData.unit_type}
             onValueChange={(value) => setFormData({ ...formData, unit_type: value })}
-            className="flex space-x-6"
+            className="flex flex-wrap space-x-4 space-y-0"
           >
             <div className="flex items-center space-x-2">
               <RadioGroupItem value="uvc" id="uvc" className="text-mywater-blue" />
@@ -58,6 +58,10 @@ export function UnitFormFields({ formData, setFormData }: UnitFormFieldsProps) {
             <div className="flex items-center space-x-2">
               <RadioGroupItem value="drop" id="drop" className="text-mywater-blue" />
               <Label htmlFor="drop" className="text-sm text-white cursor-pointer">DROP Unit</Label>
+            </div>
+            <div className="flex items-center space-x-2">
+              <RadioGroupItem value="office" id="office" className="text-mywater-blue" />
+              <Label htmlFor="office" className="text-sm text-white cursor-pointer">Office Unit</Label>
             </div>
           </RadioGroup>
         </div>
