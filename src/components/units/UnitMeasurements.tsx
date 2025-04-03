@@ -49,9 +49,9 @@ export function UnitMeasurements({ unitId }: UnitMeasurementsProps) {
         // Calculate the difference
         const volumeDiff = Math.max(0, currentVolume - previousVolume);
         
-        // For UVC units, the values are in cubic meters and need to be converted to liters for display
+        // For UVC units, the values are in cubic meters and should be kept in cubic meters
         // For DROP and Office units, the values are already in liters
-        hourlyVolume = isUVCUnit ? volumeDiff * 1000 : volumeDiff;
+        hourlyVolume = volumeDiff;
       }
       
       return {
@@ -69,16 +69,19 @@ export function UnitMeasurements({ unitId }: UnitMeasurementsProps) {
           
         // Handle volume display based on unit type
         let displayVolume;
+        let volumeUnit;
         
         if (isUVCUnit) {
           // For UVC units, convert from cubic meters to liters for display
           const cubicMeters = typeof measurement.volume === 'number' ? measurement.volume : 0;
-          displayVolume = Math.round(cubicMeters * 1000);
+          displayVolume = cubicMeters.toFixed(2);
+          volumeUnit = "m³";
         } else {
           // For DROP and Office units, the values are already in liters
           displayVolume = typeof measurement.volume === 'number' 
             ? Math.round(measurement.volume) 
             : 0;
+          volumeUnit = "L";
         }
             
         // Format temperature with 1 decimal place
@@ -97,7 +100,7 @@ export function UnitMeasurements({ unitId }: UnitMeasurementsProps) {
         return (
           <TableRow key={measurement.id} className="hover:bg-spotify-accent/20">
             <TableCell className="text-white">{timestamp}</TableCell>
-            <TableCell className="text-white text-right">{displayVolume} L</TableCell>
+            <TableCell className="text-white text-right">{displayVolume} {volumeUnit}</TableCell>
             <TableCell className="text-white text-right">{temperature}</TableCell>
             <TableCell className="text-white text-right">{lastColumn}</TableCell>
           </TableRow>
@@ -148,7 +151,9 @@ export function UnitMeasurements({ unitId }: UnitMeasurementsProps) {
             <TableHeader>
               <TableRow className="border-b border-spotify-accent">
                 <TableHead className="text-left text-gray-400">Timestamp</TableHead>
-                <TableHead className="text-right text-gray-400">Volume (L)</TableHead>
+                <TableHead className="text-right text-gray-400">
+                  Volume {isUVCUnit ? "(m³)" : "(L)"}
+                </TableHead>
                 <TableHead className="text-right text-gray-400">Temperature</TableHead>
                 <TableHead className="text-right text-gray-400">
                   {isUVCUnit ? "UVC Hours" : "Last hour volume (L)"}
@@ -164,4 +169,3 @@ export function UnitMeasurements({ unitId }: UnitMeasurementsProps) {
     </Card>
   );
 }
-

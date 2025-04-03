@@ -146,11 +146,11 @@ export const formatVolumeByUnitType = (
     const isUVCUnit = unitType === 'uvc';
     
     if (isUVCUnit) {
-      // For UVC units, display in cubic meters
-      return `${Math.round(numVolume).toLocaleString()} m³`;
+      // For UVC units, display in cubic meters with 2 decimal places
+      return `${numVolume.toFixed(2)} m³`;
     } else {
-      // For DROP and Office units, display in liters
-      return `${Math.round(numVolume).toLocaleString()} L`;
+      // For DROP and Office units, display in liters (rounded)
+      return `${Math.round(numVolume)} L`;
     }
   } catch (err) {
     console.error("Error formatting volume:", volume, err);
