@@ -30,7 +30,7 @@ export function useUVCData() {
     queryFn: async () => {
       console.log("Fetching UVC units data...");
       try {
-        // Get all units
+        // Get only UVC units
         const unitsCollection = collection(db, "units");
         // Add where clause to only get UVC units
         const unitsQuery = query(unitsCollection, where("unit_type", "==", "uvc"));

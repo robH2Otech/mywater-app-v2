@@ -91,6 +91,16 @@ export function UVCList({ units, onUVCClick }: UVCListProps) {
     }
   };
 
+  // If there are no UVC units to display
+  if (processedUnits.length === 0) {
+    return (
+      <div className="text-center p-8">
+        <h3 className="text-xl font-semibold mb-2">No UVC Units Available</h3>
+        <p className="text-gray-400">There are no UVC units in the system. Add UVC units from the Water Units page.</p>
+      </div>
+    );
+  }
+
   return (
     <>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">

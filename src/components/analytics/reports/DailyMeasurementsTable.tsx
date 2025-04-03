@@ -26,17 +26,6 @@ export function DailyMeasurementsTable({ dailyData, unitType = 'uvc' }: DailyMea
       : date.toLocaleDateString();
   };
 
-  const formatVolume = (volume: number) => {
-    // Format volume based on unit type
-    if (isUVCUnit) {
-      // For UVC units, convert to liters for display
-      return `${Math.round(volume * 1000)} L`;
-    } else {
-      // For DROP and Office units, already in liters
-      return `${Math.round(volume)} L`;
-    }
-  };
-
   return (
     <Card className="p-4 bg-spotify-darker border-spotify-accent">
       <h3 className="text-lg font-semibold mb-4">Daily Measurements</h3>
@@ -45,9 +34,15 @@ export function DailyMeasurementsTable({ dailyData, unitType = 'uvc' }: DailyMea
           <thead>
             <tr>
               <th className="px-2 md:px-4 py-2 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Date</th>
-              <th className="px-2 md:px-4 py-2 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Volume (L)</th>
-              <th className="px-2 md:px-4 py-2 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">{isMobile ? "Temp" : "Avg. Temperature"}</th>
-              <th className="px-2 md:px-4 py-2 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">UVC Hours</th>
+              <th className="px-2 md:px-4 py-2 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
+                {isUVCUnit ? "Volume (m³)" : "Volume (L)"}
+              </th>
+              <th className="px-2 md:px-4 py-2 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
+                {isMobile ? "Temp" : "Avg. Temperature"} (°C)
+              </th>
+              <th className="px-2 md:px-4 py-2 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
+                UVC Hours
+              </th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-700">
@@ -57,7 +52,7 @@ export function DailyMeasurementsTable({ dailyData, unitType = 'uvc' }: DailyMea
                   {formatDate(day.date)}
                 </td>
                 <td className="px-2 md:px-4 py-2 whitespace-nowrap text-xs md:text-sm">
-                  {formatVolume(day.volume)}
+                  {formatVolumeByUnitType(day.volume, unitType)}
                 </td>
                 <td className="px-2 md:px-4 py-2 whitespace-nowrap text-xs md:text-sm">
                   {day.avgTemperature.toFixed(1)} °C
@@ -73,4 +68,3 @@ export function DailyMeasurementsTable({ dailyData, unitType = 'uvc' }: DailyMea
     </Card>
   );
 }
-

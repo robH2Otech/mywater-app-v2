@@ -19,6 +19,9 @@ export const UVC = () => {
     return <LoadingSkeleton />;
   }
 
+  // Only show UVC units - filter out DROP and Office units
+  const uvcUnits = units.filter(unit => unit.unit_type === 'uvc');
+
   return (
     <div className="space-y-6">
       <PageHeader
@@ -27,7 +30,7 @@ export const UVC = () => {
       />
       
       <UVCList
-        units={units}
+        units={uvcUnits}
         onUVCClick={setSelectedUnit}
       />
 
