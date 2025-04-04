@@ -25,18 +25,21 @@ export const StatCard = ({
   return (
     <Link to={link} className="block">
       <Card className="p-6 glass hover:bg-spotify-accent/40 transition-colors h-[140px] flex items-center">
-        <div className="flex justify-between items-center w-full">
-          <div>
+        <div className="w-full">
+          <div className="flex items-center gap-2 mb-3">
+            <Icon className={`h-5 w-5 ${iconColor}`} />
             <p className="text-sm text-gray-400">{title}</p>
+          </div>
+          
+          <div className="pl-1">
             <div className="flex items-center">
-              <p className="text-4xl font-bold mt-2">{value}</p>
+              <p className="text-4xl font-bold">{value}</p>
               {value.toString().includes('m') && <sup className="text-lg">3</sup>}
             </div>
             {subValue && (
               <p className={`text-sm ${subValueColor} mt-1`}>{subValue}</p>
             )}
           </div>
-          <Icon className={`h-8 w-8 ${iconColor}`} />
         </div>
       </Card>
     </Link>
