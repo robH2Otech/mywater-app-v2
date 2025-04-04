@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -5,6 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ArrowRight, Droplet, Shield, Users, Globe } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
+import MatrixRain from "@/components/ui/matrix-rain";
 
 export function LandingPage() {
   const navigate = useNavigate();
@@ -21,15 +23,17 @@ export function LandingPage() {
 
   return (
     <div className="min-h-screen bg-spotify-dark flex flex-col items-center justify-center p-4 relative overflow-hidden">
-      {/* Background Video/Image */}
-      <div className="absolute inset-0 z-0">
-        <img 
-          src="https://images.unsplash.com/photo-1527066579998-dbbae57f45ce?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1920&q=80" 
-          alt="Water background" 
-          className="object-cover w-full h-full opacity-20"
-        />
-        <div className="absolute inset-0 bg-gradient-to-t from-spotify-dark to-transparent opacity-90"></div>
-      </div>
+      {/* Matrix Rain Background */}
+      <MatrixRain 
+        fontSize={16}
+        color="#39afcd"
+        characters="10MYWATER"
+        fadeOpacity={0.05}
+        speed={0.8}
+      />
+      
+      {/* Overlay gradient for better text readability */}
+      <div className="absolute inset-0 bg-gradient-to-t from-spotify-dark via-spotify-dark/90 to-spotify-dark/70 z-0"></div>
 
       {/* Language Selector */}
       <div className="absolute top-4 right-4 z-20">
