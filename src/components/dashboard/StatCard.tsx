@@ -22,6 +22,11 @@ export const StatCard = ({
   subValue,
   subValueColor = "text-mywater-blue",
 }: StatCardProps) => {
+  // Format value if it contains 'm' to show proper cubic meters
+  const formattedValue = typeof value === 'string' && value.includes('m') 
+    ? value.replace(' m', 'm³') 
+    : value;
+    
   return (
     <Link to={link} className="block">
       <Card className="p-6 glass hover:bg-spotify-accent/40 transition-colors h-[140px] flex items-center">
@@ -32,10 +37,7 @@ export const StatCard = ({
           </div>
           
           <div className="pl-1">
-            <div className="flex items-center">
-              <p className="text-4xl font-bold">{value}</p>
-              {value.toString().includes('m') && <sup className="text-lg">3</sup>}
-            </div>
+            <p className="text-4xl font-bold">{formattedValue}</p>
             {subValue && (
               <p className={`text-sm ${subValueColor} mt-1`}>{subValue}</p>
             )}

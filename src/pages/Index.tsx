@@ -1,4 +1,3 @@
-
 import { useQuery } from "@tanstack/react-query";
 import { Bell, Droplets, Filter, Lightbulb, TrendingUp } from "lucide-react";
 import { useUnits } from "@/hooks/useUnits";
@@ -17,16 +16,13 @@ const Index = () => {
   const [percentageIncrease, setPercentageIncrease] = useState(13.2);
   const [isVolumeLoading, setIsVolumeLoading] = useState(true);
   
-  // Get units data
   const { data: units = [], isLoading: unitsLoading } = useUnits();
   
-  // Fetch total volumes immediately on component mount
   useEffect(() => {
     const loadTotalVolumes = async () => {
       if (units && units.length > 0) {
         setIsVolumeLoading(true);
         try {
-          // Get all unit volumes directly from their documents
           const totalVol = await fetchUnitTotalVolumes(units.map(unit => unit.id));
           setTotalVolume(totalVol);
         } catch (error) {
@@ -43,12 +39,10 @@ const Index = () => {
     loadTotalVolumes();
   }, [units]);
   
-  // Get active alerts count
   const { data: activeAlerts = [], isLoading: alertsLoading } = useQuery({
     queryKey: ["active-alerts-count"],
     queryFn: async () => {
       console.log("Fetching active alerts count...");
-      // Calculate date 7 days ago
       const sevenDaysAgo = new Date();
       sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
       
@@ -70,7 +64,6 @@ const Index = () => {
     },
   });
   
-  // Get filter changes required
   const { data: filtersNeedingChange = [], isLoading: filtersLoading } = useQuery({
     queryKey: ["filters-needing-change"],
     queryFn: async () => {
@@ -94,10 +87,8 @@ const Index = () => {
   
   const isLoading = unitsLoading || alertsLoading || filtersLoading || isVolumeLoading;
   
-  // Format volume with commas for thousands
-  const formattedVolume = totalVolume ? `${formatThousands(totalVolume)} m` : "0 m";
+  const formattedVolume = totalVolume ? `${formatThousands(totalVolume)}m³` : "0m³";
     
-  // Format percentage with + sign if positive and 1 decimal place
   const formattedPercentage = percentageIncrease
     ? `${percentageIncrease > 0 ? '+' : ''}${percentageIncrease.toFixed(1)}%`
     : "0%";
@@ -108,9 +99,6 @@ const Index = () => {
 
   return (
     <div className="space-y-6">
-      {/* Remove the duplicated WelcomeMessage component - it's already in the Header */}
-      
-      {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard
           title="Total Units"
@@ -147,7 +135,6 @@ const Index = () => {
         />
       </div>
       
-      {/* Charts and Alerts */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <WaterUsageChart units={units} />
         <RecentAlerts />
