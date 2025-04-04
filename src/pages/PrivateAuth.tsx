@@ -7,6 +7,7 @@ import { LoginForm } from "@/components/users/private/LoginForm";
 import { PrivateUserRegisterForm } from "@/components/users/private/PrivateUserRegisterForm";
 import { useFirebaseAuth } from "@/hooks/useFirebaseAuth";
 import { Droplets, Home } from "lucide-react";
+import MatrixRain from "@/components/ui/matrix-rain";
 
 export function PrivateAuth() {
   const navigate = useNavigate();
@@ -32,8 +33,20 @@ export function PrivateAuth() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-spotify-dark to-black flex items-center justify-center p-4">
-      <div className="w-full max-w-md space-y-8">
+    <div className="min-h-screen bg-gradient-to-b from-spotify-dark to-black flex items-center justify-center p-4 relative overflow-hidden">
+      {/* Matrix Rain Background */}
+      <MatrixRain 
+        fontSize={16}
+        color="#39afcd"
+        characters="10MYWATER"
+        fadeOpacity={0.05}
+        speed={0.8}
+      />
+      
+      {/* Overlay gradient for better text readability */}
+      <div className="absolute inset-0 bg-gradient-to-t from-black via-spotify-dark/90 to-spotify-dark/70 z-0"></div>
+      
+      <div className="w-full max-w-md space-y-8 relative z-10">
         <div className="text-center">
           <div className="flex items-center justify-center mb-4">
             <div className="bg-gradient-to-r from-cyan-400 to-blue-500 p-3 rounded-full">
