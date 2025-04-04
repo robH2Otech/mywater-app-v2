@@ -10,12 +10,18 @@ interface UnitStatusCardProps {
 export function UnitStatusCard({ unit }: UnitStatusCardProps) {
   const isMobile = useIsMobile();
   
-  // Format volume with whole numbers
+  // Format volume with whole numbers and correct units
   const formatVolume = (volume: number | string | undefined | null) => {
     if (volume === undefined || volume === null) return "0";
     const numericVolume = typeof volume === 'string' ? parseFloat(volume) : volume;
     if (isNaN(numericVolume)) return "0";
-    return Math.round(numericVolume).toString();
+    
+    // Use m³ for UVC units, L for other types
+    if (unit.unit_type === 'uvc') {
+      return `${Math.round(numericVolume)} m³`;
+    } else {
+      return `${Math.round(numericVolume)} L`;
+    }
   };
   
   // Format UVC hours with whole numbers
@@ -51,7 +57,7 @@ export function UnitStatusCard({ unit }: UnitStatusCardProps) {
           </p>
         </div>
         <div>
-          <p className="text-gray-400 text-sm">Volume (m³)</p>
+          <p className="text-gray-400 text-sm">Volume</p>
           <p className="text-lg font-medium">{formatVolume(unit.total_volume)}</p>
         </div>
         <div>

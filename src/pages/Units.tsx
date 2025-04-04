@@ -71,6 +71,7 @@ export const Units = () => {
               location={unit.location}
               total_volume={unit.total_volume}
               last_maintenance={unit.last_maintenance}
+              unit_type={unit.unit_type}
             />
           ))}
         </div>
