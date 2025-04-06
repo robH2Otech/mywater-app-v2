@@ -160,14 +160,11 @@ const ComparisonFacts = ({ dailyConsumption }: { dailyConsumption: number }) => 
 // Main calculator component
 export function EnvironmentalImpactCalculator() {
   const [dailyConsumption, setDailyConsumption] = useState<number>(1.5); // Default 1.5L
-  const [showResults, setShowResults] = useState<boolean>(false);
+  const [showResults, setShowResults] = useState<boolean>(true); // Now showing results by default
   const [showDetails, setShowDetails] = useState<boolean>(false);
   
   const dailyImpact = calculateDailyImpact(dailyConsumption);
-  
-  const handleCalculate = () => {
-    setShowResults(true);
-  };
+  const yearlyImpact = calculateYearlyImpact(dailyConsumption);
   
   const toggleDetails = () => {
     setShowDetails(!showDetails);
@@ -227,73 +224,90 @@ export function EnvironmentalImpactCalculator() {
           </div>
         </div>
 
-        {!showResults ? (
-          <Button 
-            className="w-full bg-mywater-blue text-white hover:bg-mywater-blue/80"
-            onClick={handleCalculate}
-          >
-            Calculate My Impact <ArrowRight className="ml-2 h-4 w-4" />
-          </Button>
-        ) : (
-          <>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="p-4 rounded-lg bg-blue-900/20 border border-blue-800/30 flex flex-col items-center text-center">
-                <Package className="h-8 w-8 text-blue-500 mb-2" />
-                <h3 className="text-sm font-medium mb-1">Bottles Saved Daily</h3>
-                <p className="text-2xl font-bold">{Math.round(dailyImpact.bottles)}</p>
-                <p className="text-xs text-gray-400 mt-1">0.5L plastic bottles</p>
-              </div>
-              
-              <div className="p-4 rounded-lg bg-green-900/20 border border-green-800/30 flex flex-col items-center text-center">
-                <Leaf className="h-8 w-8 text-green-500 mb-2" />
-                <h3 className="text-sm font-medium mb-1">CO₂ Reduction Daily</h3>
-                <p className="text-2xl font-bold">{dailyImpact.co2.toFixed(1)}</p>
-                <p className="text-xs text-gray-400 mt-1">kg of CO₂ emissions</p>
-              </div>
-              
-              <div className="p-4 rounded-lg bg-yellow-900/20 border border-yellow-800/30 flex flex-col items-center text-center">
-                <Droplet className="h-8 w-8 text-yellow-500 mb-2" />
-                <h3 className="text-sm font-medium mb-1">Plastic Waste Reduced</h3>
-                <p className="text-2xl font-bold">{(dailyImpact.plastic * 1000).toFixed(0)}</p>
-                <p className="text-xs text-gray-400 mt-1">grams daily</p>
-              </div>
+        {/* YEARLY IMPACT - Featured prominently at the top */}
+        <div className="p-4 bg-gradient-to-r from-blue-900/30 to-green-900/30 rounded-lg border border-blue-800/30">
+          <h3 className="text-center font-semibold mb-3 text-lg">Yearly Environmental Impact</h3>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="p-3 rounded-lg bg-blue-900/20 border border-blue-800/30 flex flex-col items-center text-center">
+              <Package className="h-8 w-8 text-blue-500 mb-2" />
+              <h4 className="text-sm font-medium mb-1">Bottles Saved</h4>
+              <p className="text-2xl font-bold">{formatEnvironmentalImpact(yearlyImpact.bottles, 'bottles')}</p>
+              <p className="text-xs text-gray-400 mt-1">0.5L plastic bottles</p>
             </div>
-
-            <Button 
-              variant="outline" 
-              className="w-full flex items-center justify-center"
-              onClick={toggleDetails}
-            >
-              {showDetails ? (
-                <>
-                  <span>Hide Detailed Impact</span>
-                  <ChevronUp className="ml-2 h-4 w-4" />
-                </>
-              ) : (
-                <>
-                  <span>Show Detailed Impact</span>
-                  <ChevronDown className="ml-2 h-4 w-4" />
-                </>
-              )}
-            </Button>
-
-            {showDetails && (
-              <>
-                <ImpactChart dailyConsumption={dailyConsumption} />
-                <ComparisonFacts dailyConsumption={dailyConsumption} />
-              </>
-            )}
             
-            <Button 
-              variant="default"
-              className="w-full mt-4 bg-green-600 hover:bg-green-700"
-              onClick={() => setDailyConsumption(prev => Math.min(prev + 0.5, 5))}
-            >
-              <Check className="mr-2 h-4 w-4" />
-              Drink more, save more!
-            </Button>
+            <div className="p-3 rounded-lg bg-green-900/20 border border-green-800/30 flex flex-col items-center text-center">
+              <Leaf className="h-8 w-8 text-green-500 mb-2" />
+              <h4 className="text-sm font-medium mb-1">CO₂ Reduction</h4>
+              <p className="text-2xl font-bold">{formatEnvironmentalImpact(yearlyImpact.co2, 'kg CO₂')}</p>
+              <p className="text-xs text-gray-400 mt-1">kg of CO₂ emissions</p>
+            </div>
+            
+            <div className="p-3 rounded-lg bg-yellow-900/20 border border-yellow-800/30 flex flex-col items-center text-center">
+              <Droplet className="h-8 w-8 text-yellow-500 mb-2" />
+              <h4 className="text-sm font-medium mb-1">Plastic Waste Reduced</h4>
+              <p className="text-2xl font-bold">{formatEnvironmentalImpact(yearlyImpact.plastic, 'kg plastic')}</p>
+              <p className="text-xs text-gray-400 mt-1">kilograms of plastic</p>
+            </div>
+          </div>
+        </div>
+
+        {/* DAILY IMPACT - Second section */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="p-4 rounded-lg bg-blue-900/20 border border-blue-800/30 flex flex-col items-center text-center">
+            <Package className="h-8 w-8 text-blue-500 mb-2" />
+            <h3 className="text-sm font-medium mb-1">Bottles Saved Daily</h3>
+            <p className="text-2xl font-bold">{Math.round(dailyImpact.bottles)}</p>
+            <p className="text-xs text-gray-400 mt-1">0.5L plastic bottles</p>
+          </div>
+          
+          <div className="p-4 rounded-lg bg-green-900/20 border border-green-800/30 flex flex-col items-center text-center">
+            <Leaf className="h-8 w-8 text-green-500 mb-2" />
+            <h3 className="text-sm font-medium mb-1">CO₂ Reduction Daily</h3>
+            <p className="text-2xl font-bold">{dailyImpact.co2.toFixed(1)}</p>
+            <p className="text-xs text-gray-400 mt-1">kg of CO₂ emissions</p>
+          </div>
+          
+          <div className="p-4 rounded-lg bg-yellow-900/20 border border-yellow-800/30 flex flex-col items-center text-center">
+            <Droplet className="h-8 w-8 text-yellow-500 mb-2" />
+            <h3 className="text-sm font-medium mb-1">Plastic Waste Reduced</h3>
+            <p className="text-2xl font-bold">{(dailyImpact.plastic * 1000).toFixed(0)}</p>
+            <p className="text-xs text-gray-400 mt-1">grams daily</p>
+          </div>
+        </div>
+
+        <Button 
+          variant="outline" 
+          className="w-full flex items-center justify-center"
+          onClick={toggleDetails}
+        >
+          {showDetails ? (
+            <>
+              <span>Hide Detailed Impact</span>
+              <ChevronUp className="ml-2 h-4 w-4" />
+            </>
+          ) : (
+            <>
+              <span>Show Detailed Impact</span>
+              <ChevronDown className="ml-2 h-4 w-4" />
+            </>
+          )}
+        </Button>
+
+        {showDetails && (
+          <>
+            <ImpactChart dailyConsumption={dailyConsumption} />
+            <ComparisonFacts dailyConsumption={dailyConsumption} />
           </>
         )}
+        
+        <Button 
+          variant="default"
+          className="w-full mt-4 bg-green-600 hover:bg-green-700"
+          onClick={() => setDailyConsumption(prev => Math.min(prev + 0.5, 5))}
+        >
+          <Check className="mr-2 h-4 w-4" />
+          Drink more, save more!
+        </Button>
       </div>
     </Card>
   );

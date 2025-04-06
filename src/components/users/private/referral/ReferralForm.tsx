@@ -61,7 +61,7 @@ ${userName || "[Your Name]"}`;
     try {
       console.log("Sending referral email to:", friendEmail);
       
-      const success = await sendReferralEmail(
+      await sendReferralEmail(
         friendEmail,
         friendName,
         userName,
@@ -69,25 +69,22 @@ ${userName || "[Your Name]"}`;
         emailMessage
       );
       
-      if (success) {
-        toast({
-          title: "Referral sent!",
-          description: `Your invitation was sent to ${friendName}.`,
-        });
-        
-        // Trigger notification event
-        const notificationEvent = new CustomEvent('newReferralSent', { 
-          detail: { name: friendName, email: friendEmail }
-        });
-        window.dispatchEvent(notificationEvent);
-        
-        // Reset form
-        setFriendName("");
-        setFriendEmail("");
-        setEmailMessage("");
-      } else {
-        throw new Error("Failed to send email");
-      }
+      toast({
+        title: "Referral sent!",
+        description: `Your invitation was sent to ${friendName}.`,
+      });
+      
+      // Trigger notification event
+      const notificationEvent = new CustomEvent('newReferralSent', { 
+        detail: { name: friendName, email: friendEmail }
+      });
+      window.dispatchEvent(notificationEvent);
+      
+      // Reset form
+      setFriendName("");
+      setFriendEmail("");
+      setEmailMessage("");
+      
     } catch (error) {
       console.error("Error sending email:", error);
       toast({
