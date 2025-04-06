@@ -27,6 +27,52 @@ export const formatVolumeByUnitType = (volume: number | string | undefined | nul
 };
 
 /**
+ * Format a decimal number to 2 decimal places
+ */
+export const formatDecimal = (value: number | string | undefined | null): string => {
+  if (value === undefined || value === null) return "0.00";
+  
+  const numericValue = typeof value === 'string' ? parseFloat(value) : value;
+  if (isNaN(numericValue)) return "0.00";
+  
+  return numericValue.toFixed(2);
+};
+
+/**
+ * Safely format a timestamp from various formats
+ */
+export const safeFormatTimestamp = (timestamp: any): string => {
+  try {
+    // If it's a Firestore timestamp with toDate method
+    if (typeof timestamp === 'object' && timestamp !== null && typeof timestamp.toDate === 'function') {
+      return formatTimestamp(timestamp.toDate());
+    }
+    
+    // If it's a string, try to parse it as a date
+    if (typeof timestamp === 'string') {
+      return formatTimestamp(new Date(timestamp));
+    }
+    
+    // If it's already a Date object
+    if (timestamp instanceof Date) {
+      return formatTimestamp(timestamp);
+    }
+    
+    return "Invalid date";
+  } catch (err) {
+    console.error("Error formatting timestamp:", err);
+    return "Invalid date";
+  }
+};
+
+/**
+ * Format a Date object to ISO string format
+ */
+export const formatTimestamp = (date: Date): string => {
+  return date.toISOString();
+};
+
+/**
  * Environmental impact calculation functions
  */
 
