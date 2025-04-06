@@ -17,7 +17,8 @@ import {
 import { 
   calculateDailyImpact, 
   calculateYearlyImpact, 
-  formatEnvironmentalImpact 
+  formatEnvironmentalImpact,
+  formatDecimal
 } from "@/utils/measurements/formatUtils";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
@@ -56,14 +57,14 @@ const ImpactChart = ({ dailyConsumption }: { dailyConsumption: number }) => {
     <div className="mt-6 space-y-4">
       <h3 className="font-medium text-lg">Your Environmental Impact</h3>
       
-      <div className="space-y-4">
+      <div className="space-y-6">
         {chartData.map((data, index) => (
           <div key={index} className="space-y-3">
             <h4 className="text-sm font-medium text-gray-400">{data.label} Impact</h4>
             
             <div className="space-y-3">
               <div className="flex items-center gap-2">
-                <Package className="h-5 w-5 text-blue-500" />
+                <Package className="h-5 w-5 text-blue-500 shrink-0" />
                 <div className="w-full">
                   <div className="flex justify-between text-sm mb-1">
                     <span>Bottles Saved</span>
@@ -74,7 +75,7 @@ const ImpactChart = ({ dailyConsumption }: { dailyConsumption: number }) => {
               </div>
               
               <div className="flex items-center gap-2">
-                <Leaf className="h-5 w-5 text-green-500" />
+                <Leaf className="h-5 w-5 text-green-500 shrink-0" />
                 <div className="w-full">
                   <div className="flex justify-between text-sm mb-1">
                     <span>CO₂ Reduction</span>
@@ -85,7 +86,7 @@ const ImpactChart = ({ dailyConsumption }: { dailyConsumption: number }) => {
               </div>
               
               <div className="flex items-center gap-2">
-                <Package className="h-5 w-5 text-yellow-500" />
+                <Package className="h-5 w-5 text-yellow-500 shrink-0" />
                 <div className="w-full">
                   <div className="flex justify-between text-sm mb-1">
                     <span>Plastic Waste Reduced</span>
@@ -157,10 +158,37 @@ const ComparisonFacts = ({ dailyConsumption }: { dailyConsumption: number }) => 
   );
 };
 
+// Impact card component for displaying impact metrics
+const ImpactCard = ({ 
+  icon, 
+  title, 
+  value, 
+  unit, 
+  bgClass, 
+  iconClass,
+  description
+}: { 
+  icon: React.ReactNode;
+  title: string;
+  value: string | number;
+  unit: string;
+  bgClass: string;
+  iconClass: string;
+  description: string;
+}) => {
+  return (
+    <div className={`p-3 sm:p-4 rounded-lg ${bgClass} flex flex-col items-center text-center h-full`}>
+      <div className={`${iconClass} mb-2`}>{icon}</div>
+      <h4 className="text-sm font-medium mb-1">{title}</h4>
+      <p className="text-xl sm:text-2xl font-bold">{value}</p>
+      <p className="text-xs text-gray-400 mt-1">{description}</p>
+    </div>
+  );
+};
+
 // Main calculator component
 export function EnvironmentalImpactCalculator() {
   const [dailyConsumption, setDailyConsumption] = useState<number>(1.5); // Default 1.5L
-  const [showResults, setShowResults] = useState<boolean>(true); // Now showing results by default
   const [showDetails, setShowDetails] = useState<boolean>(false);
   
   const dailyImpact = calculateDailyImpact(dailyConsumption);
@@ -171,20 +199,20 @@ export function EnvironmentalImpactCalculator() {
   };
 
   return (
-    <Card className="p-6 bg-spotify-darker">
+    <Card className="p-4 sm:p-6 bg-spotify-darker">
       <div className="flex items-center gap-2 mb-4">
         <Leaf className="h-5 w-5 text-mywater-blue" />
-        <h2 className="text-xl font-semibold">Environmental Impact Calculator</h2>
+        <h2 className="text-lg sm:text-xl font-semibold">Environmental Impact Calculator</h2>
       </div>
       
       <div className="space-y-6">
         <div>
-          <div className="flex items-center justify-between mb-2">
+          <div className="flex flex-wrap items-center justify-between mb-2 gap-2">
             <label className="text-sm font-medium">
               How much water do you drink daily?
             </label>
             <div className="flex items-center">
-              <span className="text-xl font-bold">{dailyConsumption.toFixed(1)}L</span>
+              <span className="text-lg sm:text-xl font-bold">{dailyConsumption.toFixed(1)}L</span>
               <HoverCard>
                 <HoverCardTrigger asChild>
                   <Button variant="ghost" size="sm" className="p-0 ml-1">
@@ -227,52 +255,70 @@ export function EnvironmentalImpactCalculator() {
         {/* YEARLY IMPACT - Featured prominently at the top */}
         <div className="p-4 bg-gradient-to-r from-blue-900/30 to-green-900/30 rounded-lg border border-blue-800/30">
           <h3 className="text-center font-semibold mb-3 text-lg">Yearly Environmental Impact</h3>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="p-3 rounded-lg bg-blue-900/20 border border-blue-800/30 flex flex-col items-center text-center">
-              <Package className="h-8 w-8 text-blue-500 mb-2" />
-              <h4 className="text-sm font-medium mb-1">Bottles Saved</h4>
-              <p className="text-2xl font-bold">{formatEnvironmentalImpact(yearlyImpact.bottles, 'bottles')}</p>
-              <p className="text-xs text-gray-400 mt-1">0.5L plastic bottles</p>
-            </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
+            <ImpactCard 
+              icon={<Package className="h-6 w-6 sm:h-8 sm:w-8" />}
+              title="Bottles Saved"
+              value={formatEnvironmentalImpact(yearlyImpact.bottles, 'bottles')}
+              unit="bottles"
+              bgClass="bg-blue-900/20 border border-blue-800/30"
+              iconClass="text-blue-500"
+              description="0.5L plastic bottles"
+            />
             
-            <div className="p-3 rounded-lg bg-green-900/20 border border-green-800/30 flex flex-col items-center text-center">
-              <Leaf className="h-8 w-8 text-green-500 mb-2" />
-              <h4 className="text-sm font-medium mb-1">CO₂ Reduction</h4>
-              <p className="text-2xl font-bold">{formatEnvironmentalImpact(yearlyImpact.co2, 'kg CO₂')}</p>
-              <p className="text-xs text-gray-400 mt-1">kg of CO₂ emissions</p>
-            </div>
+            <ImpactCard 
+              icon={<Leaf className="h-6 w-6 sm:h-8 sm:w-8" />}
+              title="CO₂ Reduction"
+              value={formatEnvironmentalImpact(yearlyImpact.co2, 'kg CO₂')}
+              unit="kg CO₂"
+              bgClass="bg-green-900/20 border border-green-800/30"
+              iconClass="text-green-500"
+              description="kg of CO₂ emissions"
+            />
             
-            <div className="p-3 rounded-lg bg-yellow-900/20 border border-yellow-800/30 flex flex-col items-center text-center">
-              <Droplet className="h-8 w-8 text-yellow-500 mb-2" />
-              <h4 className="text-sm font-medium mb-1">Plastic Waste Reduced</h4>
-              <p className="text-2xl font-bold">{formatEnvironmentalImpact(yearlyImpact.plastic, 'kg plastic')}</p>
-              <p className="text-xs text-gray-400 mt-1">kilograms of plastic</p>
-            </div>
+            <ImpactCard 
+              icon={<Droplet className="h-6 w-6 sm:h-8 sm:w-8" />}
+              title="Plastic Waste Reduced"
+              value={formatEnvironmentalImpact(yearlyImpact.plastic, 'kg plastic')}
+              unit="kg plastic"
+              bgClass="bg-yellow-900/20 border border-yellow-800/30"
+              iconClass="text-yellow-500" 
+              description="kilograms of plastic"
+            />
           </div>
         </div>
 
         {/* DAILY IMPACT - Second section */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div className="p-4 rounded-lg bg-blue-900/20 border border-blue-800/30 flex flex-col items-center text-center">
-            <Package className="h-8 w-8 text-blue-500 mb-2" />
-            <h3 className="text-sm font-medium mb-1">Bottles Saved Daily</h3>
-            <p className="text-2xl font-bold">{Math.round(dailyImpact.bottles)}</p>
-            <p className="text-xs text-gray-400 mt-1">0.5L plastic bottles</p>
-          </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
+          <ImpactCard 
+            icon={<Package className="h-6 w-6 sm:h-8 sm:w-8" />}
+            title="Bottles Saved Daily"
+            value={Math.round(dailyImpact.bottles)}
+            unit="bottles"
+            bgClass="bg-blue-900/20 border border-blue-800/30"
+            iconClass="text-blue-500"
+            description="0.5L plastic bottles"
+          />
           
-          <div className="p-4 rounded-lg bg-green-900/20 border border-green-800/30 flex flex-col items-center text-center">
-            <Leaf className="h-8 w-8 text-green-500 mb-2" />
-            <h3 className="text-sm font-medium mb-1">CO₂ Reduction Daily</h3>
-            <p className="text-2xl font-bold">{dailyImpact.co2.toFixed(1)}</p>
-            <p className="text-xs text-gray-400 mt-1">kg of CO₂ emissions</p>
-          </div>
+          <ImpactCard 
+            icon={<Leaf className="h-6 w-6 sm:h-8 sm:w-8" />}
+            title="CO₂ Reduction Daily"
+            value={dailyImpact.co2.toFixed(1)}
+            unit="kg"
+            bgClass="bg-green-900/20 border border-green-800/30"
+            iconClass="text-green-500"
+            description="kg of CO₂ emissions"
+          />
           
-          <div className="p-4 rounded-lg bg-yellow-900/20 border border-yellow-800/30 flex flex-col items-center text-center">
-            <Droplet className="h-8 w-8 text-yellow-500 mb-2" />
-            <h3 className="text-sm font-medium mb-1">Plastic Waste Reduced</h3>
-            <p className="text-2xl font-bold">{(dailyImpact.plastic * 1000).toFixed(0)}</p>
-            <p className="text-xs text-gray-400 mt-1">grams daily</p>
-          </div>
+          <ImpactCard 
+            icon={<Droplet className="h-6 w-6 sm:h-8 sm:w-8" />}
+            title="Plastic Waste Reduced"
+            value={(dailyImpact.plastic * 1000).toFixed(0)}
+            unit="g"
+            bgClass="bg-yellow-900/20 border border-yellow-800/30"
+            iconClass="text-yellow-500"
+            description="grams daily"
+          />
         </div>
 
         <Button 
