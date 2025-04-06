@@ -12,7 +12,8 @@ import {
   ArrowRight,
   Check,
   ChevronDown,
-  ChevronUp
+  ChevronUp,
+  EuroIcon,
 } from "lucide-react";
 import { 
   calculateDailyImpact, 
@@ -23,6 +24,8 @@ import {
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
 import { Progress } from "@/components/ui/progress";
+import { Input } from "@/components/ui/input";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 
 // Environmental impact chart component
 const ImpactChart = ({ dailyConsumption }: { dailyConsumption: number }) => {
@@ -158,6 +161,139 @@ const ComparisonFacts = ({ dailyConsumption }: { dailyConsumption: number }) => 
   );
 };
 
+// Money savings calculator component
+const MoneySavingsCalculator = ({ dailyConsumption }: { dailyConsumption: number }) => {
+  const [bottlePrice, setBottlePrice] = useState<number>(1.5); // Default price per bottle in EUR
+  const [systemCost, setSystemCost] = useState<number>(199); // Default MYWATER system cost in EUR
+  const [systemLifetime, setSystemLifetime] = useState<number>(24); // Default system lifetime in months (2 years)
+  
+  const yearlyBottles = Math.round(dailyConsumption * 2 * 365); // Daily bottles (0.5L) per year
+  const yearlyBottleCost = bottlePrice * yearlyBottles;
+  
+  const monthlyWaterCost = bottlePrice * dailyConsumption * 2 * 30; // Monthly bottled water cost
+  const monthlySystemCost = systemCost / systemLifetime; // Monthly system cost
+  
+  const monthlySavings = monthlyWaterCost - monthlySystemCost;
+  const yearlySavings = monthlySavings * 12;
+  
+  // Calculate break-even point (months)
+  const breakEvenMonths = systemCost / monthlySavings;
+  const breakEvenFormatted = breakEvenMonths <= 0 ? 
+    "N/A" : breakEvenMonths.toFixed(1);
+  
+  // Calculate lifetime savings (based on system lifetime)
+  const lifetimeSavings = monthlySavings * systemLifetime;
+  
+  return (
+    <div className="space-y-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div className="space-y-2">
+          <label className="text-sm font-medium">Price per 0.5L bottle (€)</label>
+          <Input 
+            type="number" 
+            min={0.1}
+            step={0.1}
+            value={bottlePrice}
+            onChange={(e) => setBottlePrice(Number(e.target.value))}
+            className="bg-spotify-accent border-spotify-accent-hover"
+          />
+        </div>
+        
+        <div className="space-y-2">
+          <label className="text-sm font-medium">MYWATER system cost (€)</label>
+          <Input 
+            type="number" 
+            min={50}
+            step={10}
+            value={systemCost}
+            onChange={(e) => setSystemCost(Number(e.target.value))}
+            className="bg-spotify-accent border-spotify-accent-hover"
+          />
+        </div>
+        
+        <div className="space-y-2">
+          <label className="text-sm font-medium">System lifetime (months)</label>
+          <Input 
+            type="number" 
+            min={12}
+            step={1}
+            value={systemLifetime}
+            onChange={(e) => setSystemLifetime(Number(e.target.value))}
+            className="bg-spotify-accent border-spotify-accent-hover"
+          />
+        </div>
+      </div>
+      
+      <div className="p-4 rounded-lg bg-green-900/20 border border-green-800/50 space-y-4">
+        <div className="flex justify-between items-center">
+          <h3 className="font-medium">Cost Comparison</h3>
+          <span className="text-xs text-gray-400">Based on {dailyConsumption.toFixed(1)}L daily consumption</span>
+        </div>
+        
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="flex flex-col space-y-3">
+            <h4 className="text-sm font-medium text-gray-400">Bottled Water</h4>
+            <div className="flex justify-between items-center">
+              <span>Cost per month</span>
+              <span className="font-medium">€{monthlyWaterCost.toFixed(2)}</span>
+            </div>
+            <div className="flex justify-between items-center">
+              <span>Cost per year</span>
+              <span className="font-medium">€{yearlyBottleCost.toFixed(2)}</span>
+            </div>
+            <div className="flex justify-between items-center">
+              <span>Bottles per year</span>
+              <span className="font-medium">{yearlyBottles}</span>
+            </div>
+          </div>
+          
+          <div className="flex flex-col space-y-3">
+            <h4 className="text-sm font-medium text-gray-400">MYWATER System</h4>
+            <div className="flex justify-between items-center">
+              <span>Cost per month</span>
+              <span className="font-medium">€{monthlySystemCost.toFixed(2)}</span>
+            </div>
+            <div className="flex justify-between items-center">
+              <span>Initial investment</span>
+              <span className="font-medium">€{systemCost.toFixed(2)}</span>
+            </div>
+            <div className="flex justify-between items-center">
+              <span>System lifetime</span>
+              <span className="font-medium">{systemLifetime} months</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <div className="p-4 rounded-lg bg-blue-900/20 border border-blue-800/50 space-y-3">
+        <h3 className="font-medium">Your Savings with MYWATER</h3>
+        
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="p-3 rounded-md bg-blue-800/30 text-center">
+            <p className="text-xs text-gray-400">Monthly Savings</p>
+            <p className="text-xl font-bold">€{monthlySavings.toFixed(2)}</p>
+          </div>
+          
+          <div className="p-3 rounded-md bg-green-800/30 text-center">
+            <p className="text-xs text-gray-400">Yearly Savings</p>
+            <p className="text-xl font-bold">€{yearlySavings.toFixed(2)}</p>
+          </div>
+          
+          <div className="p-3 rounded-md bg-purple-800/30 text-center">
+            <p className="text-xs text-gray-400">Lifetime Savings</p>
+            <p className="text-xl font-bold">€{lifetimeSavings.toFixed(2)}</p>
+          </div>
+        </div>
+        
+        <div className="mt-3 text-center">
+          <p className="text-sm">Break-even point: <span className="font-bold">{breakEvenFormatted}</span> months</p>
+          <p className="text-xs text-gray-400 mt-1">The time it takes for your MYWATER investment to pay for itself</p>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 // Impact card component for displaying impact metrics
 const ImpactCard = ({ 
   icon, 
@@ -190,6 +326,7 @@ const ImpactCard = ({
 export function EnvironmentalImpactCalculator() {
   const [dailyConsumption, setDailyConsumption] = useState<number>(1.5); // Default 1.5L
   const [showDetails, setShowDetails] = useState<boolean>(false);
+  const [calculatorTab, setCalculatorTab] = useState<string>("impact");
   
   const dailyImpact = calculateDailyImpact(dailyConsumption);
   const yearlyImpact = calculateYearlyImpact(dailyConsumption);
@@ -252,99 +389,118 @@ export function EnvironmentalImpactCalculator() {
           </div>
         </div>
 
-        {/* YEARLY IMPACT - Featured prominently at the top */}
-        <div className="p-4 bg-gradient-to-r from-blue-900/30 to-green-900/30 rounded-lg border border-blue-800/30">
-          <h3 className="text-center font-semibold mb-3 text-lg">Yearly Environmental Impact</h3>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
-            <ImpactCard 
-              icon={<Package className="h-6 w-6 sm:h-8 sm:w-8" />}
-              title="Bottles Saved"
-              value={formatEnvironmentalImpact(yearlyImpact.bottles, 'bottles')}
-              unit="bottles"
-              bgClass="bg-blue-900/20 border border-blue-800/30"
-              iconClass="text-blue-500"
-              description="0.5L plastic bottles"
-            />
-            
-            <ImpactCard 
-              icon={<Leaf className="h-6 w-6 sm:h-8 sm:w-8" />}
-              title="CO₂ Reduction"
-              value={formatEnvironmentalImpact(yearlyImpact.co2, 'kg CO₂')}
-              unit="kg CO₂"
-              bgClass="bg-green-900/20 border border-green-800/30"
-              iconClass="text-green-500"
-              description="kg of CO₂ emissions"
-            />
-            
-            <ImpactCard 
-              icon={<Droplet className="h-6 w-6 sm:h-8 sm:w-8" />}
-              title="Plastic Waste Reduced"
-              value={formatEnvironmentalImpact(yearlyImpact.plastic, 'kg plastic')}
-              unit="kg plastic"
-              bgClass="bg-yellow-900/20 border border-yellow-800/30"
-              iconClass="text-yellow-500" 
-              description="kilograms of plastic"
-            />
-          </div>
-        </div>
-
-        {/* DAILY IMPACT - Second section */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
-          <ImpactCard 
-            icon={<Package className="h-6 w-6 sm:h-8 sm:w-8" />}
-            title="Bottles Saved Daily"
-            value={Math.round(dailyImpact.bottles)}
-            unit="bottles"
-            bgClass="bg-blue-900/20 border border-blue-800/30"
-            iconClass="text-blue-500"
-            description="0.5L plastic bottles"
-          />
+        <Tabs value={calculatorTab} onValueChange={setCalculatorTab} className="w-full">
+          <TabsList className="w-full mb-4 bg-spotify-accent">
+            <TabsTrigger value="impact" className="flex-1">
+              <Leaf className="h-4 w-4 mr-2" />
+              <span>Environmental Impact</span>
+            </TabsTrigger>
+            <TabsTrigger value="savings" className="flex-1">
+              <EuroIcon className="h-4 w-4 mr-2" />
+              <span>Money Savings</span>
+            </TabsTrigger>
+          </TabsList>
           
-          <ImpactCard 
-            icon={<Leaf className="h-6 w-6 sm:h-8 sm:w-8" />}
-            title="CO₂ Reduction Daily"
-            value={dailyImpact.co2.toFixed(1)}
-            unit="kg"
-            bgClass="bg-green-900/20 border border-green-800/30"
-            iconClass="text-green-500"
-            description="kg of CO₂ emissions"
-          />
+          <TabsContent value="impact">
+            {/* YEARLY IMPACT - Featured prominently at the top */}
+            <div className="p-4 bg-gradient-to-r from-blue-900/30 to-green-900/30 rounded-lg border border-blue-800/30">
+              <h3 className="text-center font-semibold mb-3 text-lg">Yearly Environmental Impact</h3>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
+                <ImpactCard 
+                  icon={<Package className="h-6 w-6 sm:h-8 sm:w-8" />}
+                  title="Bottles Saved"
+                  value={formatEnvironmentalImpact(yearlyImpact.bottles, 'bottles')}
+                  unit="bottles"
+                  bgClass="bg-blue-900/20 border border-blue-800/30"
+                  iconClass="text-blue-500"
+                  description="0.5L plastic bottles"
+                />
+                
+                <ImpactCard 
+                  icon={<Leaf className="h-6 w-6 sm:h-8 sm:w-8" />}
+                  title="CO₂ Reduction"
+                  value={formatEnvironmentalImpact(yearlyImpact.co2, 'kg CO₂')}
+                  unit="kg CO₂"
+                  bgClass="bg-green-900/20 border border-green-800/30"
+                  iconClass="text-green-500"
+                  description="kg of CO₂ emissions"
+                />
+                
+                <ImpactCard 
+                  icon={<Droplet className="h-6 w-6 sm:h-8 sm:w-8" />}
+                  title="Plastic Waste Reduced"
+                  value={formatEnvironmentalImpact(yearlyImpact.plastic, 'kg plastic')}
+                  unit="kg plastic"
+                  bgClass="bg-yellow-900/20 border border-yellow-800/30"
+                  iconClass="text-yellow-500" 
+                  description="kilograms of plastic"
+                />
+              </div>
+            </div>
+
+            {/* DAILY IMPACT - Second section */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 mt-4">
+              <ImpactCard 
+                icon={<Package className="h-6 w-6 sm:h-8 sm:w-8" />}
+                title="Bottles Saved Daily"
+                value={Math.round(dailyImpact.bottles)}
+                unit="bottles"
+                bgClass="bg-blue-900/20 border border-blue-800/30"
+                iconClass="text-blue-500"
+                description="0.5L plastic bottles"
+              />
+              
+              <ImpactCard 
+                icon={<Leaf className="h-6 w-6 sm:h-8 sm:w-8" />}
+                title="CO₂ Reduction Daily"
+                value={dailyImpact.co2.toFixed(1)}
+                unit="kg"
+                bgClass="bg-green-900/20 border border-green-800/30"
+                iconClass="text-green-500"
+                description="kg of CO₂ emissions"
+              />
+              
+              <ImpactCard 
+                icon={<Droplet className="h-6 w-6 sm:h-8 sm:w-8" />}
+                title="Plastic Waste Reduced"
+                value={(dailyImpact.plastic * 1000).toFixed(0)}
+                unit="g"
+                bgClass="bg-yellow-900/20 border border-yellow-800/30"
+                iconClass="text-yellow-500"
+                description="grams daily"
+              />
+            </div>
+            
+            <Button 
+              variant="outline" 
+              className="w-full flex items-center justify-center mt-4"
+              onClick={toggleDetails}
+            >
+              {showDetails ? (
+                <>
+                  <span>Hide Detailed Impact</span>
+                  <ChevronUp className="ml-2 h-4 w-4" />
+                </>
+              ) : (
+                <>
+                  <span>Show Detailed Impact</span>
+                  <ChevronDown className="ml-2 h-4 w-4" />
+                </>
+              )}
+            </Button>
+
+            {showDetails && (
+              <>
+                <ImpactChart dailyConsumption={dailyConsumption} />
+                <ComparisonFacts dailyConsumption={dailyConsumption} />
+              </>
+            )}
+          </TabsContent>
           
-          <ImpactCard 
-            icon={<Droplet className="h-6 w-6 sm:h-8 sm:w-8" />}
-            title="Plastic Waste Reduced"
-            value={(dailyImpact.plastic * 1000).toFixed(0)}
-            unit="g"
-            bgClass="bg-yellow-900/20 border border-yellow-800/30"
-            iconClass="text-yellow-500"
-            description="grams daily"
-          />
-        </div>
-
-        <Button 
-          variant="outline" 
-          className="w-full flex items-center justify-center"
-          onClick={toggleDetails}
-        >
-          {showDetails ? (
-            <>
-              <span>Hide Detailed Impact</span>
-              <ChevronUp className="ml-2 h-4 w-4" />
-            </>
-          ) : (
-            <>
-              <span>Show Detailed Impact</span>
-              <ChevronDown className="ml-2 h-4 w-4" />
-            </>
-          )}
-        </Button>
-
-        {showDetails && (
-          <>
-            <ImpactChart dailyConsumption={dailyConsumption} />
-            <ComparisonFacts dailyConsumption={dailyConsumption} />
-          </>
-        )}
+          <TabsContent value="savings">
+            <MoneySavingsCalculator dailyConsumption={dailyConsumption} />
+          </TabsContent>
+        </Tabs>
         
         <Button 
           variant="default"
