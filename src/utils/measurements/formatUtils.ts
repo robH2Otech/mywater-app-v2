@@ -1,228 +1,92 @@
 
-// Formatting utilities for measurements
+/**
+ * Utility functions for formatting measurement data
+ */
 
 /**
- * Format a date to a consistent string format
- * Returns format like: "March 13, 2025 at 11:34:56 AM UTC+1"
+ * Format a number with thousands separators
  */
-export const formatTimestamp = (date: Date): string => {
-  const options: Intl.DateTimeFormatOptions = {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
-    hour: 'numeric',
-    minute: '2-digit',
-    second: '2-digit',
-    hour12: true,
-    timeZoneName: 'short'
-  };
-  
-  return date.toLocaleString('en-US', options);
-};
-
-/**
- * Parse a timestamp string to a Date object
- * Handles Firestore timestamp format: "March 13, 2025 at 11:34:56 AM UTC+1"
- */
-export const parseTimestamp = (timestamp: string): Date => {
-  if (!timestamp) {
-    throw new Error("Invalid timestamp: empty string");
-  }
-  
-  // Check if it's already in our expected format with "at" separator
-  if (typeof timestamp === 'string' && timestamp.includes(" at ")) {
-    try {
-      // For strings like "March 13, 2025 at 11:34:56 AM UTC+1"
-      // Convert to a standard format that the Date constructor can handle
-      return new Date(timestamp.replace(' at ', ' '));
-    } catch (err) {
-      console.error("Error parsing formatted timestamp:", err, timestamp);
-      throw new Error(`Failed to parse timestamp: ${timestamp}`);
-    }
-  }
-  
-  // Try with standard date parsing as a fallback
-  try {
-    const date = new Date(timestamp);
-    if (isNaN(date.getTime())) {
-      throw new Error(`Invalid date from string: ${timestamp}`);
-    }
-    return date;
-  } catch (err) {
-    console.error("Error parsing timestamp:", err, timestamp);
-    throw new Error(`Failed to parse timestamp: ${timestamp}`);
-  }
-};
-
-/**
- * Format a number to have exactly 1 decimal place
- */
-export const formatDecimal = (value: number | string | null | undefined): string => {
-  if (value === null || value === undefined) return "0.0";
-  
-  const numValue = typeof value === 'string' ? parseFloat(value) : value;
-  
-  if (isNaN(numValue)) return "0.0";
-  
-  return numValue.toFixed(1);
-};
-
-/**
- * Format a number with commas for thousands and no decimals
- */
-export const formatThousands = (value: number | string | null | undefined): string => {
-  if (value === null || value === undefined) return "0";
-  
-  const numValue = typeof value === 'string' ? parseFloat(value) : value;
-  
-  if (isNaN(numValue)) return "0";
-  
-  return Math.round(numValue).toLocaleString('en-US');
-};
-
-/**
- * Convert cubic meters to liters
- * 1 cubic meter = 1000 liters
- */
-export const cubicMetersToLiters = (cubicMeters: number | string | null | undefined): number => {
-  if (cubicMeters === null || cubicMeters === undefined) return 0;
-  
-  const numValue = typeof cubicMeters === 'string' ? parseFloat(cubicMeters) : cubicMeters;
-  
-  if (isNaN(numValue)) return 0;
-  
-  return numValue * 1000;
-};
-
-/**
- * Convert liters to cubic meters
- * 1000 liters = 1 cubic meter
- */
-export const litersToCubicMeters = (liters: number | string | null | undefined): number => {
-  if (liters === null || liters === undefined) return 0;
-  
-  const numValue = typeof liters === 'string' ? parseFloat(liters) : liters;
-  
-  if (isNaN(numValue)) return 0;
-  
-  return numValue / 1000;
-};
-
-/**
- * Calculate the hourly volume change between two measurements
- * Returns volume difference in appropriate units (liters for DROP/Office, cubic meters for UVC)
- */
-export const calculateHourlyVolume = (
-  currentVolume: number | string | null | undefined, 
-  previousVolume: number | string | null | undefined,
-  isUVCUnit: boolean = false
-): number => {
-  const current = typeof currentVolume === 'string' ? parseFloat(currentVolume) : (currentVolume || 0);
-  const previous = typeof previousVolume === 'string' ? parseFloat(previousVolume) : (previousVolume || 0);
-  
-  if (isNaN(current) || isNaN(previous)) return 0;
-  
-  // Calculate difference - for both unit types
-  const volumeDiff = Math.max(0, current - previous);
-  
-  // For UVC units, convert cubic meters to liters for display
-  return isUVCUnit ? volumeDiff * 1000 : volumeDiff;
+export const formatThousands = (value: number | undefined | null): string => {
+  if (value === undefined || value === null) return "0";
+  return value.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
 };
 
 /**
  * Format volume based on unit type
- * UVC units use cubic meters (m³), DROP and Office units use liters (L)
  */
-export const formatVolumeByUnitType = (
-  volume: number | string | null | undefined,
-  unitType: string | null | undefined
-): string => {
-  if (volume === null || volume === undefined) return "N/A";
+export const formatVolumeByUnitType = (volume: number | string | undefined | null, unitType: string): string => {
+  if (volume === undefined || volume === null) return "0";
+  const numericVolume = typeof volume === 'string' ? parseFloat(volume) : volume;
+  if (isNaN(numericVolume)) return "0";
   
-  try {
-    const numVolume = typeof volume === 'string' ? parseFloat(volume) : volume;
-    if (isNaN(numVolume)) return "N/A";
-    
-    const isUVCUnit = unitType === 'uvc';
-    
-    if (isUVCUnit) {
-      // For UVC units, display in cubic meters with 2 decimal places
-      return `${numVolume.toFixed(2)} m³`;
-    } else {
-      // For DROP and Office units, display in liters (rounded)
-      return `${Math.round(numVolume)} L`;
-    }
-  } catch (err) {
-    console.error("Error formatting volume:", volume, err);
-    return "N/A";
+  if (unitType === 'uvc') {
+    return `${Math.round(numericVolume)}m³`;
+  } else {
+    return `${Math.round(numericVolume)}L`;
   }
 };
 
 /**
- * Safely parse and format a timestamp from any format to our standard format
- * Returns the formatted string or "Invalid date" if parsing fails
+ * Environmental impact calculation functions
  */
-export const safeFormatTimestamp = (timestamp: any): string => {
-  try {
-    if (!timestamp) {
-      return "Invalid date";
-    }
-    
-    // If it's already a properly formatted string in our expected format
-    if (typeof timestamp === 'string' && timestamp.includes(" at ")) {
-      // Verify that it can be parsed as a valid date
-      try {
-        const parsedDate = parseTimestamp(timestamp);
-        if (isNaN(parsedDate.getTime())) {
-          console.error("Invalid date from formatted string:", timestamp);
-          return "Invalid date";
-        }
-        return timestamp; // Return as is if it's valid
-      } catch (e) {
-        console.error("Error validating formatted timestamp:", e, timestamp);
-        return "Invalid date";
-      }
-    }
-    
-    // If it's a Firestore timestamp object
-    if (timestamp && typeof timestamp === 'object') {
-      if ('seconds' in timestamp && 'nanoseconds' in timestamp) {
-        const date = new Date(timestamp.seconds * 1000);
-        return formatTimestamp(date);
-      }
-      
-      // If it's a Date object
-      if (timestamp instanceof Date) {
-        return formatTimestamp(timestamp);
-      }
-      
-      // If it has a toDate() method (Firestore Timestamp)
-      if (typeof timestamp.toDate === 'function') {
-        try {
-          const date = timestamp.toDate();
-          return formatTimestamp(date);
-        } catch (e) {
-          console.error("Error calling toDate():", e, timestamp);
-          return "Invalid date";
-        }
-      }
-    }
-    
-    // Try to parse as a regular date
-    try {
-      const date = new Date(timestamp);
-      if (isNaN(date.getTime())) {
-        console.error("Invalid date from timestamp:", timestamp);
-        return "Invalid date";
-      }
-      return formatTimestamp(date);
-    } catch (error) {
-      console.error("Error formatting timestamp:", error, "Original value:", timestamp);
-      return "Invalid date";
-    }
-  } catch (error) {
-    console.error("Unexpected error in safeFormatTimestamp:", error, "Original value:", timestamp);
-    return "Invalid date";
+
+/**
+ * Calculate number of plastic bottles saved (2x 0.5L bottles per 1L purified water)
+ */
+export const calculateBottlesSaved = (litersConsumed: number): number => {
+  return litersConsumed * 2; // 2 bottles (0.5L each) per 1L
+};
+
+/**
+ * Calculate CO2 emissions reduction in kg (321g per 1L)
+ */
+export const calculateCO2Reduction = (litersConsumed: number): number => {
+  return litersConsumed * 0.321; // 321g = 0.321kg per 1L
+};
+
+/**
+ * Calculate plastic waste reduction in kg (40g per 1L)
+ */
+export const calculatePlasticReduction = (litersConsumed: number): number => {
+  return litersConsumed * 0.04; // 40g = 0.04kg per 1L
+};
+
+/**
+ * Format environmental impact with appropriate units
+ */
+export const formatEnvironmentalImpact = (value: number, unit: string): string => {
+  if (value >= 1000 && unit === 'bottles') {
+    return `${(value / 1000).toFixed(1)}k bottles`;
+  } else if (value >= 1000 && (unit === 'kg CO₂' || unit === 'kg plastic')) {
+    return `${(value / 1000).toFixed(1)} tons ${unit.substring(3)}`;
+  } else if (unit === 'kg CO₂' || unit === 'kg plastic') {
+    return `${value.toFixed(1)} ${unit}`;
+  } else {
+    return `${Math.round(value)} ${unit}`;
   }
 };
 
+/**
+ * Calculate and format daily environmental impact
+ */
+export const calculateDailyImpact = (dailyConsumption: number) => {
+  return {
+    bottles: calculateBottlesSaved(dailyConsumption),
+    co2: calculateCO2Reduction(dailyConsumption),
+    plastic: calculatePlasticReduction(dailyConsumption)
+  };
+};
+
+/**
+ * Calculate and format yearly environmental impact
+ */
+export const calculateYearlyImpact = (dailyConsumption: number) => {
+  const days = 365;
+  const yearlyConsumption = dailyConsumption * days;
+  
+  return {
+    bottles: calculateBottlesSaved(yearlyConsumption),
+    co2: calculateCO2Reduction(yearlyConsumption),
+    plastic: calculatePlasticReduction(yearlyConsumption)
+  };
+};

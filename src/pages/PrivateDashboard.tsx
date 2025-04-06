@@ -7,6 +7,7 @@ import { usePrivateUserData } from "@/hooks/dashboard/usePrivateUserData";
 import { DashboardHeader } from "@/components/dashboard/private/DashboardHeader";
 import { CartridgeAlert } from "@/components/dashboard/private/CartridgeAlert";
 import { DashboardTabs } from "@/components/dashboard/private/DashboardTabs";
+import { EnvironmentalImpactCalculator } from "@/components/dashboard/private/EnvironmentalImpactCalculator";
 import { Card } from "@/components/ui/card";
 import { Header } from "@/components/layout/Header";
 
@@ -59,6 +60,11 @@ export function PrivateDashboard() {
           isReplacementOverdue={isReplacementOverdue}
           formattedReplacementDate={formattedReplacementDate}
         />
+        
+        {/* Environmental Impact Calculator */}
+        <div className="my-6">
+          <EnvironmentalImpactCalculator />
+        </div>
         
         {/* Main content tabs */}
         <DashboardTabs userData={userData} />
