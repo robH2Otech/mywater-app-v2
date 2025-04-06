@@ -14,6 +14,9 @@ interface FormInputProps {
   className?: string;
   labelClassName?: string;
   inputClassName?: string;
+  min?: string;
+  max?: string;
+  step?: string;
 }
 
 export function FormInput({ 
@@ -27,7 +30,10 @@ export function FormInput({
   disabled = false,
   className,
   labelClassName,
-  inputClassName
+  inputClassName,
+  min,
+  max,
+  step
 }: FormInputProps) {
   const isMobile = useIsMobile();
   
@@ -45,6 +51,9 @@ export function FormInput({
         required={required}
         minLength={minLength}
         disabled={disabled}
+        min={min}
+        max={max}
+        step={step}
       />
     </div>
   );
