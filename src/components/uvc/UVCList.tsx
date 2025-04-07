@@ -107,9 +107,13 @@ export function UVCList({ units, onUVCClick }: UVCListProps) {
         {processedUnits.map((unit) => (
           <UVCCard 
             key={unit.id}
-            unit={unit}
-            onEditClick={handleEditClick}
-            onCardClick={onUVCClick}
+            id={unit.id}
+            name={unit.name || ""}
+            uvc_hours={unit.uvc_hours}
+            uvc_status={unit.uvc_status}
+            uvc_installation_date={unit.uvc_installation_date}
+            location={unit.location}
+            onClick={() => onUVCClick(unit)}
           />
         ))}
       </div>
