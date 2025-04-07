@@ -2,6 +2,7 @@
 import { Link } from "react-router-dom";
 import { Card } from "@/components/ui/card";
 import { LucideIcon } from "lucide-react";
+import { formatTotalVolume } from "@/utils/measurements/unitVolumeUtils";
 
 interface StatCardProps {
   title: string;
@@ -22,10 +23,21 @@ export const StatCard = ({
   subValue,
   subValueColor = "text-mywater-blue",
 }: StatCardProps) => {
-  // Format value if it contains 'm' to show proper cubic meters
-  const formattedValue = typeof value === 'string' && value.includes('m') 
-    ? value.replace(' m', 'm³') 
-    : value;
+  // Format the value properly depending on its type
+  const formattedValue = () => {
+    // If it's already a string with "m³" notation, just ensure it's properly formatted
+    if (typeof value === 'string' && value.includes('m')) {
+      return value.replace(' m', 'm³');
+    }
+    
+    // If it's a number (volume), format it properly with thousands separators
+    if (typeof value === 'number') {
+      return `${formatTotalVolume(value)}m³`;
+    }
+    
+    // Default case, return as is
+    return value;
+  };
     
   return (
     <Link to={link} className="block">
@@ -37,7 +49,7 @@ export const StatCard = ({
           </div>
           
           <div className="pl-1">
-            <p className="text-4xl font-bold">{formattedValue}</p>
+            <p className="text-4xl font-bold">{formattedValue()}</p>
             {subValue && (
               <p className={`text-sm ${subValueColor} mt-1`}>{subValue}</p>
             )}

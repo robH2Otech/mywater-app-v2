@@ -1,5 +1,7 @@
+
 import { doc, getDoc } from "firebase/firestore";
 import { db } from "@/integrations/firebase/client";
+import { formatThousands } from "./formatUtils";
 
 /**
  * Fetches all unit total volumes directly from their documents
@@ -26,7 +28,12 @@ export async function fetchUnitTotalVolumes(unitIds: string[]): Promise<number> 
             ? parseFloat(unitData.total_volume)
             : 0;
             
-        totalVolume += unitVolume;
+        // Ensure we're adding a valid number - prevent extremely large values
+        if (!isNaN(unitVolume) && isFinite(unitVolume) && unitVolume < 1000000) {
+          totalVolume += unitVolume;
+        } else {
+          console.warn(`Invalid volume value detected for unit ${unitDoc.id}: ${unitVolume}`);
+        }
       }
     });
     
@@ -52,4 +59,20 @@ export async function getLatestVolumeData(unitIds: string[]): Promise<number> {
   
   // Otherwise, implement fallback mechanism (can be expanded later)
   return 0;
+}
+
+/**
+ * Format volume for display with proper units
+ * Ensures the number isn't too large and adds appropriate formatting
+ */
+export function formatTotalVolume(volume: number | undefined | null): string {
+  if (volume === undefined || volume === null || isNaN(volume) || !isFinite(volume)) {
+    return "0";
+  }
+  
+  // Cap maximum display value to prevent unrealistic numbers
+  const cappedVolume = Math.min(volume, 999999);
+  
+  // Format with appropriate decimal places
+  return formatThousands(parseFloat(cappedVolume.toFixed(2)));
 }

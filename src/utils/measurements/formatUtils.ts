@@ -1,4 +1,3 @@
-
 /**
  * Utility functions for formatting measurement data
  */
@@ -7,8 +6,11 @@
  * Format a number with thousands separators
  */
 export const formatThousands = (value: number | undefined | null): string => {
-  if (value === undefined || value === null) return "0";
-  return value.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+  if (value === undefined || value === null || isNaN(value) || !isFinite(value)) return "0";
+  
+  // Ensure the value is reasonable before formatting
+  const safeValue = Math.min(value, 999999);
+  return safeValue.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
 };
 
 /**
@@ -17,12 +19,15 @@ export const formatThousands = (value: number | undefined | null): string => {
 export const formatVolumeByUnitType = (volume: number | string | undefined | null, unitType: string): string => {
   if (volume === undefined || volume === null) return "0";
   const numericVolume = typeof volume === 'string' ? parseFloat(volume) : volume;
-  if (isNaN(numericVolume)) return "0";
+  if (isNaN(numericVolume) || !isFinite(numericVolume)) return "0";
+  
+  // Cap maximum values to prevent unrealistic numbers
+  const cappedVolume = Math.min(numericVolume, 999999);
   
   if (unitType === 'uvc') {
-    return `${Math.round(numericVolume)}m³`;
+    return `${Math.round(cappedVolume)}m³`;
   } else {
-    return `${Math.round(numericVolume)}L`;
+    return `${Math.round(cappedVolume)}L`;
   }
 };
 
