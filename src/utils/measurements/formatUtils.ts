@@ -1,3 +1,4 @@
+
 /**
  * Utility functions for formatting measurement data
  */
@@ -10,7 +11,14 @@ export const formatThousands = (value: number | undefined | null): string => {
   
   // Ensure the value is reasonable before formatting
   const safeValue = Math.min(value, 999999);
-  return safeValue.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+  
+  // Format with commas for thousands - try to use locale format
+  try {
+    return safeValue.toLocaleString('en-US', {maximumFractionDigits: 2});
+  } catch (err) {
+    // Fallback to regex approach if toLocaleString fails
+    return safeValue.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+  }
 };
 
 /**

@@ -73,6 +73,11 @@ export function formatTotalVolume(volume: number | undefined | null): string {
   // Cap maximum display value to prevent unrealistic numbers
   const cappedVolume = Math.min(volume, 999999);
   
-  // Format with appropriate decimal places
-  return formatThousands(parseFloat(cappedVolume.toFixed(2)));
+  // Format with appropriate decimal places - For large numbers, don't show decimal places
+  if (cappedVolume >= 1000) {
+    return formatThousands(Math.floor(cappedVolume));
+  } else {
+    // For smaller numbers, show up to 2 decimal places, but only if needed
+    return formatThousands(parseFloat(cappedVolume.toFixed(2)));
+  }
 }

@@ -27,11 +27,23 @@ export const StatCard = ({
   const formattedValue = () => {
     // If it's already a string with "m³" notation, just ensure it's properly formatted
     if (typeof value === 'string' && value.includes('m')) {
+      // Clean up the string and format it properly
+      const numericPart = value.replace(/[^0-9.]/g, '');
+      const numericValue = parseFloat(numericPart);
+      
+      if (!isNaN(numericValue) && isFinite(numericValue)) {
+        return `${formatTotalVolume(numericValue)}m³`;
+      }
       return value.replace(' m', 'm³');
     }
     
     // If it's a number (volume), format it properly with thousands separators
     if (typeof value === 'number') {
+      // First check if it's a reasonable number
+      if (isNaN(value) || !isFinite(value) || value > 1000000) {
+        console.warn(`Unreasonably large volume detected: ${value}, capping display value`);
+        return `${formatTotalVolume(Math.min(value, 1000000))}m³`;
+      }
       return `${formatTotalVolume(value)}m³`;
     }
     
