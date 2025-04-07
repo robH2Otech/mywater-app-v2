@@ -1,105 +1,75 @@
 
-import { Clock, Edit, Lightbulb, MapPin } from "lucide-react";
+import { useState } from 'react';
+import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { StatusIcon, getStatusText } from "./StatusIcon";
-import { calculateUVCLifePercentage, MAX_UVC_HOURS, WARNING_THRESHOLD, URGENT_THRESHOLD } from "@/utils/uvcStatusUtils";
+import { calculateUVCLifePercentage } from "@/utils/uvcStatusUtils";
+import { StatusIcon } from "./StatusIcon";
+import { Lightbulb, ChevronRight } from "lucide-react";
+import { Progress } from "@/components/ui/progress";
 
 interface UVCCardProps {
-  unit: any;
-  onEditClick: (e: React.MouseEvent, unit: any) => void;
-  onCardClick: (unit: any) => void;
+  id: string;
+  name: string;
+  uvc_hours?: number | null;
+  uvc_status?: 'active' | 'warning' | 'urgent';
+  uvc_installation_date?: string | null;
+  location?: string;
+  onClick?: () => void;
 }
 
-export function UVCCard({ unit, onEditClick, onCardClick }: UVCCardProps) {
-  const uvcHours = unit.uvc_hours || 0;
-  const lifePercentage = calculateUVCLifePercentage(uvcHours);
-  const hoursRemaining = MAX_UVC_HOURS - uvcHours;
-
-  // Format UVC hours as whole numbers
-  const formatUVCHours = (hours: number) => {
-    return Math.round(hours);
-  };
-
+export function UVCCard({ id, name, uvc_hours, uvc_status, uvc_installation_date, location, onClick }: UVCCardProps) {
+  // Calculate the percentage of UVC life used
+  const percentage = calculateUVCLifePercentage(uvc_hours);
+  
+  // Format UVC hours for display
+  const formattedHours = uvc_hours !== undefined && uvc_hours !== null
+    ? Math.round(uvc_hours).toLocaleString()
+    : '0';
+    
+  // Format installation date if available
+  const formattedDate = uvc_installation_date 
+    ? new Date(uvc_installation_date).toLocaleDateString() 
+    : 'Not set';
+  
   return (
-    <Card 
-      key={unit.id} 
-      className={`hover:bg-spotify-accent/40 transition-colors cursor-pointer relative group ${
-        unit.uvc_status === 'urgent' ? 'bg-red-900/20' : 
-        unit.uvc_status === 'warning' ? 'bg-yellow-900/20' : 
-        'bg-spotify-darker'
-      }`}
-      onClick={() => onCardClick(unit)}
-    >
-      <Button
-        variant="ghost"
-        size="icon"
-        className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity z-10"
-        onClick={(e) => onEditClick(e, unit)}
-      >
-        <Edit className="h-4 w-4 text-white" />
-      </Button>
-      <CardContent className="p-6">
-        <div className="space-y-4">
-          <div className="flex justify-between items-start">
-            <div className="text-left">
-              <h3 className="text-xl font-semibold text-white">{unit.name}</h3>
-              {unit.location && (
-                <div className="flex items-center gap-1 text-sm text-gray-400 mt-1">
-                  <MapPin className="h-4 w-4" />
-                  {unit.location}
-                </div>
-              )}
-            </div>
-            <div className="flex items-center gap-2">
-              <StatusIcon status={unit.uvc_status} />
-              <span className={`text-sm font-medium ${
-                unit.uvc_status === 'urgent' ? 'text-red-400' : 
-                unit.uvc_status === 'warning' ? 'text-yellow-400' : 
-                'text-mywater-blue'
-              }`}>
-                {getStatusText(unit.uvc_status)}
-              </span>
-            </div>
-          </div>
-          
-          <div className="space-y-2 text-left">
-            <div className="flex items-center gap-2 text-sm text-gray-400">
-              <Lightbulb className={`h-4 w-4 ${
-                uvcHours >= URGENT_THRESHOLD ? 'text-red-400' :
-                uvcHours >= WARNING_THRESHOLD ? 'text-yellow-400' :
-                'text-mywater-blue'
-              }`} />
-              UVC Hours: {formatUVCHours(uvcHours)} / {formatUVCHours(MAX_UVC_HOURS)}
-            </div>
-            
-            <div className="w-full bg-gray-700 rounded-full h-2.5">
-              <div 
-                className={`h-2.5 rounded-full ${
-                  uvcHours >= URGENT_THRESHOLD ? 'bg-red-500' : 
-                  uvcHours >= WARNING_THRESHOLD ? 'bg-yellow-500' : 
-                  'bg-mywater-blue'
-                }`}
-                style={{ width: `${lifePercentage}%` }}
-              ></div>
-            </div>
-            
-            <div className="flex items-center gap-2 text-sm text-gray-400">
-              <Clock className="h-4 w-4" />
-              {hoursRemaining > 0 
-                ? `Hours remaining: ${formatUVCHours(hoursRemaining)}`
-                : 'Replacement overdue'
-              }
-            </div>
-            
-            {unit.uvc_installation_date && (
-              <div className="text-sm text-gray-400">
-                Installed: {new Date(unit.uvc_installation_date).toLocaleDateString()}
-              </div>
-            )}
-          </div>
+    <Card className="p-6 bg-spotify-darker hover:bg-spotify-accent/40 transition-colors cursor-pointer" onClick={onClick}>
+      <div className="flex justify-between items-start mb-4">
+        <div>
+          <h3 className="text-xl font-semibold text-white flex items-center gap-2">
+            <Lightbulb className="h-5 w-5" />
+            {name}
+          </h3>
+          {location && <p className="text-gray-400 text-sm">{location}</p>}
         </div>
-      </CardContent>
+        <StatusIcon status={uvc_status} />
+      </div>
+      
+      <div className="space-y-3 mb-4">
+        <div>
+          <div className="flex justify-between text-sm">
+            <span className="text-gray-400">UVC Hours</span>
+            <span className="text-white font-semibold">{formattedHours}</span>
+          </div>
+          <Progress className="h-2.5 mt-1" value={percentage} />
+        </div>
+        
+        <div className="flex justify-between text-sm">
+          <span className="text-gray-400">Installation Date</span>
+          <span className="text-white">{formattedDate}</span>
+        </div>
+      </div>
+      
+      <Button 
+        variant="ghost" 
+        className="w-full flex justify-between items-center p-2 hover:bg-spotify-accent mt-2 border border-gray-700" 
+        onClick={(e) => {
+          e.stopPropagation();
+          onClick?.();
+        }}
+      >
+        <span>View Details</span>
+        <ChevronRight className="h-4 w-4" />
+      </Button>
     </Card>
   );
 }

@@ -60,5 +60,9 @@ export function useUVCData() {
         throw error;
       }
     },
+    // Set a shorter staleTime to ensure data is refreshed more frequently
+    staleTime: 60 * 1000, // 1 minute stale time
+    refetchOnMount: true,
+    refetchOnWindowFocus: true,
   });
 }
