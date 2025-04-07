@@ -1,16 +1,24 @@
 
-// Measurement type definition
+import { Timestamp } from "firebase/firestore";
+
 export interface Measurement {
-  id?: string;
-  timestamp: string | any; // Support both string and Firebase timestamp
+  timestamp: string; // ISO format timestamp
+  raw_timestamp?: any; // Raw firebase timestamp (either server timestamp or ISO string)
   volume: number;
   temperature: number;
   cumulative_volume?: number;
   uvc_hours?: number;
-  raw_timestamp?: any;
+  [key: string]: any; // Allow other fields
 }
 
-// Type for processed measurements that always include an ID
-export interface ProcessedMeasurement extends Measurement {
-  id: string; // ID is required in processed measurements
+export interface ProcessedMeasurement {
+  id: string;
+  timestamp: string; // ISO format timestamp
+  rawTimestamp?: any; // Raw firebase timestamp object
+  volume: number;
+  temperature: number;
+  cumulative_volume?: number;
+  uvc_hours?: number;
+  hourlyVolume?: number;
+  [key: string]: any; // Allow other fields
 }

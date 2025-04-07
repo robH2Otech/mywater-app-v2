@@ -39,10 +39,56 @@ export const formatDecimal = (value: number | string | undefined | null): string
 };
 
 /**
+ * Format a timestamp to human-readable format matching Firestore display
+ * This will format dates like: "April 6, 2025 at 7:33:20 PM"
+ */
+export const formatHumanReadableTimestamp = (timestamp: any): string => {
+  try {
+    // Convert to Date object if needed
+    let dateObj: Date;
+    
+    // If it's a Firestore timestamp with toDate method
+    if (typeof timestamp === 'object' && timestamp !== null && typeof timestamp.toDate === 'function') {
+      dateObj = timestamp.toDate();
+    }
+    // If it's a string, try to parse it as a date
+    else if (typeof timestamp === 'string') {
+      dateObj = new Date(timestamp);
+    }
+    // If it's already a Date object
+    else if (timestamp instanceof Date) {
+      dateObj = timestamp;
+    }
+    else {
+      return "Invalid date";
+    }
+    
+    // Format matching Firestore console: "April 6, 2025 at 7:33:20 PM"
+    const options: Intl.DateTimeFormatOptions = {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+      hour: 'numeric',
+      minute: '2-digit',
+      second: '2-digit',
+      hour12: true
+    };
+    
+    return dateObj.toLocaleDateString('en-US', options).replace(',', '') + ' UTC' + 
+           (-(dateObj.getTimezoneOffset() / 60) >= 0 ? '+' : '') + 
+           (-(dateObj.getTimezoneOffset() / 60));
+  } catch (err) {
+    console.error("Error formatting timestamp for display:", err);
+    return "Invalid date";
+  }
+};
+
+/**
  * Safely format a timestamp from various formats
  */
 export const safeFormatTimestamp = (timestamp: any): string => {
   try {
+    // This now returns the ISO string format for internal use
     // If it's a Firestore timestamp with toDate method
     if (typeof timestamp === 'object' && timestamp !== null && typeof timestamp.toDate === 'function') {
       return formatTimestamp(timestamp.toDate());

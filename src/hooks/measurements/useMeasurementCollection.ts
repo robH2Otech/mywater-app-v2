@@ -38,7 +38,9 @@ export function processMeasurementDocuments(
     const data = doc.data();
     const measurement: ProcessedMeasurement = {
       id: doc.id,
+      // Store both the raw timestamp for internal use and the display timestamp
       timestamp: data.timestamp ? safeFormatTimestamp(data.timestamp) : "Invalid date",
+      rawTimestamp: data.timestamp, // Store the original timestamp object
       volume: typeof data.volume === 'number' ? data.volume : parseFloat(data.volume || '0'),
       temperature: typeof data.temperature === 'number' ? data.temperature : parseFloat(data.temperature || '0'),
     };

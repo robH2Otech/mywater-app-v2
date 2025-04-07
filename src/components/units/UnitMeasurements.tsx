@@ -13,6 +13,7 @@ import { useQuery } from "@tanstack/react-query";
 import { doc, getDoc } from "firebase/firestore";
 import { db } from "@/integrations/firebase/client";
 import { useMemo } from "react";
+import { formatHumanReadableTimestamp } from "@/utils/measurements/formatUtils";
 
 interface UnitMeasurementsProps {
   unitId: string;
@@ -64,8 +65,10 @@ export function UnitMeasurements({ unitId }: UnitMeasurementsProps) {
   const safeRenderMeasurements = (measurements: any[]) => {
     return measurements.map((measurement) => {
       try {
-        // Get timestamp directly - it should already be formatted by useRealtimeMeasurements
-        const timestamp = measurement.timestamp || "Invalid date";
+        // Format timestamp to match Firestore's display format
+        const displayTimestamp = measurement.rawTimestamp 
+          ? formatHumanReadableTimestamp(measurement.rawTimestamp)
+          : formatHumanReadableTimestamp(measurement.timestamp);
           
         // Handle volume display based on unit type
         let displayVolume;
@@ -99,7 +102,7 @@ export function UnitMeasurements({ unitId }: UnitMeasurementsProps) {
 
         return (
           <TableRow key={measurement.id} className="hover:bg-spotify-accent/20">
-            <TableCell className="text-white">{timestamp}</TableCell>
+            <TableCell className="text-white">{displayTimestamp}</TableCell>
             <TableCell className="text-white text-right">{displayVolume} {volumeUnit}</TableCell>
             <TableCell className="text-white text-right">{temperature}</TableCell>
             <TableCell className="text-white text-right">{lastColumn}</TableCell>
