@@ -15,9 +15,19 @@ interface UVCCardProps {
   uvc_installation_date?: string | null;
   location?: string;
   onClick?: () => void;
+  unit_type?: string;
 }
 
-export function UVCCard({ id, name, uvc_hours, uvc_status, uvc_installation_date, location, onClick }: UVCCardProps) {
+export function UVCCard({ 
+  id, 
+  name, 
+  uvc_hours, 
+  uvc_status, 
+  uvc_installation_date, 
+  location, 
+  onClick,
+  unit_type
+}: UVCCardProps) {
   // Calculate the percentage of UVC life used
   const percentage = calculateUVCLifePercentage(uvc_hours);
   

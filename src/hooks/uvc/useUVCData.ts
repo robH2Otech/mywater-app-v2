@@ -30,18 +30,25 @@ export function useUVCData() {
     queryFn: async () => {
       console.log("Fetching UVC units data...");
       try {
-        // Get only UVC units
+        // Get all units first - not just limited to UVC unit_type
+        // Some units may have UVC but not be marked as UVC type
         const unitsCollection = collection(db, "units");
-        // Add where clause to only get UVC units
-        const unitsQuery = query(unitsCollection, where("unit_type", "==", "uvc"));
-        const unitsSnapshot = await getDocs(unitsQuery);
+        const unitsSnapshot = await getDocs(unitsCollection);
         
         // Process each unit and accumulate UVC hours from measurements
         const unitsPromises = unitsSnapshot.docs.map(async (unitDoc) => {
           return processUnitUVCData(unitDoc);
         });
         
-        const unitsData = await Promise.all(unitsPromises) as UnitWithUVC[];
+        const allUnitsData = await Promise.all(unitsPromises) as UnitWithUVC[];
+        
+        // Filter only units that have UVC after processing
+        // This includes units with UVC type OR units with UVC hours
+        const unitsData = allUnitsData.filter(unit => 
+          unit.unit_type === 'uvc' || 
+          (unit.uvc_hours !== undefined && unit.uvc_hours > 0)
+        );
+        
         console.log("UVC units data processed successfully:", unitsData.length);
         
         // Log detailed info for debugging each unit
@@ -61,7 +68,7 @@ export function useUVCData() {
       }
     },
     // Set a shorter staleTime to ensure data is refreshed more frequently
-    staleTime: 60 * 1000, // 1 minute stale time
+    staleTime: 30 * 1000, // 30 seconds stale time
     refetchOnMount: true,
     refetchOnWindowFocus: true,
   });

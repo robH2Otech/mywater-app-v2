@@ -16,6 +16,18 @@ export async function processUnitUVCData(unitDoc: any): Promise<UnitWithUVC> {
   // Process the basic unit data
   const { id: unitId, unitData, baseUvcHours, totalVolume } = processUnitBaseData(unitDoc);
   
+  // Skip processing for non-UVC units that don't have any UVC hours
+  if (unitData.unit_type !== 'uvc' && !baseUvcHours && !unitData.uvc_hours && !unitData.uvc_status) {
+    return {
+      id: unitId,
+      ...unitData,
+      uvc_hours: 0,
+      uvc_status: 'active',
+      is_uvc_accumulated: false,
+      total_volume: totalVolume
+    };
+  }
+  
   // If the unit already has accumulated UVC hours, just use those
   if (unitData.is_uvc_accumulated) {
     console.log(`Unit ${unitId} - Using accumulated hours (${baseUvcHours}), not fetching measurements`);

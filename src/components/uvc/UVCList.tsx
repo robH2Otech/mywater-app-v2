@@ -113,6 +113,7 @@ export function UVCList({ units, onUVCClick }: UVCListProps) {
             uvc_status={unit.uvc_status}
             uvc_installation_date={unit.uvc_installation_date}
             location={unit.location}
+            unit_type={unit.unit_type}
             onClick={() => onUVCClick(unit)}
           />
         ))}

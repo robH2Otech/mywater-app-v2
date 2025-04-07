@@ -22,6 +22,7 @@ export const UVC = () => {
     setIsRefreshing(true);
     try {
       await queryClient.invalidateQueries({ queryKey: ["uvc-units"] });
+      await queryClient.invalidateQueries({ queryKey: ["units"] });
       toast({
         title: "Data refreshed",
         description: "UVC data has been updated",
@@ -47,8 +48,9 @@ export const UVC = () => {
     return <LoadingSkeleton />;
   }
 
-  // Only show UVC units - filter out DROP and Office units
-  const uvcUnits = units.filter(unit => unit.unit_type === 'uvc');
+  // We already filtered out non-UVC units in useUVCData
+  // Just use the units as-is
+  const uvcUnits = units;
 
   return (
     <div className="space-y-6">

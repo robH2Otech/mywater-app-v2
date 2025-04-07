@@ -25,6 +25,18 @@ export const StatCard = ({
 }: StatCardProps) => {
   // Format the value properly depending on its type
   const formattedValue = () => {
+    // First check if it's a DROP unit volume (in L)
+    if (typeof value === 'string' && value.toLowerCase().includes('l') && !value.toLowerCase().includes('m')) {
+      // It's a volume in liters, just ensure it's properly formatted
+      const numericPart = value.replace(/[^0-9.]/g, '');
+      const numericValue = parseFloat(numericPart);
+      
+      if (!isNaN(numericValue) && isFinite(numericValue)) {
+        return `${numericValue.toLocaleString()}L`;
+      }
+      return value;
+    }
+    
     // If it's already a string with "m³" notation, just ensure it's properly formatted
     if (typeof value === 'string' && value.includes('m')) {
       // Clean up the string and format it properly
