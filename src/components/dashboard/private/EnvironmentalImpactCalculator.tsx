@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { Waves, Recycle, Leaf, Coins } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -7,6 +7,8 @@ import { ImpactCard } from "./impact/ImpactCard";
 import { ImpactTabs } from "./impact/ImpactTabs";
 import { useImpactCalculations, ImpactConfig } from "@/hooks/dashboard/useImpactCalculations";
 import { useFirestoreUserData } from "@/hooks/dashboard/useFirestoreUserData";
+import { auth } from "@/integrations/firebase/client";
+import { useAuthState } from "@/hooks/firebase/useAuthState";
 
 export function EnvironmentalImpactCalculator() {
   const [period, setPeriod] = useState<"day" | "month" | "year" | "all-time">("year");
@@ -15,9 +17,25 @@ export function EnvironmentalImpactCalculator() {
     bottleCost: 1.10, // Default to €1.10 per bottle
     userType: 'home'  // Always home user
   });
+  const [userName, setUserName] = useState<string>("");
   
   const isMobile = useIsMobile();
-  const { userData } = useFirestoreUserData();
+  const { fetchUserData } = useFirestoreUserData();
+  const { user } = useAuthState();
+  
+  // Fetch user data when component mounts
+  useEffect(() => {
+    const loadUserData = async () => {
+      if (user?.uid) {
+        const userData = await fetchUserData(user.uid);
+        if (userData) {
+          setUserName(userData.displayName || "");
+        }
+      }
+    };
+    
+    loadUserData();
+  }, [user, fetchUserData]);
   
   const { 
     bottlesSaved, 
@@ -39,7 +57,7 @@ export function EnvironmentalImpactCalculator() {
         <div>
           <h2 className="text-xl md:text-2xl font-bold text-center">My Environmental Impact</h2>
           <p className="text-gray-400 text-center text-sm md:text-base mt-1">
-            See how your MYWATER system helps you {userData?.displayName || 'save the planet'}
+            See how your MYWATER system helps you {userName || 'save the planet'}
           </p>
         </div>
 
