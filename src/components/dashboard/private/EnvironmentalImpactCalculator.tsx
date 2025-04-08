@@ -29,7 +29,7 @@ export function EnvironmentalImpactCalculator() {
       if (user?.uid) {
         const userData = await fetchUserData(user.uid);
         if (userData) {
-          setUserName(userData.displayName || "");
+          setUserName(`${userData.first_name || ''} ${userData.last_name || ''}`.trim());
         }
       }
     };
