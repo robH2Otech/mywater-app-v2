@@ -62,11 +62,11 @@ export function WelcomeMessage({ firstName }: WelcomeMessageProps) {
           return;
         }
         
-        // As a last resort, use the displayName from auth
+        // As a last resort, use the displayName from auth but only take the first name
         if (currentUser.displayName) {
-          const nameParts = currentUser.displayName.split(' ');
-          setUserName(nameParts[0]);
-          sessionStorage.setItem('userDisplayName', nameParts[0]);
+          const firstNameOnly = currentUser.displayName.split(' ')[0];
+          setUserName(firstNameOnly);
+          sessionStorage.setItem('userDisplayName', firstNameOnly);
           return;
         }
       } catch (error) {

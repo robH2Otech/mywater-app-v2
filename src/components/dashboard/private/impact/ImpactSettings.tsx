@@ -3,10 +3,11 @@ import { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { FormInput } from "@/components/shared/FormInput";
 import { Button } from "@/components/ui/button";
-import { Check } from "lucide-react";
+import { Check, Filter } from "lucide-react";
 import { ImpactConfig } from "@/hooks/dashboard/useImpactCalculations";
 import { BOTTLE_CONFIGS } from "@/utils/formatUnitVolume";
 import { useToast } from "@/hooks/use-toast";
+import { Progress } from "@/components/ui/progress";
 
 interface ImpactSettingsProps {
   currentConfig: Partial<ImpactConfig>;
@@ -20,6 +21,11 @@ export function ImpactSettings({ currentConfig, onConfigChange }: ImpactSettings
   const [plasticPerBottle, setPlasticPerBottle] = useState((currentConfig.plasticPerBottle || 20).toString());
   const [dailyIntake, setDailyIntake] = useState((currentConfig.dailyIntake || 2).toString());
   const { toast } = useToast();
+  
+  // Filter status demo (normally this would come from user data)
+  const filterLifeRemaining = 67; // percentage
+  const nextFilterChange = new Date();
+  nextFilterChange.setDate(nextFilterChange.getDate() + 45); // 45 days from now
   
   const handleApplySettings = () => {
     onConfigChange({
@@ -57,9 +63,31 @@ export function ImpactSettings({ currentConfig, onConfigChange }: ImpactSettings
   return (
     <div className="space-y-6">
       <div className="text-center mb-4">
-        <h3 className="text-lg font-medium">My Impact Calculator Settings</h3>
+        <h3 className="text-lg font-medium">Calculator Settings</h3>
         <p className="text-sm text-gray-400">Customize how your environmental impact is calculated</p>
       </div>
+      
+      {/* Filter Status Card */}
+      <Card className="bg-spotify-darker border-spotify-accent">
+        <CardContent className="p-4 space-y-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center">
+              <Filter className="h-5 w-5 text-mywater-blue mr-2" />
+              <h3 className="font-medium">Filter Status</h3>
+            </div>
+            <span className={`text-sm font-medium ${filterLifeRemaining > 30 ? 'text-green-400' : 'text-amber-500'}`}>
+              {filterLifeRemaining}% remaining
+            </span>
+          </div>
+          
+          <Progress value={filterLifeRemaining} className="h-2" />
+          
+          <div className="text-xs text-gray-400 space-y-1">
+            <p>Next filter replacement recommended by: {nextFilterChange.toLocaleDateString()}</p>
+            <p>Regular filter changes ensure optimal water quality and taste.</p>
+          </div>
+        </CardContent>
+      </Card>
       
       {/* Bottle Presets */}
       <div className="mb-6">

@@ -6,15 +6,26 @@ import { MoneySavingsCalculator } from "./MoneySavingsCalculator";
 import { useImpactCalculations, ImpactConfig } from "@/hooks/dashboard/useImpactCalculations";
 import { ImpactSettings } from "./ImpactSettings";
 import { formatMetricValue } from "@/utils/formatUnitVolume";
+import { ReductionEquivalents } from "./ReductionEquivalents";
+import { HydrationGoals } from "./HydrationGoals";
 
 interface ImpactTabsProps {
   period: "day" | "month" | "year" | "all-time";
   setPeriod: (value: "day" | "month" | "year" | "all-time") => void;
   config: Partial<ImpactConfig>;
   onConfigChange: (config: Partial<ImpactConfig>) => void;
+  activeTab: string;
+  setActiveTab: (tab: string) => void;
 }
 
-export function ImpactTabs({ period, setPeriod, config, onConfigChange }: ImpactTabsProps) {
+export function ImpactTabs({ 
+  period, 
+  setPeriod, 
+  config, 
+  onConfigChange,
+  activeTab,
+  setActiveTab
+}: ImpactTabsProps) {
   const { 
     impactDetails,
     bottlesSaved, 
@@ -26,15 +37,15 @@ export function ImpactTabs({ period, setPeriod, config, onConfigChange }: Impact
   } = useImpactCalculations(period, config);
 
   return (
-    <Tabs defaultValue="overview" className="w-full">
+    <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
       <TabsList className="grid grid-cols-4 mb-6 w-full">
-        <TabsTrigger value="overview">My Environmental Impact</TabsTrigger>
-        <TabsTrigger value="details">My Detailed Impact</TabsTrigger>
-        <TabsTrigger value="savings">My Financial Impact</TabsTrigger>
+        <TabsTrigger value="environmental">Environmental</TabsTrigger>
+        <TabsTrigger value="financial">Financial Savings</TabsTrigger>
+        <TabsTrigger value="equivalents">Reduction Equivalents</TabsTrigger>
         <TabsTrigger value="settings">Settings</TabsTrigger>
       </TabsList>
       
-      <TabsContent value="overview" className="space-y-6">
+      <TabsContent value="environmental" className="space-y-6">
         <ImpactPeriodToggle 
           period={period} 
           setPeriod={setPeriod} 
@@ -49,31 +60,47 @@ export function ImpactTabs({ period, setPeriod, config, onConfigChange }: Impact
             Based on {config.bottleSize}L bottles at €{config.bottleCost?.toFixed(2)} each
           </p>
         </div>
+
+        <HydrationGoals waterConsumed={waterSaved} period={period} />
+
+        <ImpactDetails details={impactDetails} />
       </TabsContent>
       
-      <TabsContent value="details">
+      <TabsContent value="financial">
         <div className="space-y-4">
           <h3 className="font-medium text-center mb-4">
-            My Detailed Environmental Impact
+            Financial Impact
           </h3>
           
-          <ImpactDetails details={impactDetails} />
-          
-          <div className="text-center text-sm text-gray-400">
-            <p>Data based on average consumption patterns and industry standards.</p>
-            <p className="mt-1">Keep using MYWATER to increase your positive impact!</p>
+          <ImpactPeriodToggle 
+            period={period} 
+            setPeriod={setPeriod} 
+            includeAllTime={true} 
+          />
+
+          <div className="p-4 bg-spotify-dark rounded-lg text-center mb-4">
+            <h4 className="text-md font-medium text-gray-200 mb-1">Total Money Saved</h4>
+            <p className="text-3xl font-bold text-mywater-blue">€{moneySaved.toLocaleString(undefined, { maximumFractionDigits: 2, minimumFractionDigits: 2 })}</p>
+            <p className="text-xs text-gray-400 mt-2">Based on {config.bottleSize}L bottles at €{config.bottleCost?.toFixed(2)} each</p>
           </div>
+          
+          <MoneySavingsCalculator 
+            baseBottlePrice={config.bottleCost || 1.1}
+            baseDailyConsumption={config.dailyIntake || 2}
+            baseBottleSize={config.bottleSize || 0.5}
+          />
         </div>
       </TabsContent>
       
-      <TabsContent value="savings">
-        <MoneySavingsCalculator 
-          baseBottlePrice={config.bottleCost || 1.1}
-          baseDailyConsumption={config.dailyIntake || 2}
-          baseBottleSize={config.bottleSize || 0.5}
+      <TabsContent value="equivalents">
+        <ReductionEquivalents 
+          co2Saved={co2Saved}
+          plasticSaved={plasticSaved}
+          bottlesSaved={bottlesSaved}
+          period={period}
         />
       </TabsContent>
-      
+
       <TabsContent value="settings">
         <ImpactSettings 
           currentConfig={config}
