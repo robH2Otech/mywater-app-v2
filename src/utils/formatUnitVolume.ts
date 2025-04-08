@@ -20,6 +20,23 @@ export function formatVolumeWithUnits(volume: number | string | undefined, unitT
 }
 
 /**
+ * Format specific metrics according to requirements
+ */
+export function formatMetricValue(value: number, metricType: 'bottles' | 'money' | 'co2' | 'plastic'): string {
+  switch (metricType) {
+    case 'bottles':
+      return value.toLocaleString(undefined, { maximumFractionDigits: 1, minimumFractionDigits: 1 });
+    case 'money':
+      return value.toLocaleString(undefined, { maximumFractionDigits: 2, minimumFractionDigits: 2 });
+    case 'co2':
+    case 'plastic':
+      return value.toLocaleString(undefined, { maximumFractionDigits: 1, minimumFractionDigits: 1 });
+    default:
+      return value.toLocaleString();
+  }
+}
+
+/**
  * Environmental impact calculation constants
  */
 export interface BottleConfig {

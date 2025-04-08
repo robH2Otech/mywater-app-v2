@@ -5,6 +5,7 @@ import { ImpactDetails } from "./ImpactDetails";
 import { MoneySavingsCalculator } from "./MoneySavingsCalculator";
 import { useImpactCalculations, ImpactConfig } from "@/hooks/dashboard/useImpactCalculations";
 import { ImpactSettings } from "./ImpactSettings";
+import { formatMetricValue } from "@/utils/formatUnitVolume";
 
 interface ImpactTabsProps {
   period: "day" | "month" | "year" | "all-time";
@@ -26,10 +27,10 @@ export function ImpactTabs({ period, setPeriod, config, onConfigChange }: Impact
 
   return (
     <Tabs defaultValue="overview" className="w-full">
-      <TabsList className="grid grid-cols-4 mb-6">
-        <TabsTrigger value="overview">Environmental Impact</TabsTrigger>
-        <TabsTrigger value="details">Detailed Impact</TabsTrigger>
-        <TabsTrigger value="savings">Financial Impact</TabsTrigger>
+      <TabsList className="grid grid-cols-4 mb-6 w-full">
+        <TabsTrigger value="overview">My Environmental Impact</TabsTrigger>
+        <TabsTrigger value="details">My Detailed Impact</TabsTrigger>
+        <TabsTrigger value="savings">My Financial Impact</TabsTrigger>
         <TabsTrigger value="settings">Settings</TabsTrigger>
       </TabsList>
       
@@ -53,7 +54,7 @@ export function ImpactTabs({ period, setPeriod, config, onConfigChange }: Impact
       <TabsContent value="details">
         <div className="space-y-4">
           <h3 className="font-medium text-center mb-4">
-            Detailed Environmental Impact
+            My Detailed Environmental Impact
           </h3>
           
           <ImpactDetails details={impactDetails} />

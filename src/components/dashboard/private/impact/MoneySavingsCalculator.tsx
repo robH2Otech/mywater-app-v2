@@ -5,6 +5,7 @@ import { FormInput } from "@/components/shared/FormInput";
 import { ImpactCard } from "./ImpactCard";
 import { Coins, Calculator, TrendingUp } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { formatMetricValue } from "@/utils/formatUnitVolume";
 
 interface MoneySavingsCalculatorProps {
   baseBottlePrice?: number;
@@ -62,6 +63,8 @@ export function MoneySavingsCalculator({
 
   return (
     <div className="space-y-6">
+      <h3 className="text-lg font-medium text-center">My Financial Impact</h3>
+      
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
         <Card className="p-4 bg-spotify-darker">
           <CardContent className="p-2 space-y-4">
@@ -117,7 +120,7 @@ export function MoneySavingsCalculator({
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <ImpactCard
               title="Annual Bottle Cost"
-              value={`€${annualBottleCost.toFixed(2)}`}
+              value={`€${formatMetricValue(annualBottleCost, 'money')}`}
               icon={Coins}
               iconColor="text-amber-500"
               className="bg-spotify-darker"
@@ -125,7 +128,7 @@ export function MoneySavingsCalculator({
             
             <ImpactCard
               title="Annual MYWATER Cost"
-              value={`€${annualSystemCost.toFixed(2)}`}
+              value={`€${formatMetricValue(annualSystemCost, 'money')}`}
               icon={Calculator}
               iconColor="text-emerald-500"
               className="bg-spotify-darker"
@@ -134,7 +137,7 @@ export function MoneySavingsCalculator({
           
           <ImpactCard
             title={`Total Savings Over ${systemLifetime} Years`}
-            value={`€${totalSavings.toFixed(2)}`}
+            value={`€${formatMetricValue(totalSavings, 'money')}`}
             icon={TrendingUp}
             iconColor="text-green-400"
             valueClassName="text-green-400"
@@ -144,9 +147,9 @@ export function MoneySavingsCalculator({
       </div>
       
       <div className="text-center text-sm text-gray-400">
-        <p>By using MYWATER, you could save approximately <strong className="text-green-400">€{annualSavings.toFixed(2)}</strong> per year.</p>
-        <p className="mt-1">That's <strong className="text-green-400">€{(annualSavings/12).toFixed(2)}</strong> monthly or <strong className="text-green-400">€{(annualSavings/365).toFixed(2)}</strong> daily.</p>
-        <p className="mt-1 text-xs">Based on {bottlesPerDay.toFixed(1)} bottles ({bottleSize}L) per day at €{bottlePrice} each.</p>
+        <p>By using MYWATER, you could save approximately <strong className="text-green-400">€{formatMetricValue(annualSavings, 'money')}</strong> per year.</p>
+        <p className="mt-1">That's <strong className="text-green-400">€{formatMetricValue(annualSavings/12, 'money')}</strong> monthly or <strong className="text-green-400">€{formatMetricValue(annualSavings/365, 'money')}</strong> daily.</p>
+        <p className="mt-1 text-xs">Based on {formatMetricValue(bottlesPerDay, 'bottles')} bottles ({bottleSize}L) per day at €{bottlePrice} each.</p>
       </div>
     </div>
   );

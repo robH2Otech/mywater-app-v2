@@ -3,9 +3,10 @@ import { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { FormInput } from "@/components/shared/FormInput";
 import { Button } from "@/components/ui/button";
-import { Check, User, Briefcase } from "lucide-react";
+import { Check } from "lucide-react";
 import { ImpactConfig } from "@/hooks/dashboard/useImpactCalculations";
 import { BOTTLE_CONFIGS } from "@/utils/formatUnitVolume";
+import { useToast } from "@/hooks/use-toast";
 
 interface ImpactSettingsProps {
   currentConfig: Partial<ImpactConfig>;
@@ -18,7 +19,7 @@ export function ImpactSettings({ currentConfig, onConfigChange }: ImpactSettings
   const [co2PerBottle, setCo2PerBottle] = useState((currentConfig.co2PerBottle || 160.5).toString());
   const [plasticPerBottle, setPlasticPerBottle] = useState((currentConfig.plasticPerBottle || 20).toString());
   const [dailyIntake, setDailyIntake] = useState((currentConfig.dailyIntake || 2).toString());
-  const [userType, setUserType] = useState<'home' | 'business'>(currentConfig.userType || 'home');
+  const { toast } = useToast();
   
   const handleApplySettings = () => {
     onConfigChange({
@@ -27,7 +28,12 @@ export function ImpactSettings({ currentConfig, onConfigChange }: ImpactSettings
       co2PerBottle: parseFloat(co2PerBottle),
       plasticPerBottle: parseFloat(plasticPerBottle),
       dailyIntake: parseFloat(dailyIntake),
-      userType
+      userType: 'home' // Always home user
+    });
+    
+    toast({
+      title: "Settings applied",
+      description: "Your impact calculator settings have been updated.",
     });
   };
   
@@ -51,31 +57,8 @@ export function ImpactSettings({ currentConfig, onConfigChange }: ImpactSettings
   return (
     <div className="space-y-6">
       <div className="text-center mb-4">
-        <h3 className="text-lg font-medium">Impact Calculator Settings</h3>
+        <h3 className="text-lg font-medium">My Impact Calculator Settings</h3>
         <p className="text-sm text-gray-400">Customize how your environmental impact is calculated</p>
-      </div>
-      
-      {/* User Type Selection */}
-      <div className="grid grid-cols-2 gap-4 mb-4">
-        <Button 
-          variant={userType === 'home' ? "default" : "outline"}
-          className={`flex items-center justify-center gap-2 h-12 ${userType === 'home' ? 'bg-mywater-blue text-white' : ''}`}
-          onClick={() => setUserType('home')}
-        >
-          <User className="h-5 w-5" />
-          Home User
-          {userType === 'home' && <Check className="h-4 w-4 ml-1" />}
-        </Button>
-        
-        <Button 
-          variant={userType === 'business' ? "default" : "outline"}
-          className={`flex items-center justify-center gap-2 h-12 ${userType === 'business' ? 'bg-mywater-blue text-white' : ''}`}
-          onClick={() => setUserType('business')}
-        >
-          <Briefcase className="h-5 w-5" />
-          Business User
-          {userType === 'business' && <Check className="h-4 w-4 ml-1" />}
-        </Button>
       </div>
       
       {/* Bottle Presets */}

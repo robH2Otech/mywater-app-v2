@@ -7,7 +7,8 @@ import {
   calculateMoneySaved,
   calculateCO2Reduction,
   calculatePlasticReduction,
-  getEnvironmentalEquivalents
+  getEnvironmentalEquivalents,
+  formatMetricValue
 } from "@/utils/formatUnitVolume";
 
 export interface ImpactConfig {
@@ -16,7 +17,7 @@ export interface ImpactConfig {
   co2PerBottle: number; // CO2 in grams per bottle
   plasticPerBottle: number; // Plastic in grams per bottle
   dailyIntake: number; // Daily water intake goal in liters
-  userType: 'home' | 'business'; // User type affects which metrics are shown
+  userType: 'home'; // User type affects which metrics are shown - always 'home' now
 }
 
 // Default configuration
@@ -69,30 +70,62 @@ export function useImpactCalculations(
     const yearMultiplier = period === "year" ? 1 : period === "month" ? 12 : 365;
     
     const details = [
-      { label: "Plastic bottles saved", value: `${bottlesSaved.toLocaleString()} bottles` },
-      { label: "Purified water consumed", value: `${waterConsumedLiters.toLocaleString()} liters` },
-      { label: "Plastic waste avoided", value: `${plasticSaved.toFixed(1)} kg` },
-      { label: "CO₂ emissions reduced", value: `${co2Saved.toFixed(1)} kg` },
-      { label: "Estimated yearly impact", value: `${(bottlesSaved * yearMultiplier).toLocaleString()} bottles` },
-      { label: "5-Year environmental impact", value: `${(bottlesSaved * yearMultiplier * 5).toLocaleString()} bottles` },
-      { label: "Trees equivalent", value: `${equivalents.treesEquivalent} trees` },
-      { label: "Car kilometers equivalent", value: `${equivalents.carKilometers} km` },
-      { label: "Smartphone charges equivalent", value: `${equivalents.smartphoneCharges} charges` },
-      { label: "Equivalent to recycling", value: `${equivalents.recyclingEquivalent} kg of waste` },
-      { label: "Water footprint reduced", value: `${(waterConsumedLiters * 1.5).toFixed(0)} liters` },
-      { label: "Energy saved", value: `${(bottlesSaved * 2).toFixed(1)} kWh` }
+      { 
+        label: "Plastic bottles saved", 
+        value: `${formatMetricValue(bottlesSaved, 'bottles')} bottles` 
+      },
+      { 
+        label: "Purified water consumed", 
+        value: `${waterConsumedLiters.toLocaleString()} liters` 
+      },
+      { 
+        label: "Plastic waste avoided", 
+        value: `${formatMetricValue(plasticSaved, 'plastic')} kg` 
+      },
+      { 
+        label: "CO₂ emissions reduced", 
+        value: `${formatMetricValue(co2Saved, 'co2')} kg` 
+      },
+      { 
+        label: "Estimated yearly impact", 
+        value: `${formatMetricValue(bottlesSaved * yearMultiplier, 'bottles')} bottles` 
+      },
+      { 
+        label: "5-Year environmental impact", 
+        value: `${formatMetricValue(bottlesSaved * yearMultiplier * 5, 'bottles')} bottles` 
+      },
+      { 
+        label: "Trees equivalent", 
+        value: `${equivalents.treesEquivalent} trees` 
+      },
+      { 
+        label: "Car kilometers equivalent", 
+        value: `${equivalents.carKilometers} km` 
+      },
+      { 
+        label: "Smartphone charges equivalent", 
+        value: `${equivalents.smartphoneCharges} charges` 
+      },
+      { 
+        label: "Equivalent to recycling", 
+        value: `${equivalents.recyclingEquivalent} kg of waste` 
+      },
+      { 
+        label: "Water footprint reduced", 
+        value: `${(waterConsumedLiters * 1.5).toFixed(0)} liters` 
+      },
+      { 
+        label: "Energy saved", 
+        value: `${(bottlesSaved * 2).toFixed(1)} kWh` 
+      },
+      { 
+        label: "Money saved on bottled water", 
+        value: `€${formatMetricValue(moneySaved, 'money')}` 
+      }
     ];
     
-    // Add money-related details only for home users
-    if (fullConfig.userType === 'home') {
-      details.unshift({ 
-        label: "Money saved on bottled water", 
-        value: `€${moneySaved.toFixed(2)}` 
-      });
-    }
-    
     return details;
-  }, [bottlesSaved, waterConsumedLiters, plasticSaved, co2Saved, period, moneySaved, fullConfig.userType, equivalents]);
+  }, [bottlesSaved, waterConsumedLiters, plasticSaved, co2Saved, period, moneySaved, equivalents]);
 
   return {
     impactDetails,
