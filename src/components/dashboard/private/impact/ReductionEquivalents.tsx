@@ -1,6 +1,5 @@
-
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Leaf, Car, Smartphone, Tree } from "lucide-react";
+import { Leaf, Car, Smartphone, Trees } from "lucide-react";
 
 interface ReductionEquivalentsProps {
   co2Saved: number;
@@ -50,7 +49,7 @@ export function ReductionEquivalents({
         <Card className="bg-spotify-accent/10">
           <CardHeader className="pb-2">
             <CardTitle className="text-md flex items-center">
-              <Tree className="h-5 w-5 text-green-400 mr-2" />
+              <Trees className="h-5 w-5 text-green-400 mr-2" />
               Trees Planted Equivalent
             </CardTitle>
           </CardHeader>
