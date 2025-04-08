@@ -7,5 +7,6 @@ export {
   generateReferralEmailTemplate,
   sendEmailDirect,
   processPendingEmails,
-  sendReferralEmail
+  sendReferralEmail,
+  processPendingEmailsForUI
 } from './email';

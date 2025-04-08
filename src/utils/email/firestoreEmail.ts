@@ -66,21 +66,20 @@ export const processPendingEmails = async () => {
             
             const cleanMessage = emailData.body.replace(/<br>/g, '\n').replace(/<[^>]*>/g, '');
             
-            const templateParams = {
+            // Create a simpler version of the template params that's most likely to work
+            const simpleParams = {
               to_email: emailData.to,
               to_name: emailData.to_name || emailData.to,
               from_name: emailData.from_name,
-              message: cleanMessage,
-              subject: emailData.subject,
-              from_email: emailData.from || "noreply@mywatertechnologies.com",
-              referral_code: emailData.referral_code,
+              message: `${emailData.from_name} has invited you to try MYWATER with a 20% discount! Use code ${emailData.referral_code} when you purchase at https://mywater.com/products`,
+              subject: emailData.subject || `${emailData.from_name} invited you to try MYWATER (20% discount!)`,
               reply_to: "noreply@mywatertechnologies.com"
             };
             
             await emailjs.send(
               EMAILJS_CONFIG.SERVICE_ID,
               EMAILJS_CONFIG.TEMPLATE_ID,
-              templateParams,
+              simpleParams,
               EMAILJS_CONFIG.PUBLIC_KEY
             );
             
@@ -88,12 +87,12 @@ export const processPendingEmails = async () => {
               status: "sent",
               sent_at: new Date(),
               attempts: (emailData.attempts || 0) + 1,
-              sent_method: "direct"
+              sent_method: "direct_simple"
             });
             
             processedCount++;
             successCount++;
-            console.log(`Email ${emailDoc.id} sent successfully via direct method`);
+            console.log(`Email ${emailDoc.id} sent successfully via direct method with simplified params`);
             continue;
           } catch (directError) {
             console.error(`Direct method failed for email ${emailDoc.id}:`, directError);

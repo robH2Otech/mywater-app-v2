@@ -44,14 +44,14 @@ export const sendEmailDirect = async (
   } catch (error) {
     console.error("Direct email method failed:", error);
     
-    // Try with ultra-minimal parameters as a last resort
+    // Try one more method with ultra-minimal content as a last resort
     try {
       const ultraSimpleParams = {
         to_email: toEmail,
         to_name: toName,
         from_name: fromName,
         subject: `${fromName} invited you to try MYWATER with a discount!`,
-        message: `${fromName} has invited you to try MYWATER with a 20% discount! Use code MYWATER20 when you purchase. Visit https://mywater.com/products`,
+        message: `${fromName} has invited you to try MYWATER with a 20% discount! Visit https://mywater.com/products and use code MYWATER20`,
         reply_to: "noreply@mywatertechnologies.com"
       };
       

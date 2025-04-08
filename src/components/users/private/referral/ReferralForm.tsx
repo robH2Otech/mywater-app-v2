@@ -1,11 +1,11 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { FormInput } from "@/components/shared/FormInput";
 import { Textarea } from "@/components/ui/textarea";
-import { Send } from "lucide-react";
+import { Send, RefreshCw } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { sendReferralEmail } from "@/utils/email";
+import { sendReferralEmail, processPendingEmailsForUI } from "@/utils/email";
 
 interface ReferralFormProps {
   userName: string;
@@ -17,7 +17,12 @@ export function ReferralForm({ userName, referralCode }: ReferralFormProps) {
   const [friendEmail, setFriendEmail] = useState("");
   const [emailMessage, setEmailMessage] = useState("");
   const [isSending, setIsSending] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [pendingCount, setPendingCount] = useState(0);
   const { toast } = useToast();
+  
+  // Extract just the first name for personalization
+  const firstName = userName.split(' ')[0];
   
   const generateDefaultEmail = () => {
     const template = `Hi ${friendName || "[Friend's Name]"},
@@ -31,7 +36,7 @@ If you decide to get a MYWATER system, you'll also get the chance to refer 3 fri
 Check it out here: https://mywater.com/products
 
 Best,
-${userName || "[Your Name]"}`;
+${firstName || "[Your Name]"}`;
 
     return template;
   };
@@ -64,7 +69,7 @@ ${userName || "[Your Name]"}`;
       await sendReferralEmail(
         friendEmail,
         friendName,
-        userName,
+        firstName,
         referralCode,
         emailMessage
       );
@@ -103,6 +108,34 @@ ${userName || "[Your Name]"}`;
       title: "Template reset",
       description: "The email message has been reset to the default template",
     });
+  };
+  
+  const handleProcessPendingEmails = async () => {
+    setIsProcessing(true);
+    try {
+      const count = await processPendingEmailsForUI();
+      
+      if (count > 0) {
+        toast({
+          title: "Processing complete",
+          description: `Processed ${count} pending emails.`,
+        });
+      } else {
+        toast({
+          title: "No pending emails",
+          description: "There are no recent pending emails to process.",
+        });
+      }
+    } catch (error) {
+      console.error("Error processing emails:", error);
+      toast({
+        title: "Processing error",
+        description: "There was a problem processing pending emails.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsProcessing(false);
+    }
   };
   
   return (
@@ -151,20 +184,38 @@ ${userName || "[Your Name]"}`;
         </div>
       </div>
       
-      <Button
-        onClick={handleSendEmail}
-        disabled={isSending || !friendEmail || !friendName}
-        className="w-full bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700"
-      >
-        {isSending ? (
-          "Sending..."
-        ) : (
-          <>
-            <Send className="h-4 w-4 mr-2" />
-            Send Invitation
-          </>
-        )}
-      </Button>
+      <div className="flex flex-col md:flex-row gap-2">
+        <Button
+          onClick={handleSendEmail}
+          disabled={isSending || !friendEmail || !friendName}
+          className="w-full md:w-3/4 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700"
+        >
+          {isSending ? (
+            "Sending..."
+          ) : (
+            <>
+              <Send className="h-4 w-4 mr-2" />
+              Send Invitation
+            </>
+          )}
+        </Button>
+        
+        <Button
+          onClick={handleProcessPendingEmails}
+          disabled={isProcessing}
+          variant="outline"
+          className="w-full md:w-1/4"
+        >
+          {isProcessing ? (
+            "Processing..."
+          ) : (
+            <>
+              <RefreshCw className="h-4 w-4 mr-2" />
+              Process Pending
+            </>
+          )}
+        </Button>
+      </div>
     </div>
   );
 }
