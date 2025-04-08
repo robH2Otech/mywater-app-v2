@@ -6,11 +6,22 @@ import { ImpactCard } from "./ImpactCard";
 import { Coins, Calculator, TrendingUp } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 
-export function MoneySavingsCalculator() {
-  const [bottlePrice, setBottlePrice] = useState("1.5");
+interface MoneySavingsCalculatorProps {
+  baseBottlePrice?: number;
+  baseDailyConsumption?: number;
+  baseBottleSize?: number;
+}
+
+export function MoneySavingsCalculator({
+  baseBottlePrice = 1.1,
+  baseDailyConsumption = 2,
+  baseBottleSize = 0.5
+}: MoneySavingsCalculatorProps) {
+  const [bottlePrice, setBottlePrice] = useState(baseBottlePrice.toString());
   const [systemCost, setSystemCost] = useState("300");
   const [systemLifetime, setSystemLifetime] = useState("5");
-  const [dailyConsumption, setDailyConsumption] = useState("2");
+  const [dailyConsumption, setDailyConsumption] = useState(baseDailyConsumption.toString());
+  const [bottleSize, setBottleSize] = useState(baseBottleSize.toString());
   const isMobile = useIsMobile();
 
   // Calculated values
@@ -18,6 +29,7 @@ export function MoneySavingsCalculator() {
   const [annualSystemCost, setAnnualSystemCost] = useState(0);
   const [annualSavings, setAnnualSavings] = useState(0);
   const [totalSavings, setTotalSavings] = useState(0);
+  const [bottlesPerDay, setBottlesPerDay] = useState(0);
   
   useEffect(() => {
     // Calculate costs and savings
@@ -25,9 +37,14 @@ export function MoneySavingsCalculator() {
     const systemCostNum = parseFloat(systemCost) || 1;
     const systemLifetimeNum = parseFloat(systemLifetime) || 1;
     const dailyConsumptionNum = parseFloat(dailyConsumption) || 0;
+    const bottleSizeNum = parseFloat(bottleSize) || 0.5;
+    
+    // Calculate bottles per day based on consumption and bottle size
+    const bottlesPerDayCalc = dailyConsumptionNum / bottleSizeNum;
+    setBottlesPerDay(bottlesPerDayCalc);
     
     // Annual costs for bottled water
-    const annualBottleCostCalc = bottlePriceNum * dailyConsumptionNum * 365;
+    const annualBottleCostCalc = bottlePriceNum * bottlesPerDayCalc * 365;
     setAnnualBottleCost(annualBottleCostCalc);
     
     // Annual cost for MYWATER system (total cost divided by years)
@@ -41,7 +58,7 @@ export function MoneySavingsCalculator() {
     // Total savings over system lifetime
     const totalSavingsCalc = annualSavingsCalc * systemLifetimeNum;
     setTotalSavings(totalSavingsCalc);
-  }, [bottlePrice, systemCost, systemLifetime, dailyConsumption]);
+  }, [bottlePrice, systemCost, systemLifetime, dailyConsumption, bottleSize]);
 
   return (
     <div className="space-y-6">
@@ -51,21 +68,30 @@ export function MoneySavingsCalculator() {
             <h3 className="text-lg font-medium text-center mb-2">Calculate Your Savings</h3>
             
             <FormInput
-              label="Bottled Water Price (€/bottle)"
-              value={bottlePrice}
-              onChange={setBottlePrice}
+              label="Daily Water Consumption (L)"
+              value={dailyConsumption}
+              onChange={setDailyConsumption}
               type="number"
               min="0.1"
               step="0.1"
             />
             
             <FormInput
-              label="Daily Consumption (bottles)"
-              value={dailyConsumption}
-              onChange={setDailyConsumption}
+              label="Bottle Size (L)"
+              value={bottleSize}
+              onChange={setBottleSize}
               type="number"
-              min="1"
-              step="1"
+              min="0.1"
+              step="0.1"
+            />
+            
+            <FormInput
+              label="Bottled Water Price (€/bottle)"
+              value={bottlePrice}
+              onChange={setBottlePrice}
+              type="number"
+              min="0.1"
+              step="0.1"
             />
             
             <FormInput
@@ -90,7 +116,7 @@ export function MoneySavingsCalculator() {
         <div className="space-y-4">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <ImpactCard
-              title="Annual Bottled Cost"
+              title="Annual Bottle Cost"
               value={`€${annualBottleCost.toFixed(2)}`}
               icon={Coins}
               iconColor="text-amber-500"
@@ -120,6 +146,7 @@ export function MoneySavingsCalculator() {
       <div className="text-center text-sm text-gray-400">
         <p>By using MYWATER, you could save approximately <strong className="text-green-400">€{annualSavings.toFixed(2)}</strong> per year.</p>
         <p className="mt-1">That's <strong className="text-green-400">€{(annualSavings/12).toFixed(2)}</strong> monthly or <strong className="text-green-400">€{(annualSavings/365).toFixed(2)}</strong> daily.</p>
+        <p className="mt-1 text-xs">Based on {bottlesPerDay.toFixed(1)} bottles ({bottleSize}L) per day at €{bottlePrice} each.</p>
       </div>
     </div>
   );
