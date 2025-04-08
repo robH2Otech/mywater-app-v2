@@ -1,13 +1,12 @@
 
 import { useState, useEffect } from "react";
 import { Card } from "@/components/ui/card";
-import { Waves, Recycle, Leaf, Coins, Award, Target } from "lucide-react";
+import { Waves, Recycle, Leaf, Coins, Award } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { ImpactCard } from "./impact/ImpactCard";
 import { ImpactTabs } from "./impact/ImpactTabs";
 import { useImpactCalculations, ImpactConfig } from "@/hooks/dashboard/useImpactCalculations";
 import { useFirestoreUserData } from "@/hooks/dashboard/useFirestoreUserData";
-import { auth } from "@/integrations/firebase/client";
 import { useAuthState } from "@/hooks/firebase/useAuthState";
 
 export function EnvironmentalImpactCalculator() {
@@ -52,13 +51,20 @@ export function EnvironmentalImpactCalculator() {
     setConfig(prev => ({ ...prev, ...newConfig }));
   };
 
+  // Format numbers with specified decimal places
+  const formatBottles = (value: number) => value.toLocaleString(undefined, { maximumFractionDigits: 1, minimumFractionDigits: 1 });
+  const formatMoney = (value: number) => `€${value.toLocaleString(undefined, { maximumFractionDigits: 2, minimumFractionDigits: 2 })}`;
+  const formatWeight = (value: number) => value.toLocaleString(undefined, { maximumFractionDigits: 1, minimumFractionDigits: 1 });
+
   return (
     <Card className="p-4 md:p-6 bg-spotify-darker border-spotify-accent">
       <div className="space-y-6">
         <div>
-          <h2 className="text-xl md:text-2xl font-bold text-center">Impact Calculator</h2>
+          <h2 className="text-xl md:text-2xl font-bold text-center">
+            {userName ? `${userName}'s` : 'Your'} Impact Calculator
+          </h2>
           <p className="text-gray-400 text-center text-sm md:text-base mt-1">
-            See how your MYWATER system helps {userName || 'you'} save the planet
+            See how MYWATER system helps you save the planet
           </p>
         </div>
 
@@ -77,27 +83,28 @@ export function EnvironmentalImpactCalculator() {
             <div className="grid grid-cols-2 gap-3 md:gap-4 lg:grid-cols-4">
               <ImpactCard
                 title="Bottles Saved"
-                value={bottlesSaved.toLocaleString(undefined, { maximumFractionDigits: 1, minimumFractionDigits: 1 })}
+                value={formatBottles(bottlesSaved)}
                 icon={Waves}
                 className="bg-spotify-accent/20"
+                iconColor="text-blue-400" 
               />
               <ImpactCard
-                title="Water Filtered"
-                value={`${waterSaved.toLocaleString(undefined, { maximumFractionDigits: 1 })} L`}
-                icon={Waves}
+                title="Money Saved"
+                value={formatMoney(moneySaved)}
+                icon={Coins}
                 className="bg-spotify-accent/20"
-                iconColor="text-blue-400"
+                iconColor="text-amber-400"
               />
               <ImpactCard
                 title="CO₂ Reduced"
-                value={`${co2Saved.toLocaleString(undefined, { maximumFractionDigits: 1, minimumFractionDigits: 1 })} kg`}
+                value={`${formatWeight(co2Saved)} kg`}
                 icon={Leaf}
                 className="bg-spotify-accent/20"
                 iconColor="text-emerald-400"
               />
               <ImpactCard
                 title="Plastic Saved"
-                value={`${plasticSaved.toLocaleString(undefined, { maximumFractionDigits: 1, minimumFractionDigits: 1 })} kg`}
+                value={`${formatWeight(plasticSaved)} kg`}
                 icon={Recycle}
                 className="bg-spotify-accent/20"
                 iconColor="text-green-400"
