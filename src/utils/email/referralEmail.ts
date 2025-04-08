@@ -1,8 +1,10 @@
+
 import { collection, addDoc, updateDoc, doc, query, where, getDocs } from "firebase/firestore";
 import { db } from "@/integrations/firebase/client";
 import { EMAILJS_CONFIG, initEmailJS } from './config';
 import { generateReferralEmailTemplate } from './templates';
 import emailjs from 'emailjs-com';
+import { processPendingEmails } from './firestoreEmail';
 
 /**
  * Sends a referral email to the specified recipient
