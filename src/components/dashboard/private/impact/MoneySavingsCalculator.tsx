@@ -62,17 +62,18 @@ export function MoneySavingsCalculator({
   }, [bottlePrice, systemCost, systemLifetime, dailyConsumption, bottleSize]);
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-3">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
         {/* Left column - Key Results */}
         <div className="space-y-3">
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-2 gap-2">
             <ImpactCard
               title="Annual Bottle Cost"
               value={`€${formatMetricValue(annualBottleCost, 'money')}`}
               icon={Coins}
               iconColor="text-amber-500"
               className="bg-spotify-darker"
+              compactMode={isMobile}
             />
             
             <ImpactCard
@@ -81,6 +82,7 @@ export function MoneySavingsCalculator({
               icon={Calculator}
               iconColor="text-emerald-500"
               className="bg-spotify-darker"
+              compactMode={isMobile}
             />
           </div>
           
@@ -91,6 +93,7 @@ export function MoneySavingsCalculator({
             iconColor="text-green-400"
             valueClassName="text-green-400"
             className="bg-spotify-darker"
+            compactMode={isMobile}
           />
           
           <div className="text-center text-xs text-gray-400 p-2 bg-spotify-dark rounded-lg">
@@ -101,52 +104,69 @@ export function MoneySavingsCalculator({
         
         {/* Right column - Calculator */}
         <Card className="bg-spotify-darker">
-          <CardContent className="p-3 space-y-3">
+          <CardContent className="p-2 space-y-2">
             <h3 className="text-sm font-medium text-center">Calculate Savings</h3>
             
-            <FormInput
-              label="Daily Water (L)"
-              value={dailyConsumption}
-              onChange={setDailyConsumption}
-              type="number"
-              min="0.1"
-              step="0.1"
-            />
+            <div className="grid grid-cols-1 gap-2">
+              <div className="flex items-center gap-1.5">
+                <label className="text-xs w-24 text-gray-400">Daily Water (L)</label>
+                <input 
+                  type="number"
+                  min="0.1"
+                  step="0.1"
+                  value={dailyConsumption}
+                  onChange={(e) => setDailyConsumption(e.target.value)}
+                  className="flex h-8 w-full rounded-md border border-input bg-background px-2 py-1 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                />
+              </div>
             
-            <FormInput
-              label="Bottle Size (L)"
-              value={bottleSize}
-              onChange={setBottleSize}
-              type="number"
-              min="0.1"
-              step="0.1"
-            />
+              <div className="flex items-center gap-1.5">
+                <label className="text-xs w-24 text-gray-400">Bottle Size (L)</label>
+                <input 
+                  type="number"
+                  min="0.1"
+                  step="0.1"
+                  value={bottleSize}
+                  onChange={(e) => setBottleSize(e.target.value)}
+                  className="flex h-8 w-full rounded-md border border-input bg-background px-2 py-1 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                />
+              </div>
             
-            <FormInput
-              label="Bottle Price (€)"
-              value={bottlePrice}
-              onChange={setBottlePrice}
-              type="number"
-              min="0.1"
-              step="0.1"
-            />
+              <div className="flex items-center gap-1.5">
+                <label className="text-xs w-24 text-gray-400">Bottle Price (€)</label>
+                <input 
+                  type="number"
+                  min="0.1"
+                  step="0.1"
+                  value={bottlePrice}
+                  onChange={(e) => setBottlePrice(e.target.value)}
+                  className="flex h-8 w-full rounded-md border border-input bg-background px-2 py-1 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                />
+              </div>
             
-            <FormInput
-              label="MYWATER Cost (€)"
-              value={systemCost}
-              onChange={setSystemCost}
-              type="number"
-              min="1"
-            />
+              <div className="flex items-center gap-1.5">
+                <label className="text-xs w-24 text-gray-400">MYWATER Cost (€)</label>
+                <input 
+                  type="number"
+                  min="1"
+                  value={systemCost}
+                  onChange={(e) => setSystemCost(e.target.value)}
+                  className="flex h-8 w-full rounded-md border border-input bg-background px-2 py-1 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                />
+              </div>
             
-            <FormInput
-              label="System Life (years)"
-              value={systemLifetime}
-              onChange={setSystemLifetime}
-              type="number"
-              min="1"
-              max="20"
-            />
+              <div className="flex items-center gap-1.5">
+                <label className="text-xs w-24 text-gray-400">System Life (years)</label>
+                <input 
+                  type="number"
+                  min="1"
+                  max="20"
+                  value={systemLifetime}
+                  onChange={(e) => setSystemLifetime(e.target.value)}
+                  className="flex h-8 w-full rounded-md border border-input bg-background px-2 py-1 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                />
+              </div>
+            </div>
           </CardContent>
         </Card>
       </div>

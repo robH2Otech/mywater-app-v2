@@ -1,13 +1,11 @@
 
 import { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
-import { FormInput } from "@/components/shared/FormInput";
 import { Button } from "@/components/ui/button";
-import { Check, Filter } from "lucide-react";
+import { Check } from "lucide-react";
 import { ImpactConfig } from "@/hooks/dashboard/useImpactCalculations";
 import { BOTTLE_CONFIGS } from "@/utils/formatUnitVolume";
 import { useToast } from "@/hooks/use-toast";
-import { Progress } from "@/components/ui/progress";
 
 interface ImpactSettingsProps {
   currentConfig: Partial<ImpactConfig>;
@@ -21,11 +19,6 @@ export function ImpactSettings({ currentConfig, onConfigChange }: ImpactSettings
   const [plasticPerBottle, setPlasticPerBottle] = useState((currentConfig.plasticPerBottle || 20).toString());
   const [dailyIntake, setDailyIntake] = useState((currentConfig.dailyIntake || 2).toString());
   const { toast } = useToast();
-  
-  // Filter status demo (normally this would come from user data)
-  const filterLifeRemaining = 67; // percentage
-  const nextFilterChange = new Date();
-  nextFilterChange.setDate(nextFilterChange.getDate() + 45); // 45 days from now
   
   const handleApplySettings = () => {
     onConfigChange({
@@ -61,43 +54,21 @@ export function ImpactSettings({ currentConfig, onConfigChange }: ImpactSettings
   );
   
   return (
-    <div className="space-y-6">
-      <div className="text-center mb-4">
+    <div className="space-y-4">
+      <div className="text-center mb-3">
         <h3 className="text-lg font-medium">Calculator Settings</h3>
         <p className="text-sm text-gray-400">Customize how your environmental impact is calculated</p>
       </div>
       
-      {/* Filter Status Card */}
-      <Card className="bg-spotify-darker border-spotify-accent">
-        <CardContent className="p-4 space-y-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center">
-              <Filter className="h-5 w-5 text-mywater-blue mr-2" />
-              <h3 className="font-medium">Filter Status</h3>
-            </div>
-            <span className={`text-sm font-medium ${filterLifeRemaining > 30 ? 'text-green-400' : 'text-amber-500'}`}>
-              {filterLifeRemaining}% remaining
-            </span>
-          </div>
-          
-          <Progress value={filterLifeRemaining} className="h-2" />
-          
-          <div className="text-xs text-gray-400 space-y-1">
-            <p>Next filter replacement recommended by: {nextFilterChange.toLocaleDateString()}</p>
-            <p>Regular filter changes ensure optimal water quality and taste.</p>
-          </div>
-        </CardContent>
-      </Card>
-      
       {/* Bottle Presets */}
-      <div className="mb-6">
-        <p className="text-sm text-gray-400 mb-2">Bottle Size Presets:</p>
+      <div className="mb-4">
+        <p className="text-xs text-gray-400 mb-2">Bottle Size Presets:</p>
         <div className="grid grid-cols-4 gap-2">
           <Button 
             variant={!isCustom && currentConfig.bottleSize === 0.5 ? "default" : "outline"}
             size="sm"
             onClick={() => applyPreset('small')}
-            className={!isCustom && currentConfig.bottleSize === 0.5 ? 'bg-mywater-blue' : ''}
+            className={!isCustom && currentConfig.bottleSize === 0.5 ? 'bg-mywater-blue h-8' : 'h-8'}
           >
             0.5L
           </Button>
@@ -106,7 +77,7 @@ export function ImpactSettings({ currentConfig, onConfigChange }: ImpactSettings
             variant={!isCustom && currentConfig.bottleSize === 1.0 ? "default" : "outline"}
             size="sm"
             onClick={() => applyPreset('medium')}
-            className={!isCustom && currentConfig.bottleSize === 1.0 ? 'bg-mywater-blue' : ''}
+            className={!isCustom && currentConfig.bottleSize === 1.0 ? 'bg-mywater-blue h-8' : 'h-8'}
           >
             1.0L
           </Button>
@@ -115,7 +86,7 @@ export function ImpactSettings({ currentConfig, onConfigChange }: ImpactSettings
             variant={!isCustom && currentConfig.bottleSize === 1.5 ? "default" : "outline"}
             size="sm"
             onClick={() => applyPreset('large')}
-            className={!isCustom && currentConfig.bottleSize === 1.5 ? 'bg-mywater-blue' : ''}
+            className={!isCustom && currentConfig.bottleSize === 1.5 ? 'bg-mywater-blue h-8' : 'h-8'}
           >
             1.5L
           </Button>
@@ -124,7 +95,7 @@ export function ImpactSettings({ currentConfig, onConfigChange }: ImpactSettings
             variant={isCustom ? "default" : "outline"}
             size="sm"
             onClick={() => applyPreset('custom')}
-            className={isCustom ? 'bg-mywater-blue' : ''}
+            className={isCustom ? 'bg-mywater-blue h-8' : 'h-8'}
           >
             Custom
           </Button>
@@ -132,51 +103,66 @@ export function ImpactSettings({ currentConfig, onConfigChange }: ImpactSettings
       </div>
       
       <Card className="bg-spotify-darker">
-        <CardContent className="p-4 space-y-4">
-          <FormInput
-            label="Bottle Size (L)"
-            value={bottleSize}
-            onChange={setBottleSize}
-            type="number"
-            min="0.1"
-            step="0.1"
-          />
+        <CardContent className="p-3 space-y-3">
+          <div className="flex items-center gap-1.5">
+            <label className="text-xs w-28 text-gray-400">Bottle Size (L)</label>
+            <input 
+              type="number"
+              min="0.1"
+              step="0.1"
+              value={bottleSize}
+              onChange={(e) => setBottleSize(e.target.value)}
+              className="flex h-8 w-full rounded-md border border-input bg-background px-2 py-1 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            />
+          </div>
           
-          <FormInput
-            label="Bottle Cost (€)"
-            value={bottleCost}
-            onChange={setBottleCost}
-            type="number"
-            min="0.1"
-            step="0.01"
-          />
+          <div className="flex items-center gap-1.5">
+            <label className="text-xs w-28 text-gray-400">Bottle Cost (€)</label>
+            <input 
+              type="number"
+              min="0.1"
+              step="0.01"
+              value={bottleCost}
+              onChange={(e) => setBottleCost(e.target.value)}
+              className="flex h-8 w-full rounded-md border border-input bg-background px-2 py-1 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            />
+          </div>
           
-          <FormInput
-            label="CO₂ per Bottle (g)"
-            value={co2PerBottle}
-            onChange={setCo2PerBottle}
-            type="number"
-            min="1"
-            step="0.1"
-          />
+          <div className="flex items-center gap-1.5">
+            <label className="text-xs w-28 text-gray-400">CO₂ per Bottle (g)</label>
+            <input 
+              type="number"
+              min="1"
+              step="0.1"
+              value={co2PerBottle}
+              onChange={(e) => setCo2PerBottle(e.target.value)}
+              className="flex h-8 w-full rounded-md border border-input bg-background px-2 py-1 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            />
+          </div>
           
-          <FormInput
-            label="Plastic per Bottle (g)"
-            value={plasticPerBottle}
-            onChange={setPlasticPerBottle}
-            type="number"
-            min="1"
-            step="0.1"
-          />
+          <div className="flex items-center gap-1.5">
+            <label className="text-xs w-28 text-gray-400">Plastic per Bottle (g)</label>
+            <input 
+              type="number"
+              min="1"
+              step="0.1"
+              value={plasticPerBottle}
+              onChange={(e) => setPlasticPerBottle(e.target.value)}
+              className="flex h-8 w-full rounded-md border border-input bg-background px-2 py-1 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            />
+          </div>
           
-          <FormInput
-            label="Daily Water Intake Goal (L)"
-            value={dailyIntake}
-            onChange={setDailyIntake}
-            type="number"
-            min="0.1"
-            step="0.1"
-          />
+          <div className="flex items-center gap-1.5">
+            <label className="text-xs w-28 text-gray-400">Daily Water Intake (L)</label>
+            <input 
+              type="number"
+              min="0.1"
+              step="0.1"
+              value={dailyIntake}
+              onChange={(e) => setDailyIntake(e.target.value)}
+              className="flex h-8 w-full rounded-md border border-input bg-background px-2 py-1 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            />
+          </div>
         </CardContent>
       </Card>
       

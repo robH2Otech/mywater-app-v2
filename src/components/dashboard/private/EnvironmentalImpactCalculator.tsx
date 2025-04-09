@@ -57,14 +57,14 @@ export function EnvironmentalImpactCalculator() {
   const formatWeight = (value: number) => value.toLocaleString(undefined, { maximumFractionDigits: 1, minimumFractionDigits: 1 });
 
   return (
-    <Card className="p-4 md:p-6 bg-spotify-darker border-spotify-accent">
-      <div className="space-y-6">
+    <Card className="p-3 md:p-5 bg-spotify-darker border-spotify-accent overflow-hidden">
+      <div className="space-y-4 md:space-y-6">
         <div>
           <h2 className="text-xl md:text-2xl font-bold text-center">
             {userName ? `${userName}'s` : 'Your'} Impact Calculator
           </h2>
           <p className="text-gray-400 text-center text-sm md:text-base mt-1">
-            See how MYWATER system helps you save the planet
+            See how MYWATER system helps you save
           </p>
         </div>
 
@@ -78,15 +78,16 @@ export function EnvironmentalImpactCalculator() {
         />
 
         {activeTab === "environmental" && (
-          <div className="space-y-6">
-            {/* Impact Cards Grid - More responsive for mobile */}
-            <div className="grid grid-cols-2 gap-3 md:gap-4 lg:grid-cols-4">
+          <div className="space-y-4">
+            {/* Impact Cards Grid - More compact for mobile */}
+            <div className="grid grid-cols-2 gap-2 md:gap-4 lg:grid-cols-4">
               <ImpactCard
                 title="Bottles Saved"
                 value={formatBottles(bottlesSaved)}
                 icon={Waves}
                 className="bg-spotify-accent/20"
                 iconColor="text-blue-400" 
+                compactMode={isMobile}
               />
               <ImpactCard
                 title="Money Saved"
@@ -94,6 +95,7 @@ export function EnvironmentalImpactCalculator() {
                 icon={Coins}
                 className="bg-spotify-accent/20"
                 iconColor="text-amber-400"
+                compactMode={isMobile}
               />
               <ImpactCard
                 title="CO₂ Reduced"
@@ -101,6 +103,7 @@ export function EnvironmentalImpactCalculator() {
                 icon={Leaf}
                 className="bg-spotify-accent/20"
                 iconColor="text-emerald-400"
+                compactMode={isMobile}
               />
               <ImpactCard
                 title="Plastic Saved"
@@ -108,27 +111,28 @@ export function EnvironmentalImpactCalculator() {
                 icon={Recycle}
                 className="bg-spotify-accent/20"
                 iconColor="text-green-400"
+                compactMode={isMobile}
               />
             </div>
 
             {/* User badges for gamification */}
-            <div className="flex justify-center flex-wrap gap-3 mt-4">
+            <div className="flex justify-center flex-wrap gap-2 mt-3">
               {bottlesSaved >= 100 && (
-                <div className="flex items-center bg-gradient-to-r from-blue-500 to-cyan-500 px-3 py-1 rounded-full">
-                  <Award className="h-4 w-4 mr-1" />
-                  <span className="text-xs font-medium">100+ Bottles Saved</span>
+                <div className="flex items-center bg-gradient-to-r from-blue-500 to-cyan-500 px-2 py-0.5 rounded-full">
+                  <Award className="h-3 w-3 mr-1" />
+                  <span className="text-xs font-medium">100+ Bottles</span>
                 </div>
               )}
               {bottlesSaved >= 500 && (
-                <div className="flex items-center bg-gradient-to-r from-green-500 to-emerald-500 px-3 py-1 rounded-full">
-                  <Award className="h-4 w-4 mr-1" />
-                  <span className="text-xs font-medium">500+ Bottles Saved</span>
+                <div className="flex items-center bg-gradient-to-r from-green-500 to-emerald-500 px-2 py-0.5 rounded-full">
+                  <Award className="h-3 w-3 mr-1" />
+                  <span className="text-xs font-medium">500+ Bottles</span>
                 </div>
               )}
               {bottlesSaved >= 1000 && (
-                <div className="flex items-center bg-gradient-to-r from-purple-500 to-pink-500 px-3 py-1 rounded-full">
-                  <Award className="h-4 w-4 mr-1" />
-                  <span className="text-xs font-medium">1000+ Bottles Saved</span>
+                <div className="flex items-center bg-gradient-to-r from-purple-500 to-pink-500 px-2 py-0.5 rounded-full">
+                  <Award className="h-3 w-3 mr-1" />
+                  <span className="text-xs font-medium">1000+ Bottles</span>
                 </div>
               )}
             </div>

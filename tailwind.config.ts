@@ -22,6 +22,9 @@ export default {
       fontFamily: {
         inter: ['Inter', 'sans-serif'],
       },
+      fontSize: {
+        '2xs': '0.625rem', // Ultra small text for very compact displays
+      },
       colors: {
         spotify: {
           green: "#1DB954",

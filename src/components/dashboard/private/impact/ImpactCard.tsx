@@ -10,6 +10,7 @@ interface ImpactCardProps {
   className?: string;
   valueClassName?: string;
   titleClassName?: string;
+  compactMode?: boolean;
 }
 
 export function ImpactCard({
@@ -20,15 +21,16 @@ export function ImpactCard({
   className = "",
   valueClassName = "",
   titleClassName = "",
+  compactMode = false,
 }: ImpactCardProps) {
   return (
-    <Card className={`text-center p-4 h-full ${className}`}>
+    <Card className={`text-center ${compactMode ? 'p-2' : 'p-3'} h-full ${className}`}>
       <CardContent className="flex flex-col items-center justify-center p-0 h-full">
-        <Icon className={`h-8 w-8 mb-2 ${iconColor}`} />
-        <div className={`text-2xl sm:text-3xl font-bold mb-1 ${valueClassName}`}>
+        <Icon className={`${compactMode ? 'h-6 w-6 mb-1' : 'h-8 w-8 mb-2'} ${iconColor}`} />
+        <div className={`${compactMode ? 'text-lg md:text-xl' : 'text-2xl sm:text-3xl'} font-bold ${compactMode ? 'mb-0.5' : 'mb-1'} ${valueClassName}`}>
           {value}
         </div>
-        <div className={`text-xs sm:text-sm text-gray-400 ${titleClassName}`}>
+        <div className={`${compactMode ? 'text-2xs sm:text-xs' : 'text-xs sm:text-sm'} text-gray-400 ${titleClassName}`}>
           {title}
         </div>
       </CardContent>
