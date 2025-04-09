@@ -7,7 +7,6 @@ import { useImpactCalculations, ImpactConfig } from "@/hooks/dashboard/useImpact
 import { ImpactSettings } from "./ImpactSettings";
 import { formatMetricValue } from "@/utils/formatUnitVolume";
 import { ReductionEquivalents } from "./ReductionEquivalents";
-import { HydrationGoals } from "./HydrationGoals";
 
 interface ImpactTabsProps {
   period: "day" | "month" | "year" | "all-time";
@@ -39,10 +38,10 @@ export function ImpactTabs({
   return (
     <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
       <TabsList className="grid grid-cols-4 mb-6 w-full">
-        <TabsTrigger value="environmental">Environmental</TabsTrigger>
-        <TabsTrigger value="financial">Financial Savings</TabsTrigger>
-        <TabsTrigger value="equivalents">Reduction Equivalents</TabsTrigger>
-        <TabsTrigger value="settings">Settings</TabsTrigger>
+        <TabsTrigger value="environmental">Environment</TabsTrigger>
+        <TabsTrigger value="financial">Money</TabsTrigger>
+        <TabsTrigger value="equivalents">CO2 Reduction</TabsTrigger>
+        <TabsTrigger value="settings">My Settings</TabsTrigger>
       </TabsList>
       
       <TabsContent value="environmental" className="space-y-6">
@@ -60,8 +59,6 @@ export function ImpactTabs({
             Based on {config.bottleSize}L bottles at €{config.bottleCost?.toFixed(2)} each
           </p>
         </div>
-
-        <HydrationGoals waterConsumed={waterSaved} period={period} />
 
         <ImpactDetails details={impactDetails} />
       </TabsContent>

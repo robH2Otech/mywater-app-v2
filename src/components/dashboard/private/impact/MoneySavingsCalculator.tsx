@@ -62,62 +62,11 @@ export function MoneySavingsCalculator({
   }, [bottlePrice, systemCost, systemLifetime, dailyConsumption, bottleSize]);
 
   return (
-    <div className="space-y-6">
-      <h3 className="text-lg font-medium text-center">My Financial Impact</h3>
-      
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-        <Card className="p-4 bg-spotify-darker">
-          <CardContent className="p-2 space-y-4">
-            <h3 className="text-lg font-medium text-center mb-2">Calculate Your Savings</h3>
-            
-            <FormInput
-              label="Daily Water Consumption (L)"
-              value={dailyConsumption}
-              onChange={setDailyConsumption}
-              type="number"
-              min="0.1"
-              step="0.1"
-            />
-            
-            <FormInput
-              label="Bottle Size (L)"
-              value={bottleSize}
-              onChange={setBottleSize}
-              type="number"
-              min="0.1"
-              step="0.1"
-            />
-            
-            <FormInput
-              label="Bottled Water Price (€/bottle)"
-              value={bottlePrice}
-              onChange={setBottlePrice}
-              type="number"
-              min="0.1"
-              step="0.1"
-            />
-            
-            <FormInput
-              label="MYWATER System Cost (€)"
-              value={systemCost}
-              onChange={setSystemCost}
-              type="number"
-              min="1"
-            />
-            
-            <FormInput
-              label="System Lifetime (years)"
-              value={systemLifetime}
-              onChange={setSystemLifetime}
-              type="number"
-              min="1"
-              max="20"
-            />
-          </CardContent>
-        </Card>
-        
-        <div className="space-y-4">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+    <div className="space-y-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+        {/* Left column - Key Results */}
+        <div className="space-y-3">
+          <div className="grid grid-cols-2 gap-3">
             <ImpactCard
               title="Annual Bottle Cost"
               value={`€${formatMetricValue(annualBottleCost, 'money')}`}
@@ -136,20 +85,70 @@ export function MoneySavingsCalculator({
           </div>
           
           <ImpactCard
-            title={`Total Savings Over ${systemLifetime} Years`}
+            title={`${systemLifetime}-Year Savings`}
             value={`€${formatMetricValue(totalSavings, 'money')}`}
             icon={TrendingUp}
             iconColor="text-green-400"
             valueClassName="text-green-400"
             className="bg-spotify-darker"
           />
+          
+          <div className="text-center text-xs text-gray-400 p-2 bg-spotify-dark rounded-lg">
+            <p>Save <strong className="text-green-400">€{formatMetricValue(annualSavings, 'money')}</strong> per year</p>
+            <p className="text-xs">(<strong>€{formatMetricValue(annualSavings/12, 'money')}</strong>/month)</p>
+          </div>
         </div>
-      </div>
-      
-      <div className="text-center text-sm text-gray-400">
-        <p>By using MYWATER, you could save approximately <strong className="text-green-400">€{formatMetricValue(annualSavings, 'money')}</strong> per year.</p>
-        <p className="mt-1">That's <strong className="text-green-400">€{formatMetricValue(annualSavings/12, 'money')}</strong> monthly or <strong className="text-green-400">€{formatMetricValue(annualSavings/365, 'money')}</strong> daily.</p>
-        <p className="mt-1 text-xs">Based on {formatMetricValue(bottlesPerDay, 'bottles')} bottles ({bottleSize}L) per day at €{bottlePrice} each.</p>
+        
+        {/* Right column - Calculator */}
+        <Card className="bg-spotify-darker">
+          <CardContent className="p-3 space-y-3">
+            <h3 className="text-sm font-medium text-center">Calculate Savings</h3>
+            
+            <FormInput
+              label="Daily Water (L)"
+              value={dailyConsumption}
+              onChange={setDailyConsumption}
+              type="number"
+              min="0.1"
+              step="0.1"
+            />
+            
+            <FormInput
+              label="Bottle Size (L)"
+              value={bottleSize}
+              onChange={setBottleSize}
+              type="number"
+              min="0.1"
+              step="0.1"
+            />
+            
+            <FormInput
+              label="Bottle Price (€)"
+              value={bottlePrice}
+              onChange={setBottlePrice}
+              type="number"
+              min="0.1"
+              step="0.1"
+            />
+            
+            <FormInput
+              label="MYWATER Cost (€)"
+              value={systemCost}
+              onChange={setSystemCost}
+              type="number"
+              min="1"
+            />
+            
+            <FormInput
+              label="System Life (years)"
+              value={systemLifetime}
+              onChange={setSystemLifetime}
+              type="number"
+              min="1"
+              max="20"
+            />
+          </CardContent>
+        </Card>
       </div>
     </div>
   );
