@@ -24,6 +24,7 @@ export default {
       },
       fontSize: {
         '2xs': '0.625rem', // Ultra small text for very compact displays
+        '3xs': '0.5rem',   // Micro text for extremely compact displays
       },
       colors: {
         spotify: {

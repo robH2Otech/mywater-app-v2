@@ -1,11 +1,11 @@
 import emailjs from 'emailjs-com';
 
-// EmailJS configuration - Using hard-coded PUBLIC_KEY which works with EmailJS v3
+// EmailJS configuration - Fixed to ensure proper initialization for both v2 and v3
 export const EMAILJS_CONFIG = {
   SERVICE_ID: 'service_mywater',
   TEMPLATE_ID: 'template_referral',
-  USER_ID: '20lKGYgYsf1DIICqM',
-  PUBLIC_KEY: '20lKGYgYsf1DIICqM'
+  USER_ID: '20lKGYgYsf1DIICqM',  // This should be the actual user ID - using public key as backup
+  PUBLIC_KEY: '20lKGYgYsf1DIICqM'  // This should be the actual public key
 };
 
 // Keep track of initialization status
@@ -16,19 +16,19 @@ let emailJSInitialized = false;
  */
 export const initEmailJS = () => {
   if (!emailJSInitialized) {
-    console.log("Initializing EmailJS with User ID:", EMAILJS_CONFIG.USER_ID);
+    console.log("Initializing EmailJS...");
     
-    // Ensure we're using the proper init method for emailJS v3
     try {
-      emailjs.init(EMAILJS_CONFIG.USER_ID);
-      console.log("EmailJS initialized successfully");
+      // Modern EmailJS SDK initialization (v3)
+      emailjs.init(EMAILJS_CONFIG.PUBLIC_KEY);
+      console.log("EmailJS initialized successfully with PUBLIC_KEY");
       emailJSInitialized = true;
     } catch (err) {
       console.error("Error initializing EmailJS:", err);
       
-      // Try alternative initialization method (for older versions)
+      // Try another method (fallback for older versions or configurations)
       try {
-        // @ts-ignore - Fallback for potential version mismatch
+        // @ts-ignore - For older versions of emailjs-com
         if (typeof emailjs.init !== 'function' && typeof emailjs.initialize === 'function') {
           // @ts-ignore - Some versions use initialize instead of init
           emailjs.initialize(EMAILJS_CONFIG.USER_ID);
@@ -55,40 +55,26 @@ export const sendEmailWithEmailJS = async (
   additionalParams: Record<string, any> = {}
 ) => {
   try {
-    // Initialize EmailJS with user ID
+    // Initialize EmailJS
     initEmailJS();
     
-    // Clean HTML tags from message if present
-    const cleanMessage = message.replace(/<br>/g, '\n').replace(/<[^>]*>/g, '');
-    
-    // For referral emails, create a simpler message that's more likely to work
-    const isReferral = additionalParams.referral_code || subject.toLowerCase().includes('referral') || subject.toLowerCase().includes('invite');
-    const messageToSend = isReferral 
-      ? `${fromName} has invited you to try MYWATER with a 20% discount! Use code ${additionalParams.referral_code || 'MYWATER20'} when you purchase at https://mywater.com/products`
-      : cleanMessage;
-    
-    const templateParams = {
+    // For maximum deliverability with EmailJS, use a minimal params set
+    const minimalParams = {
       to_email: toEmail,
       to_name: toName,
       from_name: fromName,
-      message: messageToSend,
       subject: subject,
-      from_email: "noreply@mywatertechnologies.com",
+      message: message.slice(0, 500), // Limit message size for better deliverability
       reply_to: "noreply@mywatertechnologies.com",
       ...additionalParams
     };
     
-    console.log("Sending email with params:", {
-      serviceId: EMAILJS_CONFIG.SERVICE_ID,
-      templateId: EMAILJS_CONFIG.TEMPLATE_ID, 
-      params: { ...templateParams }
-    });
+    console.log("Sending email with EmailJS using minimal params");
     
-    // Use the send method with PUBLIC_KEY
     const response = await emailjs.send(
       EMAILJS_CONFIG.SERVICE_ID,
       EMAILJS_CONFIG.TEMPLATE_ID,
-      templateParams,
+      minimalParams,
       EMAILJS_CONFIG.PUBLIC_KEY
     );
     
@@ -96,13 +82,6 @@ export const sendEmailWithEmailJS = async (
     return response;
   } catch (error) {
     console.error("Error sending email with EmailJS:", error);
-    
-    // Convert any error object to a proper string
-    const errorMessage = error instanceof Error 
-      ? error.message 
-      : (typeof error === 'object' ? JSON.stringify(error) : String(error));
-    
-    console.error("Formatted error message:", errorMessage);
-    throw new Error(errorMessage);
+    throw error;
   }
 };

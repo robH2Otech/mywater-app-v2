@@ -1,4 +1,3 @@
-
 import { collection, addDoc, updateDoc, doc, query, where, getDocs } from "firebase/firestore";
 import { db } from "@/integrations/firebase/client";
 import { EMAILJS_CONFIG, initEmailJS } from './config';
@@ -7,7 +6,7 @@ import emailjs from 'emailjs-com';
 import { processPendingEmails } from './firestoreEmail';
 
 /**
- * Sends a referral email to the specified recipient with fallback mechanisms
+ * Sends a referral email to the specified recipient with direct EmailJS implementation
  */
 export const sendReferralEmail = async (
   toEmail: string,
@@ -41,117 +40,59 @@ export const sendReferralEmail = async (
 
     console.log("Email stored in Firestore with ID:", emailDocRef.id);
     
-    // Attempt immediate email delivery with multiple backup methods
+    // DIRECT IMPLEMENTATION WITH EMAILJS
+    // This improves the odds of successful delivery by simplifying the payload
+    const simpleEmailParams = {
+      to_email: toEmail,
+      to_name: toName,
+      from_name: fromName,
+      subject: subject,
+      message: `${fromName} invites you to try MYWATER with a 20% discount! Use code ${referralCode} at https://mywater.com/products`,
+      reply_to: "noreply@mywatertechnologies.com"
+    };
     
-    // Method 1: Direct send with complete template
     try {
-      console.log("Attempting direct EmailJS send with complete template");
-      
-      const emailParams = {
-        to_email: toEmail,
-        to_name: toName,
-        from_name: fromName,
-        subject: subject,
-        message: emailContent,
-        referral_code: referralCode,
-        reply_to: "noreply@mywatertechnologies.com"
-      };
-      
+      // Send with direct implementation using minimal parameters
+      console.log("Sending email with EmailJS direct implementation");
       const response = await emailjs.send(
         EMAILJS_CONFIG.SERVICE_ID,
-        EMAILJS_CONFIG.TEMPLATE_ID,
-        emailParams,
+        EMAILJS_CONFIG.TEMPLATE_ID, 
+        simpleEmailParams,
         EMAILJS_CONFIG.PUBLIC_KEY
       );
       
-      console.log("✅ Email sent successfully via direct method:", response);
+      console.log("Email sent successfully:", response);
       
       // Update status in Firestore
       await updateDoc(doc(db, "emails_to_send", emailDocRef.id), {
         status: "sent",
         sent_at: new Date(),
-        sent_method: "direct"
+        sent_method: "direct_simple"
       });
       
       return true;
-    } catch (directError) {
-      console.error("Direct method failed:", directError);
+    } catch (emailJSError) {
+      console.error("EmailJS direct implementation failed:", emailJSError);
       
-      // Method 2: Simplified template with essential info only
+      // Try a different service if available
       try {
-        console.log("Attempting with simplified template");
+        // Alternative email service implementation could go here
+        // For demo purposes, we'll just throw to move to the next method
+        throw new Error("Attempting alternative method");
+      } catch (altError) {
+        console.log("All direct methods failed. Marking for background processing");
         
-        const simpleMessage = `${fromName} has invited you to try MYWATER with a 20% discount!\n\nUse code ${referralCode} when you purchase at https://mywater.com/products`;
-        
-        const minimalParams = {
-          to_email: toEmail,
-          to_name: toName,
-          from_name: fromName,
-          message: simpleMessage,
-          subject: subject
-        };
-        
-        const response = await emailjs.send(
-          EMAILJS_CONFIG.SERVICE_ID,
-          EMAILJS_CONFIG.TEMPLATE_ID,
-          minimalParams,
-          EMAILJS_CONFIG.PUBLIC_KEY
-        );
-        
-        console.log("✅ Email sent successfully via simplified template:", response);
-        
+        // We'll let the background processor try later
         await updateDoc(doc(db, "emails_to_send", emailDocRef.id), {
-          status: "sent",
-          sent_at: new Date(),
-          sent_method: "simplified"
+          attempts: 1,
+          last_attempt: new Date()
         });
         
-        return true;
-      } catch (simplifiedError) {
-        console.error("Simplified template method failed:", simplifiedError);
+        // Immediately try background processing
+        await processPendingEmailsForUI();
         
-        // Method 3: Use the most minimal params possible
-        try {
-          console.log("Attempting with minimal params");
-          
-          // Absolute minimum required fields for EmailJS
-          const bareMinimumParams = {
-            to_email: toEmail,
-            from_name: fromName,
-            message: `Use code ${referralCode} for 20% off MYWATER: https://mywater.com/products`
-          };
-          
-          const response = await emailjs.send(
-            EMAILJS_CONFIG.SERVICE_ID,
-            EMAILJS_CONFIG.TEMPLATE_ID,
-            bareMinimumParams,
-            EMAILJS_CONFIG.PUBLIC_KEY
-          );
-          
-          console.log("✅ Email sent successfully via minimal params:", response);
-          
-          await updateDoc(doc(db, "emails_to_send", emailDocRef.id), {
-            status: "sent",
-            sent_at: new Date(),
-            sent_method: "minimal"
-          });
-          
-          return true;
-        } catch (minimalError) {
-          console.error("All direct methods failed. Marking for background processing:", minimalError);
-          
-          // We'll let the background processor try later
-          await updateDoc(doc(db, "emails_to_send", emailDocRef.id), {
-            attempts: 1,
-            last_attempt: new Date()
-          });
-          
-          // Immediately try background processing
-          processPendingEmailsForUI();
-          
-          // Tell the user it's been queued but return true for better UX
-          return true;
-        }
+        // Tell the user it's been queued but return true for better UX
+        return true;
       }
     }
   } catch (error) {
@@ -166,6 +107,9 @@ export const sendReferralEmail = async (
  */
 export const processPendingEmailsForUI = async () => {
   try {
+    // Initialize EmailJS
+    initEmailJS();
+    
     const oneDayAgo = new Date();
     oneDayAgo.setDate(oneDayAgo.getDate() - 1);
     
@@ -187,15 +131,12 @@ export const processPendingEmailsForUI = async () => {
       const emailData = emailDoc.data();
       
       try {
-        // Initialize EmailJS
-        initEmailJS();
-        
-        // Try with the most minimal configuration possible
+        // Try with the most minimal configuration possible for higher success rate
         const simpleParams = {
           to_email: emailData.to,
           to_name: emailData.to_name || emailData.to,
           from_name: emailData.from_name,
-          subject: emailData.subject,
+          subject: emailData.subject || `${emailData.from_name} invited you to try MYWATER (20% discount!)`,
           message: `${emailData.from_name} invites you to try MYWATER! Use code ${emailData.referral_code} for 20% off at https://mywater.com/products`,
         };
         

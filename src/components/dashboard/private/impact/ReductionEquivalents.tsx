@@ -16,7 +16,8 @@ export function ReductionEquivalents({
   period
 }: ReductionEquivalentsProps) {
   // Calculate equivalents
-  const carMiles = Math.round(co2Saved * 4); // ~4 miles per kg of CO2
+  // ~6.5 kilometers per kg of CO2 (converted from miles to km)
+  const carKilometers = Math.round(co2Saved * 6.5); 
   const treesPlanted = Math.round(co2Saved / 20); // ~20kg CO2 per tree per year
   const smartphoneCharges = Math.round(co2Saved * 60); // ~60 charges per kg of CO2
   const trainKilometers = Math.round(co2Saved * 15); // ~15km train ride per kg of CO2 saved
@@ -32,17 +33,17 @@ export function ReductionEquivalents({
       </p>
       
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-        {/* Car Miles Equivalent */}
+        {/* Car Kilometers Equivalent */}
         <Card className="bg-spotify-accent/10">
           <CardHeader className="pb-1 pt-3">
             <CardTitle className="text-sm flex items-center">
               <Car className="h-4 w-4 text-blue-400 mr-1.5" />
-              Car Miles Not Driven
+              Car Kilometers Not Driven
             </CardTitle>
           </CardHeader>
           <CardContent className="text-center pb-3">
-            <p className="text-2xl font-bold">{carMiles}</p>
-            <p className="text-xs text-gray-400">miles</p>
+            <p className="text-2xl font-bold">{carKilometers}</p>
+            <p className="text-xs text-gray-400">kilometers</p>
           </CardContent>
         </Card>
         
@@ -74,7 +75,7 @@ export function ReductionEquivalents({
           </CardContent>
         </Card>
         
-        {/* Train Ride (replacing CO2 Absorption Capacity) */}
+        {/* Train Ride */}
         <Card className="bg-spotify-accent/10">
           <CardHeader className="pb-1 pt-3">
             <CardTitle className="text-sm flex items-center">
@@ -89,7 +90,7 @@ export function ReductionEquivalents({
         </Card>
       </div>
       
-      <div className="text-center text-xs text-gray-500 mt-3">
+      <div className="text-center text-xs text-gray-500 mt-2">
         <p>Equivalents are estimated based on industry standards and research data.</p>
       </div>
     </div>
