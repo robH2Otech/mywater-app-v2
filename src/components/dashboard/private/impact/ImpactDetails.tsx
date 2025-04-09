@@ -36,7 +36,7 @@ export function ImpactDetails({ details }: ImpactDetailsProps) {
   
   return (
     <Card className="p-3 bg-spotify-darker">
-      <ScrollArea className={`${isMobile ? "h-[150px]" : "h-[180px]"}`}>
+      <ScrollArea className={`${isMobile ? "h-[120px]" : "h-[140px]"}`}>
         <div className="space-y-1.5 p-1">
           {filteredDetails.map((item, index) => (
             <div key={index} className="flex justify-between text-sm border-b border-gray-800 pb-1.5">

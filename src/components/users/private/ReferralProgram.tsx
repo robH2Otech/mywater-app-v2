@@ -19,16 +19,15 @@ export function ReferralProgram({ userData }: ReferralProgramProps) {
     <div className="space-y-6">
       <Card className="bg-spotify-darker border-spotify-accent">
         <ReferralHeader />
-        <CardContent>
-          <div className="mb-6 p-3 rounded-md border border-blue-700/30 bg-blue-900/10 text-sm text-blue-200">
+        <CardContent className="space-y-6">
+          <div className="p-3 rounded-md border border-blue-700/30 bg-blue-900/10 text-sm text-blue-200">
             <div className="flex items-start gap-2">
               <Info className="h-5 w-5 text-blue-400 flex-shrink-0 mt-0.5" />
               <div>
-                <p className="font-medium mb-1">Email Delivery Information</p>
+                <p className="font-medium mb-1">Email Tips</p>
                 <p>
-                  Your referral invitations are sent directly using EmailJS. For the best delivery rate, keep your message 
-                  concise and avoid spam-triggering words. If recipients don't see the email, ask them to check their 
-                  spam folder or try an alternative email address.
+                  For best delivery, keep messages concise and personalized. If recipients don't 
+                  see the email, ask them to check their spam folder or provide an alternative email address.
                 </p>
               </div>
             </div>
