@@ -47,14 +47,14 @@ export function ImpactTabs({
         <TabsTrigger value="settings" className="text-xs md:text-sm">My Settings</TabsTrigger>
       </TabsList>
       
-      <TabsContent value="environmental" className="space-y-3">
+      <TabsContent value="environmental" className="space-y-2">
         <ImpactPeriodToggle 
           period={period} 
           setPeriod={setPeriod} 
           includeAllTime={true} 
         />
         
-        <div className="text-sm text-center text-gray-400 mb-1">
+        <div className="text-sm text-center text-gray-400 mb-0">
           <p>
             Using MYWATER instead of plastic bottles has already saved:
           </p>

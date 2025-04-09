@@ -16,7 +16,7 @@ export function ReductionEquivalents({
   period
 }: ReductionEquivalentsProps) {
   // Calculate equivalents
-  // ~6.5 kilometers per kg of CO2 (converted from miles to km)
+  // ~6.5 kilometers per kg of CO2
   const carKilometers = Math.round(co2Saved * 6.5); 
   const treesPlanted = Math.round(co2Saved / 20); // ~20kg CO2 per tree per year
   const smartphoneCharges = Math.round(co2Saved * 60); // ~60 charges per kg of CO2

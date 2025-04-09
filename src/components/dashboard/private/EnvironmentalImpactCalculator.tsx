@@ -58,7 +58,7 @@ export function EnvironmentalImpactCalculator() {
 
   return (
     <Card className="p-3 md:p-5 bg-spotify-darker border-spotify-accent overflow-hidden">
-      <div className="space-y-3 md:space-y-4">
+      <div className="space-y-2 md:space-y-3">
         <div>
           <h2 className="text-xl md:text-2xl font-bold text-center">
             {userName ? `${userName}'s` : 'Your'} Impact Calculator
@@ -78,7 +78,7 @@ export function EnvironmentalImpactCalculator() {
         />
 
         {activeTab === "environmental" && (
-          <div className="space-y-3">
+          <div className="space-y-2">
             {/* Impact Cards Grid - More compact for mobile */}
             <div className="grid grid-cols-2 gap-2 md:gap-4 lg:grid-cols-4">
               <ImpactCard
@@ -116,7 +116,7 @@ export function EnvironmentalImpactCalculator() {
             </div>
 
             {/* User badges for gamification */}
-            <div className="flex justify-center flex-wrap gap-2 mt-2">
+            <div className="flex justify-center flex-wrap gap-2 mt-1">
               {bottlesSaved >= 100 && (
                 <div className="flex items-center bg-gradient-to-r from-blue-500 to-cyan-500 px-2 py-0.5 rounded-full">
                   <Award className="h-3 w-3 mr-1" />

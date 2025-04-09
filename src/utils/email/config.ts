@@ -1,3 +1,4 @@
+
 import emailjs from 'emailjs-com';
 
 // EmailJS configuration - Fixed to ensure proper initialization for both v2 and v3
@@ -23,6 +24,12 @@ export const initEmailJS = () => {
       emailjs.init(EMAILJS_CONFIG.PUBLIC_KEY);
       console.log("EmailJS initialized successfully with PUBLIC_KEY");
       emailJSInitialized = true;
+      
+      // Test if emailjs is properly initialized
+      if (typeof emailjs.send !== 'function') {
+        throw new Error("EmailJS send function not available after initialization");
+      }
+      
     } catch (err) {
       console.error("Error initializing EmailJS:", err);
       
@@ -71,12 +78,29 @@ export const sendEmailWithEmailJS = async (
     
     console.log("Sending email with EmailJS using minimal params");
     
-    const response = await emailjs.send(
-      EMAILJS_CONFIG.SERVICE_ID,
-      EMAILJS_CONFIG.TEMPLATE_ID,
-      minimalParams,
-      EMAILJS_CONFIG.PUBLIC_KEY
-    );
+    // Make sure we're calling send correctly based on the library version
+    let response;
+    
+    try {
+      // First try the modern approach (v3)
+      response = await emailjs.send(
+        EMAILJS_CONFIG.SERVICE_ID,
+        EMAILJS_CONFIG.TEMPLATE_ID,
+        minimalParams,
+        EMAILJS_CONFIG.PUBLIC_KEY
+      );
+    } catch (err) {
+      console.error("Modern EmailJS send failed, trying alternative method:", err);
+      
+      // Try alternative send method (v2)
+      // @ts-ignore - For older versions
+      response = await emailjs.sendForm(
+        EMAILJS_CONFIG.SERVICE_ID,
+        EMAILJS_CONFIG.TEMPLATE_ID,
+        minimalParams,
+        EMAILJS_CONFIG.USER_ID
+      );
+    }
     
     console.log("Email sent successfully:", response);
     return response;
