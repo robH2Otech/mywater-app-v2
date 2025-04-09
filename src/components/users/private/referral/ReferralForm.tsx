@@ -167,7 +167,7 @@ ${firstName || "[Your Name]"}`;
       <div className="flex justify-between items-center mb-2">
         <h3 className="text-lg font-medium">Send Referral Invitation</h3>
         {sentCount > 0 && (
-          <Badge variant="success" className="bg-green-900/30 text-green-300 border-green-500/30">
+          <Badge variant="secondary" className="bg-green-900/30 text-green-300 border-green-500/30">
             {sentCount} Invitation{sentCount !== 1 ? 's' : ''} Sent
           </Badge>
         )}
