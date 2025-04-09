@@ -78,7 +78,16 @@ export function EnvironmentalImpactCalculator() {
         />
 
         {activeTab === "environmental" && (
-          <div className="space-y-2">
+          <div className="space-y-4">
+            <div className="text-sm text-center text-gray-400 mt-2">
+              <p>
+                Using MYWATER instead of plastic bottles has already saved:
+              </p>
+              <p className="mt-0.5 text-xs text-gray-500">
+                Based on {config.bottleSize}L bottles at €{config.bottleCost?.toFixed(2)} each
+              </p>
+            </div>
+            
             {/* Impact Cards Grid - More compact for mobile */}
             <div className="grid grid-cols-2 gap-2 md:gap-4 lg:grid-cols-4">
               <ImpactCard

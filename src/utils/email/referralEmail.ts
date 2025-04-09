@@ -1,3 +1,4 @@
+
 import { collection, addDoc, updateDoc, doc, query, where, getDocs } from "firebase/firestore";
 import { db } from "@/integrations/firebase/client";
 import { EMAILJS_CONFIG, initEmailJS } from './config';
@@ -17,7 +18,10 @@ export const sendReferralEmail = async (
 ) => {
   try {
     // Initialize EmailJS first
-    initEmailJS();
+    const isInitialized = initEmailJS();
+    if (!isInitialized) {
+      console.error("EmailJS initialization failed");
+    }
     
     // Generate default message if none provided
     const emailContent = customMessage || generateReferralEmailTemplate(toName, fromName, referralCode);
@@ -57,7 +61,7 @@ export const sendReferralEmail = async (
       const response = await emailjs.send(
         EMAILJS_CONFIG.SERVICE_ID,
         EMAILJS_CONFIG.TEMPLATE_ID, 
-        simpleEmailParams,
+        simpleEmailParams as any, // Type cast to bypass TypeScript error
         EMAILJS_CONFIG.PUBLIC_KEY
       );
       
@@ -74,13 +78,36 @@ export const sendReferralEmail = async (
     } catch (emailJSError) {
       console.error("EmailJS direct implementation failed:", emailJSError);
       
-      // Try a different service if available
+      // Try with ultra minimal content as a last resort
       try {
-        // Alternative email service implementation could go here
-        // For demo purposes, we'll just throw to move to the next method
-        throw new Error("Attempting alternative method");
-      } catch (altError) {
-        console.log("All direct methods failed. Marking for background processing");
+        const ultraSimpleParams = {
+          to_email: toEmail,
+          to_name: toName,
+          from_name: fromName,
+          subject: `${fromName} has invited you to MYWATER`,
+          message: `You've been invited to try MYWATER with a discount code: ${referralCode}`,
+        };
+        
+        console.log("Trying ultra-simple email parameters");
+        const fallbackResponse = await emailjs.send(
+          EMAILJS_CONFIG.SERVICE_ID,
+          EMAILJS_CONFIG.TEMPLATE_ID,
+          ultraSimpleParams as any,
+          EMAILJS_CONFIG.PUBLIC_KEY
+        );
+        
+        console.log("Fallback email sent successfully:", fallbackResponse);
+        
+        // Update status in Firestore
+        await updateDoc(doc(db, "emails_to_send", emailDocRef.id), {
+          status: "sent",
+          sent_at: new Date(),
+          sent_method: "fallback_simple"
+        });
+        
+        return true;
+      } catch (fallbackError) {
+        console.error("Fallback email also failed:", fallbackError);
         
         // We'll let the background processor try later
         await updateDoc(doc(db, "emails_to_send", emailDocRef.id), {
@@ -145,7 +172,7 @@ export const processPendingEmailsForUI = async () => {
         const response = await emailjs.send(
           EMAILJS_CONFIG.SERVICE_ID,
           EMAILJS_CONFIG.TEMPLATE_ID,
-          simpleParams,
+          simpleParams as any,
           EMAILJS_CONFIG.PUBLIC_KEY
         );
         

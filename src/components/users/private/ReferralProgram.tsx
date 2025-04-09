@@ -24,10 +24,11 @@ export function ReferralProgram({ userData }: ReferralProgramProps) {
             <div className="flex items-start gap-2">
               <Info className="h-5 w-5 text-blue-400 flex-shrink-0 mt-0.5" />
               <div>
-                <p className="font-medium mb-1">Instant Email Delivery</p>
+                <p className="font-medium mb-1">Reliable Email Delivery</p>
                 <p>
-                  Your referral invitations are sent immediately when you click "Send Invitation". 
-                  If any delivery issues occur, your invites are automatically queued for background processing.
+                  Your referral invitations will be sent immediately. If delivery is delayed due to email 
+                  provider restrictions, our system will automatically retry the delivery. You can also 
+                  manually retry delivery with the "Retry Delivery" button.
                 </p>
               </div>
             </div>

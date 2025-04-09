@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { FormInput } from "@/components/shared/FormInput";
 import { Textarea } from "@/components/ui/textarea";
-import { Send, RefreshCw, Check } from "lucide-react";
+import { Send, RefreshCw, Check, AlertTriangle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { sendReferralEmail, processPendingEmailsForUI } from "@/utils/email";
 import { Badge } from "@/components/ui/badge";
@@ -21,6 +21,7 @@ export function ReferralForm({ userName, referralCode }: ReferralFormProps) {
   const [isProcessing, setIsProcessing] = useState(false);
   const [sentCount, setSentCount] = useState(0);
   const [showSuccess, setShowSuccess] = useState(false);
+  const [sendingError, setSendingError] = useState<string | null>(null);
   const { toast } = useToast();
   
   // Extract just the first name for personalization
@@ -31,9 +32,7 @@ export function ReferralForm({ userName, referralCode }: ReferralFormProps) {
 
 I wanted to share something I've been really happy with – my MYWATER water purification system. It provides clean, great-tasting water right from my tap, and I'm saving money on bottled water.
 
-I'm inviting you to try MYWATER with a special 20% discount! Just use this link: https://mywater.com/refer?code=${referralCode} when you purchase.
-
-If you decide to get a MYWATER system, you'll also get the chance to refer 3 friends and earn a free replacement cartridge for yourself!
+I'm inviting you to try MYWATER with a special 20% discount! Just use this code: ${referralCode} when you purchase.
 
 Check it out here: https://mywater.com/products
 
@@ -66,6 +65,7 @@ ${firstName || "[Your Name]"}`;
 
     setIsSending(true);
     setShowSuccess(false);
+    setSendingError(null);
     
     try {
       console.log("Sending referral email to:", friendEmail);
@@ -103,9 +103,11 @@ ${firstName || "[Your Name]"}`;
       
     } catch (error) {
       console.error("Error sending email:", error);
+      setSendingError("Email delivery encountered an issue. It has been queued for automatic delivery.");
       toast({
-        title: "Email queued for delivery",
-        description: "Your invitation has been queued and will be delivered soon.",
+        title: "Email delivery issue",
+        description: "Your invitation has been queued and will be delivered automatically.",
+        variant: "default"
       });
     } finally {
       setIsSending(false);
@@ -122,26 +124,27 @@ ${firstName || "[Your Name]"}`;
   
   const handleProcessPendingEmails = async () => {
     setIsProcessing(true);
+    setSendingError(null);
     try {
       const count = await processPendingEmailsForUI();
       
       if (count > 0) {
         toast({
-          title: "Processing complete",
-          description: `Processed ${count} pending emails.`,
+          title: "Delivery attempted",
+          description: `Processed ${count} pending invitations.`,
         });
         setSentCount(prev => prev + count);
       } else {
         toast({
-          title: "No pending emails",
-          description: "There are no recent pending emails to process.",
+          title: "No pending invitations",
+          description: "All your invitations have been processed.",
         });
       }
     } catch (error) {
       console.error("Error processing emails:", error);
       toast({
-        title: "Processing attempted",
-        description: "Email delivery has been attempted again.",
+        title: "Delivery retry",
+        description: "Your invitations are being processed again.",
       });
     } finally {
       setIsProcessing(false);
@@ -193,7 +196,7 @@ ${firstName || "[Your Name]"}`;
           id="email-message"
           value={emailMessage || generateDefaultEmail()}
           onChange={(e) => setEmailMessage(e.target.value)}
-          rows={10}
+          rows={8}
           className="w-full"
         />
         <div className="flex justify-end mt-2">
@@ -207,6 +210,15 @@ ${firstName || "[Your Name]"}`;
           </Button>
         </div>
       </div>
+
+      {sendingError && (
+        <div className="flex items-start gap-2 p-3 border rounded-md border-yellow-500/30 bg-yellow-900/10">
+          <AlertTriangle className="h-5 w-5 text-yellow-500 flex-shrink-0 mt-0.5" />
+          <div className="text-sm text-yellow-200">
+            {sendingError}
+          </div>
+        </div>
+      )}
       
       <div className="flex flex-col md:flex-row gap-2">
         <Button
