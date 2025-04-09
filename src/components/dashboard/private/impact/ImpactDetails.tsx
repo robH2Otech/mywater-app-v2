@@ -1,3 +1,4 @@
+
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Card } from "@/components/ui/card";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -30,12 +31,15 @@ export function ImpactDetails({ details }: ImpactDetailsProps) {
     return !excludedLabels.includes(item.label);
   });
   
+  // If there are no details to show after filtering, return null
+  if (filteredDetails.length === 0) return null;
+  
   return (
-    <Card className="p-4 bg-spotify-darker">
-      <ScrollArea className={`${isMobile ? "h-[200px]" : "h-[250px]"}`}>
-        <div className="space-y-2 p-1">
+    <Card className="p-3 bg-spotify-darker">
+      <ScrollArea className={`${isMobile ? "h-[150px]" : "h-[180px]"}`}>
+        <div className="space-y-1.5 p-1">
           {filteredDetails.map((item, index) => (
-            <div key={index} className="flex justify-between text-sm border-b border-gray-800 pb-2">
+            <div key={index} className="flex justify-between text-sm border-b border-gray-800 pb-1.5">
               <span className="text-gray-400">{item.label}</span>
               <span className="font-medium">{item.value}</span>
             </div>

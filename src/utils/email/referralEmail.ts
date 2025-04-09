@@ -21,6 +21,7 @@ export const sendReferralEmail = async (
     const isInitialized = initEmailJS();
     if (!isInitialized) {
       console.error("EmailJS initialization failed");
+      throw new Error("Email service initialization failed");
     }
     
     // Generate default message if none provided
@@ -45,23 +46,23 @@ export const sendReferralEmail = async (
     console.log("Email stored in Firestore with ID:", emailDocRef.id);
     
     // DIRECT IMPLEMENTATION WITH EMAILJS
-    // This improves the odds of successful delivery by simplifying the payload
-    const simpleEmailParams = {
+    const emailParams = {
       to_email: toEmail,
       to_name: toName,
       from_name: fromName,
       subject: subject,
-      message: `${fromName} invites you to try MYWATER with a 20% discount! Use code ${referralCode} at https://mywater.com/products`,
-      reply_to: "noreply@mywatertechnologies.com"
+      message: emailContent,
+      reply_to: "noreply@mywatertechnologies.com",
+      referral_code: referralCode
     };
     
     try {
-      // Send with direct implementation using minimal parameters
+      // Send with direct implementation
       console.log("Sending email with EmailJS direct implementation");
       const response = await emailjs.send(
         EMAILJS_CONFIG.SERVICE_ID,
         EMAILJS_CONFIG.TEMPLATE_ID, 
-        simpleEmailParams as any, // Type cast to bypass TypeScript error
+        emailParams as any, // Type cast to bypass TypeScript error
         EMAILJS_CONFIG.PUBLIC_KEY
       );
       
@@ -71,7 +72,7 @@ export const sendReferralEmail = async (
       await updateDoc(doc(db, "emails_to_send", emailDocRef.id), {
         status: "sent",
         sent_at: new Date(),
-        sent_method: "direct_simple"
+        sent_method: "direct"
       });
       
       return true;
@@ -84,8 +85,9 @@ export const sendReferralEmail = async (
           to_email: toEmail,
           to_name: toName,
           from_name: fromName,
-          subject: `${fromName} has invited you to MYWATER`,
-          message: `You've been invited to try MYWATER with a discount code: ${referralCode}`,
+          subject: `${fromName} has invited you to MYWATER with 20% discount`,
+          message: `Use code ${referralCode} for 20% off at mywater.com/products`,
+          referral_code: referralCode
         };
         
         console.log("Trying ultra-simple email parameters");
@@ -118,13 +120,12 @@ export const sendReferralEmail = async (
         // Immediately try background processing
         await processPendingEmailsForUI();
         
-        // Tell the user it's been queued but return true for better UX
-        return true;
+        throw new Error("Email delivery failed. It has been queued for automatic delivery.");
       }
     }
   } catch (error) {
     console.error("Error in sendReferralEmail function:", error);
-    throw new Error("Failed to send referral email");
+    throw error;
   }
 };
 

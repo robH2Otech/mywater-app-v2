@@ -24,11 +24,11 @@ export function ReferralProgram({ userData }: ReferralProgramProps) {
             <div className="flex items-start gap-2">
               <Info className="h-5 w-5 text-blue-400 flex-shrink-0 mt-0.5" />
               <div>
-                <p className="font-medium mb-1">Reliable Email Delivery</p>
+                <p className="font-medium mb-1">Email Delivery Information</p>
                 <p>
-                  Your referral invitations will be sent immediately. If delivery is delayed due to email 
-                  provider restrictions, our system will automatically retry the delivery. You can also 
-                  manually retry delivery with the "Retry Delivery" button.
+                  Your referral invitations are sent directly using EmailJS. For the best delivery rate, keep your message 
+                  concise and avoid spam-triggering words. If recipients don't see the email, ask them to check their 
+                  spam folder or try an alternative email address.
                 </p>
               </div>
             </div>

@@ -28,7 +28,7 @@ export function ReferralForm({ userName, referralCode }: ReferralFormProps) {
   const firstName = userName.split(' ')[0];
   
   const generateDefaultEmail = () => {
-    const template = `Hi ${friendName || "[Friend's Name]"},
+    return `Hi ${friendName || "[Friend's Name]"},
 
 I wanted to share something I've been really happy with – my MYWATER water purification system. It provides clean, great-tasting water right from my tap, and I'm saving money on bottled water.
 
@@ -38,19 +38,17 @@ Check it out here: https://mywater.com/products
 
 Best,
 ${firstName || "[Your Name]"}`;
-
-    return template;
   };
 
   const handleFriendNameChange = (value: string) => {
     setFriendName(value);
-    if (emailMessage === "" || !emailMessage) {
-      setEmailMessage(generateDefaultEmail());
-    } else {
-      setEmailMessage(prev => 
-        prev.replace(/^Hi.*?,/m, `Hi ${value || "[Friend's Name]"},`)
-      );
-    }
+    
+    // Update the email template with the new friend name
+    const updatedTemplate = emailMessage.replace(
+      /^Hi.*?,/m, 
+      `Hi ${value || "[Friend's Name]"},`
+    );
+    setEmailMessage(updatedTemplate);
   };
 
   const handleSendEmail = async () => {
@@ -73,7 +71,7 @@ ${firstName || "[Your Name]"}`;
       await sendReferralEmail(
         friendEmail,
         friendName,
-        firstName,
+        firstName || userName,
         referralCode,
         emailMessage
       );
@@ -106,7 +104,7 @@ ${firstName || "[Your Name]"}`;
       setSendingError("Email delivery encountered an issue. It has been queued for automatic delivery.");
       toast({
         title: "Email delivery issue",
-        description: "Your invitation has been queued and will be delivered automatically.",
+        description: "Your invitation has been queued and will be delivered shortly.",
         variant: "default"
       });
     } finally {
@@ -131,7 +129,7 @@ ${firstName || "[Your Name]"}`;
       if (count > 0) {
         toast({
           title: "Delivery attempted",
-          description: `Processed ${count} pending invitations.`,
+          description: `Successfully processed ${count} pending invitations.`,
         });
         setSentCount(prev => prev + count);
       } else {
@@ -144,7 +142,7 @@ ${firstName || "[Your Name]"}`;
       console.error("Error processing emails:", error);
       toast({
         title: "Delivery retry",
-        description: "Your invitations are being processed again.",
+        description: "Your invitations will be processed again automatically.",
       });
     } finally {
       setIsProcessing(false);
@@ -194,9 +192,9 @@ ${firstName || "[Your Name]"}`;
         </label>
         <Textarea
           id="email-message"
-          value={emailMessage || generateDefaultEmail()}
+          value={emailMessage}
           onChange={(e) => setEmailMessage(e.target.value)}
-          rows={8}
+          rows={6}
           className="w-full"
         />
         <div className="flex justify-end mt-2">

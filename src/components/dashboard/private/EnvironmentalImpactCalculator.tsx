@@ -78,18 +78,9 @@ export function EnvironmentalImpactCalculator() {
         />
 
         {activeTab === "environmental" && (
-          <div className="space-y-4">
-            <div className="text-sm text-center text-gray-400 mt-2">
-              <p>
-                Using MYWATER instead of plastic bottles has already saved:
-              </p>
-              <p className="mt-0.5 text-xs text-gray-500">
-                Based on {config.bottleSize}L bottles at €{config.bottleCost?.toFixed(2)} each
-              </p>
-            </div>
-            
+          <div>
             {/* Impact Cards Grid - More compact for mobile */}
-            <div className="grid grid-cols-2 gap-2 md:gap-4 lg:grid-cols-4">
+            <div className="grid grid-cols-2 gap-2 md:gap-4 lg:grid-cols-4 mt-2">
               <ImpactCard
                 title="Bottles Saved"
                 value={formatBottles(bottlesSaved)}
@@ -125,7 +116,7 @@ export function EnvironmentalImpactCalculator() {
             </div>
 
             {/* User badges for gamification */}
-            <div className="flex justify-center flex-wrap gap-2 mt-1">
+            <div className="flex justify-center flex-wrap gap-2 mt-3">
               {bottlesSaved >= 100 && (
                 <div className="flex items-center bg-gradient-to-r from-blue-500 to-cyan-500 px-2 py-0.5 rounded-full">
                   <Award className="h-3 w-3 mr-1" />

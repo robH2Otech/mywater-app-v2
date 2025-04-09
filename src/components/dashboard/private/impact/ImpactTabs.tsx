@@ -54,7 +54,7 @@ export function ImpactTabs({
           includeAllTime={true} 
         />
         
-        <div className="text-sm text-center text-gray-400 mb-0">
+        <div className="text-sm text-center text-gray-400">
           <p>
             Using MYWATER instead of plastic bottles has already saved:
           </p>
@@ -62,8 +62,6 @@ export function ImpactTabs({
             Based on {config.bottleSize}L bottles at €{config.bottleCost?.toFixed(2)} each
           </p>
         </div>
-
-        <ImpactDetails details={impactDetails} />
       </TabsContent>
       
       <TabsContent value="financial">
