@@ -5,7 +5,7 @@ import { ReferralStatus } from "./referral/ReferralStatus";
 import { ReferralCode } from "./referral/ReferralCode";
 import { ReferralForm } from "./referral/ReferralForm";
 import { ReferralHeader } from "./referral/ReferralHeader";
-import { InfoCircle } from "lucide-react";
+import { Info } from "lucide-react";
 
 interface ReferralProgramProps {
   userData: DocumentData | null;
@@ -22,7 +22,7 @@ export function ReferralProgram({ userData }: ReferralProgramProps) {
         <CardContent>
           <div className="mb-6 p-3 rounded-md border border-blue-700/30 bg-blue-900/10 text-sm text-blue-200">
             <div className="flex items-start gap-2">
-              <InfoCircle className="h-5 w-5 text-blue-400 flex-shrink-0 mt-0.5" />
+              <Info className="h-5 w-5 text-blue-400 flex-shrink-0 mt-0.5" />
               <div>
                 <p className="font-medium mb-1">Instant Email Delivery</p>
                 <p>
