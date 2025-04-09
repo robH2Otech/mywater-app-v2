@@ -1,4 +1,3 @@
-
 import emailjs from 'emailjs-com';
 
 // EmailJS configuration - Using hard-coded PUBLIC_KEY which works with EmailJS v3

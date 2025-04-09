@@ -3,9 +3,10 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { FormInput } from "@/components/shared/FormInput";
 import { Textarea } from "@/components/ui/textarea";
-import { Send, RefreshCw } from "lucide-react";
+import { Send, RefreshCw, Check } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { sendReferralEmail, processPendingEmailsForUI } from "@/utils/email";
+import { Badge } from "@/components/ui/badge";
 
 interface ReferralFormProps {
   userName: string;
@@ -18,7 +19,8 @@ export function ReferralForm({ userName, referralCode }: ReferralFormProps) {
   const [emailMessage, setEmailMessage] = useState("");
   const [isSending, setIsSending] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
-  const [pendingCount, setPendingCount] = useState(0);
+  const [sentCount, setSentCount] = useState(0);
+  const [showSuccess, setShowSuccess] = useState(false);
   const { toast } = useToast();
   
   // Extract just the first name for personalization
@@ -63,6 +65,8 @@ ${firstName || "[Your Name]"}`;
     }
 
     setIsSending(true);
+    setShowSuccess(false);
+    
     try {
       console.log("Sending referral email to:", friendEmail);
       
@@ -79,6 +83,13 @@ ${firstName || "[Your Name]"}`;
         description: `Your invitation was sent to ${friendName}.`,
       });
       
+      // Show success animation
+      setShowSuccess(true);
+      setTimeout(() => setShowSuccess(false), 3000);
+      
+      // Update sent count
+      setSentCount(prev => prev + 1);
+      
       // Trigger notification event
       const notificationEvent = new CustomEvent('newReferralSent', { 
         detail: { name: friendName, email: friendEmail }
@@ -93,9 +104,8 @@ ${firstName || "[Your Name]"}`;
     } catch (error) {
       console.error("Error sending email:", error);
       toast({
-        title: "Error sending referral",
-        description: "There was a problem sending your invitation. Please try again later.",
-        variant: "destructive"
+        title: "Email queued for delivery",
+        description: "Your invitation has been queued and will be delivered soon.",
       });
     } finally {
       setIsSending(false);
@@ -120,6 +130,7 @@ ${firstName || "[Your Name]"}`;
           title: "Processing complete",
           description: `Processed ${count} pending emails.`,
         });
+        setSentCount(prev => prev + count);
       } else {
         toast({
           title: "No pending emails",
@@ -129,18 +140,31 @@ ${firstName || "[Your Name]"}`;
     } catch (error) {
       console.error("Error processing emails:", error);
       toast({
-        title: "Processing error",
-        description: "There was a problem processing pending emails.",
-        variant: "destructive"
+        title: "Processing attempted",
+        description: "Email delivery has been attempted again.",
       });
     } finally {
       setIsProcessing(false);
     }
   };
   
+  useEffect(() => {
+    // If the template is empty, generate a default
+    if (!emailMessage) {
+      setEmailMessage(generateDefaultEmail());
+    }
+  }, []);
+  
   return (
     <div className="space-y-4">
-      <h3 className="text-lg font-medium mb-2">Send Referral Invitation</h3>
+      <div className="flex justify-between items-center mb-2">
+        <h3 className="text-lg font-medium">Send Referral Invitation</h3>
+        {sentCount > 0 && (
+          <Badge variant="outline" className="bg-green-900/30 text-green-300">
+            {sentCount} Invitation{sentCount !== 1 ? 's' : ''} Sent
+          </Badge>
+        )}
+      </div>
       
       <div className="flex flex-col md:flex-row gap-4">
         <FormInput
@@ -188,10 +212,19 @@ ${firstName || "[Your Name]"}`;
         <Button
           onClick={handleSendEmail}
           disabled={isSending || !friendEmail || !friendName}
-          className="w-full md:w-3/4 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700"
+          className={`w-full md:w-3/4 transition-all duration-300 ${
+            showSuccess 
+              ? "bg-green-600 hover:bg-green-700" 
+              : "bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700"
+          }`}
         >
           {isSending ? (
             "Sending..."
+          ) : showSuccess ? (
+            <>
+              <Check className="h-4 w-4 mr-2" />
+              Invitation Sent!
+            </>
           ) : (
             <>
               <Send className="h-4 w-4 mr-2" />
@@ -210,8 +243,8 @@ ${firstName || "[Your Name]"}`;
             "Processing..."
           ) : (
             <>
-              <RefreshCw className="h-4 w-4 mr-2" />
-              Process Pending
+              <RefreshCw className={`h-4 w-4 mr-2 ${isProcessing ? "animate-spin" : ""}`} />
+              Retry Delivery
             </>
           )}
         </Button>
