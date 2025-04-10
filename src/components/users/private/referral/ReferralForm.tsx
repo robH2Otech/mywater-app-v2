@@ -8,6 +8,8 @@ import { useToast } from "@/hooks/use-toast";
 import { sendReferralEmail, processPendingEmailsForUI } from "@/utils/email";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
+import { useReferralEmailForm } from "@/hooks/referral/useReferralEmailForm";
+import { useReferralTracking } from "@/hooks/referral/useReferralTracking";
 
 interface ReferralFormProps {
   userName: string;
@@ -15,153 +17,34 @@ interface ReferralFormProps {
 }
 
 export function ReferralForm({ userName, referralCode }: ReferralFormProps) {
-  const [friendName, setFriendName] = useState("");
-  const [friendEmail, setFriendEmail] = useState("");
-  const [emailMessage, setEmailMessage] = useState("");
-  const [isSending, setIsSending] = useState(false);
-  const [isProcessing, setIsProcessing] = useState(false);
-  const [sentCount, setSentCount] = useState(0);
-  const [showSuccess, setShowSuccess] = useState(false);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const { toast } = useToast();
+  const { 
+    friendName,
+    setFriendName,
+    friendEmail, 
+    setFriendEmail,
+    emailMessage, 
+    setEmailMessage,
+    generateDefaultEmail,
+    handleFriendNameChange,
+    resetEmailTemplate
+  } = useReferralEmailForm(userName, referralCode);
   
-  // Extract just the first name for personalization
-  const firstName = userName.split(' ')[0];
-  
-  const generateDefaultEmail = () => {
-    return `Hi ${friendName || "[Friend's Name]"},
+  const {
+    isSending,
+    setIsSending,
+    isProcessing,
+    setIsProcessing,
+    sentCount,
+    setSentCount,
+    showSuccess,
+    setShowSuccess,
+    errorMessage,
+    setErrorMessage,
+    handleSendEmail,
+    handleRetryDelivery
+  } = useReferralTracking(friendName, friendEmail, userName, referralCode, emailMessage);
 
-I wanted to share something I've been really happy with – my MYWATER water purification system. It provides clean, great-tasting water right from my tap, and I'm saving money on bottled water.
-
-I'm inviting you to try MYWATER with a special 20% discount! Just use this code: ${referralCode} when you purchase.
-
-Check it out here: https://mywater.com/products
-
-Best,
-${firstName || "[Your Name]"}`;
-  };
-
-  const handleFriendNameChange = (value: string) => {
-    setFriendName(value);
-    
-    // Update the email template with the new friend name
-    const updatedTemplate = emailMessage.replace(
-      /^Hi.*?,/m, 
-      `Hi ${value || "[Friend's Name]"},`
-    );
-    setEmailMessage(updatedTemplate);
-  };
-
-  const handleSendEmail = async () => {
-    if (!friendEmail || !friendName) {
-      toast({
-        title: "Missing information",
-        description: "Please fill in your friend's name and email.",
-        variant: "destructive"
-      });
-      return;
-    }
-
-    setIsSending(true);
-    setShowSuccess(false);
-    setErrorMessage(null);
-    
-    try {
-      console.log("Attempting to send referral email to:", friendEmail);
-      
-      const result = await sendReferralEmail(
-        friendEmail,
-        friendName,
-        firstName || userName,
-        referralCode,
-        emailMessage
-      );
-      
-      console.log("Email sending result:", result);
-      
-      // Show success animation
-      setShowSuccess(true);
-      
-      toast({
-        title: "Invitation sent!",
-        description: `Your invitation to ${friendName} was successfully delivered.`,
-      });
-      
-      // Update sent count
-      setSentCount(prev => prev + 1);
-      
-      // Trigger notification event
-      const notificationEvent = new CustomEvent('newReferralSent', { 
-        detail: { name: friendName, email: friendEmail }
-      });
-      window.dispatchEvent(notificationEvent);
-      
-      // Reset form after short delay
-      setTimeout(() => {
-        setFriendName("");
-        setFriendEmail("");
-        setEmailMessage("");
-        setShowSuccess(false);
-      }, 2000);
-      
-    } catch (error) {
-      console.error("Error sending email:", error);
-      setErrorMessage("We couldn't deliver your invitation directly. It has been queued for automatic delivery.");
-      
-      toast({
-        title: "Delivery issue",
-        description: "Your invitation has been saved and will be delivered shortly.",
-        variant: "destructive"
-      });
-    } finally {
-      setIsSending(false);
-    }
-  };
-
-  const resetEmailTemplate = () => {
-    setEmailMessage(generateDefaultEmail());
-    toast({
-      title: "Template reset",
-      description: "The email message has been reset to the default template",
-    });
-  };
-  
-  const handleRetryDelivery = async () => {
-    setIsProcessing(true);
-    try {
-      const count = await processPendingEmailsForUI();
-      
-      if (count > 0) {
-        toast({
-          title: "Success!",
-          description: `Successfully delivered ${count} pending invitations.`,
-        });
-        setSentCount(prev => prev + count);
-      } else {
-        toast({
-          title: "No pending invitations",
-          description: "All your invitations have already been processed.",
-        });
-      }
-    } catch (error) {
-      console.error("Error processing emails:", error);
-      toast({
-        title: "Retry failed",
-        description: "Please try again later or contact support.",
-        variant: "destructive"
-      });
-    } finally {
-      setIsProcessing(false);
-    }
-  };
-  
-  useEffect(() => {
-    // If the template is empty, generate a default
-    if (!emailMessage) {
-      setEmailMessage(generateDefaultEmail());
-    }
-  }, []);
-  
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center mb-2">
@@ -237,7 +120,7 @@ ${firstName || "[Your Name]"}`;
       
       <div className="flex flex-col sm:flex-row gap-2">
         <Button
-          onClick={handleSendEmail}
+          onClick={() => handleSendEmail()}
           disabled={isSending || !friendEmail || !friendName}
           className={`w-full sm:w-3/4 transition-all duration-300 ${
             showSuccess 
@@ -261,7 +144,7 @@ ${firstName || "[Your Name]"}`;
         </Button>
         
         <Button
-          onClick={handleRetryDelivery}
+          onClick={() => handleRetryDelivery()}
           disabled={isProcessing}
           variant="outline"
           className="w-full sm:w-1/4"

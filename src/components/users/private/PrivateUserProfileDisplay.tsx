@@ -3,8 +3,6 @@ import { Button } from "@/components/ui/button";
 import { Edit, User, Home, Monitor, Award } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { CartridgeDonutChart } from "./CartridgeDonutChart";
-import { ReferralProgressChart } from "./ReferralProgressChart";
 
 interface PrivateUserProfileDisplayProps {
   userData: any;
@@ -114,8 +112,8 @@ export function PrivateUserProfileDisplay({
             </CardTitle>
           </CardHeader>
           <CardContent className="px-4 pb-4 pt-0">
-            <div className="flex flex-col md:flex-row gap-4">
-              <div className="space-y-3 md:w-1/2">
+            <div className="flex flex-col gap-4">
+              <div className="space-y-3">
                 <div className="space-y-1">
                   <p className="text-xs font-medium text-gray-400">Purifier Model</p>
                   <p className="text-sm text-white">{userData.purifier_model || ''}</p>
@@ -147,20 +145,16 @@ export function PrivateUserProfileDisplay({
                     ></div>
                   </div>
                 </div>
-              </div>
-              
-              <div className="md:w-1/2">
-                <p className="text-xs font-medium text-gray-400 mb-1 text-center">Cartridge Life</p>
-                <div className="w-28 h-28 mx-auto">
-                  <CartridgeDonutChart percentage={cartridgeUsagePercent} />
+                <div className="space-y-1">
+                  <p className="text-xs font-medium text-gray-400">Next Replacement</p>
+                  <p className="text-[10px] text-gray-400">
+                    {userData?.cartridge_replacement_date 
+                      ? (userData.cartridge_replacement_date.toDate 
+                         ? new Date(userData.cartridge_replacement_date.toDate()).toLocaleDateString() 
+                         : new Date(userData.cartridge_replacement_date).toLocaleDateString())
+                      : 'Not set'}
+                  </p>
                 </div>
-                <p className="text-[10px] text-center mt-1 text-gray-400">
-                  Next replacement: {userData?.cartridge_replacement_date 
-                    ? (userData.cartridge_replacement_date.toDate 
-                       ? new Date(userData.cartridge_replacement_date.toDate()).toLocaleDateString() 
-                       : new Date(userData.cartridge_replacement_date).toLocaleDateString())
-                    : 'Not set'}
-                </p>
               </div>
             </div>
           </CardContent>

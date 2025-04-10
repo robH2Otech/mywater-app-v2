@@ -32,10 +32,10 @@ export const CartridgeVisualization: React.FC<CartridgeVisualizationProps> = ({
       </div>
       
       <div style={{ height: `${height}px` }} className="relative w-44 flex items-center justify-center">
-        {/* Container with filter image */}
+        {/* Container with the new transparent reservoir image */}
         <div className="absolute inset-0 flex items-center justify-center">
           <img 
-            src="/lovable-uploads/f2f80940-5fa8-45b6-a3dd-78b6282cf10e.png" 
+            src="https://www.vecteezy.com/png/51686637-high-quality-transparent-reservoir-with-blue-liquid-for-computer-cooling-systems-isolated-on-a-transparent-background" 
             alt="Water Filter Cartridge"
             className="h-full object-contain z-10"
           />
