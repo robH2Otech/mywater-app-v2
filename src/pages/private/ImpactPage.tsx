@@ -100,14 +100,16 @@ export function ImpactPage() {
                   iconColor="text-amber-400"
                 />
                 <ImpactCard
-                  title={`${formatNumber(co2Saved)} kg`}
+                  title="CO₂ Reduced"
+                  value={`${formatNumber(co2Saved)} kg`}
                   subtext="CO₂ Reduced"
                   icon={Leaf}
                   className="bg-emerald-900/20 border-emerald-600/20"
                   iconColor="text-emerald-400"
                 />
                 <ImpactCard
-                  title={`${formatNumber(plasticSaved)} kg`}
+                  title="Plastic Saved"
+                  value={`${formatNumber(plasticSaved)} kg`}
                   subtext="Plastic Saved"
                   icon={Recycle}
                   className="bg-green-900/20 border-green-600/20"
