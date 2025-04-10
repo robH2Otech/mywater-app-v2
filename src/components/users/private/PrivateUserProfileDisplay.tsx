@@ -4,6 +4,7 @@ import { Edit, User, Home, Monitor, Award } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { CartridgeDonutChart } from "./CartridgeDonutChart";
+import { ReferralProgressChart } from "./ReferralProgressChart";
 
 interface PrivateUserProfileDisplayProps {
   userData: any;
@@ -21,6 +22,7 @@ export function PrivateUserProfileDisplay({
   }
 
   const isMyWaterHero = (userData?.referrals_converted || 0) >= 3;
+  const referralsCount = userData?.referrals_count || 0;
 
   return (
     <div className="space-y-4">
@@ -129,8 +131,21 @@ export function PrivateUserProfileDisplay({
                   </p>
                 </div>
                 <div className="space-y-1">
-                  <p className="text-xs font-medium text-gray-400">Purchase Price</p>
-                  <p className="text-sm text-white">{userData.purchase_price ? `$${userData.purchase_price}` : 'N/A'}</p>
+                  <p className="text-xs font-medium text-gray-400">Referral Points</p>
+                  <p className="text-sm text-white flex items-center gap-2">
+                    <span>{(referralsCount * 50)}/150 Points</span>
+                    {isMyWaterHero && (
+                      <span className="text-xs bg-green-500/20 text-green-400 px-2 py-0.5 rounded-full">
+                        Free Cartridge Earned!
+                      </span>
+                    )}
+                  </p>
+                  <div className="h-1.5 w-full bg-gray-700 rounded-full mt-1">
+                    <div 
+                      className="h-full bg-gradient-to-r from-cyan-500 to-blue-500 rounded-full" 
+                      style={{ width: `${Math.min(100, (referralsCount * 50) / 150 * 100)}%` }}
+                    ></div>
+                  </div>
                 </div>
               </div>
               
