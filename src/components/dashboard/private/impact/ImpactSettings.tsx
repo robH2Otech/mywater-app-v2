@@ -4,7 +4,6 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Check, Droplets } from "lucide-react";
 import { ImpactConfig } from "@/hooks/dashboard/useImpactCalculations";
-import { BOTTLE_CONFIGS } from "@/utils/formatUnitVolume";
 import { useToast } from "@/hooks/use-toast";
 
 interface ImpactSettingsProps {
@@ -15,10 +14,27 @@ interface ImpactSettingsProps {
 export function ImpactSettings({ currentConfig, onConfigChange }: ImpactSettingsProps) {
   const [bottleSize, setBottleSize] = useState((currentConfig.bottleSize || 0.5).toString());
   const [bottleCost, setBottleCost] = useState((currentConfig.bottleCost || 1.10).toString());
-  const [co2PerBottle, setCo2PerBottle] = useState((currentConfig.co2PerBottle || 160.5).toString());
+  const [co2PerBottle, setCo2PerBottle] = useState("160.5"); // Default for 0.5L
   const [plasticPerBottle, setPlasticPerBottle] = useState((currentConfig.plasticPerBottle || 20).toString());
   const [dailyIntake, setDailyIntake] = useState((currentConfig.dailyIntake || 2).toString());
+  const [mywaterModel, setMywaterModel] = useState("basic"); // Default to Basic model
   const { toast } = useToast();
+  
+  // Update CO2 value when bottle size changes
+  useEffect(() => {
+    const size = parseFloat(bottleSize);
+    let co2Value = 160.5; // Default for 0.5L
+    
+    if (size === 1.0) {
+      co2Value = 321;
+    } else if (size === 1.5) {
+      co2Value = 481.5;
+    } else if (size === 2.0) {
+      co2Value = 642;
+    }
+    
+    setCo2PerBottle(co2Value.toString());
+  }, [bottleSize]);
   
   const handleApplySettings = () => {
     onConfigChange({
@@ -27,31 +43,54 @@ export function ImpactSettings({ currentConfig, onConfigChange }: ImpactSettings
       co2PerBottle: parseFloat(co2PerBottle),
       plasticPerBottle: parseFloat(plasticPerBottle),
       dailyIntake: parseFloat(dailyIntake),
-      userType: 'home' // Always home user
+      userType: 'home'
     });
     
     toast({
       title: "Settings applied",
-      description: "Your impact calculator settings have been updated.",
+      description: "Your water consumption settings have been updated.",
     });
   };
   
   const applyPreset = (preset: 'small' | 'medium' | 'large' | 'custom') => {
     if (preset === 'custom') return; // Custom keeps current values
     
-    const config = BOTTLE_CONFIGS[preset];
-    setBottleSize(config.size.toString());
-    setBottleCost(config.cost.toString());
-    setCo2PerBottle(config.co2.toString());
-    setPlasticPerBottle(config.plastic.toString());
+    let size: number;
+    let cost: number;
+    let plastic: number;
+    
+    switch (preset) {
+      case 'small':
+        size = 0.5;
+        cost = 1.10;
+        plastic = 20;
+        break;
+      case 'medium':
+        size = 1.0;
+        cost = 1.50;
+        plastic = 30;
+        break;
+      case 'large':
+        size = 1.5;
+        cost = 1.80;
+        plastic = 40;
+        break;
+    }
+    
+    setBottleSize(size.toString());
+    setBottleCost(cost.toString());
+    setPlasticPerBottle(plastic.toString());
+    // CO2 is automatically updated by the useEffect
   };
   
-  const isCustom = !Object.values(BOTTLE_CONFIGS).some(config => 
-    config.size === parseFloat(bottleSize) && 
-    config.cost === parseFloat(bottleCost) &&
-    config.co2 === parseFloat(co2PerBottle) &&
-    config.plastic === parseFloat(plasticPerBottle)
-  );
+  const getMywaterPrice = () => {
+    switch (mywaterModel) {
+      case 'basic': return 199;
+      case 'plus': return 299;
+      case 'pro': return 2499;
+      default: return 199;
+    }
+  };
   
   // Calculate water intake visualization data
   const dailyIntakeValue = parseFloat(dailyIntake);
@@ -62,7 +101,7 @@ export function ImpactSettings({ currentConfig, onConfigChange }: ImpactSettings
   return (
     <div className="space-y-4">
       <div className="text-center mb-2">
-        <h3 className="text-lg font-medium">Calculator Settings</h3>
+        <h3 className="text-lg font-medium">My Water Consumption</h3>
         <p className="text-sm text-gray-400">Customize how your environmental impact is calculated</p>
       </div>
       
@@ -71,37 +110,37 @@ export function ImpactSettings({ currentConfig, onConfigChange }: ImpactSettings
         <p className="text-xs text-gray-400 mb-2">Bottle Size Presets:</p>
         <div className="grid grid-cols-4 gap-2">
           <Button 
-            variant={!isCustom && currentConfig.bottleSize === 0.5 ? "default" : "outline"}
+            variant={(bottleSize === "0.5") ? "default" : "outline"}
             size="sm"
             onClick={() => applyPreset('small')}
-            className={!isCustom && currentConfig.bottleSize === 0.5 ? 'bg-mywater-blue h-8' : 'h-8'}
+            className={(bottleSize === "0.5") ? 'bg-mywater-blue h-8' : 'h-8'}
           >
             0.5L
           </Button>
           
           <Button 
-            variant={!isCustom && currentConfig.bottleSize === 1.0 ? "default" : "outline"}
+            variant={(bottleSize === "1") ? "default" : "outline"}
             size="sm"
             onClick={() => applyPreset('medium')}
-            className={!isCustom && currentConfig.bottleSize === 1.0 ? 'bg-mywater-blue h-8' : 'h-8'}
+            className={(bottleSize === "1") ? 'bg-mywater-blue h-8' : 'h-8'}
           >
             1.0L
           </Button>
           
           <Button 
-            variant={!isCustom && currentConfig.bottleSize === 1.5 ? "default" : "outline"}
+            variant={(bottleSize === "1.5") ? "default" : "outline"}
             size="sm"
             onClick={() => applyPreset('large')}
-            className={!isCustom && currentConfig.bottleSize === 1.5 ? 'bg-mywater-blue h-8' : 'h-8'}
+            className={(bottleSize === "1.5") ? 'bg-mywater-blue h-8' : 'h-8'}
           >
             1.5L
           </Button>
           
           <Button 
-            variant={isCustom ? "default" : "outline"}
+            variant={!["0.5", "1", "1.5"].includes(bottleSize) ? "default" : "outline"}
             size="sm"
             onClick={() => applyPreset('custom')}
-            className={isCustom ? 'bg-mywater-blue h-8' : 'h-8'}
+            className={!["0.5", "1", "1.5"].includes(bottleSize) ? 'bg-mywater-blue h-8' : 'h-8'}
           >
             Custom
           </Button>
@@ -143,8 +182,8 @@ export function ImpactSettings({ currentConfig, onConfigChange }: ImpactSettings
                   min="1"
                   step="0.1"
                   value={co2PerBottle}
-                  onChange={(e) => setCo2PerBottle(e.target.value)}
-                  className="flex h-7 w-full rounded-md border border-input bg-background px-2 py-1 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  disabled
+                  className="flex h-7 w-full rounded-md border border-input bg-background/50 px-2 py-1 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring opacity-80"
                 />
               </div>
               
@@ -170,6 +209,19 @@ export function ImpactSettings({ currentConfig, onConfigChange }: ImpactSettings
                   onChange={(e) => setDailyIntake(e.target.value)}
                   className="flex h-7 w-full rounded-md border border-input bg-background px-2 py-1 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                 />
+              </div>
+              
+              <div className="flex items-center gap-1.5 pt-2 border-t border-gray-700/30">
+                <label className="text-xs w-28 text-gray-400">MYWATER Model</label>
+                <select
+                  value={mywaterModel}
+                  onChange={(e) => setMywaterModel(e.target.value)}
+                  className="flex h-7 w-full rounded-md border border-input bg-background px-2 py-1 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                >
+                  <option value="basic">MYWATER Home Basic (€199)</option>
+                  <option value="plus">MYWATER Home PLUS (€299)</option>
+                  <option value="pro">MYWATER PRO (€2499)</option>
+                </select>
               </div>
             </CardContent>
           </Card>

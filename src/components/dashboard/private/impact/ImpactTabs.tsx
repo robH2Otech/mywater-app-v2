@@ -43,8 +43,8 @@ export function ImpactTabs({
       <TabsList className="grid grid-cols-4 mb-3 w-full">
         <TabsTrigger value="environmental" className="text-xs md:text-sm">Environment</TabsTrigger>
         <TabsTrigger value="financial" className="text-xs md:text-sm">Money</TabsTrigger>
-        <TabsTrigger value="equivalents" className="text-xs md:text-sm">CO2 Reduction</TabsTrigger>
-        <TabsTrigger value="settings" className="text-xs md:text-sm">My Settings</TabsTrigger>
+        <TabsTrigger value="equivalents" className="text-xs md:text-sm">CO2 Emissions</TabsTrigger>
+        <TabsTrigger value="settings" className="text-xs md:text-sm">My Water Consumption</TabsTrigger>
       </TabsList>
       
       <TabsContent value="environmental" className="space-y-2">

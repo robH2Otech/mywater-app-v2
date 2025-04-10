@@ -22,6 +22,7 @@ export function WelcomeMessage({ firstName }: WelcomeMessageProps) {
     // If firstName prop is provided, use it
     if (firstName) {
       setUserName(firstName);
+      sessionStorage.setItem('userDisplayName', firstName);
       return;
     }
     
@@ -41,7 +42,8 @@ export function WelcomeMessage({ firstName }: WelcomeMessageProps) {
         
         if (!querySnapshot.empty) {
           const userData = querySnapshot.docs[0].data();
-          const name = userData.first_name || userData.firstName || "";
+          // Only use the first name
+          const name = userData.first_name || "";
           setUserName(name);
           sessionStorage.setItem('userDisplayName', name);
           return;
@@ -54,7 +56,8 @@ export function WelcomeMessage({ firstName }: WelcomeMessageProps) {
         
         if (!businessSnapshot.empty) {
           const userData = businessSnapshot.docs[0].data();
-          const name = userData.first_name || userData.firstName || "";
+          // Only use the first name
+          const name = userData.first_name || "";
           setUserName(name);
           sessionStorage.setItem('userDisplayName', name);
           return;

@@ -20,11 +20,21 @@ export interface ImpactConfig {
   userType: 'home'; // User type affects which metrics are shown - always 'home' now
 }
 
+// Updated CO2 values
+const getCO2ForBottleSize = (size: number): number => {
+  if (size === 0.5) return 160.5;
+  if (size === 1.0) return 321;
+  if (size === 1.5) return 481.5;
+  if (size === 2.0) return 642;
+  // For custom sizes, calculate proportionally based on 321g per liter
+  return size * 321;
+};
+
 // Default configuration
 const DEFAULT_CONFIG: ImpactConfig = {
   bottleSize: BOTTLE_CONFIGS.small.size,
   bottleCost: BOTTLE_CONFIGS.small.cost,
-  co2PerBottle: BOTTLE_CONFIGS.small.co2,
+  co2PerBottle: getCO2ForBottleSize(BOTTLE_CONFIGS.small.size),
   plasticPerBottle: BOTTLE_CONFIGS.small.plastic,
   dailyIntake: DEFAULT_DAILY_INTAKE,
   userType: 'home'
@@ -35,7 +45,12 @@ export function useImpactCalculations(
   config: Partial<ImpactConfig> = {}
 ) {
   // Merge default config with provided config
-  const fullConfig: ImpactConfig = { ...DEFAULT_CONFIG, ...config };
+  const fullConfig: ImpactConfig = { 
+    ...DEFAULT_CONFIG, 
+    ...config,
+    // Ensure CO2 is consistent with bottle size
+    co2PerBottle: config.co2PerBottle || getCO2ForBottleSize(config.bottleSize || DEFAULT_CONFIG.bottleSize)
+  };
   
   // Multipliers based on selected period
   const periodMultiplier = useMemo(() => {

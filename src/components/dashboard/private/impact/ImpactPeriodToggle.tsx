@@ -11,7 +11,7 @@ interface ImpactPeriodToggleProps {
 export function ImpactPeriodToggle({ 
   period, 
   setPeriod, 
-  includeAllTime = false 
+  includeAllTime = true
 }: ImpactPeriodToggleProps) {
   const isMobile = useIsMobile();
   
