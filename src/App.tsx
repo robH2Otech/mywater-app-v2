@@ -107,7 +107,7 @@ function App() {
               <Route path="/auth" element={<Auth />} />
               <Route path="/private-auth" element={<PrivateAuth />} />
               <Route
-                path="/private-dashboard"
+                path="/private-dashboard/*"
                 element={
                   <PrivateProtectedRoute>
                     <PrivateDashboard />
