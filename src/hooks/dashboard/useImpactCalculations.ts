@@ -1,5 +1,5 @@
 
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import { 
   BOTTLE_CONFIGS, 
   DEFAULT_DAILY_INTAKE,
@@ -20,7 +20,7 @@ export interface ImpactConfig {
   userType: 'home'; // User type affects which metrics are shown - always 'home' now
 }
 
-// Updated CO2 values
+// Updated CO2 values per your specification
 const getCO2ForBottleSize = (size: number): number => {
   if (size === 0.5) return 160.5;
   if (size === 1.0) return 321;

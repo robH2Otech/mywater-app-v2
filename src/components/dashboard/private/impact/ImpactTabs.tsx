@@ -40,11 +40,11 @@ export function ImpactTabs({
 
   return (
     <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-      <TabsList className="grid grid-cols-4 mb-3 w-full">
-        <TabsTrigger value="environmental" className="text-xs md:text-sm">Environment</TabsTrigger>
-        <TabsTrigger value="financial" className="text-xs md:text-sm">Money</TabsTrigger>
-        <TabsTrigger value="equivalents" className="text-xs md:text-sm">CO2 Emissions</TabsTrigger>
-        <TabsTrigger value="settings" className="text-xs md:text-sm">My Water Consumption</TabsTrigger>
+      <TabsList className="grid grid-cols-4 mb-3 w-full bg-spotify-dark">
+        <TabsTrigger value="environmental" className="text-sm md:text-base">Environment</TabsTrigger>
+        <TabsTrigger value="financial" className="text-sm md:text-base">Money</TabsTrigger>
+        <TabsTrigger value="equivalents" className="text-sm md:text-base">CO₂ Emissions</TabsTrigger>
+        <TabsTrigger value="settings" className="text-sm md:text-base">My Water Consumption</TabsTrigger>
       </TabsList>
       
       <TabsContent value="environmental" className="space-y-2">
@@ -53,15 +53,6 @@ export function ImpactTabs({
           setPeriod={setPeriod} 
           includeAllTime={true} 
         />
-        
-        <div className="text-sm text-center text-gray-400">
-          <p>
-            Using MYWATER instead of plastic bottles has already saved:
-          </p>
-          <p className="mt-0.5 text-xs text-gray-500">
-            Based on {config.bottleSize}L bottles at €{config.bottleCost?.toFixed(2)} each
-          </p>
-        </div>
       </TabsContent>
       
       <TabsContent value="financial">
@@ -76,9 +67,9 @@ export function ImpactTabs({
             includeAllTime={true} 
           />
 
-          <div className="p-2 bg-spotify-dark rounded-lg text-center mb-2">
+          <div className="p-4 bg-spotify-dark rounded-lg text-center mb-2">
             <h4 className="text-sm font-medium text-gray-200 mb-0.5">Total Money Saved</h4>
-            <p className="text-xl font-bold text-mywater-blue">€{moneySaved.toLocaleString(undefined, { maximumFractionDigits: 2, minimumFractionDigits: 2 })}</p>
+            <p className="text-2xl font-bold text-mywater-blue">€{moneySaved.toLocaleString(undefined, { maximumFractionDigits: 2, minimumFractionDigits: 2 })}</p>
             <p className="text-xs text-gray-400 mt-0.5">Based on {config.bottleSize}L bottles at €{config.bottleCost?.toFixed(2)} each</p>
           </div>
           
