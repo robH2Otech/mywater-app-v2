@@ -8,7 +8,10 @@ export function useReferralTracking(
   friendEmail: string,
   userName: string,
   referralCode: string,
-  emailMessage: string
+  emailMessage: string,
+  setFriendName: (value: string) => void,
+  setFriendEmail: (value: string) => void,
+  setEmailMessage: (value: string) => void
 ) {
   const [isSending, setIsSending] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);

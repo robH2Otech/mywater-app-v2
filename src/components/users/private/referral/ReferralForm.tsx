@@ -43,7 +43,16 @@ export function ReferralForm({ userName, referralCode }: ReferralFormProps) {
     setErrorMessage,
     handleSendEmail,
     handleRetryDelivery
-  } = useReferralTracking(friendName, friendEmail, userName, referralCode, emailMessage);
+  } = useReferralTracking(
+    friendName, 
+    friendEmail, 
+    userName, 
+    referralCode, 
+    emailMessage,
+    setFriendName,
+    setFriendEmail,
+    setEmailMessage
+  );
 
   return (
     <div className="space-y-4">
