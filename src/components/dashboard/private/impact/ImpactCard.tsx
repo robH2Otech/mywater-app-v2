@@ -5,7 +5,6 @@ import { LucideIcon } from "lucide-react";
 interface ImpactCardProps {
   title: string;
   value: string | number;
-  subtext?: string; // Added subtext property as optional
   icon: LucideIcon;
   iconColor?: string;
   className?: string;
@@ -17,7 +16,6 @@ interface ImpactCardProps {
 export function ImpactCard({
   title,
   value,
-  subtext,
   icon: Icon,
   iconColor = "text-mywater-blue",
   className = "",
@@ -33,7 +31,7 @@ export function ImpactCard({
           {value}
         </div>
         <div className={`${compactMode ? 'text-2xs sm:text-xs' : 'text-xs'} text-gray-400 ${titleClassName}`}>
-          {subtext || title}
+          {title}
         </div>
       </CardContent>
     </Card>

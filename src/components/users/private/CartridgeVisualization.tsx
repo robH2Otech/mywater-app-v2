@@ -90,23 +90,21 @@ export const CartridgeVisualization: React.FC<CartridgeVisualizationProps> = ({
         </div>
       </div>
       
-      <style>
-        {`
-          @keyframes bubble {
-            0%, 100% {
-              transform: translateY(0) scale(1);
-              opacity: 0.5;
-            }
-            50% {
-              transform: translateY(-${Math.random() * 20 + 10}px) scale(${Math.random() * 0.5 + 0.8});
-              opacity: 0.8;
-            }
+      <style jsx global>{`
+        @keyframes bubble {
+          0%, 100% {
+            transform: translateY(0) scale(1);
+            opacity: 0.5;
           }
-          .animate-bubble {
-            animation: bubble 4s infinite ease-in-out;
+          50% {
+            transform: translateY(-${Math.random() * 20 + 10}px) scale(${Math.random() * 0.5 + 0.8});
+            opacity: 0.8;
           }
-        `}
-      </style>
+        }
+        .animate-bubble {
+          animation: bubble 4s infinite ease-in-out;
+        }
+      `}</style>
     </div>
   );
 };
