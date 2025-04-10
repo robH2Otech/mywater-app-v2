@@ -74,7 +74,7 @@ export const CartridgeVisualization: React.FC<CartridgeVisualizationProps> = ({
               width: `${Math.random() * 8 + 4}px`,
               height: `${Math.random() * 8 + 4}px`,
               left: `${Math.random() * 30 + 35}%`,
-              bottom: `${Math.random() * remainingPercentage}%`,
+              bottom: `${Math.random() * remainingPercentage + animatedPercentage}%`,
               animation: `bubble ${Math.random() * 5 + 3}s infinite ease-in-out ${Math.random() * 2}s`,
               opacity: Math.random() * 0.5 + 0.2,
             }}

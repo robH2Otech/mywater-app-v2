@@ -2,9 +2,10 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Filter, Calendar, Droplets, Share2 } from "lucide-react";
 import { DocumentData } from "firebase/firestore";
+import { PrivateUser } from "@/types/privateUser";
 
 interface HomeStatsProps {
-  userData: DocumentData | null;
+  userData: DocumentData | PrivateUser | null;
   daysUntilReplacement: number | null;
   isReplacementOverdue: boolean;
   isReplacementDueSoon: boolean;

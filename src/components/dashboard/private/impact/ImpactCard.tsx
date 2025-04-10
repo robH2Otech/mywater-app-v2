@@ -24,13 +24,13 @@ export function ImpactCard({
   compactMode = false,
 }: ImpactCardProps) {
   return (
-    <Card className={`text-center ${compactMode ? 'p-1.5' : 'p-2'} h-full ${className}`}>
+    <Card className={`text-center ${compactMode ? 'p-1.5' : 'p-4'} h-full ${className}`}>
       <CardContent className="flex flex-col items-center justify-center p-0 h-full">
-        <Icon className={`${compactMode ? 'h-4 w-4 mb-0.5' : 'h-6 w-6 mb-1'} ${iconColor}`} />
-        <div className={`${compactMode ? 'text-base md:text-lg' : 'text-lg sm:text-xl'} font-bold ${compactMode ? 'mb-0.5' : 'mb-1'} ${valueClassName}`}>
+        <Icon className={`${compactMode ? 'h-6 w-6 mb-1' : 'h-8 w-8 mb-2'} ${iconColor}`} />
+        <div className={`${compactMode ? 'text-base md:text-xl' : 'text-xl sm:text-2xl'} font-bold ${compactMode ? 'mb-1' : 'mb-2'} ${valueClassName}`}>
           {value}
         </div>
-        <div className={`${compactMode ? 'text-2xs sm:text-xs' : 'text-xs'} text-gray-400 ${titleClassName}`}>
+        <div className={`${compactMode ? 'text-xs' : 'text-sm'} text-gray-400 ${titleClassName}`}>
           {title}
         </div>
       </CardContent>

@@ -1,13 +1,10 @@
 
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { ImpactPeriodToggle } from "./ImpactPeriodToggle";
 import { ImpactDetails } from "./ImpactDetails";
 import { MoneySavingsCalculator } from "./MoneySavingsCalculator";
 import { useImpactCalculations, ImpactConfig } from "@/hooks/dashboard/useImpactCalculations";
 import { ImpactSettings } from "./ImpactSettings";
-import { formatMetricValue } from "@/utils/formatUnitVolume";
 import { ReductionEquivalents } from "./ReductionEquivalents";
-import { useIsMobile } from "@/hooks/use-mobile";
 
 interface ImpactTabsProps {
   period: "day" | "month" | "year" | "all-time";
@@ -28,45 +25,22 @@ export function ImpactTabs({
 }: ImpactTabsProps) {
   const { 
     impactDetails,
-    bottlesSaved, 
-    waterSaved, 
-    plasticSaved, 
-    co2Saved,
     moneySaved,
+    co2Saved,
     equivalents
   } = useImpactCalculations(period, config);
-  
-  const isMobile = useIsMobile();
 
   return (
     <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
       <TabsList className="grid grid-cols-4 mb-3 w-full bg-spotify-dark">
-        <TabsTrigger value="environmental" className="text-sm md:text-base">Environment</TabsTrigger>
-        <TabsTrigger value="financial" className="text-sm md:text-base">Money</TabsTrigger>
-        <TabsTrigger value="equivalents" className="text-sm md:text-base">CO₂ Emissions</TabsTrigger>
-        <TabsTrigger value="settings" className="text-sm md:text-base">My Water Consumption</TabsTrigger>
+        <TabsTrigger value="environmental">Environment</TabsTrigger>
+        <TabsTrigger value="financial">Money</TabsTrigger>
+        <TabsTrigger value="equivalents">CO₂ Reduction</TabsTrigger>
+        <TabsTrigger value="settings">My Settings</TabsTrigger>
       </TabsList>
-      
-      <TabsContent value="environmental" className="space-y-2">
-        <ImpactPeriodToggle 
-          period={period} 
-          setPeriod={setPeriod} 
-          includeAllTime={true} 
-        />
-      </TabsContent>
       
       <TabsContent value="financial">
         <div className="space-y-2">
-          <h3 className={`font-medium text-center mb-1 ${isMobile ? 'text-sm' : 'text-base'}`}>
-            Financial Impact
-          </h3>
-          
-          <ImpactPeriodToggle 
-            period={period} 
-            setPeriod={setPeriod} 
-            includeAllTime={true} 
-          />
-
           <div className="p-4 bg-spotify-dark rounded-lg text-center mb-2">
             <h4 className="text-sm font-medium text-gray-200 mb-0.5">Total Money Saved</h4>
             <p className="text-2xl font-bold text-mywater-blue">€{moneySaved.toLocaleString(undefined, { maximumFractionDigits: 2, minimumFractionDigits: 2 })}</p>
@@ -84,8 +58,8 @@ export function ImpactTabs({
       <TabsContent value="equivalents">
         <ReductionEquivalents 
           co2Saved={co2Saved}
-          plasticSaved={plasticSaved}
-          bottlesSaved={bottlesSaved}
+          plasticSaved={0} // This will be calculated inside the component
+          bottlesSaved={0} // This will be calculated inside the component
           period={period}
         />
       </TabsContent>
