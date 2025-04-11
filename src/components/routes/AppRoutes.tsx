@@ -15,7 +15,7 @@ import { Auth } from "@/pages/Auth";
 import { LandingPage } from "@/pages/LandingPage";
 import { PrivateAuth } from "@/pages/PrivateAuth";
 import { PrivateDashboard } from "@/pages/PrivateDashboard";
-import { Index } from "@/pages/Index";
+import Index from "@/pages/Index";  // Changed from import { Index } to import Index
 import ClientRequests from "@/pages/ClientRequests";
 import { ProtectedRoute, PrivateProtectedRoute } from "./ProtectedRoutes";
 
