@@ -4,60 +4,99 @@ import { DocumentData } from "firebase/firestore";
 import { ReferralStatus } from "./referral/ReferralStatus";
 import { ReferralCode } from "./referral/ReferralCode";
 import { ReferralForm } from "./referral/ReferralForm";
-import { ReferralHeader } from "./referral/ReferralHeader";
-import { Info, Award, Share2, Users } from "lucide-react";
+import { Award, Info, Share2, Users } from "lucide-react";
 import { ReferralSteps } from "./referral/ReferralSteps";
-import { ReferralProgressBar } from "./referral/ReferralProgressBar";
+import { motion } from "framer-motion";
 
 interface ReferralProgramProps {
   userData: DocumentData | null;
 }
 
 export function ReferralProgram({ userData }: ReferralProgramProps) {
-  const referralCode = userData?.referral_code || "MYWATER20";
+  const referralCode = userData?.referral_code || "";
   const userName = `${userData?.first_name || ""} ${userData?.last_name || ""}`.trim();
-  const referralsCount = userData?.referrals_count || 0;
-  const referralsNeeded = 3; // Need 3 referrals for free cartridge
-  const progress = Math.min(100, (referralsCount / referralsNeeded) * 100);
+
+  // Animation variants for staggered animations
+  const container = {
+    hidden: { opacity: 0 },
+    show: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.1,
+        delayChildren: 0.2
+      }
+    }
+  };
+
+  const item = {
+    hidden: { opacity: 0, y: 20 },
+    show: { opacity: 1, y: 0 }
+  };
 
   return (
-    <div className="space-y-6">
-      <Card className="bg-spotify-darker border-spotify-accent">
-        <CardContent className="pt-6 space-y-6">
-          <div className="text-center space-y-2">
-            <div className="inline-flex items-center justify-center bg-blue-500/10 rounded-full p-3 mb-2">
-              <Award className="h-8 w-8 text-blue-400" />
-            </div>
-            <h2 className="text-xl font-bold">Refer Your Friends</h2>
-            <p className="text-gray-400">Get a free replacement cartridge (value of €150)</p>
-          </div>
-          
-          <ReferralProgressBar 
-            progress={progress} 
-            referralsCount={referralsCount}
-            referralsNeeded={referralsNeeded}
-          />
-
-          <div className="p-3 rounded-md border border-blue-700/30 bg-blue-900/10 text-sm text-blue-200">
-            <div className="flex items-start gap-2">
-              <Info className="h-5 w-5 text-blue-400 flex-shrink-0 mt-0.5" />
-              <div>
-                <p className="font-medium mb-1">Referral Rewards</p>
-                <p>
-                  Earn 50 points for each friend who purchases a MYWATER product – up to 150 points per calendar year.
-                  When you reach 150 points, you'll get a free replacement cartridge!
-                </p>
+    <motion.div 
+      variants={container}
+      initial="hidden"
+      animate="show"
+      className="space-y-6"
+    >
+      <motion.div variants={item}>
+        <Card className="border-blue-500/20 bg-gradient-to-b from-blue-900/10 to-blue-800/5">
+          <CardContent className="pt-6 pb-8 px-4 sm:px-6 space-y-6">
+            <div className="text-center space-y-3">
+              <div className="relative">
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <div className="w-16 h-16 bg-blue-500/10 rounded-full blur-xl" />
+                </div>
+                <div className="relative inline-flex items-center justify-center bg-blue-500 rounded-full p-3 z-10">
+                  <Award className="h-8 w-8 text-white" />
+                </div>
               </div>
+              
+              <motion.div>
+                <h2 className="text-2xl font-bold mt-3 bg-gradient-to-r from-blue-300 to-cyan-200 bg-clip-text text-transparent">
+                  Refer Your Friends
+                </h2>
+                <p className="text-gray-300 mt-1">
+                  Share the benefits & earn a free replacement cartridge worth €150
+                </p>
+              </motion.div>
             </div>
-          </div>
-          
-          <ReferralSteps />
-          
-          <ReferralStatus userData={userData} />
-          <ReferralCode referralCode={referralCode} />
-          <ReferralForm userName={userName} referralCode={referralCode} />
-        </CardContent>
-      </Card>
-    </div>
+            
+            <ReferralStatus userData={userData} />
+            
+            <motion.div 
+              variants={item}
+              className="p-4 rounded-md border border-blue-700/30 bg-blue-900/10 text-sm text-blue-200 relative overflow-hidden"
+            >
+              <div className="absolute top-0 right-0 w-24 h-24 bg-blue-500/10 rounded-full blur-xl -translate-y-12 translate-x-12" />
+              <div className="relative z-10">
+                <div className="flex items-start gap-3">
+                  <Info className="h-5 w-5 text-blue-400 flex-shrink-0 mt-0.5" />
+                  <div>
+                    <p className="font-medium mb-1.5">Referral Rewards Program</p>
+                    <p className="text-sm text-blue-100/80 leading-relaxed">
+                      For every friend who purchases a MYWATER system using your code, you'll earn progress toward your free replacement cartridge. Get 3 friends to purchase and claim your reward!
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+            
+            <motion.div variants={item}>
+              <ReferralSteps />
+            </motion.div>
+            
+            <motion.div variants={item}>
+              <ReferralCode referralCode={referralCode} />
+            </motion.div>
+            
+            <motion.div variants={item}>
+              <ReferralForm userName={userName} referralCode={referralCode} />
+            </motion.div>
+          </CardContent>
+        </Card>
+      </motion.div>
+    </motion.div>
   );
 }
