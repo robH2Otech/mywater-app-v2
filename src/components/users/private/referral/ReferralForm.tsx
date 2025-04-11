@@ -5,11 +5,11 @@ import { FormInput } from "@/components/shared/FormInput";
 import { Textarea } from "@/components/ui/textarea";
 import { Send, RefreshCw, Check, AlertCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { sendReferralEmail, processPendingEmailsForUI } from "@/utils/email";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { useReferralEmailForm } from "@/hooks/referral/useReferralEmailForm";
 import { useReferralTracking } from "@/hooks/referral/useReferralTracking";
+import { motion } from "framer-motion";
 
 interface ReferralFormProps {
   userName: string;
@@ -55,9 +55,17 @@ export function ReferralForm({ userName, referralCode }: ReferralFormProps) {
   );
 
   return (
-    <div className="space-y-4">
-      <div className="flex justify-between items-center mb-2">
-        <h3 className="text-lg font-medium">Send Referral Invitation</h3>
+    <motion.div 
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5, delay: 0.3 }}
+      className="bg-spotify-dark/60 rounded-xl p-5 space-y-4"
+    >
+      <div className="flex justify-between items-center mb-1">
+        <h3 className="text-lg font-semibold flex items-center">
+          <Send className="h-5 w-5 mr-2 text-green-400" />
+          Send Invitation
+        </h3>
         {sentCount > 0 && (
           <Badge variant="secondary" className="bg-green-900/30 text-green-300 border-green-500/30">
             {sentCount} Invitation{sentCount !== 1 ? 's' : ''} Sent
@@ -65,23 +73,13 @@ export function ReferralForm({ userName, referralCode }: ReferralFormProps) {
         )}
       </div>
       
-      <Alert className="bg-blue-900/20 border-blue-500/30 text-blue-100">
-        <AlertTitle className="flex items-center gap-2">
-          <Check className="h-4 w-4" /> Direct Email Delivery
-        </AlertTitle>
-        <AlertDescription className="text-blue-200">
-          Your referral invitations are delivered directly to recipients when you send them.
-          Check delivery status in the referral dashboard.
-        </AlertDescription>
-      </Alert>
-      
-      <div className="flex flex-col md:flex-row gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <FormInput
           label="Friend's Name"
           value={friendName}
           onChange={handleFriendNameChange}
           placeholder="John Doe"
-          className="flex-1"
+          className="bg-spotify-accent/10"
         />
         
         <FormInput
@@ -90,7 +88,7 @@ export function ReferralForm({ userName, referralCode }: ReferralFormProps) {
           value={friendEmail}
           onChange={setFriendEmail}
           placeholder="friend@example.com"
-          className="flex-1"
+          className="bg-spotify-accent/10"
         />
       </div>
       
@@ -103,7 +101,7 @@ export function ReferralForm({ userName, referralCode }: ReferralFormProps) {
           value={emailMessage}
           onChange={(e) => setEmailMessage(e.target.value)}
           rows={6}
-          className="w-full"
+          className="w-full bg-spotify-accent/10 resize-none"
         />
         <div className="flex justify-end mt-2">
           <Button 
@@ -112,7 +110,7 @@ export function ReferralForm({ userName, referralCode }: ReferralFormProps) {
             onClick={resetEmailTemplate}
             className="text-xs"
           >
-            Reset to Default
+            Reset Message
           </Button>
         </div>
       </div>
@@ -127,7 +125,7 @@ export function ReferralForm({ userName, referralCode }: ReferralFormProps) {
         </Alert>
       )}
       
-      <div className="flex flex-col sm:flex-row gap-2">
+      <div className="flex flex-col sm:flex-row gap-2 pt-2">
         <Button
           onClick={() => handleSendEmail()}
           disabled={isSending || !friendEmail || !friendName}
@@ -138,7 +136,10 @@ export function ReferralForm({ userName, referralCode }: ReferralFormProps) {
           }`}
         >
           {isSending ? (
-            "Sending..."
+            <>
+              <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+              Sending...
+            </>
           ) : showSuccess ? (
             <>
               <Check className="h-4 w-4 mr-2" />
@@ -159,7 +160,10 @@ export function ReferralForm({ userName, referralCode }: ReferralFormProps) {
           className="w-full sm:w-1/4"
         >
           {isProcessing ? (
-            "Processing..."
+            <>
+              <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+              Processing...
+            </>
           ) : (
             <>
               <RefreshCw className={`h-4 w-4 mr-2 ${isProcessing ? "animate-spin" : ""}`} />
@@ -168,6 +172,6 @@ export function ReferralForm({ userName, referralCode }: ReferralFormProps) {
           )}
         </Button>
       </div>
-    </div>
+    </motion.div>
   );
 }

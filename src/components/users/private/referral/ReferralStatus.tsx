@@ -1,5 +1,7 @@
 
+import { Card, CardContent } from "@/components/ui/card";
 import { DocumentData } from "firebase/firestore";
+import { Progress } from "@/components/ui/progress";
 import { Award } from "lucide-react";
 
 interface ReferralStatusProps {
@@ -7,35 +9,49 @@ interface ReferralStatusProps {
 }
 
 export function ReferralStatus({ userData }: ReferralStatusProps) {
-  const isMyWaterHero = (userData?.referrals_converted || 0) >= 3;
+  const referralsConverted = userData?.referrals_converted || 0;
+  const referralsCount = userData?.referrals_count || 0;
+  const rewardEarned = userData?.referral_reward_earned || false;
+  const rewardClaimed = userData?.referral_reward_claimed || false;
+  
+  const maxReferrals = 3;
+  const progress = Math.min(100, (referralsConverted / maxReferrals) * 100);
   
   return (
-    <div className="mb-4">
-      <div className="flex items-center justify-between">
-        <p className="text-sm text-gray-400 mb-2">Your Referral Status</p>
-        {isMyWaterHero && (
-          <div className="flex items-center gap-1 bg-gradient-to-r from-cyan-500 to-blue-600 text-white text-xs rounded-full px-2 py-1">
-            <Award className="h-3 w-3" />
-            <span>MYWATER HERO</span>
+    <div className="bg-spotify-dark/60 rounded-xl p-5">
+      <h3 className="text-lg font-semibold flex items-center mb-4">
+        <Award className="h-5 w-5 mr-2 text-amber-400" />
+        Your Status
+      </h3>
+      
+      <div className="space-y-4">
+        <div className="flex items-center justify-between">
+          <span className="text-sm font-medium">Referral Progress</span>
+          <span className="text-sm">{referralsConverted}/{maxReferrals}</span>
+        </div>
+        
+        <Progress value={progress} className="h-2" />
+        
+        <div className="grid grid-cols-2 gap-2 mt-2">
+          <div className="p-3 bg-spotify-dark rounded-lg text-center">
+            <p className="text-2xl font-bold text-amber-400">{referralsConverted}</p>
+            <p className="text-xs text-gray-400">Converted</p>
+          </div>
+          
+          <div className="p-3 bg-spotify-dark rounded-lg text-center">
+            <p className="text-2xl font-bold text-blue-400">{referralsCount - referralsConverted}</p>
+            <p className="text-xs text-gray-400">Pending</p>
+          </div>
+        </div>
+        
+        {rewardEarned && (
+          <div className="p-3 rounded-lg border border-amber-500/30 bg-amber-900/20 text-center">
+            <p className="text-sm font-medium text-amber-300">
+              {rewardClaimed ? "Free cartridge claimed!" : "Free cartridge earned! Claim it in your account."}
+            </p>
           </div>
         )}
       </div>
-      <div className="flex items-center gap-2">
-        <div className="w-full bg-gray-700 h-2.5 rounded-full">
-          <div 
-            className="bg-gradient-to-r from-cyan-500 to-blue-600 h-2.5 rounded-full" 
-            style={{ width: `${Math.min(100, ((userData?.referrals_converted || 0) / 3) * 100)}%` }}
-          ></div>
-        </div>
-        <span className="text-sm font-medium text-white whitespace-nowrap">
-          {userData?.referrals_converted || 0}/3
-        </span>
-      </div>
-      <p className="text-xs text-gray-400 mt-1">
-        {isMyWaterHero 
-          ? "Congratulations! You've earned a free replacement cartridge!" 
-          : "Refer 3 friends who purchase to earn a free replacement cartridge"}
-      </p>
     </div>
   );
 }
