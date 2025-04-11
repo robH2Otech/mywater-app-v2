@@ -1,175 +1,122 @@
 
 import { useState, useEffect } from "react";
-import { Card, CardContent } from "@/components/ui/card";
-import { FormInput } from "@/components/shared/FormInput";
-import { ImpactCard } from "./ImpactCard";
-import { Coins, Calculator, TrendingUp } from "lucide-react";
-import { useIsMobile } from "@/hooks/use-mobile";
-import { formatMetricValue } from "@/utils/formatUnitVolume";
+import { Slider } from "@/components/ui/slider";
+import { Label } from "@/components/ui/label";
+import { Card } from "@/components/ui/card";
+import { EuroIcon, TrendingUp } from "lucide-react";
 
 interface MoneySavingsCalculatorProps {
-  baseBottlePrice?: number;
-  baseDailyConsumption?: number;
-  baseBottleSize?: number;
+  baseBottlePrice: number;
+  baseDailyConsumption: number;
+  baseBottleSize: number;
 }
 
 export function MoneySavingsCalculator({
   baseBottlePrice = 1.1,
-  baseDailyConsumption = 2,
+  baseDailyConsumption = 2.0,
   baseBottleSize = 0.5
 }: MoneySavingsCalculatorProps) {
-  const [bottlePrice, setBottlePrice] = useState(baseBottlePrice.toString());
-  const [systemCost, setSystemCost] = useState("300");
-  const [systemLifetime, setSystemLifetime] = useState("5");
-  const [dailyConsumption, setDailyConsumption] = useState(baseDailyConsumption.toString());
-  const [bottleSize, setBottleSize] = useState(baseBottleSize.toString());
-  const isMobile = useIsMobile();
-
-  // Calculated values
-  const [annualBottleCost, setAnnualBottleCost] = useState(0);
-  const [annualSystemCost, setAnnualSystemCost] = useState(0);
-  const [annualSavings, setAnnualSavings] = useState(0);
-  const [totalSavings, setTotalSavings] = useState(0);
-  const [bottlesPerDay, setBottlesPerDay] = useState(0);
+  const [dailyConsumption, setDailyConsumption] = useState(baseDailyConsumption);
+  const [bottlePrice, setBottlePrice] = useState(baseBottlePrice);
+  
+  const [monthlySavings, setMonthlySavings] = useState(0);
+  const [yearlySavings, setYearlySavings] = useState(0);
+  const [fiveYearSavings, setFiveYearSavings] = useState(0);
   
   useEffect(() => {
-    // Calculate costs and savings
-    const bottlePriceNum = parseFloat(bottlePrice) || 0;
-    const systemCostNum = parseFloat(systemCost) || 1;
-    const systemLifetimeNum = parseFloat(systemLifetime) || 1;
-    const dailyConsumptionNum = parseFloat(dailyConsumption) || 0;
-    const bottleSizeNum = parseFloat(bottleSize) || 0.5;
+    const calculateSavings = () => {
+      // Calculate number of bottles saved based on consumption and bottle size
+      const dailyBottlesSaved = dailyConsumption / baseBottleSize;
+      
+      // Calculate savings
+      const dailySavings = dailyBottlesSaved * bottlePrice;
+      const monthly = dailySavings * 30;
+      const yearly = dailySavings * 365;
+      const fiveYear = yearly * 5;
+      
+      setMonthlySavings(monthly);
+      setYearlySavings(yearly);
+      setFiveYearSavings(fiveYear);
+    };
     
-    // Calculate bottles per day based on consumption and bottle size
-    const bottlesPerDayCalc = dailyConsumptionNum / bottleSizeNum;
-    setBottlesPerDay(bottlesPerDayCalc);
-    
-    // Annual costs for bottled water
-    const annualBottleCostCalc = bottlePriceNum * bottlesPerDayCalc * 365;
-    setAnnualBottleCost(annualBottleCostCalc);
-    
-    // Annual cost for MYWATER system (total cost divided by years)
-    const annualSystemCostCalc = systemCostNum / systemLifetimeNum;
-    setAnnualSystemCost(annualSystemCostCalc);
-    
-    // Annual savings
-    const annualSavingsCalc = annualBottleCostCalc - annualSystemCostCalc;
-    setAnnualSavings(annualSavingsCalc);
-    
-    // Total savings over system lifetime
-    const totalSavingsCalc = annualSavingsCalc * systemLifetimeNum;
-    setTotalSavings(totalSavingsCalc);
-  }, [bottlePrice, systemCost, systemLifetime, dailyConsumption, bottleSize]);
+    calculateSavings();
+  }, [dailyConsumption, bottlePrice, baseBottleSize]);
 
   return (
-    <div className="space-y-2">
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
-        {/* Left column - Annual costs */}
-        <div className="grid grid-cols-2 gap-2 md:col-span-1">
-          <ImpactCard
-            title="Annual Bottle Cost"
-            value={`€${formatMetricValue(annualBottleCost, 'money')}`}
-            icon={Coins}
-            iconColor="text-amber-500"
-            className="bg-spotify-darker"
-            compactMode={true}
-          />
-          
-          <ImpactCard
-            title="Annual MYWATER Cost"
-            value={`€${formatMetricValue(annualSystemCost, 'money')}`}
-            icon={Calculator}
-            iconColor="text-emerald-500"
-            className="bg-spotify-darker"
-            compactMode={true}
-          />
-        </div>
+    <div className="space-y-6">
+      <div className="p-4 bg-spotify-dark/50 rounded-lg space-y-6">
+        <h3 className="text-center font-medium">Calculate Your Savings</h3>
         
-        {/* Middle column - Calculator form */}
-        <Card className="bg-spotify-darker md:col-span-1">
-          <CardContent className="p-2 space-y-1">
-            <h3 className="text-xs font-medium text-center mb-1">Calculate Savings</h3>
-            
-            <div className="grid grid-cols-1 gap-1">
-              <div className="flex items-center gap-1">
-                <label className="text-2xs w-20 text-gray-400">Daily Water (L)</label>
-                <input 
-                  type="number"
-                  min="0.1"
-                  step="0.1"
-                  value={dailyConsumption}
-                  onChange={(e) => setDailyConsumption(e.target.value)}
-                  className="flex h-6 w-full rounded-md border border-input bg-background px-2 py-1 text-xs ring-offset-background focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-                />
-              </div>
-            
-              <div className="flex items-center gap-1">
-                <label className="text-2xs w-20 text-gray-400">Bottle Size (L)</label>
-                <input 
-                  type="number"
-                  min="0.1"
-                  step="0.1"
-                  value={bottleSize}
-                  onChange={(e) => setBottleSize(e.target.value)}
-                  className="flex h-6 w-full rounded-md border border-input bg-background px-2 py-1 text-xs ring-offset-background focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-                />
-              </div>
-            
-              <div className="flex items-center gap-1">
-                <label className="text-2xs w-20 text-gray-400">Bottle Price (€)</label>
-                <input 
-                  type="number"
-                  min="0.1"
-                  step="0.1"
-                  value={bottlePrice}
-                  onChange={(e) => setBottlePrice(e.target.value)}
-                  className="flex h-6 w-full rounded-md border border-input bg-background px-2 py-1 text-xs ring-offset-background focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-                />
-              </div>
-            
-              <div className="flex items-center gap-1">
-                <label className="text-2xs w-20 text-gray-400">MYWATER Cost (€)</label>
-                <input 
-                  type="number"
-                  min="1"
-                  value={systemCost}
-                  onChange={(e) => setSystemCost(e.target.value)}
-                  className="flex h-6 w-full rounded-md border border-input bg-background px-2 py-1 text-xs ring-offset-background focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-                />
-              </div>
-            
-              <div className="flex items-center gap-1">
-                <label className="text-2xs w-20 text-gray-400">System Life (yrs)</label>
-                <input 
-                  type="number"
-                  min="1"
-                  max="20"
-                  value={systemLifetime}
-                  onChange={(e) => setSystemLifetime(e.target.value)}
-                  className="flex h-6 w-full rounded-md border border-input bg-background px-2 py-1 text-xs ring-offset-background focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-                />
-              </div>
+        <div className="space-y-4">
+          <div className="space-y-2">
+            <div className="flex justify-between">
+              <Label htmlFor="daily-consumption">Daily Water Consumption</Label>
+              <span className="text-sm font-medium">{dailyConsumption.toFixed(1)} L</span>
             </div>
-          </CardContent>
-        </Card>
-        
-        {/* Right column - Savings */}
-        <div className="md:col-span-1 flex flex-col gap-2">
-          <ImpactCard
-            title={`${systemLifetime}-Year Savings`}
-            value={`€${formatMetricValue(totalSavings, 'money')}`}
-            icon={TrendingUp}
-            iconColor="text-green-400"
-            valueClassName="text-green-400"
-            className="bg-spotify-darker flex-grow"
-            compactMode={true}
-          />
+            <Slider
+              id="daily-consumption"
+              min={0.5}
+              max={5.0}
+              step={0.1}
+              value={[dailyConsumption]}
+              onValueChange={(value) => setDailyConsumption(value[0])}
+            />
+          </div>
           
-          <div className="text-center text-xs text-gray-400 p-2 bg-spotify-dark rounded-lg">
-            <p>Save <strong className="text-green-400">€{formatMetricValue(annualSavings, 'money')}</strong>/year</p>
-            <p className="text-2xs">(<strong>€{formatMetricValue(annualSavings/12, 'money')}</strong>/month)</p>
+          <div className="space-y-2">
+            <div className="flex justify-between">
+              <Label htmlFor="bottle-price">Bottle Price (€)</Label>
+              <span className="text-sm font-medium">€{bottlePrice.toFixed(2)}</span>
+            </div>
+            <Slider
+              id="bottle-price"
+              min={0.5}
+              max={3.0}
+              step={0.1}
+              value={[bottlePrice]}
+              onValueChange={(value) => setBottlePrice(value[0])}
+            />
           </div>
         </div>
+      </div>
+      
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <Card className="bg-amber-900/20 border-amber-600/20">
+          <div className="p-4 text-center">
+            <div className="flex justify-center mb-2">
+              <EuroIcon className="h-8 w-8 text-amber-400" />
+            </div>
+            <h3 className="text-sm font-medium text-gray-300">Monthly Savings</h3>
+            <p className="text-2xl font-bold">€{monthlySavings.toFixed(2)}</p>
+          </div>
+        </Card>
+        
+        <Card className="bg-green-900/20 border-green-600/20">
+          <div className="p-4 text-center">
+            <div className="flex justify-center mb-2">
+              <EuroIcon className="h-8 w-8 text-green-400" />
+            </div>
+            <h3 className="text-sm font-medium text-gray-300">Yearly Savings</h3>
+            <p className="text-2xl font-bold">€{yearlySavings.toFixed(2)}</p>
+          </div>
+        </Card>
+        
+        <Card className="bg-blue-900/20 border-blue-600/20">
+          <div className="p-4 text-center">
+            <div className="flex justify-center mb-2">
+              <TrendingUp className="h-8 w-8 text-blue-400" />
+            </div>
+            <h3 className="text-sm font-medium text-gray-300">5-Year Savings</h3>
+            <p className="text-2xl font-bold">€{fiveYearSavings.toFixed(2)}</p>
+          </div>
+        </Card>
+      </div>
+      
+      <div className="p-4 bg-gradient-to-r from-amber-900/30 to-green-900/30 rounded-lg text-center">
+        <p className="text-sm">
+          Based on {dailyConsumption.toFixed(1)}L daily consumption and €{bottlePrice.toFixed(2)} per {baseBottleSize}L bottle,
+          you save approximately €{(yearlySavings / 12).toFixed(2)} per month with your MYWATER system.
+        </p>
       </div>
     </div>
   );

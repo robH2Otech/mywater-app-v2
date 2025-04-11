@@ -1,6 +1,6 @@
 
 import { Card, CardContent } from "@/components/ui/card";
-import { Filter, Calendar, Droplets, Share2 } from "lucide-react";
+import { Calendar, Droplets, Share2 } from "lucide-react";
 import { DocumentData } from "firebase/firestore";
 import { PrivateUser } from "@/types/privateUser";
 
@@ -24,9 +24,6 @@ export function HomeStats({
       {/* Cartridge Status Card */}
       <Card className="glass hover:bg-spotify-accent/40 transition-colors">
         <CardContent className="p-4 flex items-center gap-3">
-          <div className="h-10 w-10 rounded-full bg-spotify-dark flex items-center justify-center">
-            <Filter className="h-5 w-5 text-cyan-400" />
-          </div>
           <div className="flex-1">
             <p className="text-xs text-gray-400">Cartridge Status</p>
             <div className="flex justify-between items-center">
