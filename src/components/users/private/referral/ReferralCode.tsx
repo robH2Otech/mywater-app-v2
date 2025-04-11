@@ -1,9 +1,8 @@
 
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Copy, CheckCheck, Facebook, Twitter, Mail, Instagram, MessageSquare, Share2 } from "lucide-react";
+import { Copy, CheckCheck, Facebook, Twitter, Mail, Instagram, MessageSquare } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { motion } from "framer-motion";
 
 interface ReferralCodeProps {
   referralCode: string;
@@ -11,7 +10,6 @@ interface ReferralCodeProps {
 
 export function ReferralCode({ referralCode }: ReferralCodeProps) {
   const [isCopied, setIsCopied] = useState(false);
-  const [isExpanded, setIsExpanded] = useState(false);
   const { toast } = useToast();
   
   const copyReferralLink = () => {
@@ -60,124 +58,85 @@ export function ReferralCode({ referralCode }: ReferralCodeProps) {
   };
   
   return (
-    <div className="space-y-4 bg-spotify-dark/60 rounded-xl p-5">
-      <h3 className="text-lg font-semibold flex items-center">
-        <Share2 className="h-5 w-5 mr-2 text-blue-400" />
-        Your Referral Code
-      </h3>
-      
-      <motion.div 
-        whileHover={{ scale: 1.01 }}
-        className="flex items-center gap-2 p-3 bg-gradient-to-r from-blue-900/40 to-cyan-900/40 rounded-lg border border-blue-500/20"
-      >
+    <div className="space-y-4">
+      <div className="flex items-center gap-2 p-3 bg-spotify-dark rounded-lg">
         <div className="flex-1">
-          <p className="text-xs text-gray-300 mb-1">Share this code</p>
-          <p className="text-2xl font-mono font-bold tracking-wider text-white">{referralCode}</p>
+          <p className="text-sm text-gray-400">Your Referral Code</p>
+          <p className="text-lg font-mono font-bold">{referralCode}</p>
         </div>
         <Button
-          variant="default"
+          variant="outline"
           size="sm"
           onClick={copyReferralLink}
-          className={`gap-2 transition-all ${isCopied ? "bg-green-600 hover:bg-green-700" : ""}`}
+          className="gap-2"
         >
           {isCopied ? (
             <>
               <CheckCheck className="h-4 w-4" />
-              Copied!
+              Copied
             </>
           ) : (
             <>
               <Copy className="h-4 w-4" />
-              Copy
+              Copy Link
             </>
           )}
         </Button>
-      </motion.div>
+      </div>
       
       <div className="space-y-2">
-        <Button 
-          variant="outline" 
-          size="sm" 
-          className="w-full justify-between"
-          onClick={() => setIsExpanded(!isExpanded)}
-        >
-          <span className="flex items-center">
-            <Share2 className="h-4 w-4 mr-2" />
-            Share via
-          </span>
-          <span className={`transition-transform ${isExpanded ? "rotate-180" : ""}`}>
-            ▼
-          </span>
-        </Button>
-        
-        {isExpanded && (
-          <motion.div 
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: "auto" }}
-            exit={{ opacity: 0, height: 0 }}
-            className="grid grid-cols-2 sm:grid-cols-3 gap-2 mt-2"
+        <p className="text-sm font-medium">Share via:</p>
+        <div className="flex flex-wrap gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={shareViaFacebook}
+            className="flex-1 min-w-[80px]"
           >
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={shareViaFacebook}
-              className="bg-blue-900/20 border-blue-500/20 hover:bg-blue-800/40"
-            >
-              <Facebook className="h-4 w-4 mr-2 text-blue-400" />
-              Facebook
-            </Button>
-            
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={shareViaTwitter}
-              className="bg-blue-900/20 border-cyan-500/20 hover:bg-blue-800/40"
-            >
-              <Twitter className="h-4 w-4 mr-2 text-cyan-400" />
-              Twitter
-            </Button>
-            
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={shareViaInstagram}
-              className="bg-purple-900/20 border-pink-500/20 hover:bg-purple-800/40"
-            >
-              <Instagram className="h-4 w-4 mr-2 text-pink-400" />
-              Instagram
-            </Button>
-            
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={shareViaSMS}
-              className="bg-green-900/20 border-green-500/20 hover:bg-green-800/40"
-            >
-              <MessageSquare className="h-4 w-4 mr-2 text-green-400" />
-              SMS
-            </Button>
-            
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={shareViaEmail}
-              className="bg-amber-900/20 border-amber-500/20 hover:bg-amber-800/40"
-            >
-              <Mail className="h-4 w-4 mr-2 text-amber-400" />
-              Email
-            </Button>
-            
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={copyReferralLink}
-              className="bg-gray-800 border-gray-600 hover:bg-gray-700"
-            >
-              <Copy className="h-4 w-4 mr-2 text-gray-400" />
-              Copy Link
-            </Button>
-          </motion.div>
-        )}
+            <Facebook className="h-4 w-4 mr-2" />
+            Facebook
+          </Button>
+          
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={shareViaTwitter}
+            className="flex-1 min-w-[80px]"
+          >
+            <Twitter className="h-4 w-4 mr-2" />
+            Twitter
+          </Button>
+          
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={shareViaInstagram}
+            className="flex-1 min-w-[80px]"
+          >
+            <Instagram className="h-4 w-4 mr-2" />
+            Instagram
+          </Button>
+          
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={shareViaSMS}
+            className="flex-1 min-w-[80px]"
+          >
+            <MessageSquare className="h-4 w-4 mr-2" />
+            SMS
+          </Button>
+          
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={shareViaEmail}
+            className="flex-1 min-w-[80px]"
+          >
+            <Mail className="h-4 w-4 mr-2" />
+            Email
+          </Button>
+        </div>
       </div>
     </div>
   );

@@ -1,5 +1,6 @@
 
 import { Button } from "@/components/ui/button";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface ImpactPeriodToggleProps {
   period: "day" | "month" | "year" | "all-time";
@@ -12,6 +13,8 @@ export function ImpactPeriodToggle({
   setPeriod, 
   includeAllTime = true
 }: ImpactPeriodToggleProps) {
+  const isMobile = useIsMobile();
+  
   const periods = [
     { value: "day", label: "Daily" },
     { value: "month", label: "Monthly" },
@@ -23,8 +26,8 @@ export function ImpactPeriodToggle({
   }
 
   return (
-    <div className="flex justify-center mb-2">
-      <div className="inline-flex bg-black rounded-md p-1">
+    <div className="flex justify-center mb-4">
+      <div className="inline-flex bg-black rounded-md">
         {periods.map((item) => (
           <Button
             key={item.value}

@@ -1,20 +1,28 @@
 
 import { useState } from "react";
 import { Card } from "@/components/ui/card";
-import { ImpactLayout } from "@/components/dashboard/private/impact/ImpactLayout";
-import { useAuthState } from "@/hooks/firebase/useAuthState";
+import { Waves, Recycle, Leaf, Coins } from "lucide-react";
+import { ImpactCard } from "@/components/dashboard/private/impact/ImpactCard";
+import { useImpactCalculations } from "@/hooks/dashboard/useImpactCalculations";
 import { useFirestoreUserData } from "@/hooks/dashboard/useFirestoreUserData";
-import { useEffect } from "react";
+import { useAuthState } from "@/hooks/firebase/useAuthState";
+import { ImpactTabs } from "@/components/dashboard/private/impact/ImpactTabs";
 
 export function ImpactPage() {
-  const [userName, setUserName] = useState<string>("");
+  const [period, setPeriod] = useState<"day" | "month" | "year" | "all-time">("year");
+  const [activeTab, setActiveTab] = useState("environmental");
+  const [config, setConfig] = useState({
+    bottleSize: 0.5,  // Default to 0.5L bottles
+    bottleCost: 1.10, // Default to €1.10 per bottle
+    userType: 'home'  // Always home user
+  });
   
-  // Auth and user data
   const { user } = useAuthState();
   const { fetchUserData } = useFirestoreUserData();
+  const [userName, setUserName] = useState<string>("");
   
   // Fetch user data when component mounts
-  useEffect(() => {
+  useState(() => {
     const loadUserData = async () => {
       if (user?.uid) {
         const userData = await fetchUserData(user.uid);
@@ -25,22 +33,108 @@ export function ImpactPage() {
     };
     
     loadUserData();
-  }, [user, fetchUserData]);
+  });
+  
+  const { 
+    bottlesSaved, 
+    waterSaved, 
+    plasticSaved, 
+    co2Saved, 
+    moneySaved
+  } = useImpactCalculations(period, config);
+
+  const handleConfigChange = (newConfig: Partial<typeof config>) => {
+    setConfig(prev => ({ ...prev, ...newConfig }));
+  };
+
+  // Format numbers with specified decimal places
+  const formatNumber = (value: number) => value.toLocaleString(undefined, { maximumFractionDigits: 1 });
+  const formatMoney = (value: number) => `€${value.toLocaleString(undefined, { maximumFractionDigits: 2, minimumFractionDigits: 2 })}`;
 
   return (
-    <div className="space-y-6">
-      <Card className="p-4 md:p-6 bg-spotify-darker border-spotify-accent overflow-hidden">
-        <div className="space-y-4">
+    <div className="space-y-4">
+      <Card className="p-6 bg-spotify-darker border-spotify-accent overflow-hidden">
+        <div className="space-y-3">
           <div className="text-center">
-            <h2 className="text-xl md:text-2xl font-bold">
+            <h2 className="text-2xl font-bold">
               {userName ? `${userName}'s` : 'Your'} Impact Calculator
             </h2>
-            <p className="text-gray-400 mt-1 text-sm md:text-base">
-              See how MYWATER system helps you save the environment and money
+            <p className="text-gray-400 mt-1">
+              See how MYWATER system helps you save
             </p>
           </div>
 
-          <ImpactLayout />
+          <ImpactTabs 
+            period={period} 
+            setPeriod={setPeriod} 
+            config={config}
+            onConfigChange={handleConfigChange}
+            activeTab={activeTab}
+            setActiveTab={setActiveTab}
+          />
+
+          {activeTab === "environmental" && (
+            <div className="space-y-6">
+              <div className="text-center text-gray-400">
+                <p>Using MYWATER instead of plastic bottles has already saved:</p>
+                <p className="mt-0.5 text-xs text-gray-500">
+                  Based on {config.bottleSize}L bottles at €{config.bottleCost?.toFixed(2)} each
+                </p>
+              </div>
+              
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <ImpactCard
+                  title="Bottles Saved"
+                  value={formatNumber(bottlesSaved)}
+                  subtext="Bottles Saved"
+                  icon={Waves}
+                  className="bg-blue-900/20 border-blue-600/20"
+                  iconColor="text-blue-400"
+                />
+                <ImpactCard
+                  title="Money Saved"
+                  value={formatMoney(moneySaved)}
+                  subtext="Money Saved"
+                  icon={Coins}
+                  className="bg-amber-900/20 border-amber-600/20"
+                  iconColor="text-amber-400"
+                />
+                <ImpactCard
+                  title={`${formatNumber(co2Saved)} kg`}
+                  subtext="CO₂ Reduced"
+                  icon={Leaf}
+                  className="bg-emerald-900/20 border-emerald-600/20"
+                  iconColor="text-emerald-400"
+                />
+                <ImpactCard
+                  title={`${formatNumber(plasticSaved)} kg`}
+                  subtext="Plastic Saved"
+                  icon={Recycle}
+                  className="bg-green-900/20 border-green-600/20"
+                  iconColor="text-green-400"
+                />
+              </div>
+
+              {/* User badges for gamification */}
+              <div className="flex justify-center flex-wrap gap-2 mt-3">
+                {bottlesSaved >= 100 && (
+                  <div className="flex items-center bg-gradient-to-r from-blue-500 to-cyan-500 px-3 py-1 rounded-full">
+                    <span className="text-sm font-medium">100+ Bottles</span>
+                  </div>
+                )}
+                {bottlesSaved >= 500 && (
+                  <div className="flex items-center bg-gradient-to-r from-green-500 to-emerald-500 px-3 py-1 rounded-full">
+                    <span className="text-sm font-medium">500+ Bottles</span>
+                  </div>
+                )}
+                {bottlesSaved >= 1000 && (
+                  <div className="flex items-center bg-gradient-to-r from-purple-500 to-pink-500 px-3 py-1 rounded-full">
+                    <span className="text-sm font-medium">1000+ Bottles</span>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
         </div>
       </Card>
     </div>

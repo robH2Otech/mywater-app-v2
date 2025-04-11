@@ -1,5 +1,6 @@
 
-import { Bike, Car, Leaf, Factory } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Leaf, Car, Smartphone, TrainFront } from "lucide-react";
 
 interface ReductionEquivalentsProps {
   co2Saved: number;
@@ -8,74 +9,89 @@ interface ReductionEquivalentsProps {
   period: "day" | "month" | "year" | "all-time";
 }
 
-export function ReductionEquivalents({
+export function ReductionEquivalents({ 
   co2Saved,
   plasticSaved,
   bottlesSaved,
   period
 }: ReductionEquivalentsProps) {
-  const formatNumber = (num: number) => {
-    if (num < 1) return num.toFixed(2);
-    if (num < 10) return num.toFixed(1);
-    return Math.round(num).toLocaleString();
-  };
-  
-  const periodLabel = period === "day" 
-    ? "daily" 
-    : period === "month" 
-      ? "monthly" 
-      : period === "all-time"
-        ? "lifetime"
-        : "yearly";
-  
-  // Calculate equivalents based on CO2 saved
-  const carKm = co2Saved / 0.14; // 140g CO2 per km in average car
-  const treeDays = co2Saved / 0.022; // 22g CO2 per day absorbed by one tree
-  const phoneCharges = co2Saved * 400; // 2.5g CO2 per full phone charge
-  
+  // Calculate equivalents
+  // ~6.5 kilometers per kg of CO2
+  const carKilometers = Math.round(co2Saved * 6.5); 
+  const treesPlanted = Math.round(co2Saved / 20); // ~20kg CO2 per tree per year
+  const smartphoneCharges = Math.round(co2Saved * 60); // ~60 charges per kg of CO2
+  const trainKilometers = Math.round(co2Saved * 15); // ~15km train ride per kg of CO2 saved
+
   return (
-    <div className="bg-green-900/20 rounded-lg p-4 border border-green-500/20">
-      <h3 className="text-lg font-medium mb-4 text-center">Environmental Equivalents</h3>
-      <p className="text-sm text-gray-400 mb-4 text-center">
-        Your {periodLabel} environmental impact is equivalent to:
+    <div className="space-y-4">
+      <h3 className="font-medium text-center mb-3">
+        Your Environmental Impact Equivalents
+      </h3>
+      
+      <p className="text-sm text-center text-gray-400 mb-3">
+        See how your plastic reduction translates to real-world impact
       </p>
       
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-        <div className="flex items-center bg-spotify-dark/60 p-3 rounded-lg">
-          <div className="mr-4 bg-green-900/40 p-2 rounded-full">
-            <Car className="h-6 w-6 text-green-400" />
-          </div>
-          <div>
-            <p className="text-sm font-medium text-green-300">{formatNumber(carKm)} km</p>
-            <p className="text-xs text-gray-400">Not driven in a car</p>
-          </div>
-        </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+        {/* Car Kilometers Equivalent */}
+        <Card className="bg-spotify-accent/10">
+          <CardHeader className="pb-1 pt-3">
+            <CardTitle className="text-sm flex items-center">
+              <Car className="h-4 w-4 text-blue-400 mr-1.5" />
+              Car Kilometers Not Driven
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="text-center pb-3">
+            <p className="text-2xl font-bold">{carKilometers}</p>
+            <p className="text-xs text-gray-400">kilometers</p>
+          </CardContent>
+        </Card>
         
-        <div className="flex items-center bg-spotify-dark/60 p-3 rounded-lg">
-          <div className="mr-4 bg-green-900/40 p-2 rounded-full">
-            <Leaf className="h-6 w-6 text-green-400" />
-          </div>
-          <div>
-            <p className="text-sm font-medium text-green-300">{formatNumber(treeDays)} days</p>
-            <p className="text-xs text-gray-400">Of one tree absorbing CO₂</p>
-          </div>
-        </div>
+        {/* Trees Planted */}
+        <Card className="bg-spotify-accent/10">
+          <CardHeader className="pb-1 pt-3">
+            <CardTitle className="text-sm flex items-center">
+              <Leaf className="h-4 w-4 text-green-400 mr-1.5" />
+              Trees Planted Equivalent
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="text-center pb-3">
+            <p className="text-2xl font-bold">{treesPlanted}</p>
+            <p className="text-xs text-gray-400">trees</p>
+          </CardContent>
+        </Card>
         
-        <div className="flex items-center bg-spotify-dark/60 p-3 rounded-lg">
-          <div className="mr-4 bg-green-900/40 p-2 rounded-full">
-            <Factory className="h-6 w-6 text-green-400" />
-          </div>
-          <div>
-            <p className="text-sm font-medium text-green-300">{formatNumber(bottlesSaved)} bottles</p>
-            <p className="text-xs text-gray-400">Not manufactured</p>
-          </div>
-        </div>
+        {/* Smartphone Charges */}
+        <Card className="bg-spotify-accent/10">
+          <CardHeader className="pb-1 pt-3">
+            <CardTitle className="text-sm flex items-center">
+              <Smartphone className="h-4 w-4 text-amber-400 mr-1.5" />
+              Smartphone Charges
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="text-center pb-3">
+            <p className="text-2xl font-bold">{smartphoneCharges}</p>
+            <p className="text-xs text-gray-400">charges</p>
+          </CardContent>
+        </Card>
         
-        <div className="sm:col-span-2 md:col-span-3">
-          <div className="text-center py-2 px-4 bg-green-900/20 rounded-lg text-sm">
-            <p className="text-gray-300">You've saved enough energy to charge a smartphone {formatNumber(phoneCharges)} times!</p>
-          </div>
-        </div>
+        {/* Train Ride */}
+        <Card className="bg-spotify-accent/10">
+          <CardHeader className="pb-1 pt-3">
+            <CardTitle className="text-sm flex items-center">
+              <TrainFront className="h-4 w-4 text-emerald-400 mr-1.5" />
+              Train Ride
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="text-center pb-3">
+            <p className="text-2xl font-bold">{trainKilometers}</p>
+            <p className="text-xs text-gray-400">kilometers</p>
+          </CardContent>
+        </Card>
+      </div>
+      
+      <div className="text-center text-xs text-gray-500 mt-2">
+        <p>Equivalents are estimated based on industry standards and research data.</p>
       </div>
     </div>
   );

@@ -1,11 +1,10 @@
 
 import { Card, CardContent } from "@/components/ui/card";
-import { Calendar, Droplets, Share2, Timer } from "lucide-react";
+import { Filter, Calendar, Droplets, Share2 } from "lucide-react";
 import { DocumentData } from "firebase/firestore";
-import { PrivateUser } from "@/types/privateUser";
 
 interface HomeStatsProps {
-  userData: DocumentData | PrivateUser | null;
+  userData: DocumentData | null;
   daysUntilReplacement: number | null;
   isReplacementOverdue: boolean;
   isReplacementDueSoon: boolean;
@@ -23,7 +22,7 @@ export function HomeStats({
       <Card className="glass hover:bg-spotify-accent/40 transition-colors">
         <CardContent className="p-4 flex items-center gap-3">
           <div className="h-10 w-10 rounded-full bg-spotify-dark flex items-center justify-center">
-            <Timer className="h-5 w-5 text-cyan-400" />
+            <Filter className="h-5 w-5 text-cyan-400" />
           </div>
           <div>
             <p className="text-xs text-gray-400">Cartridge Status</p>

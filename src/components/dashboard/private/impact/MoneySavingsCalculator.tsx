@@ -1,6 +1,7 @@
 
 import { useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
+import { FormInput } from "@/components/shared/FormInput";
 import { ImpactCard } from "./ImpactCard";
 import { Coins, Calculator, TrendingUp } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
