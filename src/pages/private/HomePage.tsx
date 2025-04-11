@@ -1,9 +1,8 @@
 
 import { usePrivateUserData } from "@/hooks/dashboard/usePrivateUserData";
 import { HomeStats } from "@/components/dashboard/private/HomeStats";
+import { CartridgeVisualization } from "@/components/users/private/CartridgeVisualization";
 import { CartridgeAlert } from "@/components/dashboard/private/CartridgeAlert";
-import { Card } from "@/components/ui/card";
-import { Filter, Calendar } from "lucide-react";
 
 export function HomePage() {
   const {
@@ -32,15 +31,20 @@ export function HomePage() {
         formattedReplacementDate={formattedReplacementDate}
       />
       
-      <div className="grid grid-cols-1 md:grid-cols-1 gap-6">
-        <div className="w-full">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="md:col-span-1">
           <HomeStats 
             userData={userData}
             daysUntilReplacement={daysUntilReplacement}
             isReplacementOverdue={isReplacementOverdue}
             isReplacementDueSoon={isReplacementDueSoon}
-            cartridgeUsagePercent={cartridgeUsagePercent}
           />
+        </div>
+        
+        <div className="md:col-span-2">
+          <div className="bg-spotify-darker rounded-lg border border-white/10 h-full p-6 flex items-center justify-center">
+            <CartridgeVisualization percentage={cartridgeUsagePercent} />
+          </div>
         </div>
       </div>
     </div>
