@@ -9,6 +9,7 @@ interface HomeStatsProps {
   daysUntilReplacement: number | null;
   isReplacementOverdue: boolean;
   isReplacementDueSoon: boolean;
+  cartridgeUsagePercent: number;
 }
 
 export function HomeStats({ 
@@ -16,6 +17,7 @@ export function HomeStats({
   daysUntilReplacement, 
   isReplacementOverdue,
   isReplacementDueSoon,
+  cartridgeUsagePercent
 }: HomeStatsProps) {
   return (
     <div className="flex flex-col gap-4">
@@ -25,19 +27,30 @@ export function HomeStats({
           <div className="h-10 w-10 rounded-full bg-spotify-dark flex items-center justify-center">
             <Filter className="h-5 w-5 text-cyan-400" />
           </div>
-          <div>
+          <div className="flex-1">
             <p className="text-xs text-gray-400">Cartridge Status</p>
-            <p className={`text-sm font-medium ${
-              isReplacementOverdue 
-                ? "text-red-400" 
-                : isReplacementDueSoon 
-                  ? "text-amber-400" 
-                  : "text-green-400"
-            }`}>
-              {isReplacementOverdue 
-                ? `Overdue by ${Math.abs(daysUntilReplacement!)} days` 
-                : `In ${daysUntilReplacement} days`}
-            </p>
+            <div className="flex justify-between items-center">
+              <p className={`text-sm font-medium ${
+                isReplacementOverdue 
+                  ? "text-red-400" 
+                  : isReplacementDueSoon 
+                    ? "text-amber-400" 
+                    : "text-green-400"
+              }`}>
+                {isReplacementOverdue 
+                  ? `Overdue by ${Math.abs(daysUntilReplacement!)} days` 
+                  : `In ${daysUntilReplacement} days`}
+              </p>
+              <div className="w-24 h-2 bg-gray-700 rounded-full overflow-hidden">
+                <div 
+                  className={`h-full ${
+                    cartridgeUsagePercent > 80 ? "bg-red-500" : 
+                    cartridgeUsagePercent > 50 ? "bg-amber-500" : 
+                    "bg-green-500"}`} 
+                  style={{ width: `${cartridgeUsagePercent}%` }}
+                />
+              </div>
+            </div>
           </div>
         </CardContent>
       </Card>
