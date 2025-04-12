@@ -1,9 +1,7 @@
-
 import { 
   Home, 
   UserCircle, 
-  Share2, 
-  Calculator, 
+  Share2,
   Wrench, 
   HelpCircle, 
   ShoppingCart, 
@@ -38,7 +36,6 @@ export const PrivateSidebar = ({ isMobile, closeSidebar }: PrivateSidebarProps) 
     { name: "Home", icon: Home, path: "/private-dashboard" },
     { name: "My Profile", icon: UserCircle, path: "/private-dashboard/profile" },
     { name: "Refer a Friend", icon: Share2, path: "/private-dashboard/refer" },
-    { name: "Impact Calculator", icon: Calculator, path: "/private-dashboard/impact" },
     { name: "Installation Guide", icon: Wrench, path: "/private-dashboard/install" },
     { name: "Support", icon: HelpCircle, path: "/private-dashboard/support" },
     { name: "Shop", icon: ShoppingCart, path: "/private-dashboard/shop" },
@@ -47,7 +44,6 @@ export const PrivateSidebar = ({ isMobile, closeSidebar }: PrivateSidebarProps) 
 
   return (
     <div className={`h-screen ${isMobile ? "w-[250px]" : "w-64"} bg-spotify-darker border-r border-white/10 flex flex-col`}>
-      {/* Sidebar header with close button for mobile */}
       <div className="flex items-center justify-between p-4">
         <div className="flex items-center gap-2">
           <img src="/lovable-uploads/f2f80940-5fa8-45b6-a3dd-78b6282cf10e.png" alt="Water Filter" className="h-8 w-8 object-contain" />
@@ -70,7 +66,6 @@ export const PrivateSidebar = ({ isMobile, closeSidebar }: PrivateSidebarProps) 
         )}
       </div>
       
-      {/* Navigation links */}
       <nav className="space-y-1 flex-grow overflow-y-auto p-2">
         {navigation.map((item) => {
           const isActive = location.pathname === item.path || 
@@ -93,7 +88,6 @@ export const PrivateSidebar = ({ isMobile, closeSidebar }: PrivateSidebarProps) 
           );
         })}
         
-        {/* Logout button */}
         <button
           onClick={handleLogout}
           className="w-full flex items-center gap-3 px-4 py-3 rounded-md transition-colors text-gray-400 hover:text-white hover:bg-spotify-accent"
