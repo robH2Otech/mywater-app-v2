@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { ImpactCalculatorContent } from "@/components/dashboard/private/impact/ImpactCalculatorContent";
 import { useFirestoreUserData } from "@/hooks/dashboard/useFirestoreUserData";
 import { useAuthState } from "@/hooks/firebase/useAuthState";
@@ -17,7 +17,7 @@ export function ImpactPage() {
   const [userName, setUserName] = useState<string>("");
   
   // Fetch user data when component mounts
-  useState(() => {
+  useEffect(() => {
     const loadUserData = async () => {
       if (user?.uid) {
         const userData = await fetchUserData(user.uid);
@@ -28,7 +28,7 @@ export function ImpactPage() {
     };
     
     loadUserData();
-  });
+  }, [user, fetchUserData]);
   
   const handleConfigChange = (newConfig: Partial<typeof config>) => {
     setConfig(prev => ({ ...prev, ...newConfig }));

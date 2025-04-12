@@ -15,12 +15,12 @@ interface ImpactCalculatorContentProps {
   config: {
     bottleSize: number;
     bottleCost: number;
-    userType: string;
+    userType: "home"; // Changed to literal type "home" instead of string
   };
   onConfigChange: (config: Partial<{
     bottleSize: number;
     bottleCost: number;
-    userType: string;
+    userType: "home"; // Changed to literal type "home"
   }>) => void;
   userName: string;
 }

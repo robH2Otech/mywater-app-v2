@@ -90,7 +90,8 @@ export const CartridgeVisualization: React.FC<CartridgeVisualizationProps> = ({
         </div>
       </div>
       
-      <style jsx global>{`
+      {/* Fixed the style element by removing jsx and global props */}
+      <style dangerouslySetInnerHTML={{ __html: `
         @keyframes bubble {
           0%, 100% {
             transform: translateY(0) scale(1);
@@ -104,7 +105,7 @@ export const CartridgeVisualization: React.FC<CartridgeVisualizationProps> = ({
         .animate-bubble {
           animation: bubble 4s infinite ease-in-out;
         }
-      `}</style>
+      `}} />
     </div>
   );
 };
