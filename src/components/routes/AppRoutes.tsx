@@ -46,7 +46,7 @@ export function AppRoutes() {
         }
       />
       
-      {/* Include all admin routes directly - not as a component */}
+      {/* Include all admin routes directly */}
       <Route
         path="/units"
         element={

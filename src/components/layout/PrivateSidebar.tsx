@@ -8,7 +8,8 @@ import {
   HelpCircle, 
   ShoppingCart, 
   Settings, 
-  LogOut 
+  LogOut,
+  X 
 } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -63,6 +64,7 @@ export const PrivateSidebar = ({ isMobile, closeSidebar }: PrivateSidebarProps) 
             onClick={closeSidebar}
             className="text-gray-400 hover:text-white"
           >
+            <X className="h-5 w-5" />
             <span className="sr-only">Close menu</span>
           </Button>
         )}
@@ -102,4 +104,4 @@ export const PrivateSidebar = ({ isMobile, closeSidebar }: PrivateSidebarProps) 
       </nav>
     </div>
   );
-};
+}
