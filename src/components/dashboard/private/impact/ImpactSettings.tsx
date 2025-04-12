@@ -31,7 +31,8 @@ export function ImpactSettings({ currentConfig, onConfigChange }: ImpactSettings
     
     onConfigChange({
       bottleSize: numericSize,
-      co2PerBottle: co2Value
+      co2PerBottle: co2Value,
+      plasticPerBottle: numericSize * 40
     });
   };
 

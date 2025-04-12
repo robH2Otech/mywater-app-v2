@@ -5,7 +5,6 @@ import { ImpactDetails } from "./ImpactDetails";
 import { MoneySavingsCalculator } from "./MoneySavingsCalculator";
 import { useImpactCalculations, ImpactConfig } from "@/hooks/dashboard/useImpactCalculations";
 import { ImpactSettings } from "./ImpactSettings";
-import { formatMetricValue } from "@/utils/formatUnitVolume";
 import { ReductionEquivalents } from "./ReductionEquivalents";
 import { useIsMobile } from "@/hooks/use-mobile";
 

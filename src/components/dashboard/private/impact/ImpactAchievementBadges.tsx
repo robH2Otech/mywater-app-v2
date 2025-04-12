@@ -45,7 +45,7 @@ export function ImpactAchievementBadges({ bottlesSaved }: ImpactAchievementBadge
             style={{ width: `${progressPercentage}%` }}
           ></div>
         </div>
-        <p className="text-sm mt-1 text-gray-500">{bottlesSaved}/100 bottles saved</p>
+        <p className="text-sm mt-1 text-gray-500">{bottlesSaved.toFixed(0)}/100 bottles saved</p>
       </div>
     );
   }

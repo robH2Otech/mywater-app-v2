@@ -14,13 +14,13 @@ import {
 export interface ImpactConfig {
   bottleSize: number;  // Size in liters (0.5, 1.0, 1.5)
   bottleCost: number;  // Cost in EUR
-  co2PerBottle: number; // CO2 in grams per bottle
-  plasticPerBottle: number; // Plastic in grams per bottle
-  dailyIntake: number; // Daily water intake goal in liters
+  co2PerBottle?: number; // CO2 in grams per bottle
+  plasticPerBottle?: number; // Plastic in grams per bottle
+  dailyIntake?: number; // Daily water intake goal in liters
   userType: 'home'; // User type affects which metrics are shown - always 'home' now
 }
 
-// Updated CO2 values per your specification
+// Updated CO2 values per specification
 const getCO2ForBottleSize = (size: number): number => {
   if (size === 0.5) return 160.5;
   if (size === 1.0) return 321;
@@ -49,7 +49,8 @@ export function useImpactCalculations(
     ...DEFAULT_CONFIG, 
     ...config,
     // Ensure CO2 is consistent with bottle size
-    co2PerBottle: config.co2PerBottle || getCO2ForBottleSize(config.bottleSize || DEFAULT_CONFIG.bottleSize)
+    co2PerBottle: config.co2PerBottle || getCO2ForBottleSize(config.bottleSize || DEFAULT_CONFIG.bottleSize),
+    plasticPerBottle: config.plasticPerBottle || (config.bottleSize || DEFAULT_CONFIG.bottleSize) * 40
   };
   
   // Multipliers based on selected period
@@ -69,7 +70,7 @@ export function useImpactCalculations(
   }, [period]);
 
   // Calculate base water consumption in liters
-  const waterConsumedLiters = fullConfig.dailyIntake * periodMultiplier;
+  const waterConsumedLiters = (fullConfig.dailyIntake || DEFAULT_DAILY_INTAKE) * periodMultiplier;
   
   // Calculate impact values
   const bottlesSaved = calculateBottlesSaved(waterConsumedLiters, fullConfig.bottleSize);

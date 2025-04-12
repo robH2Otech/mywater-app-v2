@@ -1,98 +1,111 @@
 
 /**
- * Format volume values based on unit type
- * DROP units use L (liters), other units use m³ (cubic meters)
+ * Utility functions to format unit volumes and calculate environmental impact metrics
  */
-export function formatVolumeWithUnits(volume: number | string | undefined, unitType?: string): string {
-  if (volume === undefined) return '0';
-  
-  // Convert volume to number if it's a string
-  const numericVolume = typeof volume === 'string' ? parseFloat(volume) : volume;
-  
-  // Format based on unit type
-  if (unitType === 'drop') {
-    // For DROP units, use liters (L)
-    return `${numericVolume.toLocaleString()}L`;
-  } else {
-    // For all other units, use cubic meters (m³)
-    return `${numericVolume.toLocaleString()}m³`;
-  }
-}
 
-/**
- * Format specific metrics according to requirements
- */
-export function formatMetricValue(value: number, metricType: 'bottles' | 'money' | 'co2' | 'plastic'): string {
-  switch (metricType) {
-    case 'bottles':
-      return value.toLocaleString(undefined, { maximumFractionDigits: 1, minimumFractionDigits: 1 });
-    case 'money':
-      return value.toLocaleString(undefined, { maximumFractionDigits: 2, minimumFractionDigits: 2 });
-    case 'co2':
-    case 'plastic':
-      return value.toLocaleString(undefined, { maximumFractionDigits: 1, minimumFractionDigits: 1 });
-    default:
-      return value.toLocaleString();
-  }
-}
-
-/**
- * Environmental impact calculation constants
- */
-export interface BottleConfig {
-  size: number;        // in liters (0.5, 1.0, 1.5)
-  cost: number;        // in EUR
-  co2: number;         // in grams per bottle
-  plastic: number;     // in grams per bottle
-}
-
-// Default bottle configurations
-export const BOTTLE_CONFIGS: Record<string, BottleConfig> = {
-  small: { size: 0.5, cost: 1.10, co2: 160.5, plastic: 20 },
-  medium: { size: 1.0, cost: 0.75, co2: 321, plastic: 38 },
-  large: { size: 1.5, cost: 0.31, co2: 481.5, plastic: 56 }
+// Bottle configuration constants
+export const BOTTLE_CONFIGS = {
+  small: { size: 0.5, cost: 1.1, plastic: 20 }, // 0.5L bottle, €1.10, 20g plastic
+  medium: { size: 1.0, cost: 1.5, plastic: 40 }, // 1.0L bottle, €1.50, 40g plastic
+  large: { size: 1.5, cost: 2.0, plastic: 60 }, // 1.5L bottle, €2.00, 60g plastic
+  xlarge: { size: 2.0, cost: 2.5, plastic: 80 } // 2.0L bottle, €2.50, 80g plastic
 };
 
-// Default daily water intake goal in liters
+// Default daily water intake recommendation (in liters)
 export const DEFAULT_DAILY_INTAKE = 2.0;
 
 /**
- * Calculate bottles saved based on volume and bottle size
+ * Calculates the number of plastic bottles saved
+ * @param litersConsumed - Amount of water consumed in liters
+ * @param bottleSize - Size of bottle in liters (default: 0.5L)
+ * @returns Number of bottles saved
  */
-export function calculateBottlesSaved(volumeLiters: number, bottleSize: number = 0.5): number {
-  return volumeLiters / bottleSize;
-}
+export const calculateBottlesSaved = (
+  litersConsumed: number, 
+  bottleSize: number = BOTTLE_CONFIGS.small.size
+): number => {
+  return litersConsumed / bottleSize;
+};
 
 /**
- * Calculate money saved based on bottles saved and bottle cost
+ * Calculates money saved by not purchasing bottled water
+ * @param bottlesSaved - Number of bottles saved
+ * @param bottleCost - Cost per bottle in euros (default: €1.10)
+ * @returns Money saved in euros
  */
-export function calculateMoneySaved(bottlesSaved: number, bottleCost: number = 1.10): number {
+export const calculateMoneySaved = (
+  bottlesSaved: number,
+  bottleCost: number = BOTTLE_CONFIGS.small.cost
+): number => {
   return bottlesSaved * bottleCost;
-}
+};
 
 /**
- * Calculate CO2 reduction based on bottles saved and CO2 per bottle
+ * Calculates CO2 emissions reduction
+ * @param bottlesSaved - Number of bottles saved
+ * @param co2PerBottle - CO2 emissions per bottle in grams (default: based on 0.5L bottle)
+ * @returns CO2 reduction in kg
  */
-export function calculateCO2Reduction(bottlesSaved: number, co2PerBottle: number = 160.5): number {
-  return bottlesSaved * co2PerBottle / 1000; // convert to kg
-}
+export const calculateCO2Reduction = (
+  bottlesSaved: number,
+  co2PerBottle: number = 160.5 // 321g per liter for 0.5L bottle = 160.5g
+): number => {
+  return (bottlesSaved * co2PerBottle) / 1000; // Convert from g to kg
+};
 
 /**
- * Calculate plastic reduction based on bottles saved and plastic per bottle
+ * Calculates plastic waste reduction
+ * @param bottlesSaved - Number of bottles saved
+ * @param plasticPerBottle - Plastic per bottle in grams (default: based on 0.5L bottle)
+ * @returns Plastic reduction in kg
  */
-export function calculatePlasticReduction(bottlesSaved: number, plasticPerBottle: number = 20): number {
-  return bottlesSaved * plasticPerBottle / 1000; // convert to kg
-}
+export const calculatePlasticReduction = (
+  bottlesSaved: number,
+  plasticPerBottle: number = BOTTLE_CONFIGS.small.plastic
+): number => {
+  return (bottlesSaved * plasticPerBottle) / 1000; // Convert from g to kg
+};
 
 /**
- * Generate equivalents for environmental impact
+ * Formats a metric value for display with appropriate units
+ * @param value - Numeric value to format
+ * @param metricType - Type of metric ('bottles', 'plastic', 'co2', 'money')
+ * @returns Formatted string
  */
-export function getEnvironmentalEquivalents(co2Kg: number, plasticKg: number) {
+export const formatMetricValue = (
+  value: number,
+  metricType: 'bottles' | 'plastic' | 'co2' | 'money'
+): string => {
+  if (value >= 1000000) {
+    return `${(value / 1000000).toFixed(1)}M`;
+  } else if (value >= 1000) {
+    return `${(value / 1000).toFixed(1)}k`;
+  } else {
+    return value.toFixed(1);
+  }
+};
+
+/**
+ * Calculates environmental equivalents for CO2 and plastic reduction
+ * @param co2Saved - CO2 reduction in kg
+ * @param plasticSaved - Plastic reduction in kg
+ * @returns Object with equivalent metrics
+ */
+export const getEnvironmentalEquivalents = (
+  co2Saved: number,
+  plasticSaved: number
+) => {
   return {
-    carKilometers: Math.round(co2Kg * 6),           // ~6km per kg of CO2
-    smartphoneCharges: Math.round(co2Kg * 120),     // ~120 charges per kg of CO2
-    treesEquivalent: (co2Kg / 21).toFixed(2),       // ~21kg CO2 per tree per year
-    plasticBottlesWeight: Math.round(plasticKg * 50), // ~50 bottles per kg
-    recyclingEquivalent: (plasticKg * 2).toFixed(1)   // impact of recycling 2x the weight
+    // Driving a car produces ~120g CO2 per km, so dividing by 0.12 gives km saved
+    carKilometers: Math.round(co2Saved / 0.12),
+    
+    // One tree absorbs ~20kg CO2 per year
+    treesEquivalent: Math.round(co2Saved / 20),
+    
+    // One smartphone charge ~0.01kg CO2
+    smartphoneCharges: Math.round(co2Saved / 0.01),
+    
+    // Each kg of recycled plastic saves ~1.5kg CO2
+    recyclingEquivalent: Math.round(plasticSaved * 1.5)
   };
-}
+};
