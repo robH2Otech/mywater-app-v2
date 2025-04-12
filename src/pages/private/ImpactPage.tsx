@@ -9,7 +9,7 @@ export function ImpactPage() {
   const [config, setConfig] = useState({
     bottleSize: 0.5,  // Default to 0.5L bottles
     bottleCost: 1.10, // Default to €1.10 per bottle
-    userType: 'home'  // Always home user
+    userType: "home" as const  // Explicitly typed as "home" literal
   });
   
   const { user } = useAuthState();

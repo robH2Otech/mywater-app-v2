@@ -39,8 +39,10 @@ export function AppRoutes() {
         }
       />
       
-      {/* Additional Admin Routes */}
-      <AdminRoutes />
+      {/* Additional Admin Routes - Use fragment to include all routes from AdminRoutes */}
+      <>
+        <AdminRoutes />
+      </>
       
       {/* Client Requests Route */}
       <Route 
