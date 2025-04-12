@@ -45,6 +45,9 @@ export const PrivateSidebar = ({ isMobile, closeSidebar }: PrivateSidebarProps) 
     { name: "Settings", icon: Settings, path: "/private-dashboard/settings" },
   ];
 
+  // Add console log to verify active path
+  console.log("Current location:", location.pathname);
+
   return (
     <div className={`h-screen ${isMobile ? "w-[250px]" : "w-64"} bg-spotify-darker border-r border-white/10 flex flex-col`}>
       <div className="flex items-center justify-between p-4">

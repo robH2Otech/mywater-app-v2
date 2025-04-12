@@ -16,12 +16,14 @@ export function ImpactPage() {
   const { fetchUserData } = useFirestoreUserData();
   const { user } = useAuthState();
   
+  // Make sure this useEffect runs correctly to fetch user data
   useEffect(() => {
     const loadUserData = async () => {
       if (user?.uid) {
         const userData = await fetchUserData(user.uid);
         if (userData) {
           setUserName(userData.first_name || '');
+          console.log("Impact page: User data loaded", userData.first_name);
         }
       }
     };
@@ -32,6 +34,9 @@ export function ImpactPage() {
   const handleConfigChange = (newConfig: Partial<typeof config>) => {
     setConfig(prev => ({ ...prev, ...newConfig }));
   };
+
+  // Add console log to verify this component is being rendered
+  console.log("ImpactPage rendering, period:", period);
 
   return (
     <div className="container mx-auto p-4 max-w-5xl">
