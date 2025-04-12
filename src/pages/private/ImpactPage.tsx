@@ -16,7 +16,7 @@ export function ImpactPage() {
   const { fetchUserData } = useFirestoreUserData();
   const [userName, setUserName] = useState<string>("");
   
-  // Fetch user data when component mounts
+  // Fetch user data when component mounts - Fixed: changed from useState to useEffect
   useEffect(() => {
     const loadUserData = async () => {
       if (user?.uid) {
@@ -28,7 +28,7 @@ export function ImpactPage() {
     };
     
     loadUserData();
-  }, [user, fetchUserData]);
+  }, [user, fetchUserData]); // Added missing dependencies
   
   const handleConfigChange = (newConfig: Partial<typeof config>) => {
     setConfig(prev => ({ ...prev, ...newConfig }));
