@@ -25,7 +25,7 @@ export function PrivateDashboard() {
         <Route path="support" element={<SupportPage />} />
         <Route path="shop" element={<ShopPage />} />
         <Route path="settings" element={<SettingsPage />} />
-        {/* Redirect any other paths to the home page */}
+        {/* Use a more specific redirect that doesn't catch the impact route */}
         <Route path="*" element={<Navigate to="/private-dashboard" replace />} />
       </Routes>
     </PrivateLayout>

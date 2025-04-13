@@ -73,10 +73,11 @@ export const PrivateSidebar = ({ isMobile, closeSidebar }: PrivateSidebarProps) 
       
       <nav className="space-y-1 flex-grow overflow-y-auto p-2">
         {navigation.map((item) => {
-          // Fix the active state logic by comparing exact paths
-          const isActive = location.pathname === item.path;
+          // Fix the active state logic by comparing paths correctly - modified to properly detect active state
+          const isActive = location.pathname === item.path || 
+                         (location.pathname.startsWith(item.path) && item.path !== "/private-dashboard");
           
-          console.log(`Navigation item: ${item.name}, path: ${item.path}, isActive: ${isActive}`);
+          console.log(`Navigation item: ${item.name}, path: ${item.path}, isActive: ${isActive}, location: ${location.pathname}`);
           
           return (
             <Link
