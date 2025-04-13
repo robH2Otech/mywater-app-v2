@@ -44,7 +44,6 @@ export function ImpactPage() {
 
   return (
     <>
-      {/* Explicitly showing this is the Impact page */}
       <div className="container mx-auto p-4 max-w-5xl">
         <ImpactCalculatorContent 
           period={period}

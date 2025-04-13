@@ -48,7 +48,6 @@ export const PrivateSidebar = ({ isMobile, closeSidebar }: PrivateSidebarProps) 
   // Improved logging to help debug the active path issue
   console.log("PrivateSidebar - Current location.pathname:", location.pathname);
   console.log("PrivateSidebar - Impact path:", "/private-dashboard/impact");
-  console.log("PrivateSidebar - Is Impact active?:", location.pathname === "/private-dashboard/impact");
 
   return (
     <div className={`h-screen ${isMobile ? "w-[250px]" : "w-64"} bg-spotify-darker border-r border-white/10 flex flex-col`}>
@@ -79,6 +78,8 @@ export const PrivateSidebar = ({ isMobile, closeSidebar }: PrivateSidebarProps) 
           // Fix the active state logic to properly highlight the current page
           const isActive = location.pathname === item.path || 
                         (item.path !== "/private-dashboard" && location.pathname.startsWith(item.path));
+          
+          console.log(`Checking ${item.name}: Path=${item.path}, isActive=${isActive}, location=${location.pathname}`);
           
           return (
             <Link
