@@ -43,16 +43,14 @@ export function ImpactPage() {
   };
 
   return (
-    <>
-      <div className="container mx-auto p-4 max-w-5xl">
-        <ImpactCalculatorContent 
-          period={period}
-          setPeriod={setPeriod}
-          config={config}
-          onConfigChange={handleConfigChange}
-          userName={userName}
-        />
-      </div>
-    </>
+    <div className="container mx-auto p-4 max-w-5xl">
+      <ImpactCalculatorContent 
+        period={period}
+        setPeriod={setPeriod}
+        config={config}
+        onConfigChange={handleConfigChange}
+        userName={userName}
+      />
+    </div>
   );
 }
