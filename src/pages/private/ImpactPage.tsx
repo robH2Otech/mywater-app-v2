@@ -5,6 +5,8 @@ import { useFirestoreUserData } from "@/hooks/dashboard/useFirestoreUserData";
 import { useAuthState } from "@/hooks/firebase/useAuthState";
 
 export function ImpactPage() {
+  console.log("ImpactPage component is being RENDERED");
+  
   const [period, setPeriod] = useState<"day" | "month" | "year" | "all-time">("month");
   const [config, setConfig] = useState({
     bottleSize: 0.5, // Default to 0.5L bottles
@@ -16,14 +18,19 @@ export function ImpactPage() {
   const { fetchUserData } = useFirestoreUserData();
   const { user } = useAuthState();
   
-  // Make sure this useEffect runs correctly to fetch user data
+  // Fetch user data on component mount
   useEffect(() => {
+    console.log("ImpactPage useEffect running to fetch user data");
+    
     const loadUserData = async () => {
       if (user?.uid) {
+        console.log("ImpactPage: Fetching user data for", user.uid);
         const userData = await fetchUserData(user.uid);
         if (userData) {
           setUserName(userData.first_name || '');
-          console.log("Impact page: User data loaded", userData.first_name);
+          console.log("ImpactPage: User data loaded successfully:", userData.first_name);
+        } else {
+          console.log("ImpactPage: No user data found");
         }
       }
     };
@@ -35,18 +42,18 @@ export function ImpactPage() {
     setConfig(prev => ({ ...prev, ...newConfig }));
   };
 
-  // Add console log to verify this component is being rendered
-  console.log("ImpactPage rendering, period:", period);
-
   return (
-    <div className="container mx-auto p-4 max-w-5xl">
-      <ImpactCalculatorContent 
-        period={period}
-        setPeriod={setPeriod}
-        config={config}
-        onConfigChange={handleConfigChange}
-        userName={userName}
-      />
-    </div>
+    <>
+      {/* Explicitly showing this is the Impact page */}
+      <div className="container mx-auto p-4 max-w-5xl">
+        <ImpactCalculatorContent 
+          period={period}
+          setPeriod={setPeriod}
+          config={config}
+          onConfigChange={handleConfigChange}
+          userName={userName}
+        />
+      </div>
+    </>
   );
 }

@@ -32,6 +32,8 @@ export function ImpactCalculatorContent({
   onConfigChange,
   userName 
 }: ImpactCalculatorContentProps) {
+  console.log("ImpactCalculatorContent rendered with userName:", userName);
+  
   const [activeTab, setActiveTab] = useState("environmental");
 
   const { 
@@ -42,9 +44,6 @@ export function ImpactCalculatorContent({
     moneySaved
   } = useImpactCalculations(period, config);
 
-  // Add console log to verify this component is being rendered
-  console.log("ImpactCalculatorContent rendered");
-
   return (
     <div className="space-y-6">
       <motion.div
@@ -52,7 +51,7 @@ export function ImpactCalculatorContent({
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4 }}
       >
-        <h1 className="text-3xl font-bold mb-6 text-center">Environmental Impact</h1>
+        <h1 className="text-3xl font-bold mb-6 text-center">Environmental Impact Dashboard</h1>
         <Card className="p-6 bg-gradient-to-br from-spotify-darker via-slate-900/90 to-spotify-darker border-spotify-accent overflow-hidden">
           <div className="space-y-4">
             <div className="text-center">

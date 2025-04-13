@@ -11,6 +11,9 @@ import { SettingsPage } from "./private/SettingsPage";
 import { ImpactPage } from "./private/ImpactPage";
 
 export function PrivateDashboard() {
+  // Add console logging to diagnose the route rendering
+  console.log("PrivateDashboard rendering - Current path:", window.location.pathname);
+  
   return (
     <PrivateLayout>
       <Routes>
