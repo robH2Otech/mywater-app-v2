@@ -1,3 +1,4 @@
+
 import { Routes, Route, Navigate } from "react-router-dom";
 import { Layout } from "@/components/layout/Layout";
 import { PrivateDashboard } from "@/pages/PrivateDashboard";
@@ -56,7 +57,6 @@ export function AppRoutes() {
           </ProtectedRoute>
         }
       />
-      
       
       <Route
         path="/units/:id"

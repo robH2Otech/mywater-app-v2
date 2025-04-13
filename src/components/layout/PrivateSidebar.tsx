@@ -24,6 +24,8 @@ interface PrivateSidebarProps {
 export const PrivateSidebar = ({ isMobile, closeSidebar }: PrivateSidebarProps) => {
   const location = useLocation();
   const navigate = useNavigate();
+  
+  console.log("Current location path in PrivateSidebar:", location.pathname);
 
   const handleLogout = async () => {
     try {
@@ -44,10 +46,6 @@ export const PrivateSidebar = ({ isMobile, closeSidebar }: PrivateSidebarProps) 
     { name: "Shop", icon: ShoppingCart, path: "/private-dashboard/shop" },
     { name: "Settings", icon: Settings, path: "/private-dashboard/settings" },
   ];
-
-  // Improved logging to help debug the active path issue
-  console.log("PrivateSidebar - Current location.pathname:", location.pathname);
-  console.log("PrivateSidebar - Impact path:", "/private-dashboard/impact");
 
   return (
     <div className={`h-screen ${isMobile ? "w-[250px]" : "w-64"} bg-spotify-darker border-r border-white/10 flex flex-col`}>
@@ -75,11 +73,10 @@ export const PrivateSidebar = ({ isMobile, closeSidebar }: PrivateSidebarProps) 
       
       <nav className="space-y-1 flex-grow overflow-y-auto p-2">
         {navigation.map((item) => {
-          // Fix the active state logic to properly highlight the current page
-          const isActive = location.pathname === item.path || 
-                        (item.path !== "/private-dashboard" && location.pathname.startsWith(item.path));
+          // Fix the active state logic by comparing exact paths
+          const isActive = location.pathname === item.path;
           
-          console.log(`Checking ${item.name}: Path=${item.path}, isActive=${isActive}, location=${location.pathname}`);
+          console.log(`Navigation item: ${item.name}, path: ${item.path}, isActive: ${isActive}`);
           
           return (
             <Link

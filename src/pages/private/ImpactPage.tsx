@@ -42,8 +42,13 @@ export function ImpactPage() {
     setConfig(prev => ({ ...prev, ...newConfig }));
   };
 
+  // Add a debug message to the UI to confirm we're on the impact page
   return (
     <div className="container mx-auto p-4 max-w-5xl">
+      <div className="mb-4 p-2 bg-primary/10 rounded-md text-center">
+        <p className="text-sm text-primary">Impact Dashboard</p>
+      </div>
+      
       <ImpactCalculatorContent 
         period={period}
         setPeriod={setPeriod}

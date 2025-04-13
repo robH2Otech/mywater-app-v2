@@ -25,7 +25,7 @@ export function PrivateDashboard() {
         <Route path="support" element={<SupportPage />} />
         <Route path="shop" element={<ShopPage />} />
         <Route path="settings" element={<SettingsPage />} />
-        {/* Catch any unmatched routes inside private-dashboard and redirect to home */}
+        {/* Redirect any other paths to the home page */}
         <Route path="*" element={<Navigate to="/private-dashboard" replace />} />
       </Routes>
     </PrivateLayout>
