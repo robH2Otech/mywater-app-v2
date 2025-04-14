@@ -45,6 +45,20 @@ export const PrivateSidebar = ({ isMobile, closeSidebar }: PrivateSidebarProps) 
     { name: "Settings", icon: Settings, path: "/private-dashboard/settings" },
   ];
 
+  const isActive = (path: string): boolean => {
+    // Special case for home page
+    if (path === "/private-dashboard" && location.pathname === "/private-dashboard") {
+      return true;
+    }
+    
+    // For other pages, check if the pathname starts with the path but is not just "/private-dashboard"
+    if (path !== "/private-dashboard") {
+      return location.pathname === path;
+    }
+    
+    return false;
+  };
+
   return (
     <div className={`h-screen ${isMobile ? "w-[250px]" : "w-64"} bg-spotify-darker border-r border-white/10 flex flex-col`}>
       <div className="flex items-center justify-between p-4">
@@ -70,26 +84,21 @@ export const PrivateSidebar = ({ isMobile, closeSidebar }: PrivateSidebarProps) 
       </div>
       
       <nav className="space-y-1 flex-grow overflow-y-auto p-2">
-        {navigation.map((item) => {
-          const isActive = location.pathname === item.path || 
-                        (item.path !== "/private-dashboard" && location.pathname.startsWith(item.path));
-          
-          return (
-            <Link
-              key={item.name}
-              to={item.path}
-              className={`flex items-center gap-3 px-4 py-3 rounded-md transition-colors ${
-                isActive
-                  ? "bg-primary text-white"
-                  : "text-gray-400 hover:text-white hover:bg-spotify-accent"
-              }`}
-              onClick={isMobile ? closeSidebar : undefined}
-            >
-              <item.icon className="h-5 w-5 flex-shrink-0" />
-              <span className="truncate">{item.name}</span>
-            </Link>
-          );
-        })}
+        {navigation.map((item) => (
+          <Link
+            key={item.name}
+            to={item.path}
+            className={`flex items-center gap-3 px-4 py-3 rounded-md transition-colors ${
+              isActive(item.path)
+                ? "bg-primary text-white"
+                : "text-gray-400 hover:text-white hover:bg-spotify-accent"
+            }`}
+            onClick={isMobile ? closeSidebar : undefined}
+          >
+            <item.icon className="h-5 w-5 flex-shrink-0" />
+            <span className="truncate">{item.name}</span>
+          </Link>
+        ))}
         
         <button
           onClick={handleLogout}
