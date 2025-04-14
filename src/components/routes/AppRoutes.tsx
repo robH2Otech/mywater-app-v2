@@ -24,7 +24,7 @@ export function AppRoutes() {
       <Route path="/auth" element={<Auth />} />
       <Route path="/private-auth" element={<PrivateAuth />} />
       
-      {/* Private User Routes */}
+      {/* Private User Routes - Make sure to use the wildcard * to catch all subroutes */}
       <Route
         path="/private-dashboard/*"
         element={

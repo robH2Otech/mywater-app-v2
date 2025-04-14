@@ -18,7 +18,7 @@ export function PrivateDashboard() {
   return (
     <PrivateLayout>
       <Routes>
-        <Route path="/" element={<HomePage />} />
+        <Route index element={<HomePage />} />
         <Route path="profile" element={<ProfilePage />} />
         <Route path="refer" element={<ReferPage />} />
         <Route path="impact" element={<ImpactPage />} />

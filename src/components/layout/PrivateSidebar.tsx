@@ -73,14 +73,8 @@ export const PrivateSidebar = ({ isMobile, closeSidebar }: PrivateSidebarProps) 
       
       <nav className="space-y-1 flex-grow overflow-y-auto p-2">
         {navigation.map((item) => {
-          // Improved active state detection logic that ensures exact matching for specific routes
-          const isActive = (() => {
-            if (item.path === "/private-dashboard") {
-              return location.pathname === "/private-dashboard";
-            } else {
-              return location.pathname === item.path;
-            }
-          })();
+          // Fix the active state detection logic
+          const isActive = location.pathname === item.path;
           
           console.log(`Navigation item: ${item.name}, path: ${item.path}, isActive: ${isActive}, location: ${location.pathname}`);
           
@@ -88,7 +82,7 @@ export const PrivateSidebar = ({ isMobile, closeSidebar }: PrivateSidebarProps) 
             <Link
               key={item.name}
               to={item.path}
-              onClick={(e) => {
+              onClick={() => {
                 console.log(`Clicked on ${item.name}, navigating to ${item.path}`);
                 if (isMobile && closeSidebar) {
                   closeSidebar();
