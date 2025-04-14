@@ -11,10 +11,10 @@ import {
   X,
   BarChart2
 } from "lucide-react";
-import { Link, useLocation, useNavigate } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { auth } from "@/integrations/firebase/client";
-import { useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 
 interface PrivateSidebarProps {
   isMobile?: boolean;
@@ -24,8 +24,6 @@ interface PrivateSidebarProps {
 export const PrivateSidebar = ({ isMobile, closeSidebar }: PrivateSidebarProps) => {
   const location = useLocation();
   const navigate = useNavigate();
-  
-  console.log("Current location path in PrivateSidebar:", location.pathname);
 
   const handleLogout = async () => {
     try {
@@ -46,18 +44,6 @@ export const PrivateSidebar = ({ isMobile, closeSidebar }: PrivateSidebarProps) 
     { name: "Shop", icon: ShoppingCart, path: "/private-dashboard/shop" },
     { name: "Settings", icon: Settings, path: "/private-dashboard/settings" },
   ];
-
-  // Improved active state detection
-  const isActiveRoute = (path: string) => {
-    // Special case for home route
-    if (path === "/private-dashboard" && location.pathname === "/private-dashboard") {
-      return true;
-    }
-    
-    // For all other routes, check if the current path starts with the navigation path
-    // This ensures that even with nested routes, the parent tab stays highlighted
-    return path !== "/private-dashboard" && location.pathname.startsWith(path);
-  };
 
   return (
     <div className={`h-screen ${isMobile ? "w-[250px]" : "w-64"} bg-spotify-darker border-r border-white/10 flex flex-col`}>
@@ -85,26 +71,19 @@ export const PrivateSidebar = ({ isMobile, closeSidebar }: PrivateSidebarProps) 
       
       <nav className="space-y-1 flex-grow overflow-y-auto p-2">
         {navigation.map((item) => {
-          const isActive = isActiveRoute(item.path);
-          
-          console.log(`Navigation item: ${item.name}, path: ${item.path}, isActive: ${isActive}, location: ${location.pathname}`);
+          const isActive = location.pathname === item.path || 
+                        (item.path !== "/private-dashboard" && location.pathname.startsWith(item.path));
           
           return (
             <Link
               key={item.name}
               to={item.path}
-              onClick={() => {
-                console.log(`Clicked on ${item.name}, navigating to ${item.path}`);
-                
-                if (isMobile && closeSidebar) {
-                  closeSidebar();
-                }
-              }}
               className={`flex items-center gap-3 px-4 py-3 rounded-md transition-colors ${
                 isActive
                   ? "bg-primary text-white"
                   : "text-gray-400 hover:text-white hover:bg-spotify-accent"
               }`}
+              onClick={isMobile ? closeSidebar : undefined}
             >
               <item.icon className="h-5 w-5 flex-shrink-0" />
               <span className="truncate">{item.name}</span>

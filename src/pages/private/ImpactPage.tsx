@@ -5,8 +5,6 @@ import { useFirestoreUserData } from "@/hooks/dashboard/useFirestoreUserData";
 import { useAuthState } from "@/hooks/firebase/useAuthState";
 
 export function ImpactPage() {
-  console.log("ImpactPage component is being rendered");
-  
   const [period, setPeriod] = useState<"day" | "month" | "year" | "all-time">("month");
   const [config, setConfig] = useState({
     bottleSize: 0.5, // Default to 0.5L bottles
@@ -18,19 +16,12 @@ export function ImpactPage() {
   const { fetchUserData } = useFirestoreUserData();
   const { user } = useAuthState();
   
-  // Fetch user data on component mount
   useEffect(() => {
-    console.log("ImpactPage useEffect running to fetch user data");
-    
     const loadUserData = async () => {
       if (user?.uid) {
-        console.log("ImpactPage: Fetching user data for", user.uid);
         const userData = await fetchUserData(user.uid);
         if (userData) {
           setUserName(userData.first_name || '');
-          console.log("ImpactPage: User data loaded successfully:", userData.first_name);
-        } else {
-          console.log("ImpactPage: No user data found");
         }
       }
     };
@@ -44,11 +35,6 @@ export function ImpactPage() {
 
   return (
     <div className="container mx-auto p-4 max-w-5xl">
-      <h1 className="text-2xl font-bold mb-6">Environmental Impact Dashboard</h1>
-      <div className="mb-4 p-2 bg-primary/10 rounded-md text-center">
-        <p className="text-sm font-medium text-primary">You are viewing your Impact dashboard</p>
-      </div>
-      
       <ImpactCalculatorContent 
         period={period}
         setPeriod={setPeriod}

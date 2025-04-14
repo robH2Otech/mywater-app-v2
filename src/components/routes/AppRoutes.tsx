@@ -1,4 +1,3 @@
-
 import { Routes, Route, Navigate } from "react-router-dom";
 import { Layout } from "@/components/layout/Layout";
 import { PrivateDashboard } from "@/pages/PrivateDashboard";
@@ -24,7 +23,7 @@ export function AppRoutes() {
       <Route path="/auth" element={<Auth />} />
       <Route path="/private-auth" element={<PrivateAuth />} />
       
-      {/* Private User Routes - Ensure wildcard is properly defined for nested routes */}
+      {/* Private User Routes */}
       <Route
         path="/private-dashboard/*"
         element={
@@ -57,6 +56,7 @@ export function AppRoutes() {
           </ProtectedRoute>
         }
       />
+      
       
       <Route
         path="/units/:id"
