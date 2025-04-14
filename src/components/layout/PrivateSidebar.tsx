@@ -45,17 +45,22 @@ export const PrivateSidebar = ({ isMobile, closeSidebar }: PrivateSidebarProps) 
     { name: "Settings", icon: Settings, path: "/private-dashboard/settings" },
   ];
 
+  // Completely revised isActive function to fix route matching issues
   const isActive = (path: string): boolean => {
-    // Special case for home page - only exact match
-    if (path === "/private-dashboard" && location.pathname === "/private-dashboard") {
+    // Exact match is always active
+    if (location.pathname === path) {
       return true;
     }
     
-    // For other pages, check for exact match or if the path is part of the current URL
-    // But make sure we don't match parent paths (like /private-dashboard) when on child paths
-    if (path !== "/private-dashboard") {
-      return location.pathname === path || 
-             (location.pathname.startsWith(path) && path !== "/private-dashboard");
+    // For non-home paths, check if current path starts with this path
+    // But only if this path isn't the base dashboard path
+    if (path !== "/private-dashboard" && path.length > "/private-dashboard".length) {
+      return location.pathname.startsWith(path);
+    }
+    
+    // Special handling for home page - only exact match
+    if (path === "/private-dashboard") {
+      return location.pathname === "/private-dashboard";
     }
     
     return false;
