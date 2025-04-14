@@ -1,5 +1,5 @@
 
-import { Route, Routes, Navigate } from "react-router-dom";
+import { Route, Routes, Navigate, useLocation } from "react-router-dom";
 import { PrivateLayout } from "@/components/layout/PrivateLayout";
 import { HomePage } from "./private/HomePage";
 import { ProfilePage } from "./private/ProfilePage";
@@ -11,13 +11,14 @@ import { SettingsPage } from "./private/SettingsPage";
 import { ImpactPage } from "./private/ImpactPage";
 
 export function PrivateDashboard() {
+  const location = useLocation();
   // Add console logging to diagnose the route rendering
-  console.log("PrivateDashboard rendering - Current path:", window.location.pathname);
+  console.log("PrivateDashboard rendering - Current path:", location.pathname);
   
   return (
     <PrivateLayout>
       <Routes>
-        <Route index element={<HomePage />} />
+        <Route path="/" element={<HomePage />} />
         <Route path="profile" element={<ProfilePage />} />
         <Route path="refer" element={<ReferPage />} />
         <Route path="impact" element={<ImpactPage />} />
@@ -25,7 +26,7 @@ export function PrivateDashboard() {
         <Route path="support" element={<SupportPage />} />
         <Route path="shop" element={<ShopPage />} />
         <Route path="settings" element={<SettingsPage />} />
-        {/* Use a more specific redirect that doesn't interfere with other routes */}
+        {/* Fallback route */}
         <Route path="*" element={<Navigate to="/private-dashboard" replace />} />
       </Routes>
     </PrivateLayout>

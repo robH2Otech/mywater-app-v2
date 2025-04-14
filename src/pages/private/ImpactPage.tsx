@@ -5,7 +5,7 @@ import { useFirestoreUserData } from "@/hooks/dashboard/useFirestoreUserData";
 import { useAuthState } from "@/hooks/firebase/useAuthState";
 
 export function ImpactPage() {
-  console.log("ImpactPage component is being RENDERED");
+  console.log("ImpactPage component is being rendered");
   
   const [period, setPeriod] = useState<"day" | "month" | "year" | "all-time">("month");
   const [config, setConfig] = useState({
