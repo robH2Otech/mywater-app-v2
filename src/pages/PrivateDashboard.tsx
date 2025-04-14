@@ -1,7 +1,6 @@
 
 import { Route, Routes, Navigate } from "react-router-dom";
 import { PrivateLayout } from "@/components/layout/PrivateLayout";
-import { HomePage } from "./private/HomePage";
 import { ProfilePage } from "./private/ProfilePage";
 import { ReferPage } from "./private/ReferPage";
 import { InstallationPage } from "./private/InstallationPage";
@@ -10,11 +9,24 @@ import { ShopPage } from "./private/ShopPage";
 import { SettingsPage } from "./private/SettingsPage";
 import { ImpactPage } from "./private/ImpactPage";
 
+// Temporary home page component to test Impact page navigation
+const TemporaryHomePage = () => (
+  <div className="text-center my-8">
+    <h2 className="text-2xl font-bold">Home Page (temporarily hidden for testing)</h2>
+    <p className="text-gray-400 mt-2">
+      This page is temporarily hidden to test the Impact page functionality.
+      <br />
+      Please click on the Impact tab in the sidebar.
+    </p>
+  </div>
+);
+
 export function PrivateDashboard() {
   return (
     <PrivateLayout>
       <Routes>
-        <Route index element={<HomePage />} />
+        {/* Temporarily replace HomePage with TemporaryHomePage for testing */}
+        <Route index element={<TemporaryHomePage />} />
         <Route path="profile" element={<ProfilePage />} />
         <Route path="refer" element={<ReferPage />} />
         <Route path="impact" element={<ImpactPage />} />
