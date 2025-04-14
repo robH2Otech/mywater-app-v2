@@ -4,13 +4,15 @@ import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 
+interface ConsumptionConfig {
+  bottleSize: number;
+  bottleCost: number;
+  dailyIntake: number;
+}
+
 interface WaterConsumptionSettingsProps {
-  config: {
-    bottleSize: number;
-    bottleCost: number;
-    dailyIntake: number;
-  };
-  onConfigChange: (config: Partial<typeof config>) => void;
+  config: ConsumptionConfig;
+  onConfigChange: (config: Partial<ConsumptionConfig>) => void;
 }
 
 export function WaterConsumptionSettings({ config, onConfigChange }: WaterConsumptionSettingsProps) {

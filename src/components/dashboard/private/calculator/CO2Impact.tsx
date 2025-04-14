@@ -1,8 +1,7 @@
-
 import { useMemo } from "react";
 import { Card } from "@/components/ui/card";
 import { calculateBottlesSaved, calculateCO2Reduction, calculatePlasticReduction } from "@/utils/formatUnitVolume";
-import { Leaf, Car, Smartphone, Tree } from "lucide-react";
+import { Leaf, Car, Smartphone, Trees } from "lucide-react";
 
 interface CO2ImpactProps {
   period: "day" | "month" | "year" | "all-time";
@@ -78,7 +77,7 @@ export function CO2Impact({ period, config }: CO2ImpactProps) {
         
         <Card className="p-4 bg-gradient-to-b from-spotify-darker to-slate-900">
           <div className="flex flex-col items-center">
-            <Tree className="h-8 w-8 mb-2 text-green-400" />
+            <Trees className="h-8 w-8 mb-2 text-green-400" />
             <p className="text-2xl font-bold">{Math.round(treeDays / 365)} trees</p>
             <p className="text-xs text-center text-gray-400 mt-2">
               Equivalent to oxygen produced by these trees for a year
