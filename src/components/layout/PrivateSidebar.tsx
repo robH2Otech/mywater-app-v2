@@ -47,6 +47,14 @@ export const PrivateSidebar = ({ isMobile, closeSidebar }: PrivateSidebarProps) 
     { name: "Settings", icon: Settings, path: "/private-dashboard/settings" },
   ];
 
+  // Improved isActive check that handles the root path as a special case
+  const isPathActive = (path: string) => {
+    if (path === "/private-dashboard" && location.pathname === "/private-dashboard") {
+      return true;
+    }
+    return location.pathname === path;
+  };
+
   return (
     <div className={`h-screen ${isMobile ? "w-[250px]" : "w-64"} bg-spotify-darker border-r border-white/10 flex flex-col`}>
       <div className="flex items-center justify-between p-4">
@@ -73,8 +81,7 @@ export const PrivateSidebar = ({ isMobile, closeSidebar }: PrivateSidebarProps) 
       
       <nav className="space-y-1 flex-grow overflow-y-auto p-2">
         {navigation.map((item) => {
-          // Fix the active state detection logic
-          const isActive = location.pathname === item.path;
+          const isActive = isPathActive(item.path);
           
           console.log(`Navigation item: ${item.name}, path: ${item.path}, isActive: ${isActive}, location: ${location.pathname}`);
           

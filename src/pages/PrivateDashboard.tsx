@@ -18,7 +18,10 @@ export function PrivateDashboard() {
   return (
     <PrivateLayout>
       <Routes>
+        {/* Index route for the home page */}
         <Route index element={<HomePage />} />
+        
+        {/* Individual routes for each section */}
         <Route path="profile" element={<ProfilePage />} />
         <Route path="refer" element={<ReferPage />} />
         <Route path="impact" element={<ImpactPage />} />
@@ -26,6 +29,7 @@ export function PrivateDashboard() {
         <Route path="support" element={<SupportPage />} />
         <Route path="shop" element={<ShopPage />} />
         <Route path="settings" element={<SettingsPage />} />
+        
         {/* Fallback route */}
         <Route path="*" element={<Navigate to="/private-dashboard" replace />} />
       </Routes>
