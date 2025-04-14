@@ -45,16 +45,6 @@ export const PrivateSidebar = ({ isMobile, closeSidebar }: PrivateSidebarProps) 
     { name: "Settings", icon: Settings, path: "/private-dashboard/settings" },
   ];
 
-  // Improved isActive check that properly handles nested routes
-  const isActive = (path: string) => {
-    if (path === "/private-dashboard") {
-      // Home should only be active when exactly at /private-dashboard
-      return location.pathname === "/private-dashboard";
-    }
-    // For other paths, check if the current path starts with this path
-    return location.pathname === path;
-  };
-
   return (
     <div className={`h-screen ${isMobile ? "w-[250px]" : "w-64"} bg-spotify-darker border-r border-white/10 flex flex-col`}>
       <div className="flex items-center justify-between p-4">
@@ -81,14 +71,15 @@ export const PrivateSidebar = ({ isMobile, closeSidebar }: PrivateSidebarProps) 
       
       <nav className="space-y-1 flex-grow overflow-y-auto p-2">
         {navigation.map((item) => {
-          const active = isActive(item.path);
+          const isActive = location.pathname === item.path || 
+                        (item.path !== "/private-dashboard" && location.pathname.startsWith(item.path));
           
           return (
             <Link
               key={item.name}
               to={item.path}
               className={`flex items-center gap-3 px-4 py-3 rounded-md transition-colors ${
-                active
+                isActive
                   ? "bg-primary text-white"
                   : "text-gray-400 hover:text-white hover:bg-spotify-accent"
               }`}
