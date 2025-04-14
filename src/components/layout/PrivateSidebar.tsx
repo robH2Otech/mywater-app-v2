@@ -93,15 +93,8 @@ export const PrivateSidebar = ({ isMobile, closeSidebar }: PrivateSidebarProps) 
             <Link
               key={item.name}
               to={item.path}
-              onClick={(e) => {
+              onClick={() => {
                 console.log(`Clicked on ${item.name}, navigating to ${item.path}`);
-                
-                // For impact page, prevent default and handle navigation manually
-                if (item.name === "Impact") {
-                  e.preventDefault();
-                  console.log("Special handling for Impact page");
-                  navigate(item.path, { replace: true });
-                }
                 
                 if (isMobile && closeSidebar) {
                   closeSidebar();

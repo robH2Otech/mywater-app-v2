@@ -34,12 +34,8 @@ export function PrivateDashboard() {
         <Route path="profile" element={<ProfilePage />} />
         <Route path="refer" element={<ReferPage />} />
         
-        {/* Ensure Impact page has high specificity and is properly defined */}
-        <Route path="impact" element={
-          <div key="impact-wrapper">
-            <ImpactPage />
-          </div>
-        } />
+        {/* Make sure Impact page has its own distinct route */}
+        <Route path="impact" element={<ImpactPage />} />
         
         <Route path="install" element={<InstallationPage />} />
         <Route path="support" element={<SupportPage />} />
