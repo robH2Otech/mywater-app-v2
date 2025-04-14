@@ -1,3 +1,4 @@
+
 import { 
   Home, 
   UserCircle, 
@@ -72,16 +73,16 @@ export const PrivateSidebar = ({ isMobile, closeSidebar }: PrivateSidebarProps) 
       
       <nav className="space-y-1 flex-grow overflow-y-auto p-2">
         {navigation.map((item) => {
+          // Improved active state detection logic that ensures exact matching for specific routes
           const isActive = (() => {
             if (item.path === "/private-dashboard") {
               return location.pathname === "/private-dashboard";
             } else {
-              return location.pathname === item.path || 
-                     location.pathname.startsWith(item.path + "/");
+              return location.pathname === item.path;
             }
           })();
           
-          console.log(`Navigation item: ${item.name}, path: ${item.path}, isActive: ${isActive}, current location: ${location.pathname}`);
+          console.log(`Navigation item: ${item.name}, path: ${item.path}, isActive: ${isActive}, location: ${location.pathname}`);
           
           return (
             <Link
