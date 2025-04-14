@@ -45,27 +45,6 @@ export const PrivateSidebar = ({ isMobile, closeSidebar }: PrivateSidebarProps) 
     { name: "Settings", icon: Settings, path: "/private-dashboard/settings" },
   ];
 
-  // Completely revised isActive function to fix route matching issues
-  const isActive = (path: string): boolean => {
-    // Exact match is always active
-    if (location.pathname === path) {
-      return true;
-    }
-    
-    // For non-home paths, check if current path starts with this path
-    // But only if this path isn't the base dashboard path
-    if (path !== "/private-dashboard" && path.length > "/private-dashboard".length) {
-      return location.pathname.startsWith(path);
-    }
-    
-    // Special handling for home page - only exact match
-    if (path === "/private-dashboard") {
-      return location.pathname === "/private-dashboard";
-    }
-    
-    return false;
-  };
-
   return (
     <div className={`h-screen ${isMobile ? "w-[250px]" : "w-64"} bg-spotify-darker border-r border-white/10 flex flex-col`}>
       <div className="flex items-center justify-between p-4">
@@ -91,21 +70,26 @@ export const PrivateSidebar = ({ isMobile, closeSidebar }: PrivateSidebarProps) 
       </div>
       
       <nav className="space-y-1 flex-grow overflow-y-auto p-2">
-        {navigation.map((item) => (
-          <Link
-            key={item.name}
-            to={item.path}
-            className={`flex items-center gap-3 px-4 py-3 rounded-md transition-colors ${
-              isActive(item.path)
-                ? "bg-primary text-white"
-                : "text-gray-400 hover:text-white hover:bg-spotify-accent"
-            }`}
-            onClick={isMobile ? closeSidebar : undefined}
-          >
-            <item.icon className="h-5 w-5 flex-shrink-0" />
-            <span className="truncate">{item.name}</span>
-          </Link>
-        ))}
+        {navigation.map((item) => {
+          const isActive = location.pathname === item.path || 
+                        (item.path !== "/private-dashboard" && location.pathname.startsWith(item.path));
+          
+          return (
+            <Link
+              key={item.name}
+              to={item.path}
+              className={`flex items-center gap-3 px-4 py-3 rounded-md transition-colors ${
+                isActive
+                  ? "bg-primary text-white"
+                  : "text-gray-400 hover:text-white hover:bg-spotify-accent"
+              }`}
+              onClick={isMobile ? closeSidebar : undefined}
+            >
+              <item.icon className="h-5 w-5 flex-shrink-0" />
+              <span className="truncate">{item.name}</span>
+            </Link>
+          );
+        })}
         
         <button
           onClick={handleLogout}
