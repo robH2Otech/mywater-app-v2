@@ -46,14 +46,16 @@ export const PrivateSidebar = ({ isMobile, closeSidebar }: PrivateSidebarProps) 
   ];
 
   const isActive = (path: string): boolean => {
-    // Special case for home page
+    // Special case for home page - only exact match
     if (path === "/private-dashboard" && location.pathname === "/private-dashboard") {
       return true;
     }
     
-    // For other pages, check if the pathname starts with the path but is not just "/private-dashboard"
+    // For other pages, check for exact match or if the path is part of the current URL
+    // But make sure we don't match parent paths (like /private-dashboard) when on child paths
     if (path !== "/private-dashboard") {
-      return location.pathname === path;
+      return location.pathname === path || 
+             (location.pathname.startsWith(path) && path !== "/private-dashboard");
     }
     
     return false;
