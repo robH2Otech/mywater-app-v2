@@ -11,10 +11,10 @@ import {
   X,
   BarChart2
 } from "lucide-react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { auth } from "@/integrations/firebase/client";
-import { useNavigate } from "react-router-dom";
+import { useEffect } from "react";
 
 interface PrivateSidebarProps {
   isMobile?: boolean;
@@ -47,12 +47,16 @@ export const PrivateSidebar = ({ isMobile, closeSidebar }: PrivateSidebarProps) 
     { name: "Settings", icon: Settings, path: "/private-dashboard/settings" },
   ];
 
-  // Improved isActive check that handles the root path as a special case
-  const isPathActive = (path: string) => {
+  // Improved active state detection
+  const isActiveRoute = (path: string) => {
+    // Special case for home route
     if (path === "/private-dashboard" && location.pathname === "/private-dashboard") {
       return true;
     }
-    return location.pathname === path;
+    
+    // For all other routes, check if the current path starts with the navigation path
+    // This ensures that even with nested routes, the parent tab stays highlighted
+    return path !== "/private-dashboard" && location.pathname.startsWith(path);
   };
 
   return (
@@ -81,7 +85,7 @@ export const PrivateSidebar = ({ isMobile, closeSidebar }: PrivateSidebarProps) 
       
       <nav className="space-y-1 flex-grow overflow-y-auto p-2">
         {navigation.map((item) => {
-          const isActive = isPathActive(item.path);
+          const isActive = isActiveRoute(item.path);
           
           console.log(`Navigation item: ${item.name}, path: ${item.path}, isActive: ${isActive}, location: ${location.pathname}`);
           
@@ -89,8 +93,16 @@ export const PrivateSidebar = ({ isMobile, closeSidebar }: PrivateSidebarProps) 
             <Link
               key={item.name}
               to={item.path}
-              onClick={() => {
+              onClick={(e) => {
                 console.log(`Clicked on ${item.name}, navigating to ${item.path}`);
+                
+                // For impact page, prevent default and handle navigation manually
+                if (item.name === "Impact") {
+                  e.preventDefault();
+                  console.log("Special handling for Impact page");
+                  navigate(item.path, { replace: true });
+                }
+                
                 if (isMobile && closeSidebar) {
                   closeSidebar();
                 }

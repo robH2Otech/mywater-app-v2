@@ -9,22 +9,38 @@ import { SupportPage } from "./private/SupportPage";
 import { ShopPage } from "./private/ShopPage";
 import { SettingsPage } from "./private/SettingsPage";
 import { ImpactPage } from "./private/ImpactPage";
+import { useEffect } from "react";
 
 export function PrivateDashboard() {
   const location = useLocation();
+  
   // Add console logging to diagnose the route rendering
-  console.log("PrivateDashboard rendering - Current path:", location.pathname);
+  useEffect(() => {
+    console.log("PrivateDashboard - Current path:", location.pathname);
+    
+    // To debug any potential redirects
+    return () => {
+      console.log("PrivateDashboard unmounting - Last path:", location.pathname);
+    };
+  }, [location.pathname]);
   
   return (
     <PrivateLayout>
       <Routes>
-        {/* Index route for the home page */}
+        {/* Index route for the home page - ONLY match exact path */}
         <Route index element={<HomePage />} />
         
         {/* Individual routes for each section */}
         <Route path="profile" element={<ProfilePage />} />
         <Route path="refer" element={<ReferPage />} />
-        <Route path="impact" element={<ImpactPage />} />
+        
+        {/* Ensure Impact page has high specificity and is properly defined */}
+        <Route path="impact" element={
+          <div key="impact-wrapper">
+            <ImpactPage />
+          </div>
+        } />
+        
         <Route path="install" element={<InstallationPage />} />
         <Route path="support" element={<SupportPage />} />
         <Route path="shop" element={<ShopPage />} />

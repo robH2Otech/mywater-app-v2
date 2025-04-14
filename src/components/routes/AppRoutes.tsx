@@ -24,7 +24,7 @@ export function AppRoutes() {
       <Route path="/auth" element={<Auth />} />
       <Route path="/private-auth" element={<PrivateAuth />} />
       
-      {/* Private User Routes - Important: The wildcard * is needed to catch all nested routes */}
+      {/* Private User Routes - Ensure wildcard is properly defined for nested routes */}
       <Route
         path="/private-dashboard/*"
         element={
