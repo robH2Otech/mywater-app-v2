@@ -53,7 +53,7 @@ export function HomePage() {
           <div className="bg-spotify-darker rounded-lg border border-white/10 h-full p-6 flex items-center justify-center">
             <CartridgeVisualization 
               percentage={cartridgeUsagePercent} 
-              height={isSmallScreen ? 300 : "100%"} 
+              height={isSmallScreen ? 300 : 400} 
             />
           </div>
         </div>

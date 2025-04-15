@@ -5,13 +5,14 @@ import { Card, CardContent } from "@/components/ui/card";
 import { motion } from "framer-motion";
 import { ReferralCodeDisplay } from "./code/ReferralCodeDisplay";
 import { ShareButtons } from "./code/ShareButtons";
-import { usePrivateUserData } from "@/hooks/dashboard/usePrivateUserData";
 
-export function ReferralCode() {
+interface ReferralCodeProps {
+  referralCode?: string;
+}
+
+export function ReferralCode({ referralCode = "" }: ReferralCodeProps) {
   const [isCopied, setIsCopied] = useState(false);
   const { toast } = useToast();
-  const { userData } = usePrivateUserData();
-  const referralCode = userData?.referral_code || "";
   
   useEffect(() => {
     if (isCopied) {
