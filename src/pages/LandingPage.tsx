@@ -63,7 +63,7 @@ export function LandingPage() {
             Welcome to <span className="text-mywater-blue">MYWATER app</span>
           </h1>
           <p className="text-lg text-gray-400 max-w-2xl mx-auto">
-            Stay informed, save money, drink cleaner water.
+            Drink cleaner water, save money and stay informed.
           </p>
         </div>
 

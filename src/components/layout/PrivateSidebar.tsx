@@ -73,12 +73,13 @@ export const PrivateSidebar = ({ isMobile, closeSidebar }: PrivateSidebarProps) 
       
       <nav className="space-y-1 flex-grow overflow-y-auto p-2">
         {navigation.map((item) => {
-          // More explicit route matching to fix the Impact page issue
+          // Fix the route matching logic
           const isActive = 
-            (item.path === "/private-dashboard" && (location.pathname === "/private-dashboard" || location.pathname === "/private-dashboard/")) ||
-            (item.path !== "/private-dashboard" && location.pathname === item.path);
+            location.pathname === item.path || 
+            (item.path === "/private-dashboard" && location.pathname === "/private-dashboard/") ||
+            (item.path !== "/private-dashboard" && location.pathname.startsWith(item.path));
           
-          console.log(`Menu item: ${item.name}, path: ${item.path}, isActive: ${isActive}`);
+          console.log(`Menu item: ${item.name}, path: ${item.path}, isActive: ${isActive}, current path: ${location.pathname}`);
           
           return (
             <Link
