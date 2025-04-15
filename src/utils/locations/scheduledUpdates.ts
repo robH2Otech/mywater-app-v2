@@ -31,3 +31,4 @@ export const scheduleLocationUpdates = () => {
   const nextUpdate = new Date(now.getTime() + Math.min(msUntilMorning, msUntilEvening));
   console.log('Next location update scheduled for:', nextUpdate.toLocaleString());
 };
+

@@ -1,3 +1,4 @@
+
 import { collection, getDocs, updateDoc, doc } from 'firebase/firestore';
 import { db } from '@/integrations/firebase/client';
 import { UnitData } from '@/types/analytics';
@@ -85,3 +86,4 @@ export async function fetchAndStoreLocationData() {
     throw error;
   }
 }
+

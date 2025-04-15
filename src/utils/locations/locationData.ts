@@ -69,3 +69,4 @@ export const MOCK_LOCATIONS: Record<string, LocationData> = {
     timestamp: new Date().toISOString()
   }
 };
+
