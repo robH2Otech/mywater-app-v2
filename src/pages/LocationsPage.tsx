@@ -3,12 +3,13 @@ import { useState, useEffect } from "react";
 import { collection, getDocs } from "firebase/firestore";
 import { db } from "@/integrations/firebase/client";
 import { PageHeader } from "@/components/shared/PageHeader";
-import { MapPin, Search } from "lucide-react";
+import { MapPin, Search, X } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { LoadingSkeleton } from "@/components/shared/LoadingSkeleton";
 import { Input } from "@/components/ui/input";
+import { toast } from "sonner";
 
 interface UnitWithLocation {
   id: string;
@@ -59,9 +60,17 @@ export function LocationsPage() {
         console.log("Units with ICCID:", unitsWithLocation);
         setUnits(unitsWithLocation);
         setFilteredUnits(unitsWithLocation);
+
+        // Display toast if units were successfully fetched
+        if (unitsWithLocation.length > 0) {
+          toast.success(`Found ${unitsWithLocation.length} units with location data`);
+        } else {
+          toast.info("No units with location data found");
+        }
       } catch (err) {
         console.error("Error fetching units:", err);
         setError("Failed to load units. Please try again later.");
+        toast.error("Failed to load units data");
       } finally {
         setIsLoading(false);
       }
@@ -70,7 +79,7 @@ export function LocationsPage() {
     fetchUnitsWithICCID();
   }, []);
 
-  // Improved search with comprehensive and lenient matching
+  // Enhanced search with comprehensive and lenient matching
   useEffect(() => {
     if (!searchQuery.trim()) {
       setFilteredUnits(units);
@@ -81,21 +90,29 @@ export function LocationsPage() {
     console.log(`Searching for: "${query}"`);
     
     const filtered = units.filter(unit => {
-      // Check if unit name contains the query
+      // Check if unit name contains the query (case insensitive)
       const nameMatch = unit.name?.toLowerCase().includes(query);
+      
+      // Try to match without spaces too (e.g. "mywater002" matches "MYWATER 002")
+      const normalizedName = unit.name?.toLowerCase().replace(/\s+/g, "");
+      const normalizedQuery = query.replace(/\s+/g, "");
+      const nameMatchNormalized = normalizedName?.includes(normalizedQuery);
+      
       // Check if site name contains the query
       const siteMatch = unit.site_name?.toLowerCase().includes(query);
+      
       // Check if customer name contains the query
       const customerMatch = unit.customer_name?.toLowerCase().includes(query);
+      
       // Check if ICCID contains the query
       const iccidMatch = unit.iccid?.toLowerCase().includes(query);
       
-      const isMatch = nameMatch || siteMatch || customerMatch || iccidMatch;
+      const isMatch = nameMatch || nameMatchNormalized || siteMatch || customerMatch || iccidMatch;
       
       // For debugging, log which field matched
       if (isMatch) {
         console.log(`Match found for unit "${unit.name}":`, { 
-          nameMatch, siteMatch, customerMatch, iccidMatch 
+          nameMatch, nameMatchNormalized, siteMatch, customerMatch, iccidMatch 
         });
       }
       
@@ -113,6 +130,39 @@ export function LocationsPage() {
   const handleClearSearch = () => {
     setSearchQuery("");
   };
+  
+  const refreshUnits = async () => {
+    toast.info("Refreshing units data...");
+    setIsLoading(true);
+    setSearchQuery("");
+    
+    try {
+      const unitsCollection = collection(db, "units");
+      const snapshot = await getDocs(unitsCollection);
+      
+      const allUnits = snapshot.docs.map(doc => {
+        const data = doc.data();
+        return {
+          id: doc.id,
+          name: data.name || "Unnamed Unit",
+          iccid: data.iccid || null,
+          site_name: data.site_name,
+          customer_name: data.customer_name
+        };
+      });
+      
+      const unitsWithLocation = allUnits.filter(unit => !!unit.iccid);
+      
+      setUnits(unitsWithLocation);
+      setFilteredUnits(unitsWithLocation);
+      toast.success(`Successfully refreshed ${unitsWithLocation.length} units`);
+    } catch (err) {
+      console.error("Error refreshing units:", err);
+      toast.error("Failed to refresh units data");
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   return (
     <div className="container mx-auto p-4 space-y-6 animate-fadeIn">
@@ -120,7 +170,16 @@ export function LocationsPage() {
         title="Units Location" 
         description="View geographic locations of all connected units"
         icon={MapPin}
-      />
+      >
+        <Button 
+          onClick={refreshUnits} 
+          variant="outline" 
+          className="bg-spotify-darker text-white hover:bg-spotify-accent"
+          disabled={isLoading}
+        >
+          Refresh Units
+        </Button>
+      </PageHeader>
       
       <div className="relative mb-4">
         <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
@@ -130,6 +189,17 @@ export function LocationsPage() {
           onChange={handleSearchChange}
           className="pl-10 bg-spotify-darker text-white border-spotify-accent focus-visible:ring-spotify-accent"
         />
+        {searchQuery && (
+          <Button
+            variant="ghost"
+            size="icon"
+            className="absolute right-2 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400"
+            onClick={handleClearSearch}
+          >
+            <X className="h-4 w-4" />
+            <span className="sr-only">Clear search</span>
+          </Button>
+        )}
       </div>
       
       {isLoading ? (
@@ -138,6 +208,12 @@ export function LocationsPage() {
         <Card className="bg-spotify-darker border-red-500/20">
           <CardContent className="p-6">
             <div className="text-red-400">{error}</div>
+            <Button 
+              onClick={refreshUnits} 
+              className="mt-4 bg-spotify-accent hover:bg-spotify-accent-hover"
+            >
+              Retry
+            </Button>
           </CardContent>
         </Card>
       ) : filteredUnits.length === 0 ? (
@@ -173,7 +249,13 @@ export function LocationsPage() {
                     <h3 className="font-semibold text-white text-lg">{unit.name}</h3>
                     {unit.site_name && <p className="text-gray-300 text-sm">{unit.site_name}</p>}
                     {unit.customer_name && <p className="text-gray-400 text-xs mt-1">Customer: {unit.customer_name}</p>}
-                    {unit.iccid && <p className="text-gray-400 text-xs mt-1">ICCID: {unit.iccid}</p>}
+                    {unit.iccid && (
+                      <p className="text-gray-400 text-xs mt-1">
+                        ICCID: {unit.iccid.length > 16 ? 
+                          unit.iccid.substring(0, 6) + '...' + unit.iccid.substring(unit.iccid.length - 6) : 
+                          unit.iccid}
+                      </p>
+                    )}
                   </div>
                   <MapPin className="h-5 w-5 text-primary flex-shrink-0" />
                 </div>

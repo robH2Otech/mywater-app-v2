@@ -10,7 +10,7 @@ import { LoadingSkeleton } from "@/components/shared/LoadingSkeleton";
 import { PageHeader } from "@/components/shared/PageHeader";
 import { collection, query, where, getDocs, limit } from "firebase/firestore";
 import { db } from "@/integrations/firebase/client";
-import { use1oTLocation } from "@/hooks/locations/use1oTLocation";
+import { use1oTLocation, LocationData } from "@/hooks/locations/use1oTLocation";
 import { toast } from "sonner";
 
 export function UnitLocationPage() {
@@ -40,6 +40,29 @@ export function UnitLocationPage() {
         const snapshot = await getDocs(q);
         
         if (snapshot.empty) {
+          // Try a more flexible search approach by using array-contains or startsWith
+          console.log("No exact match found, trying flexible search");
+          const allUnitsRef = collection(db, "units");
+          const allUnitsSnapshot = await getDocs(allUnitsRef);
+          
+          // Search for units with ICCID that includes our search ICCID or vice versa
+          const matchingUnit = allUnitsSnapshot.docs.find(doc => {
+            const unitData = doc.data();
+            const unitIccid = unitData.iccid;
+            if (!unitIccid) return false;
+            
+            return unitIccid.includes(iccid) || iccid.includes(unitIccid);
+          });
+          
+          if (matchingUnit) {
+            const unitData = matchingUnit.data();
+            setUnitName(unitData.name || "Unnamed Unit");
+            setUnitId(matchingUnit.id);
+            console.log(`Found unit with similar ICCID: ${unitData.name} (${matchingUnit.id})`);
+            setUnitFetched(true);
+            return;
+          }
+          
           console.log("No matching unit found in Firestore");
           setUnitFetchError("Unit not found with the provided ICCID");
         } else {
@@ -67,8 +90,14 @@ export function UnitLocationPage() {
       setTimeout(() => {
         fetchLocationData(iccid);
       }, 300);
+    } else if (iccid && !unitFetched && !unitFetchError) {
+      // If we couldn't find the unit but have an ICCID, try to fetch location anyway
+      console.log("Unit not found but trying location data fetch with ICCID");
+      setTimeout(() => {
+        fetchLocationData(iccid);
+      }, 300);
     }
-  }, [iccid, unitFetched, fetchLocationData]);
+  }, [iccid, unitFetched, unitFetchError, fetchLocationData]);
   
   // Handle navigation back to appropriate location
   const handleBack = () => {
@@ -107,9 +136,9 @@ export function UnitLocationPage() {
         </Button>
       </PageHeader>
       
-      {isLoading || !unitFetched ? (
+      {isLoading || (!unitFetched && !unitFetchError) ? (
         <LoadingSkeleton />
-      ) : displayError ? (
+      ) : displayError && !locationData ? (
         <Card className="bg-spotify-darker border-red-500/20">
           <CardContent className="p-6">
             <Alert variant="destructive" className="bg-red-900/20 border-red-500/30 text-red-200">
@@ -155,6 +184,20 @@ export function UnitLocationPage() {
                   <p className="text-xl font-bold text-white mt-1">{locationData.radius} meters</p>
                 </div>
               </div>
+              
+              {locationData.lastCountry && locationData.lastOperator && (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                  <div className="p-4 rounded-lg bg-spotify-accent/10 border border-spotify-accent/10">
+                    <h3 className="text-sm font-medium text-gray-400">Country</h3>
+                    <p className="text-md font-medium text-white mt-1">{locationData.lastCountry}</p>
+                  </div>
+                  
+                  <div className="p-4 rounded-lg bg-spotify-accent/10 border border-spotify-accent/10">
+                    <h3 className="text-sm font-medium text-gray-400">Network Operator</h3>
+                    <p className="text-md font-medium text-white mt-1">{locationData.lastOperator}</p>
+                  </div>
+                </div>
+              )}
               
               {locationData.timestamp && (
                 <p className="text-xs text-gray-400">
