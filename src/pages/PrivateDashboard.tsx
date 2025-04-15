@@ -9,6 +9,7 @@ import { SupportPage } from "./private/SupportPage";
 import { ShopPage } from "./private/ShopPage";
 import { SettingsPage } from "./private/SettingsPage";
 import { ImpactPage } from "./private/ImpactPage";
+import { DataCalculatorPage } from "./private/DataCalculatorPage";
 
 export function PrivateDashboard() {
   return (
@@ -18,11 +19,11 @@ export function PrivateDashboard() {
         <Route path="profile" element={<ProfilePage />} />
         <Route path="refer" element={<ReferPage />} />
         <Route path="impact" element={<ImpactPage />} />
+        <Route path="data" element={<DataCalculatorPage />} />
         <Route path="install" element={<InstallationPage />} />
         <Route path="support" element={<SupportPage />} />
         <Route path="shop" element={<ShopPage />} />
         <Route path="settings" element={<SettingsPage />} />
-        {/* Redirect any unknown paths to the dashboard home */}
         <Route path="*" element={<Navigate to="/private-dashboard" replace />} />
       </Routes>
     </PrivateLayout>

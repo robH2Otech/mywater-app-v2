@@ -1,4 +1,3 @@
-
 import { 
   Home, 
   UserCircle, 
@@ -9,7 +8,8 @@ import {
   Settings, 
   LogOut,
   X,
-  BarChart2
+  BarChart2,
+  Calculator
 } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -41,6 +41,7 @@ export const PrivateSidebar = ({ isMobile, closeSidebar }: PrivateSidebarProps) 
     { name: "My Profile", icon: UserCircle, path: "/private-dashboard/profile" },
     { name: "Refer a Friend", icon: Share2, path: "/private-dashboard/refer" },
     { name: "Impact", icon: BarChart2, path: "/private-dashboard/impact" },
+    { name: "Data Calculator", icon: Calculator, path: "/private-dashboard/data" },
     { name: "Installation Guide", icon: Wrench, path: "/private-dashboard/install" },
     { name: "Support", icon: HelpCircle, path: "/private-dashboard/support" },
     { name: "Shop", icon: ShoppingCart, path: "/private-dashboard/shop" },
@@ -73,7 +74,6 @@ export const PrivateSidebar = ({ isMobile, closeSidebar }: PrivateSidebarProps) 
       
       <nav className="space-y-1 flex-grow overflow-y-auto p-2">
         {navigation.map((item) => {
-          // Fix the route matching logic
           const isActive = 
             location.pathname === item.path || 
             (item.path === "/private-dashboard" && location.pathname === "/private-dashboard/") ||
