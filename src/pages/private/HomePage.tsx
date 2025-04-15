@@ -39,8 +39,8 @@ export function HomePage() {
         formattedReplacementDate={formattedReplacementDate}
       />
       
-      <div className={`grid ${isSmallScreen ? 'grid-cols-1 gap-4' : 'grid-cols-3 gap-6'}`}>
-        <div className={isSmallScreen ? '' : 'col-span-1'}>
+      <div className={`grid ${isSmallScreen ? 'grid-cols-1 gap-4' : 'grid-cols-3 gap-6'} min-h-[400px]`}>
+        <div className={isSmallScreen ? '' : 'col-span-1 h-full'}>
           <HomeStats 
             userData={userData}
             daysUntilReplacement={daysUntilReplacement}
@@ -49,11 +49,11 @@ export function HomePage() {
           />
         </div>
         
-        <div className={`${isSmallScreen ? 'mt-6' : 'col-span-2'}`}>
+        <div className={`${isSmallScreen ? 'mt-6' : 'col-span-2'} h-full`}>
           <div className="bg-spotify-darker rounded-lg border border-white/10 h-full p-6 flex items-center justify-center">
             <CartridgeVisualization 
               percentage={cartridgeUsagePercent} 
-              height={isSmallScreen ? 300 : 400} 
+              height={isSmallScreen ? 300 : "100%"} 
             />
           </div>
         </div>

@@ -1,4 +1,3 @@
-
 import { Card, CardContent } from "@/components/ui/card";
 import { Filter, Calendar, Droplets, Share2 } from "lucide-react";
 import { DocumentData } from "firebase/firestore";
@@ -17,9 +16,9 @@ export function HomeStats({
   isReplacementDueSoon,
 }: HomeStatsProps) {
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-4 h-full">
       {/* Cartridge Status Card */}
-      <Card className="glass hover:bg-spotify-accent/40 transition-colors">
+      <Card className="glass hover:bg-spotify-accent/40 transition-colors flex-1">
         <CardContent className="p-4 flex items-center gap-3">
           <div className="h-10 w-10 rounded-full bg-spotify-dark flex items-center justify-center">
             <Filter className="h-5 w-5 text-cyan-400" />
@@ -42,7 +41,7 @@ export function HomeStats({
       </Card>
 
       {/* Purchase Date Card */}
-      <Card className="glass hover:bg-spotify-accent/40 transition-colors">
+      <Card className="glass hover:bg-spotify-accent/40 transition-colors flex-1">
         <CardContent className="p-4 flex items-center gap-3">
           <div className="h-10 w-10 rounded-full bg-spotify-dark flex items-center justify-center">
             <Calendar className="h-5 w-5 text-purple-400" />
@@ -59,7 +58,7 @@ export function HomeStats({
       </Card>
 
       {/* Model Card */}
-      <Card className="glass hover:bg-spotify-accent/40 transition-colors">
+      <Card className="glass hover:bg-spotify-accent/40 transition-colors flex-1">
         <CardContent className="p-4 flex items-center gap-3">
           <div className="h-10 w-10 rounded-full bg-spotify-dark flex items-center justify-center">
             <Droplets className="h-5 w-5 text-blue-400" />
@@ -72,7 +71,7 @@ export function HomeStats({
       </Card>
 
       {/* Referral Card */}
-      <Card className="glass hover:bg-spotify-accent/40 transition-colors">
+      <Card className="glass hover:bg-spotify-accent/40 transition-colors flex-1">
         <CardContent className="p-4 flex items-center gap-3">
           <div className="h-10 w-10 rounded-full bg-spotify-dark flex items-center justify-center">
             <Share2 className="h-5 w-5 text-green-400" />

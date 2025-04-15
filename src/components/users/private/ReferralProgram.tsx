@@ -16,7 +16,8 @@ interface ReferralProgramProps {
 export function ReferralProgram({ userData }: ReferralProgramProps) {
   const [mounted, setMounted] = useState(false);
   const isMobile = useIsMobile();
-  
+
+  // Ensure we have the correct referral code from userData
   const referralCode = userData?.referral_code || "";
   const userName = `${userData?.first_name || ""} ${userData?.last_name || ""}`.trim();
   const referralsCount = userData?.referrals_count || 0;
@@ -64,7 +65,7 @@ export function ReferralProgram({ userData }: ReferralProgramProps) {
             <ReferralStatus userData={userData} />
             
             <motion.div variants={item}>
-              <ReferralCode />
+              <ReferralCode referralCode={referralCode} />
             </motion.div>
             
             <motion.div variants={item}>

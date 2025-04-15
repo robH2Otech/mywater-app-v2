@@ -1,4 +1,3 @@
-
 import { 
   Home, 
   UserCircle, 
@@ -35,13 +34,11 @@ export const PrivateSidebar = ({ isMobile, closeSidebar }: PrivateSidebarProps) 
     }
   };
 
-  // Updated navigation with Calculator
   const navigation = [
     { name: "Home", icon: Home, path: "/private-dashboard" },
     { name: "My Profile", icon: UserCircle, path: "/private-dashboard/profile" },
     { name: "Refer a Friend", icon: Share2, path: "/private-dashboard/refer" },
     { name: "Impact", icon: BarChart2, path: "/private-dashboard/impact" },
-    { name: "Calculator", icon: Calculator, path: "/private-dashboard/calculator" },
     { name: "Installation Guide", icon: Wrench, path: "/private-dashboard/install" },
     { name: "Support", icon: HelpCircle, path: "/private-dashboard/support" },
     { name: "Shop", icon: ShoppingCart, path: "/private-dashboard/shop" },
@@ -74,7 +71,6 @@ export const PrivateSidebar = ({ isMobile, closeSidebar }: PrivateSidebarProps) 
       
       <nav className="space-y-1 flex-grow overflow-y-auto p-2">
         {navigation.map((item) => {
-          // Fix for accurate active state detection
           const isActive = item.path === "/private-dashboard" 
             ? location.pathname === "/private-dashboard" || location.pathname === "/private-dashboard/" 
             : location.pathname === item.path || location.pathname.startsWith(`${item.path}/`);
