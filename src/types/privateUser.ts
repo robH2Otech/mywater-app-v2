@@ -1,4 +1,3 @@
-
 export interface PrivateUser {
   id: string;
   uid: string;
@@ -10,6 +9,7 @@ export interface PrivateUser {
   purifier_model: string;
   purchase_date: Date;
   cartridge_replacement_date: Date;
+  referral_code: string;
   referrals_count: number;
   referrals_converted: number;
   referral_reward_earned: boolean;

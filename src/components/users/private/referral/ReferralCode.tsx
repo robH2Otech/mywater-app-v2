@@ -1,18 +1,17 @@
 
 import { useState } from "react";
-import { Copy, CheckCheck, Share2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
+import { ReferralCodeDisplay } from "./code/ReferralCodeDisplay";
+import { ShareButtons } from "./code/ShareButtons";
+import { usePrivateUserData } from "@/hooks/dashboard/usePrivateUserData";
 
-interface ReferralCodeProps {
-  referralCode: string;
-}
-
-export function ReferralCode({ referralCode }: ReferralCodeProps) {
+export function ReferralCode() {
   const [isCopied, setIsCopied] = useState(false);
   const { toast } = useToast();
+  const { userData } = usePrivateUserData();
+  const referralCode = userData?.referral_code || "";
   
   const copyReferralLink = () => {
     const referralLink = `https://mywatertechnologies.com/shop?code=${referralCode}`;
@@ -59,42 +58,15 @@ export function ReferralCode({ referralCode }: ReferralCodeProps) {
           animate={{ opacity: 1, y: 0 }}
           className="space-y-4"
         >
-          <div className="text-center space-y-2">
-            <h3 className="text-sm font-medium text-blue-300">Your Referral Code</h3>
-            <p className="text-2xl sm:text-3xl font-mono font-bold tracking-wider text-white bg-gradient-to-r from-blue-400 to-cyan-300 bg-clip-text text-transparent">
-              {referralCode}
-            </p>
-          </div>
-          
-          <div className="flex flex-col sm:flex-row gap-3">
-            <Button
-              onClick={copyReferralLink}
-              variant="outline"
-              className="w-full flex-1 border-blue-500/50 hover:bg-blue-700/30"
-            >
-              {isCopied ? (
-                <>
-                  <CheckCheck className="text-green-400" />
-                  <span className="ml-2 text-green-400">Copied!</span>
-                </>
-              ) : (
-                <>
-                  <Copy className="text-blue-300" />
-                  <span className="ml-2">Copy Link</span>
-                </>
-              )}
-            </Button>
-            
-            <Button
-              onClick={handleShare}
-              className="w-full flex-1 bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600"
-            >
-              <Share2 className="mr-2" />
-              Share Your Invite
-            </Button>
-          </div>
+          <ReferralCodeDisplay referralCode={referralCode} />
+          <ShareButtons 
+            referralCode={referralCode}
+            onShare={handleShare}
+            onCopy={copyReferralLink}
+            isCopied={isCopied}
+          />
         </motion.div>
       </CardContent>
     </Card>
   );
-};
+}

@@ -1,4 +1,3 @@
-
 import { Card, CardContent } from "@/components/ui/card";
 import { DocumentData } from "firebase/firestore";
 import { ReferralStatus } from "./referral/ReferralStatus";
@@ -14,13 +13,12 @@ interface ReferralProgramProps {
 }
 
 export function ReferralProgram({ userData }: ReferralProgramProps) {
-  const referralCode = userData?.referral_code || "MYWATER20";
+  const referralCode = userData?.referral_code || "";
   const userName = `${userData?.first_name || ""} ${userData?.last_name || ""}`.trim();
   const referralsCount = userData?.referrals_count || 0;
   const referralsNeeded = 3;
   const referralsRemaining = Math.max(0, referralsNeeded - referralsCount);
 
-  // Animation variants for staggered animations
   const container = {
     hidden: { opacity: 0 },
     show: {
@@ -55,30 +53,8 @@ export function ReferralProgram({ userData }: ReferralProgramProps) {
             
             <ReferralStatus userData={userData} />
             
-            <motion.div 
-              variants={item}
-              className="p-4 rounded-md border border-blue-700/30 bg-blue-900/10 text-sm text-blue-200 relative overflow-hidden"
-            >
-              <div className="absolute top-0 right-0 w-24 h-24 bg-blue-500/10 rounded-full blur-xl -translate-y-12 translate-x-12" />
-              <div className="relative z-10">
-                <div className="flex items-start gap-3">
-                  <Info className="h-5 w-5 text-blue-400 flex-shrink-0 mt-0.5" />
-                  <div>
-                    <p className="font-medium mb-1.5">Referral Rewards Program</p>
-                    <p className="text-sm text-blue-100/80 leading-relaxed">
-                      For every friend who purchases a MYWATER system using your code, you'll earn progress toward your free replacement cartridge worth €150. Get 3 friends to purchase and claim your reward!
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </motion.div>
-            
             <motion.div variants={item}>
-              <ReferralSteps />
-            </motion.div>
-            
-            <motion.div variants={item}>
-              <ReferralCode referralCode={referralCode} />
+              <ReferralCode />
             </motion.div>
             
             <motion.div variants={item}>
