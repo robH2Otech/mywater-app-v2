@@ -19,6 +19,11 @@ export function HomePage() {
   const isMobile = useIsMobile();
   const isTablet = useIsTablet();
   const isSmallScreen = isMobile || isTablet;
+  
+  // Ensure cartridgeUsagePercent is a number
+  const safeCartridgeUsagePercent = typeof cartridgeUsagePercent === 'number' 
+    ? cartridgeUsagePercent 
+    : 0;
 
   if (loading) {
     return (
@@ -52,7 +57,7 @@ export function HomePage() {
         <div className={`${isSmallScreen ? 'mt-6' : 'col-span-2'}`}>
           <div className="bg-spotify-darker rounded-lg border border-white/10 p-6 flex items-center justify-center" style={{ height: isSmallScreen ? 'auto' : '408px' }}>
             <CartridgeVisualization 
-              percentage={cartridgeUsagePercent} 
+              percentage={safeCartridgeUsagePercent} 
               height={isSmallScreen ? 300 : 350} 
             />
           </div>

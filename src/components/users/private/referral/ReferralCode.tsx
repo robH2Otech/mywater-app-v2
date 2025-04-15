@@ -7,12 +7,15 @@ import { ReferralCodeDisplay } from "./code/ReferralCodeDisplay";
 import { ShareButtons } from "./code/ShareButtons";
 
 interface ReferralCodeProps {
-  referralCode?: string;
+  referralCode: string;
 }
 
-export function ReferralCode({ referralCode = "" }: ReferralCodeProps) {
+export function ReferralCode({ referralCode }: ReferralCodeProps) {
   const [isCopied, setIsCopied] = useState(false);
   const { toast } = useToast();
+  
+  // Debug log to check the referral code
+  console.log("ReferralCode component - received code:", referralCode);
   
   useEffect(() => {
     if (isCopied) {

@@ -24,6 +24,8 @@ interface PrivateSidebarProps {
 export const PrivateSidebar = ({ isMobile, closeSidebar }: PrivateSidebarProps) => {
   const location = useLocation();
   const navigate = useNavigate();
+  
+  console.log("Current location pathname:", location.pathname);
 
   const handleLogout = async () => {
     try {
@@ -71,9 +73,12 @@ export const PrivateSidebar = ({ isMobile, closeSidebar }: PrivateSidebarProps) 
       
       <nav className="space-y-1 flex-grow overflow-y-auto p-2">
         {navigation.map((item) => {
-          const isActive = item.path === "/private-dashboard" 
-            ? location.pathname === "/private-dashboard" || location.pathname === "/private-dashboard/" 
-            : location.pathname === item.path || location.pathname.startsWith(`${item.path}/`);
+          // More explicit route matching to fix the Impact page issue
+          const isActive = 
+            (item.path === "/private-dashboard" && (location.pathname === "/private-dashboard" || location.pathname === "/private-dashboard/")) ||
+            (item.path !== "/private-dashboard" && location.pathname === item.path);
+          
+          console.log(`Menu item: ${item.name}, path: ${item.path}, isActive: ${isActive}`);
           
           return (
             <Link

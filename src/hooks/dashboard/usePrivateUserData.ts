@@ -24,6 +24,13 @@ export function usePrivateUserData() {
         }
         
         const userDataResult = await fetchUserData(user.uid);
+        console.log("usePrivateUserData - Fetched user data:", userDataResult);
+        
+        if (userDataResult) {
+          // Log specifically to check for referral code
+          console.log("usePrivateUserData - referral_code:", userDataResult.referral_code);
+        }
+        
         setUserData(userDataResult);
       } catch (error) {
         console.error("Error fetching user data:", error);
