@@ -32,19 +32,31 @@ export function LocationsPage() {
         const unitsCollection = collection(db, "units");
         const snapshot = await getDocs(unitsCollection);
         
-        const unitsWithLocation = snapshot.docs
-          .map(doc => {
-            const data = doc.data();
-            return {
-              id: doc.id,
-              name: data.name || "Unnamed Unit",
-              iccid: data.iccid || null,
-              site_name: data.site_name,
-              customer_name: data.customer_name
-            };
-          })
-          .filter(unit => unit.iccid); // Only include units with ICCID
+        console.log("Total units fetched:", snapshot.size);
         
+        const allUnits = snapshot.docs.map(doc => {
+          const data = doc.data();
+          return {
+            id: doc.id,
+            name: data.name || "Unnamed Unit",
+            iccid: data.iccid || null,
+            site_name: data.site_name,
+            customer_name: data.customer_name
+          };
+        });
+        
+        console.log("All units:", allUnits);
+        
+        // Filter units with ICCID, but log those without for debugging
+        const unitsWithLocation = allUnits.filter(unit => {
+          if (!unit.iccid) {
+            console.log(`Unit without ICCID: ${unit.name} (${unit.id})`);
+            return false;
+          }
+          return true;
+        });
+        
+        console.log("Units with ICCID:", unitsWithLocation);
         setUnits(unitsWithLocation);
         setFilteredUnits(unitsWithLocation);
       } catch (err) {
@@ -58,7 +70,7 @@ export function LocationsPage() {
     fetchUnitsWithICCID();
   }, []);
 
-  // Improved search to be more flexible with case and partial matches
+  // Improved search with comprehensive and lenient matching
   useEffect(() => {
     if (!searchQuery.trim()) {
       setFilteredUnits(units);
@@ -66,18 +78,40 @@ export function LocationsPage() {
     }
 
     const query = searchQuery.toLowerCase().trim();
-    const filtered = units.filter(unit => 
-      (unit.name && unit.name.toLowerCase().includes(query)) || 
-      (unit.site_name && unit.site_name.toLowerCase().includes(query)) ||
-      (unit.customer_name && unit.customer_name.toLowerCase().includes(query)) ||
-      (unit.iccid && unit.iccid.toLowerCase().includes(query))
-    );
+    console.log(`Searching for: "${query}"`);
     
+    const filtered = units.filter(unit => {
+      // Check if unit name contains the query
+      const nameMatch = unit.name?.toLowerCase().includes(query);
+      // Check if site name contains the query
+      const siteMatch = unit.site_name?.toLowerCase().includes(query);
+      // Check if customer name contains the query
+      const customerMatch = unit.customer_name?.toLowerCase().includes(query);
+      // Check if ICCID contains the query
+      const iccidMatch = unit.iccid?.toLowerCase().includes(query);
+      
+      const isMatch = nameMatch || siteMatch || customerMatch || iccidMatch;
+      
+      // For debugging, log which field matched
+      if (isMatch) {
+        console.log(`Match found for unit "${unit.name}":`, { 
+          nameMatch, siteMatch, customerMatch, iccidMatch 
+        });
+      }
+      
+      return isMatch;
+    });
+    
+    console.log("Filtered units:", filtered);
     setFilteredUnits(filtered);
   }, [searchQuery, units]);
 
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchQuery(e.target.value);
+  };
+
+  const handleClearSearch = () => {
+    setSearchQuery("");
   };
 
   return (
@@ -91,7 +125,7 @@ export function LocationsPage() {
       <div className="relative mb-4">
         <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
         <Input
-          placeholder="Search units by name, site, or customer..."
+          placeholder="Search units by name, site, customer or ICCID..."
           value={searchQuery}
           onChange={handleSearchChange}
           className="pl-10 bg-spotify-darker text-white border-spotify-accent focus-visible:ring-spotify-accent"
@@ -120,7 +154,7 @@ export function LocationsPage() {
             </p>
             {searchQuery && (
               <Button 
-                onClick={() => setSearchQuery("")} 
+                onClick={handleClearSearch} 
                 variant="outline" 
                 className="bg-spotify-accent hover:bg-spotify-accent-hover text-white"
               >
@@ -139,6 +173,7 @@ export function LocationsPage() {
                     <h3 className="font-semibold text-white text-lg">{unit.name}</h3>
                     {unit.site_name && <p className="text-gray-300 text-sm">{unit.site_name}</p>}
                     {unit.customer_name && <p className="text-gray-400 text-xs mt-1">Customer: {unit.customer_name}</p>}
+                    {unit.iccid && <p className="text-gray-400 text-xs mt-1">ICCID: {unit.iccid}</p>}
                   </div>
                   <MapPin className="h-5 w-5 text-primary flex-shrink-0" />
                 </div>

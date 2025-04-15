@@ -1,4 +1,3 @@
-
 import { Home, Droplets, Filter, Bell, BarChart2, Users, Settings, Lightbulb, X, MessageSquare, MapPin } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -28,7 +27,6 @@ export const Sidebar = ({ isMobile, closeSidebar }: SidebarProps) => {
 
   return (
     <div className={`h-screen ${isMobile ? "w-[250px]" : "w-64"} bg-spotify-darker border-r border-white/10 flex flex-col`}>
-      {/* Sidebar header with close button for mobile */}
       <div className="flex items-center justify-between p-4">
         <div className="flex items-center gap-2">
           <Droplets className="h-8 w-8 text-primary" />
@@ -51,7 +49,6 @@ export const Sidebar = ({ isMobile, closeSidebar }: SidebarProps) => {
         )}
       </div>
       
-      {/* Navigation links */}
       <nav className="space-y-1 flex-grow overflow-y-auto p-2">
         {navigation.map((item) => {
           const isActive = location.pathname === item.path || 

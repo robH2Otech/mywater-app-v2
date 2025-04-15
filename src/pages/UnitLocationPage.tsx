@@ -1,7 +1,7 @@
 
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { MapPin, ArrowLeft } from "lucide-react";
+import { MapPin, ArrowLeft, RefreshCw } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -11,6 +11,7 @@ import { PageHeader } from "@/components/shared/PageHeader";
 import { collection, query, where, getDocs, limit } from "firebase/firestore";
 import { db } from "@/integrations/firebase/client";
 import { use1oTLocation } from "@/hooks/locations/use1oTLocation";
+import { toast } from "sonner";
 
 export function UnitLocationPage() {
   const { iccid } = useParams<{ iccid: string }>();
@@ -19,6 +20,7 @@ export function UnitLocationPage() {
   const [unitName, setUnitName] = useState<string>("");
   const [unitId, setUnitId] = useState<string>("");
   const [unitFetchError, setUnitFetchError] = useState<string | null>(null);
+  const [unitFetched, setUnitFetched] = useState<boolean>(false);
   
   // Use our custom hook for location data
   const { isLoading, error, locationData, fetchLocationData } = use1oTLocation();
@@ -46,6 +48,7 @@ export function UnitLocationPage() {
           setUnitName(unitData.name || "Unnamed Unit");
           setUnitId(unitDoc.id);
           console.log(`Found unit: ${unitData.name} (${unitDoc.id})`);
+          setUnitFetched(true);
         }
       } catch (err) {
         console.error("Error fetching unit details:", err);
@@ -56,15 +59,16 @@ export function UnitLocationPage() {
     fetchUnitDetails();
   }, [iccid]);
   
-  // Fetch location data when ICCID is available
+  // Fetch location data when ICCID is available and unit is fetched
   useEffect(() => {
-    if (iccid) {
+    if (iccid && unitFetched) {
+      console.log("Unit fetched, requesting location data");
       // Add a small delay to ensure UI is rendered first
       setTimeout(() => {
         fetchLocationData(iccid);
-      }, 100);
+      }, 300);
     }
-  }, [iccid, fetchLocationData]);
+  }, [iccid, unitFetched, fetchLocationData]);
   
   // Handle navigation back to appropriate location
   const handleBack = () => {
@@ -75,15 +79,16 @@ export function UnitLocationPage() {
     }
   };
   
-  const displayName = unitName || iccid || "Unknown Unit";
-  const displayError = unitFetchError || error;
-
   // Handle retrying location fetch
   const handleRetryFetch = () => {
     if (iccid) {
+      toast.info("Retrying location data fetch...");
       fetchLocationData(iccid);
     }
   };
+  
+  const displayName = unitName || iccid || "Unknown Unit";
+  const displayError = unitFetchError || error;
   
   return (
     <div className="container mx-auto p-4 space-y-6 animate-fadeIn">
@@ -102,7 +107,7 @@ export function UnitLocationPage() {
         </Button>
       </PageHeader>
       
-      {isLoading ? (
+      {isLoading || !unitFetched ? (
         <LoadingSkeleton />
       ) : displayError ? (
         <Card className="bg-spotify-darker border-red-500/20">
@@ -115,8 +120,9 @@ export function UnitLocationPage() {
             <div className="flex gap-3 mt-4">
               <Button 
                 onClick={handleRetryFetch}
-                className="bg-spotify-accent hover:bg-spotify-accent-hover"
+                className="bg-spotify-accent hover:bg-spotify-accent-hover flex items-center gap-2"
               >
+                <RefreshCw className="h-4 w-4" />
                 Retry
               </Button>
               <Button 
@@ -160,6 +166,17 @@ export function UnitLocationPage() {
                 <p className="text-sm text-gray-300">
                   <strong>Note:</strong> Location is approximate, based on cell tower information.
                 </p>
+              </div>
+              
+              <div className="flex justify-end">
+                <Button 
+                  onClick={handleRetryFetch}
+                  variant="outline" 
+                  className="flex items-center gap-2 border-spotify-accent text-spotify-accent hover:bg-spotify-accent/10"
+                >
+                  <RefreshCw className="h-4 w-4" />
+                  Refresh Location
+                </Button>
               </div>
             </CardContent>
           </Card>
