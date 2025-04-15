@@ -1,5 +1,5 @@
 
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { Card } from "@/components/ui/card";
 import { useState } from "react";
 import { useFilterStatus } from "@/components/filters/FilterStatusUtils";
@@ -14,6 +14,7 @@ import { toast } from "sonner";
 
 export const UnitDetails = () => {
   const { id } = useParams();
+  const navigate = useNavigate();
   const [isSyncing, setIsSyncing] = useState(false);
   const { syncUnitMeasurements } = useFilterStatus();
   const { data: unit, isLoading, error } = useUnitDetails(id);
