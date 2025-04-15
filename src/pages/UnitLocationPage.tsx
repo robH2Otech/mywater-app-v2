@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { MapPin, ArrowLeft } from "lucide-react";
@@ -39,6 +38,10 @@ interface DiagnosticsResponse {
   message?: string;
 }
 
+// 1oT API configuration
+const ONE_OT_USERNAME = 'API_USER_76219';
+const ONE_OT_PASSWORD = 'f350459ec96aa4a82f41529bc92bcbcb197eb7d734e77065b0e62378a127a935';
+
 export function UnitLocationPage() {
   const { iccid } = useParams<{ iccid: string }>();
   const navigate = useNavigate();
@@ -49,21 +52,18 @@ export function UnitLocationPage() {
   const [unitName, setUnitName] = useState<string>("");
   const [unitId, setUnitId] = useState<string>("");
   
-  // Fetch unit details from Firestore using the ICCID
   useEffect(() => {
     async function fetchUnitDetails() {
       if (!iccid) return;
       
       try {
         console.log(`Fetching unit details for ICCID: ${iccid}`);
-        // Query Firestore to find the unit with matching ICCID - using Firebase v9 syntax
         const unitsRef = collection(db, "units");
         const q = query(unitsRef, where("iccid", "==", iccid), limit(1));
         const snapshot = await getDocs(q);
         
         if (snapshot.empty) {
           console.log("No matching unit found in Firestore");
-          // No need to set an error, we'll just use the ICCID as the unit name
         } else {
           const unitDoc = snapshot.docs[0];
           const unitData = unitDoc.data();
@@ -73,7 +73,6 @@ export function UnitLocationPage() {
         }
       } catch (err) {
         console.error("Error fetching unit details:", err);
-        // Don't set an error state here, we'll still try to fetch location
       }
     }
     
@@ -93,15 +92,8 @@ export function UnitLocationPage() {
       
       try {
         console.log(`Fetching location for ICCID: ${iccid}`);
-        
+
         // Step 1: Get auth token
-        const username = process.env.REACT_APP_ONE_OT_USERNAME;
-        const password = process.env.REACT_APP_ONE_OT_PASSWORD;
-        
-        if (!username || !password) {
-          throw new Error("1oT API credentials not configured");
-        }
-        
         const authResponse = await fetch("https://terminal.1ot.mobi/webapi/oauth/token", {
           method: "POST",
           headers: {
@@ -109,20 +101,20 @@ export function UnitLocationPage() {
           },
           body: new URLSearchParams({
             grant_type: "password",
-            username,
-            password,
+            username: ONE_OT_USERNAME,
+            password: ONE_OT_PASSWORD,
           }),
         });
-        
+
         if (!authResponse.ok) {
           const errorText = await authResponse.text();
           console.error("Auth response error:", errorText);
           throw new Error(`Authentication failed: ${authResponse.statusText}`);
         }
-        
+
         const authData: AuthResponse = await authResponse.json();
         console.log("Authentication successful");
-        
+
         // Step 2: Get diagnostics with the token
         const diagnosticsResponse = await fetch(
           `https://terminal.1ot.mobi/webapi/diagnostics?iccid=${iccid}`,
@@ -132,20 +124,20 @@ export function UnitLocationPage() {
             },
           }
         );
-        
+
         if (!diagnosticsResponse.ok) {
           const errorText = await diagnosticsResponse.text();
           console.error("Diagnostics response error:", errorText);
           throw new Error(`Failed to get diagnostics: ${diagnosticsResponse.statusText}`);
         }
-        
+
         const diagnosticsData: DiagnosticsResponse = await diagnosticsResponse.json();
         console.log("Diagnostics data:", diagnosticsData);
-        
+
         if (!diagnosticsData.location) {
           throw new Error("Location data not available for this unit");
         }
-        
+
         setLocationData({
           latitude: diagnosticsData.location.lat,
           longitude: diagnosticsData.location.lng,
@@ -153,9 +145,9 @@ export function UnitLocationPage() {
           cellId: diagnosticsData.location.cellId,
           timestamp: diagnosticsData.location.timestamp,
         });
-        
+
         toast.success("Location data loaded successfully");
-        
+
       } catch (err) {
         console.error("Error fetching location data:", err);
         setError(err instanceof Error ? err.message : "An unknown error occurred");
