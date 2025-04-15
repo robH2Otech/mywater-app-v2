@@ -1,3 +1,4 @@
+
 import { Home, Droplets, Filter, Bell, BarChart2, Users, Settings, Lightbulb, X, MessageSquare, MapPin } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -15,7 +16,7 @@ export const Sidebar = ({ isMobile, closeSidebar }: SidebarProps) => {
   const navigation = [
     { name: t("nav.dashboard"), icon: Home, path: "/dashboard" },
     { name: t("nav.water.units"), icon: Droplets, path: "/units" },
-    { name: t("nav.units.location"), icon: MapPin, path: "/locations" },
+    { name: "Units Location", icon: MapPin, path: "/locations" },
     { name: t("nav.filters"), icon: Filter, path: "/filters" },
     { name: t("nav.uvc"), icon: Lightbulb, path: "/uvc" },
     { name: t("nav.alerts"), icon: Bell, path: "/alerts" },

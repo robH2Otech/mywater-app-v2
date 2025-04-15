@@ -59,6 +59,13 @@ export function UnitLocationMap({ latitude, longitude, radius }: UnitLocationMap
         Accuracy: ${radius} meters
       `).openPopup();
       
+      // Force a map resize after component mounts to fix display issues
+      setTimeout(() => {
+        if (map.current) {
+          map.current.invalidateSize();
+        }
+      }, 200);
+      
     } catch (error) {
       console.error("Error initializing map:", error);
     }

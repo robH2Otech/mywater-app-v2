@@ -58,7 +58,7 @@ export function LocationsPage() {
     fetchUnitsWithICCID();
   }, []);
 
-  // Filter units based on search query
+  // Improved search to be more flexible with case and partial matches
   useEffect(() => {
     if (!searchQuery.trim()) {
       setFilteredUnits(units);
@@ -67,9 +67,10 @@ export function LocationsPage() {
 
     const query = searchQuery.toLowerCase().trim();
     const filtered = units.filter(unit => 
-      unit.name.toLowerCase().includes(query) || 
+      (unit.name && unit.name.toLowerCase().includes(query)) || 
       (unit.site_name && unit.site_name.toLowerCase().includes(query)) ||
-      (unit.customer_name && unit.customer_name.toLowerCase().includes(query))
+      (unit.customer_name && unit.customer_name.toLowerCase().includes(query)) ||
+      (unit.iccid && unit.iccid.toLowerCase().includes(query))
     );
     
     setFilteredUnits(filtered);

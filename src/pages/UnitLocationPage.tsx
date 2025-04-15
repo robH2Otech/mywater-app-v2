@@ -26,7 +26,10 @@ export function UnitLocationPage() {
   // Fetch unit details from Firestore
   useEffect(() => {
     async function fetchUnitDetails() {
-      if (!iccid) return;
+      if (!iccid) {
+        setUnitFetchError("No ICCID provided");
+        return;
+      }
       
       try {
         console.log(`Fetching unit details for ICCID: ${iccid}`);
@@ -56,7 +59,10 @@ export function UnitLocationPage() {
   // Fetch location data when ICCID is available
   useEffect(() => {
     if (iccid) {
-      fetchLocationData(iccid);
+      // Add a small delay to ensure UI is rendered first
+      setTimeout(() => {
+        fetchLocationData(iccid);
+      }, 100);
     }
   }, [iccid, fetchLocationData]);
   
@@ -71,6 +77,13 @@ export function UnitLocationPage() {
   
   const displayName = unitName || iccid || "Unknown Unit";
   const displayError = unitFetchError || error;
+
+  // Handle retrying location fetch
+  const handleRetryFetch = () => {
+    if (iccid) {
+      fetchLocationData(iccid);
+    }
+  };
   
   return (
     <div className="container mx-auto p-4 space-y-6 animate-fadeIn">
@@ -99,12 +112,21 @@ export function UnitLocationPage() {
                 {displayError}
               </AlertDescription>
             </Alert>
-            <Button 
-              onClick={handleBack} 
-              className="mt-4 bg-spotify-accent hover:bg-spotify-accent-hover"
-            >
-              Return to {unitId ? "Unit Details" : "Locations"}
-            </Button>
+            <div className="flex gap-3 mt-4">
+              <Button 
+                onClick={handleRetryFetch}
+                className="bg-spotify-accent hover:bg-spotify-accent-hover"
+              >
+                Retry
+              </Button>
+              <Button 
+                onClick={handleBack} 
+                variant="outline"
+                className="border-spotify-accent text-spotify-accent hover:bg-spotify-accent/10"
+              >
+                Return to {unitId ? "Unit Details" : "Locations"}
+              </Button>
+            </div>
           </CardContent>
         </Card>
       ) : locationData ? (
