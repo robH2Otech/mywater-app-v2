@@ -1,14 +1,14 @@
 
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { MapPin, ArrowLeft, Loader } from "lucide-react";
+import { MapPin, ArrowLeft } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { UnitLocationMap } from "@/components/units/UnitLocationMap";
 import { LoadingSkeleton } from "@/components/shared/LoadingSkeleton";
 import { PageHeader } from "@/components/shared/PageHeader";
-import { doc, getDoc } from "firebase/firestore";
+import { collection, query, where, getDocs, limit } from "firebase/firestore";
 import { db } from "@/integrations/firebase/client";
 import { toast } from "sonner";
 
@@ -56,9 +56,10 @@ export function UnitLocationPage() {
       
       try {
         console.log(`Fetching unit details for ICCID: ${iccid}`);
-        // Query Firestore to find the unit with matching ICCID
-        const unitsRef = db.collection("units");
-        const snapshot = await unitsRef.where("iccid", "==", iccid).limit(1).get();
+        // Query Firestore to find the unit with matching ICCID - using Firebase v9 syntax
+        const unitsRef = collection(db, "units");
+        const q = query(unitsRef, where("iccid", "==", iccid), limit(1));
+        const snapshot = await getDocs(q);
         
         if (snapshot.empty) {
           console.log("No matching unit found in Firestore");
