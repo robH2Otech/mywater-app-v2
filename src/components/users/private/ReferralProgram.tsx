@@ -4,17 +4,21 @@ import { DocumentData } from "firebase/firestore";
 import { ReferralStatus } from "./referral/ReferralStatus";
 import { ReferralCode } from "./referral/ReferralCode";
 import { ReferralForm } from "./referral/ReferralForm";
-import { Award, Info, Share2, Users } from "lucide-react";
+import { Award, Info } from "lucide-react";
 import { ReferralSteps } from "./referral/ReferralSteps";
 import { motion } from "framer-motion";
+import { ReferralHeader } from "./referral/ReferralHeader";
 
 interface ReferralProgramProps {
   userData: DocumentData | null;
 }
 
 export function ReferralProgram({ userData }: ReferralProgramProps) {
-  const referralCode = userData?.referral_code || "";
+  const referralCode = userData?.referral_code || "MYWATER20";
   const userName = `${userData?.first_name || ""} ${userData?.last_name || ""}`.trim();
+  const referralsCount = userData?.referrals_count || 0;
+  const referralsNeeded = 3;
+  const referralsRemaining = Math.max(0, referralsNeeded - referralsCount);
 
   // Animation variants for staggered animations
   const container = {
@@ -43,25 +47,11 @@ export function ReferralProgram({ userData }: ReferralProgramProps) {
       <motion.div variants={item}>
         <Card className="border-blue-500/20 bg-gradient-to-b from-blue-900/10 to-blue-800/5">
           <CardContent className="pt-6 pb-8 px-4 sm:px-6 space-y-6">
-            <div className="text-center space-y-3">
-              <div className="relative">
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <div className="w-16 h-16 bg-blue-500/10 rounded-full blur-xl" />
-                </div>
-                <div className="relative inline-flex items-center justify-center bg-blue-500 rounded-full p-3 z-10">
-                  <Award className="h-8 w-8 text-white" />
-                </div>
-              </div>
-              
-              <motion.div>
-                <h2 className="text-2xl font-bold mt-3 bg-gradient-to-r from-blue-300 to-cyan-200 bg-clip-text text-transparent">
-                  Refer Your Friends
-                </h2>
-                <p className="text-gray-300 mt-1">
-                  Share the benefits & earn a free replacement cartridge worth €150
-                </p>
-              </motion.div>
-            </div>
+            <ReferralHeader 
+              referralsCount={referralsCount} 
+              referralsNeeded={referralsNeeded}
+              referralsRemaining={referralsRemaining}
+            />
             
             <ReferralStatus userData={userData} />
             
@@ -76,7 +66,7 @@ export function ReferralProgram({ userData }: ReferralProgramProps) {
                   <div>
                     <p className="font-medium mb-1.5">Referral Rewards Program</p>
                     <p className="text-sm text-blue-100/80 leading-relaxed">
-                      For every friend who purchases a MYWATER system using your code, you'll earn progress toward your free replacement cartridge. Get 3 friends to purchase and claim your reward!
+                      For every friend who purchases a MYWATER system using your code, you'll earn progress toward your free replacement cartridge worth €150. Get 3 friends to purchase and claim your reward!
                     </p>
                   </div>
                 </div>

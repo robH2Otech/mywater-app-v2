@@ -1,86 +1,74 @@
 
-import { Award, Send, Tag, UserPlus } from "lucide-react";
+import { Check, Share2, Gift, Users } from "lucide-react";
 import { motion } from "framer-motion";
 
 export function ReferralSteps() {
   const steps = [
     {
-      icon: Tag,
+      icon: Share2,
       title: "Share Your Code",
-      description: "Send your unique referral code to friends"
+      description: "Send your unique referral code to friends via email, SMS, or social media."
     },
     {
-      icon: UserPlus,
-      title: "Friends Sign Up",
-      description: "They receive 20% off their first purchase"
+      icon: Users,
+      title: "Friends Purchase",
+      description: "Your friends use your code to get 20% off their MYWATER purchase."
     },
     {
-      icon: Award,
+      icon: Gift,
       title: "Earn Rewards",
-      description: "Get a free cartridge after 3 referrals"
+      description: "After 3 successful referrals, claim your free replacement cartridge worth €150!"
     }
   ];
 
-  const container = {
-    hidden: { opacity: 0 },
-    show: {
-      opacity: 1,
-      transition: {
-        staggerChildren: 0.2,
-        delayChildren: 0.3
-      }
-    }
-  };
-
-  const item = {
-    hidden: { opacity: 0, y: 10 },
-    show: { opacity: 1, y: 0 }
-  };
-
   return (
-    <motion.div
-      variants={container}
-      initial="hidden"
-      animate="show"
-      className="grid grid-cols-1 sm:grid-cols-3 gap-3 py-1"
+    <div className="p-5 bg-blue-950/20 rounded-lg border border-blue-700/20">
+      <h3 className="text-lg font-semibold text-blue-200 mb-4">How It Works</h3>
+      
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        {steps.map((step, index) => (
+          <StepCard
+            key={index}
+            icon={step.icon}
+            title={step.title}
+            description={step.description}
+            stepNumber={index + 1}
+          />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+interface StepCardProps {
+  icon: React.ElementType;
+  title: string;
+  description: string;
+  stepNumber: number;
+}
+
+function StepCard({ icon: Icon, title, description, stepNumber }: StepCardProps) {
+  return (
+    <motion.div 
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: 0.1 * stepNumber }}
+      className="p-4 bg-blue-900/10 border border-blue-700/30 rounded-md relative"
     >
-      {steps.map((step, index) => (
-        <motion.div
-          key={index}
-          variants={item}
-          className={`relative p-4 rounded-lg bg-gradient-to-br ${
-            index === 0 ? "from-blue-900/30 to-blue-800/10" :
-            index === 1 ? "from-cyan-900/30 to-cyan-800/10" :
-            "from-indigo-900/30 to-indigo-800/10"
-          }`}
-        >
-          <div className="absolute top-0 left-0 w-full h-1 overflow-hidden rounded-t-lg">
-            <div className={`w-full h-full ${
-              index === 0 ? "bg-blue-500/50" :
-              index === 1 ? "bg-cyan-500/50" :
-              "bg-indigo-500/50"
-            }`}></div>
-          </div>
-          
-          <div className="flex flex-col items-center text-center pt-2">
-            <div className={`p-2 rounded-full ${
-              index === 0 ? "bg-blue-500/20 text-blue-300" :
-              index === 1 ? "bg-cyan-500/20 text-cyan-300" :
-              "bg-indigo-500/20 text-indigo-300"
-            }`}>
-              <step.icon className="h-5 w-5" />
-            </div>
-            <h4 className="mt-2 font-medium text-white">{step.title}</h4>
-            <p className="text-xs text-gray-400 mt-1">{step.description}</p>
-            
-            {index < steps.length - 1 && (
-              <div className="hidden sm:block absolute -right-4 top-1/2 transform -translate-y-1/2 z-10">
-                <Send className="h-4 w-4 text-gray-500" />
-              </div>
-            )}
-          </div>
-        </motion.div>
-      ))}
+      <div className="absolute -top-3 -left-3 w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center text-xs font-bold">
+        {stepNumber}
+      </div>
+      
+      <div className="flex flex-col items-center text-center space-y-3 pt-2">
+        <div className="p-3 bg-blue-800/30 rounded-full">
+          <Icon className="h-6 w-6 text-blue-300" />
+        </div>
+        
+        <div>
+          <h4 className="text-blue-200 font-medium">{title}</h4>
+          <p className="text-blue-100/70 text-sm mt-1">{description}</p>
+        </div>
+      </div>
     </motion.div>
   );
 }
