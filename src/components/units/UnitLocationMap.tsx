@@ -109,9 +109,9 @@ export function UnitLocationMap({ latitude, longitude, radius }: UnitLocationMap
     coordinates.push(coordinates[0]);
     
     return {
-      type: "Feature",
+      type: "Feature" as const,  // Fix: Use "Feature" as a const to satisfy TypeScript
       geometry: {
-        type: "Polygon",
+        type: "Polygon" as const,  // Fix: Use "Polygon" as a const to satisfy TypeScript
         coordinates: [coordinates]
       },
       properties: {}

@@ -91,7 +91,7 @@ export const UnitDetails = () => {
           onSync={handleSync}
           onBack={() => navigate("/units")}
           unitId={id}
-          unitIccid={unit.iccid || unit.serial_number} // Use ICCID if available, otherwise serial number
+          unitIccid={unit.iccid || ''} // Fixed: Use empty string as fallback instead of accessing serial_number
         />
         <UnitDetailsCard unit={unit} />
       </Card>
