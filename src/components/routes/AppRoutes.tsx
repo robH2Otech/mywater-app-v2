@@ -59,7 +59,6 @@ export function AppRoutes() {
         }
       />
       
-      
       <Route
         path="/units/:id"
         element={
@@ -71,7 +70,7 @@ export function AppRoutes() {
         }
       />
 
-      {/* Add the new Unit Location route */}
+      {/* Make sure the location route comes before the :id route to avoid conflicts */}
       <Route
         path="/units/location/:iccid"
         element={

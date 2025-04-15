@@ -8,6 +8,9 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { UnitLocationMap } from "@/components/units/UnitLocationMap";
 import { LoadingSkeleton } from "@/components/shared/LoadingSkeleton";
 import { PageHeader } from "@/components/shared/PageHeader";
+import { doc, getDoc } from "firebase/firestore";
+import { db } from "@/integrations/firebase/client";
+import { toast } from "sonner";
 
 interface LocationData {
   latitude: number;
@@ -43,7 +46,38 @@ export function UnitLocationPage() {
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [locationData, setLocationData] = useState<LocationData | null>(null);
-  const [unitName, setUnitName] = useState<string>(iccid || "");
+  const [unitName, setUnitName] = useState<string>("");
+  const [unitId, setUnitId] = useState<string>("");
+  
+  // Fetch unit details from Firestore using the ICCID
+  useEffect(() => {
+    async function fetchUnitDetails() {
+      if (!iccid) return;
+      
+      try {
+        console.log(`Fetching unit details for ICCID: ${iccid}`);
+        // Query Firestore to find the unit with matching ICCID
+        const unitsRef = db.collection("units");
+        const snapshot = await unitsRef.where("iccid", "==", iccid).limit(1).get();
+        
+        if (snapshot.empty) {
+          console.log("No matching unit found in Firestore");
+          // No need to set an error, we'll just use the ICCID as the unit name
+        } else {
+          const unitDoc = snapshot.docs[0];
+          const unitData = unitDoc.data();
+          setUnitName(unitData.name || "");
+          setUnitId(unitDoc.id);
+          console.log(`Found unit: ${unitData.name} (${unitDoc.id})`);
+        }
+      } catch (err) {
+        console.error("Error fetching unit details:", err);
+        // Don't set an error state here, we'll still try to fetch location
+      }
+    }
+    
+    fetchUnitDetails();
+  }, [iccid]);
   
   useEffect(() => {
     async function fetchLocation() {
@@ -57,7 +91,16 @@ export function UnitLocationPage() {
       }
       
       try {
+        console.log(`Fetching location for ICCID: ${iccid}`);
+        
         // Step 1: Get auth token
+        const username = process.env.REACT_APP_ONE_OT_USERNAME;
+        const password = process.env.REACT_APP_ONE_OT_PASSWORD;
+        
+        if (!username || !password) {
+          throw new Error("1oT API credentials not configured");
+        }
+        
         const authResponse = await fetch("https://terminal.1ot.mobi/webapi/oauth/token", {
           method: "POST",
           headers: {
@@ -65,16 +108,19 @@ export function UnitLocationPage() {
           },
           body: new URLSearchParams({
             grant_type: "password",
-            username: process.env.REACT_APP_ONE_OT_USERNAME || "",
-            password: process.env.REACT_APP_ONE_OT_PASSWORD || "",
+            username,
+            password,
           }),
         });
         
         if (!authResponse.ok) {
+          const errorText = await authResponse.text();
+          console.error("Auth response error:", errorText);
           throw new Error(`Authentication failed: ${authResponse.statusText}`);
         }
         
         const authData: AuthResponse = await authResponse.json();
+        console.log("Authentication successful");
         
         // Step 2: Get diagnostics with the token
         const diagnosticsResponse = await fetch(
@@ -87,10 +133,13 @@ export function UnitLocationPage() {
         );
         
         if (!diagnosticsResponse.ok) {
+          const errorText = await diagnosticsResponse.text();
+          console.error("Diagnostics response error:", errorText);
           throw new Error(`Failed to get diagnostics: ${diagnosticsResponse.statusText}`);
         }
         
         const diagnosticsData: DiagnosticsResponse = await diagnosticsResponse.json();
+        console.log("Diagnostics data:", diagnosticsData);
         
         if (!diagnosticsData.location) {
           throw new Error("Location data not available for this unit");
@@ -104,20 +153,12 @@ export function UnitLocationPage() {
           timestamp: diagnosticsData.location.timestamp,
         });
         
-        // Try to fetch unit name from the database
-        try {
-          // This is a placeholder - in a real implementation, you'd fetch the unit name
-          // from your database using the ICCID
-          // Example: const unitData = await db.collection('units').where('iccid', '==', iccid).get();
-          // setUnitName(unitData.name || iccid);
-        } catch (unitError) {
-          console.error("Failed to fetch unit name:", unitError);
-          // Fall back to using ICCID
-        }
+        toast.success("Location data loaded successfully");
         
       } catch (err) {
         console.error("Error fetching location data:", err);
         setError(err instanceof Error ? err.message : "An unknown error occurred");
+        toast.error("Failed to load location data");
       } finally {
         setIsLoading(false);
       }
@@ -127,14 +168,20 @@ export function UnitLocationPage() {
   }, [iccid]);
   
   const handleBack = () => {
-    navigate(-1);
+    if (unitId) {
+      navigate(`/units/${unitId}`);
+    } else {
+      navigate("/units");
+    }
   };
+  
+  const displayName = unitName || iccid || "Unknown Unit";
   
   return (
     <div className="container mx-auto p-4 space-y-6 animate-fadeIn">
       <PageHeader 
         title="Approximate Unit Location" 
-        description={unitName ? `Location data for unit: ${unitName}` : "Location based on cell tower information"}
+        description={`Location data for unit: ${displayName}`}
         icon={MapPin}
       >
         <Button 

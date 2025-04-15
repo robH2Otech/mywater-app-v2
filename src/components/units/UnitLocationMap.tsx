@@ -1,7 +1,8 @@
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 interface UnitLocationMapProps {
   latitude: number;
@@ -13,61 +14,73 @@ export function UnitLocationMap({ latitude, longitude, radius }: UnitLocationMap
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<mapboxgl.Map | null>(null);
   const marker = useRef<mapboxgl.Marker | null>(null);
-  const circle = useRef<mapboxgl.CircleLayer | null>(null);
+  const [mapError, setMapError] = useState<string | null>(null);
   
   useEffect(() => {
     if (!mapContainer.current) return;
     
-    // Initialize the map
-    mapboxgl.accessToken = process.env.REACT_APP_MAPBOX_TOKEN || '';
-    
-    map.current = new mapboxgl.Map({
-      container: mapContainer.current,
-      style: 'mapbox://styles/mapbox/dark-v11', // Dark theme to match app style
-      center: [longitude, latitude],
-      zoom: calculateZoom(radius),
-    });
-    
-    // Add navigation controls
-    map.current.addControl(new mapboxgl.NavigationControl(), 'top-right');
-    
-    map.current.on('load', () => {
-      if (!map.current) return;
+    try {
+      // Get Mapbox token from environment variable
+      const mapboxToken = process.env.REACT_APP_MAPBOX_TOKEN;
       
-      // Add a marker at the unit location
-      marker.current = new mapboxgl.Marker({
-        color: '#2563eb', // Blue color
-      })
-        .setLngLat([longitude, latitude])
-        .addTo(map.current);
+      if (!mapboxToken) {
+        throw new Error("Mapbox token not configured");
+      }
       
-      // Add a source and layer for the accuracy circle
-      map.current.addSource('unit-radius', {
-        type: 'geojson',
-        data: createGeoJSONCircle([longitude, latitude], radius)
+      // Initialize the map
+      mapboxgl.accessToken = mapboxToken;
+      
+      map.current = new mapboxgl.Map({
+        container: mapContainer.current,
+        style: 'mapbox://styles/mapbox/dark-v11', // Dark theme to match app style
+        center: [longitude, latitude],
+        zoom: calculateZoom(radius),
       });
       
-      map.current.addLayer({
-        id: 'unit-radius-fill',
-        type: 'fill',
-        source: 'unit-radius',
-        paint: {
-          'fill-color': '#2563eb',
-          'fill-opacity': 0.1,
-        }
-      });
+      // Add navigation controls
+      map.current.addControl(new mapboxgl.NavigationControl(), 'top-right');
       
-      map.current.addLayer({
-        id: 'unit-radius-line',
-        type: 'line',
-        source: 'unit-radius',
-        paint: {
-          'line-color': '#2563eb',
-          'line-width': 2,
-          'line-opacity': 0.6,
-        }
+      map.current.on('load', () => {
+        if (!map.current) return;
+        
+        // Add a marker at the unit location
+        marker.current = new mapboxgl.Marker({
+          color: '#2563eb', // Blue color
+        })
+          .setLngLat([longitude, latitude])
+          .addTo(map.current);
+        
+        // Add a source and layer for the accuracy circle
+        map.current.addSource('unit-radius', {
+          type: 'geojson',
+          data: createGeoJSONCircle([longitude, latitude], radius)
+        });
+        
+        map.current.addLayer({
+          id: 'unit-radius-fill',
+          type: 'fill',
+          source: 'unit-radius',
+          paint: {
+            'fill-color': '#2563eb',
+            'fill-opacity': 0.1,
+          }
+        });
+        
+        map.current.addLayer({
+          id: 'unit-radius-line',
+          type: 'line',
+          source: 'unit-radius',
+          paint: {
+            'line-color': '#2563eb',
+            'line-width': 2,
+            'line-opacity': 0.6,
+          }
+        });
       });
-    });
+    } catch (error) {
+      console.error("Error initializing map:", error);
+      setMapError(error instanceof Error ? error.message : "Failed to load map");
+    }
     
     return () => {
       map.current?.remove();
@@ -117,6 +130,18 @@ export function UnitLocationMap({ latitude, longitude, radius }: UnitLocationMap
       properties: {}
     };
   };
+  
+  if (mapError) {
+    return (
+      <div className="h-full flex items-center justify-center bg-gray-900">
+        <Alert variant="destructive" className="w-full max-w-md">
+          <AlertDescription>
+            {mapError}. Please check if Mapbox token is properly configured.
+          </AlertDescription>
+        </Alert>
+      </div>
+    );
+  }
   
   return (
     <div className="absolute inset-0">

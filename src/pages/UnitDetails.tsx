@@ -7,6 +7,7 @@ import { UnitMeasurements } from "@/components/units/UnitMeasurements";
 import { UnitDetailsCard } from "@/components/units/UnitDetailsCard";
 import { UnitDetailsHeader } from "@/components/units/UnitDetailsHeader";
 import { useUnitDetails } from "@/hooks/units/useUnitDetails";
+import { toast } from "sonner";
 
 export const UnitDetails = () => {
   const { id } = useParams();
@@ -14,7 +15,7 @@ export const UnitDetails = () => {
   const [isSyncing, setIsSyncing] = useState(false);
   const { syncUnitMeasurements } = useFilterStatus();
 
-  // Fix the issue with unit details not loading
+  // Get unit details
   const { data: unit, isLoading, error } = useUnitDetails(id);
 
   const handleSync = async () => {
@@ -23,6 +24,10 @@ export const UnitDetails = () => {
     setIsSyncing(true);
     try {
       await syncUnitMeasurements(id);
+      toast.success("Measurements synced successfully");
+    } catch (err) {
+      console.error("Error syncing measurements:", err);
+      toast.error("Failed to sync measurements");
     } finally {
       setIsSyncing(false);
     }
