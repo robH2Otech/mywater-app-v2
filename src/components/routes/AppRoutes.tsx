@@ -1,3 +1,4 @@
+
 import { Routes, Route, Navigate } from "react-router-dom";
 import { Layout } from "@/components/layout/Layout";
 import { PrivateDashboard } from "@/pages/PrivateDashboard";
@@ -25,7 +26,7 @@ export function AppRoutes() {
       <Route path="/auth" element={<Auth />} />
       <Route path="/private-auth" element={<PrivateAuth />} />
       
-      {/* Private User Routes */}
+      {/* Private User Routes - ensure correct routing */}
       <Route
         path="/private-dashboard/*"
         element={

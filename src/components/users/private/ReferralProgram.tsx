@@ -25,6 +25,10 @@ export function ReferralProgram({ userData }: ReferralProgramProps) {
   const referralsNeeded = 3;
   const referralsRemaining = Math.max(0, referralsNeeded - referralsConverted);
 
+  // Debug the referral code value
+  console.log("Referral code from userData:", referralCode);
+  console.log("Full userData object:", userData);
+
   // Ensure animations run after component mount for better performance
   useEffect(() => {
     setMounted(true);

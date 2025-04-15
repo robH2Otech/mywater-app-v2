@@ -1,3 +1,4 @@
+
 import { 
   Home, 
   UserCircle, 
@@ -8,8 +9,7 @@ import {
   Settings, 
   LogOut,
   X,
-  BarChart2,
-  Calculator
+  BarChart2
 } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";

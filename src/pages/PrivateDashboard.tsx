@@ -22,6 +22,7 @@ export function PrivateDashboard() {
         <Route path="support" element={<SupportPage />} />
         <Route path="shop" element={<ShopPage />} />
         <Route path="settings" element={<SettingsPage />} />
+        {/* Redirect any unknown paths to the dashboard home */}
         <Route path="*" element={<Navigate to="/private-dashboard" replace />} />
       </Routes>
     </PrivateLayout>
