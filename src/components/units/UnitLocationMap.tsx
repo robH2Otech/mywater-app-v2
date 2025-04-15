@@ -2,7 +2,6 @@
 import { useEffect, useRef } from 'react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
-import { Alert, AlertDescription } from "@/components/ui/alert";
 
 interface UnitLocationMapProps {
   latitude: number;
@@ -20,40 +19,46 @@ export function UnitLocationMap({ latitude, longitude, radius }: UnitLocationMap
     if (!mapContainer.current) return;
 
     try {
-      // Initialize the map if it hasn't been initialized yet
-      if (!map.current) {
-        map.current = L.map(mapContainer.current).setView([latitude, longitude], calculateZoom(radius));
-
-        // Add OpenStreetMap tiles
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-          attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-        }).addTo(map.current);
-
-        // Create marker and circle
-        const locationIcon = L.icon({
-          iconUrl: 'https://unpkg.com/leaflet@1.7.1/dist/images/marker-icon.png',
-          iconRetinaUrl: 'https://unpkg.com/leaflet@1.7.1/dist/images/marker-icon-2x.png',
-          shadowUrl: 'https://unpkg.com/leaflet@1.7.1/dist/images/marker-shadow.png',
-          iconSize: [25, 41],
-          iconAnchor: [12, 41],
-          popupAnchor: [1, -34],
-          shadowSize: [41, 41]
-        });
-
-        marker.current = L.marker([latitude, longitude], { icon: locationIcon }).addTo(map.current);
-        circle.current = L.circle([latitude, longitude], {
-          radius: radius,
-          color: '#2563eb',
-          fillColor: '#2563eb',
-          fillOpacity: 0.1,
-          weight: 2
-        }).addTo(map.current);
-      } else {
-        // Update marker and circle positions
-        marker.current?.setLatLng([latitude, longitude]);
-        circle.current?.setLatLng([latitude, longitude]).setRadius(radius);
-        map.current.setView([latitude, longitude], calculateZoom(radius));
+      // Clean up previous map instance if it exists
+      if (map.current) {
+        map.current.remove();
+        map.current = null;
       }
+      
+      // Initialize the map
+      map.current = L.map(mapContainer.current).setView([latitude, longitude], calculateZoom(radius));
+
+      // Add OpenStreetMap tiles
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+      }).addTo(map.current);
+
+      // Create marker and circle
+      const locationIcon = L.icon({
+        iconUrl: 'https://unpkg.com/leaflet@1.7.1/dist/images/marker-icon.png',
+        iconRetinaUrl: 'https://unpkg.com/leaflet@1.7.1/dist/images/marker-icon-2x.png',
+        shadowUrl: 'https://unpkg.com/leaflet@1.7.1/dist/images/marker-shadow.png',
+        iconSize: [25, 41],
+        iconAnchor: [12, 41],
+        popupAnchor: [1, -34],
+        shadowSize: [41, 41]
+      });
+
+      marker.current = L.marker([latitude, longitude], { icon: locationIcon }).addTo(map.current);
+      circle.current = L.circle([latitude, longitude], {
+        radius: radius,
+        color: '#2563eb',
+        fillColor: '#2563eb',
+        fillOpacity: 0.1,
+        weight: 2
+      }).addTo(map.current);
+
+      // Add popup with coordinates info
+      marker.current.bindPopup(`
+        <b>${latitude.toFixed(6)}, ${longitude.toFixed(6)}</b><br>
+        Accuracy: ${radius} meters
+      `).openPopup();
+      
     } catch (error) {
       console.error("Error initializing map:", error);
     }

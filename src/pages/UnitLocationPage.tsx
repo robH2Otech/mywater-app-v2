@@ -10,51 +10,18 @@ import { LoadingSkeleton } from "@/components/shared/LoadingSkeleton";
 import { PageHeader } from "@/components/shared/PageHeader";
 import { collection, query, where, getDocs, limit } from "firebase/firestore";
 import { db } from "@/integrations/firebase/client";
-import { toast } from "sonner";
+import { use1oTLocation } from "@/hooks/locations/use1oTLocation";
 
-// Location Data Types
-interface LocationData {
-  latitude: number;
-  longitude: number;
-  radius: number;
-  cellId?: string;
-  timestamp?: string;
-}
-
-// 1oT API Types
-interface AuthResponse {
-  access_token: string;
-  token_type: string;
-  expires_in: number;
-  scope: string;
-}
-
-interface DiagnosticsResponse {
-  location?: {
-    lat: number;
-    lng: number;
-    radius: number;
-    cellId: string;
-    timestamp: string;
-  };
-  status?: string;
-  message?: string;
-}
-
-// 1oT API configuration
-const ONE_OT_USERNAME = 'API_USER_76219';
-const ONE_OT_PASSWORD = 'f350459ec96aa4a82f41529bc92bcbcb197eb7d734e77065b0e62378a127a935';
-
-// Main component
 export function UnitLocationPage() {
   const { iccid } = useParams<{ iccid: string }>();
   const navigate = useNavigate();
   
-  const [isLoading, setIsLoading] = useState<boolean>(true);
-  const [error, setError] = useState<string | null>(null);
-  const [locationData, setLocationData] = useState<LocationData | null>(null);
   const [unitName, setUnitName] = useState<string>("");
   const [unitId, setUnitId] = useState<string>("");
+  const [unitFetchError, setUnitFetchError] = useState<string | null>(null);
+  
+  // Use our custom hook for location data
+  const { isLoading, error, locationData, fetchLocationData } = use1oTLocation();
   
   // Fetch unit details from Firestore
   useEffect(() => {
@@ -69,104 +36,29 @@ export function UnitLocationPage() {
         
         if (snapshot.empty) {
           console.log("No matching unit found in Firestore");
-          setError("Unit not found with the provided ICCID");
+          setUnitFetchError("Unit not found with the provided ICCID");
         } else {
           const unitDoc = snapshot.docs[0];
           const unitData = unitDoc.data();
-          setUnitName(unitData.name || "");
+          setUnitName(unitData.name || "Unnamed Unit");
           setUnitId(unitDoc.id);
           console.log(`Found unit: ${unitData.name} (${unitDoc.id})`);
         }
       } catch (err) {
         console.error("Error fetching unit details:", err);
-        setError("Failed to fetch unit details");
+        setUnitFetchError("Failed to fetch unit details");
       }
     }
     
     fetchUnitDetails();
   }, [iccid]);
   
-  // Fetch location from 1oT API
+  // Fetch location data when ICCID is available
   useEffect(() => {
-    async function fetchLocation() {
-      setIsLoading(true);
-      setError(null);
-      
-      if (!iccid) {
-        setError("No ICCID provided");
-        setIsLoading(false);
-        return;
-      }
-      
-      try {
-        console.log(`Fetching location for ICCID: ${iccid}`);
-
-        // Step 1: Get auth token
-        const authResponse = await fetch("https://terminal.1ot.mobi/webapi/oauth/token", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/x-www-form-urlencoded",
-          },
-          body: new URLSearchParams({
-            grant_type: "password",
-            username: ONE_OT_USERNAME,
-            password: ONE_OT_PASSWORD,
-          }),
-        });
-
-        if (!authResponse.ok) {
-          const errorText = await authResponse.text();
-          console.error("Auth response error:", errorText);
-          throw new Error(`Authentication failed: ${authResponse.statusText}`);
-        }
-
-        const authData: AuthResponse = await authResponse.json();
-        console.log("Authentication successful");
-
-        // Step 2: Get diagnostics with the token
-        const diagnosticsResponse = await fetch(
-          `https://terminal.1ot.mobi/webapi/diagnostics?iccid=${iccid}`,
-          {
-            headers: {
-              Authorization: `Bearer ${authData.access_token}`,
-            },
-          }
-        );
-
-        if (!diagnosticsResponse.ok) {
-          const errorText = await diagnosticsResponse.text();
-          console.error("Diagnostics response error:", errorText);
-          throw new Error(`Failed to get diagnostics: ${diagnosticsResponse.statusText}`);
-        }
-
-        const diagnosticsData: DiagnosticsResponse = await diagnosticsResponse.json();
-        console.log("Diagnostics data:", diagnosticsData);
-
-        if (!diagnosticsData.location) {
-          throw new Error("Location data not available for this unit");
-        }
-
-        setLocationData({
-          latitude: diagnosticsData.location.lat,
-          longitude: diagnosticsData.location.lng,
-          radius: diagnosticsData.location.radius,
-          cellId: diagnosticsData.location.cellId,
-          timestamp: diagnosticsData.location.timestamp,
-        });
-
-        toast.success("Location data loaded successfully");
-
-      } catch (err) {
-        console.error("Error fetching location data:", err);
-        setError(err instanceof Error ? err.message : "An unknown error occurred");
-        toast.error("Failed to load location data");
-      } finally {
-        setIsLoading(false);
-      }
+    if (iccid) {
+      fetchLocationData(iccid);
     }
-    
-    fetchLocation();
-  }, [iccid]);
+  }, [iccid, fetchLocationData]);
   
   // Handle navigation back to appropriate location
   const handleBack = () => {
@@ -178,6 +70,7 @@ export function UnitLocationPage() {
   };
   
   const displayName = unitName || iccid || "Unknown Unit";
+  const displayError = unitFetchError || error;
   
   return (
     <div className="container mx-auto p-4 space-y-6 animate-fadeIn">
@@ -198,12 +91,12 @@ export function UnitLocationPage() {
       
       {isLoading ? (
         <LoadingSkeleton />
-      ) : error ? (
+      ) : displayError ? (
         <Card className="bg-spotify-darker border-red-500/20">
           <CardContent className="p-6">
             <Alert variant="destructive" className="bg-red-900/20 border-red-500/30 text-red-200">
               <AlertDescription className="text-red-200">
-                {error}
+                {displayError}
               </AlertDescription>
             </Alert>
             <Button 
