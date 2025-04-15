@@ -1,20 +1,21 @@
-import { useParams, useNavigate } from "react-router-dom";
+
+import { useParams } from "react-router-dom";
 import { Card } from "@/components/ui/card";
 import { useState } from "react";
 import { useFilterStatus } from "@/components/filters/FilterStatusUtils";
 import { UnitMeasurements } from "@/components/units/UnitMeasurements";
 import { UnitDetailsCard } from "@/components/units/UnitDetailsCard";
 import { UnitDetailsHeader } from "@/components/units/UnitDetailsHeader";
-import { UnitLocationLink } from "@/components/units/UnitLocationLink";
+import { UnitLocationSection } from "@/components/units/details/UnitLocationSection";
+import { UnitError } from "@/components/units/details/UnitError";
+import { UnitLoading } from "@/components/units/details/UnitLoading";
 import { useUnitDetails } from "@/hooks/units/useUnitDetails";
 import { toast } from "sonner";
 
 export const UnitDetails = () => {
   const { id } = useParams();
-  const navigate = useNavigate();
   const [isSyncing, setIsSyncing] = useState(false);
   const { syncUnitMeasurements } = useFilterStatus();
-
   const { data: unit, isLoading, error } = useUnitDetails(id);
 
   const handleSync = async () => {
@@ -32,58 +33,9 @@ export const UnitDetails = () => {
     }
   };
 
-  if (error) {
-    console.error("Error loading unit details:", error);
-    return (
-      <div className="container mx-auto p-3 md:p-6 max-w-4xl">
-        <Card className="bg-spotify-darker border-spotify-accent p-4 md:p-6">
-          <div className="text-red-400 p-3 md:p-4">
-            <h2 className="text-lg md:text-xl font-semibold mb-2">Error loading unit details</h2>
-            <p className="text-sm md:text-base">{error.message || "An unknown error occurred"}</p>
-            <button 
-              onClick={() => navigate("/units")} 
-              className="mt-3 md:mt-4 bg-spotify-accent px-3 py-1.5 md:px-4 md:py-2 rounded hover:bg-spotify-accent-hover text-sm md:text-base"
-            >
-              Back to Units
-            </button>
-          </div>
-        </Card>
-      </div>
-    );
-  }
-
-  if (isLoading) {
-    return (
-      <div className="container mx-auto p-3 md:p-6 max-w-4xl">
-        <Card className="bg-spotify-darker border-spotify-accent p-4 md:p-6">
-          <div className="animate-pulse space-y-3 md:space-y-4">
-            <div className="h-6 md:h-8 bg-spotify-accent rounded w-1/3"></div>
-            <div className="h-24 md:h-32 bg-spotify-accent rounded"></div>
-            <div className="h-48 md:h-64 bg-spotify-accent rounded"></div>
-          </div>
-        </Card>
-      </div>
-    );
-  }
-
-  if (!unit) {
-    return (
-      <div className="container mx-auto p-3 md:p-6 max-w-4xl">
-        <Card className="bg-spotify-darker border-spotify-accent p-4 md:p-6">
-          <div className="text-center p-3 md:p-4">
-            <h2 className="text-lg md:text-xl font-semibold mb-2">Unit not found</h2>
-            <p className="text-sm md:text-base">The requested water unit could not be found.</p>
-            <button 
-              onClick={() => navigate("/units")} 
-              className="mt-3 md:mt-4 bg-spotify-accent px-3 py-1.5 md:px-4 md:py-2 rounded hover:bg-spotify-accent-hover text-sm md:text-base"
-            >
-              Back to Units
-            </button>
-          </div>
-        </Card>
-      </div>
-    );
-  }
+  if (error) return <UnitError error={error} />;
+  if (isLoading) return <UnitLoading />;
+  if (!unit) return <UnitError error={new Error("Unit not found")} />;
 
   return (
     <div className="container mx-auto p-3 md:p-6 max-w-4xl animate-fadeIn space-y-4 md:space-y-6">
@@ -96,10 +48,7 @@ export const UnitDetails = () => {
           unitId={id}
           unitIccid={unit.iccid || ''}
         />
-        <div className="flex justify-between items-center mb-4">
-          <h2 className="text-xl font-bold text-white">{unit.name || 'Unnamed Unit'}</h2>
-          {unit.iccid && <UnitLocationLink unitId={id || ''} iccid={unit.iccid} />}
-        </div>
+        <UnitLocationSection unit={unit} unitId={id || ''} />
         <UnitDetailsCard unit={unit} />
       </Card>
 
