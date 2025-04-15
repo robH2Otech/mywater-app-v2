@@ -1,3 +1,4 @@
+
 import { Routes, Route, Navigate } from "react-router-dom";
 import { Layout } from "@/components/layout/Layout";
 import { PrivateDashboard } from "@/pages/PrivateDashboard";
@@ -9,6 +10,7 @@ import { ProtectedRoute, PrivateProtectedRoute } from "./ProtectedRoutes";
 import ClientRequests from "@/pages/ClientRequests";
 import { Units } from "@/pages/Units";
 import { UnitDetails } from "@/pages/UnitDetails";
+import { UnitLocationPage } from "@/pages/UnitLocationPage";
 import { Filters } from "@/pages/Filters";
 import { UVC } from "@/pages/UVC";
 import { Alerts } from "@/pages/Alerts";
@@ -64,6 +66,18 @@ export function AppRoutes() {
           <ProtectedRoute>
             <Layout>
               <UnitDetails />
+            </Layout>
+          </ProtectedRoute>
+        }
+      />
+
+      {/* Add the new Unit Location route */}
+      <Route
+        path="/units/location/:iccid"
+        element={
+          <ProtectedRoute>
+            <Layout>
+              <UnitLocationPage />
             </Layout>
           </ProtectedRoute>
         }

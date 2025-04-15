@@ -90,6 +90,8 @@ export const UnitDetails = () => {
           isSyncing={isSyncing}
           onSync={handleSync}
           onBack={() => navigate("/units")}
+          unitId={id}
+          unitIccid={unit.iccid || unit.serial_number} // Use ICCID if available, otherwise serial number
         />
         <UnitDetailsCard unit={unit} />
       </Card>
