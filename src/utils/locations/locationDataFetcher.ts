@@ -1,7 +1,7 @@
-
 import { collection, getDocs, updateDoc, doc } from 'firebase/firestore';
 import { db } from '@/integrations/firebase/client';
 import { UnitData } from '@/types/analytics';
+import { MOCK_LOCATIONS } from './locationData';
 
 interface OneOTAuthResponse {
   access_token: string;
