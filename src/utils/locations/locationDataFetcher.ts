@@ -4,24 +4,12 @@ import { db } from '@/integrations/firebase/client';
 import { UnitData } from '@/types/analytics';
 import { MOCK_LOCATIONS } from './locationData';
 
-interface OneOTAuthResponse {
-  access_token: string;
-  token_type: string;
-  expires_in: number;
-}
-
-interface OneOTDiagnosticsResponse {
-  imei: string;
-  deviceName: string;
-  inDataSession: boolean;
-  lastNetworkActivity: number;
-  lastCountry: string;
-  lastOperator: string;
-  latitude: number;
-  longitude: number;
-  radius: number;
-}
-
+/**
+ * @deprecated This function is now implemented as a Firebase Cloud Function.
+ * Use the functions directly in production.
+ * 
+ * This client-side implementation is kept for development and testing purposes.
+ */
 export async function fetchAndStoreLocationData() {
   try {
     // 1. Get all active units from Firestore
@@ -61,9 +49,8 @@ export async function fetchAndStoreLocationData() {
             locationLastFetchedAt: new Date().toISOString()
           };
         } else {
-          // In production, this would be replaced with actual 1oT API calls
-          console.log(`Production environment - would fetch real data for ICCID: ${unit.iccid}`);
-          continue;
+          console.log(`Production environment detected - use Cloud Functions instead for unit: ${unit.id}`);
+          continue; // Skip in production - use Cloud Functions instead
         }
 
         // Update Firestore with location data
@@ -74,7 +61,6 @@ export async function fetchAndStoreLocationData() {
 
       } catch (error) {
         console.error(`Error processing unit ${unit.id}:`, error);
-        // Continue with next unit
       }
     }
 
@@ -86,4 +72,3 @@ export async function fetchAndStoreLocationData() {
     throw error;
   }
 }
-

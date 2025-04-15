@@ -1,4 +1,3 @@
-
 import { useParams, useNavigate } from "react-router-dom";
 import { Card } from "@/components/ui/card";
 import { useState } from "react";
@@ -6,6 +5,7 @@ import { useFilterStatus } from "@/components/filters/FilterStatusUtils";
 import { UnitMeasurements } from "@/components/units/UnitMeasurements";
 import { UnitDetailsCard } from "@/components/units/UnitDetailsCard";
 import { UnitDetailsHeader } from "@/components/units/UnitDetailsHeader";
+import { UnitLocationLink } from "@/components/units/UnitLocationLink";
 import { useUnitDetails } from "@/hooks/units/useUnitDetails";
 import { toast } from "sonner";
 
@@ -15,7 +15,6 @@ export const UnitDetails = () => {
   const [isSyncing, setIsSyncing] = useState(false);
   const { syncUnitMeasurements } = useFilterStatus();
 
-  // Get unit details
   const { data: unit, isLoading, error } = useUnitDetails(id);
 
   const handleSync = async () => {
@@ -33,7 +32,6 @@ export const UnitDetails = () => {
     }
   };
 
-  // Add proper error handling to explain the issue
   if (error) {
     console.error("Error loading unit details:", error);
     return (
@@ -96,8 +94,12 @@ export const UnitDetails = () => {
           onSync={handleSync}
           onBack={() => navigate("/units")}
           unitId={id}
-          unitIccid={unit.iccid || ''} // Fixed: Use empty string as fallback instead of accessing serial_number
+          unitIccid={unit.iccid || ''}
         />
+        <div className="flex justify-between items-center mb-4">
+          <h2 className="text-xl font-bold text-white">{unit.name || 'Unnamed Unit'}</h2>
+          {unit.iccid && <UnitLocationLink unitId={id || ''} iccid={unit.iccid} />}
+        </div>
         <UnitDetailsCard unit={unit} />
       </Card>
 

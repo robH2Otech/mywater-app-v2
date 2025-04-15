@@ -1,18 +1,17 @@
 
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { MapPin, ArrowLeft, RefreshCw } from "lucide-react";
+import { MapPin, ArrowLeft } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { UnitLocationMap } from "@/components/units/UnitLocationMap";
 import { LoadingSkeleton } from "@/components/shared/LoadingSkeleton";
 import { PageHeader } from "@/components/shared/PageHeader";
 import { collection, query, where, getDocs, limit } from "firebase/firestore";
 import { db } from "@/integrations/firebase/client";
 import { use1oTLocation } from "@/hooks/locations/use1oTLocation";
-import { LocationData } from "@/utils/locations/locationData";
-import { toast } from "sonner";
+import { useCloudLocationUpdate } from "@/hooks/locations/useCloudLocationUpdate";
+import { UnitLocationDisplay } from "@/components/locations/UnitLocationDisplay";
 
 export function UnitLocationPage() {
   const { iccid } = useParams<{ iccid: string }>();
@@ -23,8 +22,9 @@ export function UnitLocationPage() {
   const [unitFetchError, setUnitFetchError] = useState<string | null>(null);
   const [unitFetched, setUnitFetched] = useState<boolean>(false);
   
-  // Use our custom hook for location data
-  const { isLoading, error, locationData, fetchLocationData } = use1oTLocation();
+  // Use our custom hooks
+  const { isLoading: isLoadingLocation, error: locationError, locationData, fetchLocationData } = use1oTLocation();
+  const { isUpdating, updateUnitLocation } = useCloudLocationUpdate();
   
   // Fetch unit details from Firestore
   useEffect(() => {
@@ -41,12 +41,10 @@ export function UnitLocationPage() {
         const snapshot = await getDocs(q);
         
         if (snapshot.empty) {
-          // Try a more flexible search approach by using array-contains or startsWith
-          console.log("No exact match found, trying flexible search");
+          // Try a more flexible search approach
           const allUnitsRef = collection(db, "units");
           const allUnitsSnapshot = await getDocs(allUnitsRef);
           
-          // Search for units with ICCID that includes our search ICCID or vice versa
           const matchingUnit = allUnitsSnapshot.docs.find(doc => {
             const unitData = doc.data();
             const unitIccid = unitData.iccid;
@@ -59,19 +57,15 @@ export function UnitLocationPage() {
             const unitData = matchingUnit.data();
             setUnitName(unitData.name || "Unnamed Unit");
             setUnitId(matchingUnit.id);
-            console.log(`Found unit with similar ICCID: ${unitData.name} (${matchingUnit.id})`);
             setUnitFetched(true);
-            return;
+          } else {
+            setUnitFetchError("Unit not found with the provided ICCID");
           }
-          
-          console.log("No matching unit found in Firestore");
-          setUnitFetchError("Unit not found with the provided ICCID");
         } else {
           const unitDoc = snapshot.docs[0];
           const unitData = unitDoc.data();
           setUnitName(unitData.name || "Unnamed Unit");
           setUnitId(unitDoc.id);
-          console.log(`Found unit: ${unitData.name} (${unitDoc.id})`);
           setUnitFetched(true);
         }
       } catch (err) {
@@ -83,24 +77,20 @@ export function UnitLocationPage() {
     fetchUnitDetails();
   }, [iccid]);
   
-  // Fetch location data when ICCID is available and unit is fetched
+  // Fetch location data when unit is identified
   useEffect(() => {
     if (iccid && unitFetched) {
-      console.log("Unit fetched, requesting location data");
-      // Add a small delay to ensure UI is rendered first
       setTimeout(() => {
         fetchLocationData(iccid);
       }, 300);
     } else if (iccid && !unitFetched && !unitFetchError) {
-      // If we couldn't find the unit but have an ICCID, try to fetch location anyway
-      console.log("Unit not found but trying location data fetch with ICCID");
       setTimeout(() => {
         fetchLocationData(iccid);
       }, 300);
     }
   }, [iccid, unitFetched, unitFetchError, fetchLocationData]);
   
-  // Handle navigation back to appropriate location
+  // Navigation handler
   const handleBack = () => {
     if (unitId) {
       navigate(`/units/${unitId}`);
@@ -109,16 +99,26 @@ export function UnitLocationPage() {
     }
   };
   
-  // Handle retrying location fetch
-  const handleRetryFetch = () => {
-    if (iccid) {
-      toast.info("Retrying location data fetch...");
+  // Update location handler
+  const handleRetryFetch = async () => {
+    if (unitId && iccid) {
+      // Use cloud function if available
+      const updatedLocation = await updateUnitLocation(unitId, iccid);
+      if (updatedLocation) {
+        // If cloud update was successful, use that data
+        return;
+      }
+      // Fall back to client-side fetching
+      fetchLocationData(iccid);
+    } else if (iccid) {
+      // Just use client-side fetching
       fetchLocationData(iccid);
     }
   };
   
   const displayName = unitName || iccid || "Unknown Unit";
-  const displayError = unitFetchError || error;
+  const displayError = unitFetchError || locationError;
+  const isUpdatingLocation = isLoadingLocation || isUpdating;
   
   return (
     <div className="container mx-auto p-4 space-y-6 animate-fadeIn">
@@ -137,7 +137,7 @@ export function UnitLocationPage() {
         </Button>
       </PageHeader>
       
-      {isLoading || (!unitFetched && !unitFetchError) ? (
+      {isUpdatingLocation || (!unitFetched && !unitFetchError) ? (
         <LoadingSkeleton />
       ) : displayError && !locationData ? (
         <Card className="bg-spotify-darker border-red-500/20">
@@ -152,7 +152,6 @@ export function UnitLocationPage() {
                 onClick={handleRetryFetch}
                 className="bg-spotify-accent hover:bg-spotify-accent-hover flex items-center gap-2"
               >
-                <RefreshCw className="h-4 w-4" />
                 Retry
               </Button>
               <Button 
@@ -166,73 +165,11 @@ export function UnitLocationPage() {
           </CardContent>
         </Card>
       ) : locationData ? (
-        <div className="space-y-6">
-          <Card className="bg-spotify-darker">
-            <CardContent className="p-6 space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="p-4 rounded-lg bg-spotify-accent/20 border border-spotify-accent/20">
-                  <h3 className="text-sm font-medium text-gray-400">Latitude</h3>
-                  <p className="text-xl font-bold text-white mt-1">{locationData.latitude.toFixed(6)}</p>
-                </div>
-                
-                <div className="p-4 rounded-lg bg-spotify-accent/20 border border-spotify-accent/20">
-                  <h3 className="text-sm font-medium text-gray-400">Longitude</h3>
-                  <p className="text-xl font-bold text-white mt-1">{locationData.longitude.toFixed(6)}</p>
-                </div>
-                
-                <div className="p-4 rounded-lg bg-spotify-accent/20 border border-spotify-accent/20">
-                  <h3 className="text-sm font-medium text-gray-400">Accuracy Radius</h3>
-                  <p className="text-xl font-bold text-white mt-1">{locationData.radius} meters</p>
-                </div>
-              </div>
-              
-              {locationData.lastCountry && locationData.lastOperator && (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
-                  <div className="p-4 rounded-lg bg-spotify-accent/10 border border-spotify-accent/10">
-                    <h3 className="text-sm font-medium text-gray-400">Country</h3>
-                    <p className="text-md font-medium text-white mt-1">{locationData.lastCountry}</p>
-                  </div>
-                  
-                  <div className="p-4 rounded-lg bg-spotify-accent/10 border border-spotify-accent/10">
-                    <h3 className="text-sm font-medium text-gray-400">Network Operator</h3>
-                    <p className="text-md font-medium text-white mt-1">{locationData.lastOperator}</p>
-                  </div>
-                </div>
-              )}
-              
-              {locationData.timestamp && (
-                <p className="text-xs text-gray-400">
-                  Location data captured at: {new Date(locationData.timestamp).toLocaleString()}
-                </p>
-              )}
-              
-              <div className="p-3 bg-blue-900/20 border border-blue-500/20 rounded-md">
-                <p className="text-sm text-gray-300">
-                  <strong>Note:</strong> Location is approximate, based on cell tower information.
-                </p>
-              </div>
-              
-              <div className="flex justify-end">
-                <Button 
-                  onClick={handleRetryFetch}
-                  variant="outline" 
-                  className="flex items-center gap-2 border-spotify-accent text-spotify-accent hover:bg-spotify-accent/10"
-                >
-                  <RefreshCw className="h-4 w-4" />
-                  Refresh Location
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-          
-          <div className="h-[60vh] relative rounded-lg overflow-hidden">
-            <UnitLocationMap 
-              latitude={locationData.latitude} 
-              longitude={locationData.longitude} 
-              radius={locationData.radius} 
-            />
-          </div>
-        </div>
+        <UnitLocationDisplay 
+          locationData={locationData}
+          onRefresh={handleRetryFetch}
+          isLoading={isUpdatingLocation}
+        />
       ) : (
         <Card className="bg-spotify-darker border-yellow-500/20">
           <CardContent className="p-6">
