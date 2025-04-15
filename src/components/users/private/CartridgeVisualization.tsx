@@ -1,5 +1,6 @@
 
 import { useState, useEffect } from 'react';
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface CartridgeVisualizationProps {
   percentage: number;
@@ -11,6 +12,7 @@ export const CartridgeVisualization: React.FC<CartridgeVisualizationProps> = ({
   height = 400
 }) => {
   const [animatedPercentage, setAnimatedPercentage] = useState(0);
+  const isMobile = useIsMobile();
   
   // Calculate the remaining percentage (what's left in the cartridge)
   const remainingPercentage = Math.max(0, Math.min(100 - percentage, 100));
@@ -23,50 +25,44 @@ export const CartridgeVisualization: React.FC<CartridgeVisualizationProps> = ({
     
     return () => clearTimeout(timeout);
   }, [percentage]);
-  
-  // Filter image from the uploaded asset
-  const filterImage = "/lovable-uploads/e2384ed6-7c9e-48a1-a6f1-48649d569560.png";
-  
+
   return (
-    <div className="relative flex flex-col items-center justify-center h-full">
+    <div className="relative flex flex-col items-center justify-center h-full w-full">
       <div className="text-center mb-4">
         <h3 className="text-lg font-medium">Cartridge Lifespan</h3>
         <p className="text-sm text-gray-400">Remaining capacity</p>
       </div>
       
-      <div style={{ height: `${height}px` }} className="relative w-44 flex items-center justify-center">
-        {/* Container with the filter image */}
-        <div className="absolute inset-0 flex items-center justify-center">
-          <img 
-            src={filterImage} 
-            alt="Water Filter Cartridge"
-            className="h-full object-contain z-10"
-          />
-        </div>
+      <div 
+        style={{ height: isMobile ? '300px' : `${height}px` }} 
+        className="relative w-44 flex items-center justify-center mx-auto"
+      >
+        {/* Container - cylindrical shape for cartridge */}
+        <div className="absolute inset-0 border-2 border-blue-500/30 rounded-2xl opacity-25"></div>
         
         {/* Filled part (red) - represents used percentage */}
         <div 
-          className="absolute bottom-0 left-0 right-0 bg-red-500/60 transition-all duration-1000 ease-out rounded-b-lg"
+          className="absolute bottom-0 left-0 right-0 bg-red-500/60 transition-all duration-1000 ease-out rounded-b-xl"
           style={{ 
             height: `${animatedPercentage}%`,
-            width: '60%',
-            marginLeft: '20%'
+            width: '80%',
+            marginLeft: '10%'
           }}
         />
         
         {/* Remaining part (blue) - represents remaining percentage */}
         <div 
-          className="absolute bottom-0 left-0 right-0 bg-blue-500/60 transition-all duration-1000 ease-out rounded-t-lg"
+          className="absolute bottom-0 left-0 right-0 bg-blue-500/60 transition-all duration-1000 ease-out rounded-t-xl"
           style={{ 
             height: `${remainingPercentage}%`,
             bottom: `${animatedPercentage}%`,
-            width: '60%',
-            marginLeft: '20%'
+            width: '80%',
+            marginLeft: '10%'
           }}
         />
         
         {/* Bubbles effect (for blue water) */}
-        {remainingPercentage > 10 && Array.from({ length: 5 }).map((_, i) => (
+        {remainingPercentage > 10 && Array.from({ length: 8 }).map((_, i) => (
           <div 
             key={i}
             className="absolute rounded-full bg-blue-300/60 animate-bubble"
@@ -74,7 +70,7 @@ export const CartridgeVisualization: React.FC<CartridgeVisualizationProps> = ({
               width: `${Math.random() * 8 + 4}px`,
               height: `${Math.random() * 8 + 4}px`,
               left: `${Math.random() * 30 + 35}%`,
-              bottom: `${Math.random() * remainingPercentage}%`,
+              bottom: `${Math.random() * remainingPercentage + animatedPercentage}%`,
               animation: `bubble ${Math.random() * 5 + 3}s infinite ease-in-out ${Math.random() * 2}s`,
               opacity: Math.random() * 0.5 + 0.2,
             }}
@@ -83,14 +79,14 @@ export const CartridgeVisualization: React.FC<CartridgeVisualizationProps> = ({
         
         {/* Percentage indicator */}
         <div className="absolute inset-0 flex items-center justify-center z-20">
-          <div className="bg-black/70 px-3 py-1.5 rounded-full">
-            <p className="text-xl font-bold text-white">{remainingPercentage.toFixed(0)}%</p>
+          <div className="bg-black/70 px-4 py-2 rounded-full">
+            <p className="text-2xl font-bold text-white">{remainingPercentage.toFixed(0)}%</p>
             <p className="text-xs text-center text-gray-300">remaining</p>
           </div>
         </div>
       </div>
       
-      {/* Fixed the style element by removing jsx and global props */}
+      {/* Animation keyframes */}
       <style dangerouslySetInnerHTML={{ __html: `
         @keyframes bubble {
           0%, 100% {

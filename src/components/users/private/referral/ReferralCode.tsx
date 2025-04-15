@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { Card, CardContent } from "@/components/ui/card";
 import { motion } from "framer-motion";
@@ -13,19 +13,34 @@ export function ReferralCode() {
   const { userData } = usePrivateUserData();
   const referralCode = userData?.referral_code || "";
   
+  useEffect(() => {
+    if (isCopied) {
+      const timer = setTimeout(() => setIsCopied(false), 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [isCopied]);
+  
   const copyReferralLink = () => {
     const referralLink = `https://mywatertechnologies.com/shop?code=${referralCode}`;
     navigator.clipboard.writeText(referralLink);
     setIsCopied(true);
+    
     toast({
       title: "Copied!",
       description: "Referral link copied to clipboard",
     });
-    
-    setTimeout(() => setIsCopied(false), 3000);
   };
   
   const handleShare = async () => {
+    if (!referralCode) {
+      toast({
+        title: "No referral code found",
+        description: "Please refresh the page or contact support",
+        variant: "destructive"
+      });
+      return;
+    }
+    
     const shareData = {
       title: 'Get 20% Off MYWATER',
       text: `I'm loving my MYWATER purification system! Get 20% off your purchase using my referral code: ${referralCode}`,

@@ -7,6 +7,7 @@ export function ReferralTitle() {
       initial={{ y: 20, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
       transition={{ delay: 0.2 }}
+      className="text-center"
     >
       <h2 className="text-2xl sm:text-3xl font-bold mt-3 bg-gradient-to-r from-blue-200 to-cyan-200 bg-clip-text text-transparent">
         Refer Friends & Earn Rewards

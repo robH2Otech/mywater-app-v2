@@ -1,23 +1,33 @@
+
 import { Card, CardContent } from "@/components/ui/card";
 import { DocumentData } from "firebase/firestore";
 import { ReferralStatus } from "./referral/ReferralStatus";
 import { ReferralCode } from "./referral/ReferralCode";
 import { ReferralForm } from "./referral/ReferralForm";
-import { Award, Info } from "lucide-react";
-import { ReferralSteps } from "./referral/ReferralSteps";
 import { motion } from "framer-motion";
 import { ReferralHeader } from "./referral/ReferralHeader";
+import { useState, useEffect } from "react";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface ReferralProgramProps {
   userData: DocumentData | null;
 }
 
 export function ReferralProgram({ userData }: ReferralProgramProps) {
+  const [mounted, setMounted] = useState(false);
+  const isMobile = useIsMobile();
+  
   const referralCode = userData?.referral_code || "";
   const userName = `${userData?.first_name || ""} ${userData?.last_name || ""}`.trim();
   const referralsCount = userData?.referrals_count || 0;
+  const referralsConverted = userData?.referrals_converted || 0;
   const referralsNeeded = 3;
-  const referralsRemaining = Math.max(0, referralsNeeded - referralsCount);
+  const referralsRemaining = Math.max(0, referralsNeeded - referralsConverted);
+
+  // Ensure animations run after component mount for better performance
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const container = {
     hidden: { opacity: 0 },
@@ -39,14 +49,14 @@ export function ReferralProgram({ userData }: ReferralProgramProps) {
     <motion.div 
       variants={container}
       initial="hidden"
-      animate="show"
+      animate={mounted ? "show" : "hidden"}
       className="space-y-6"
     >
       <motion.div variants={item}>
         <Card className="border-blue-500/20 bg-gradient-to-b from-blue-900/10 to-blue-800/5">
-          <CardContent className="pt-6 pb-8 px-4 sm:px-6 space-y-6">
+          <CardContent className={`${isMobile ? 'p-4' : 'pt-6 pb-8 px-6'} space-y-6`}>
             <ReferralHeader 
-              referralsCount={referralsCount} 
+              referralsCount={referralsConverted} 
               referralsNeeded={referralsNeeded}
               referralsRemaining={referralsRemaining}
             />
