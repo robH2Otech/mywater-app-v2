@@ -10,7 +10,8 @@ import { LoadingSkeleton } from "@/components/shared/LoadingSkeleton";
 import { PageHeader } from "@/components/shared/PageHeader";
 import { collection, query, where, getDocs, limit } from "firebase/firestore";
 import { db } from "@/integrations/firebase/client";
-import { use1oTLocation, LocationData } from "@/hooks/locations/use1oTLocation";
+import { use1oTLocation } from "@/hooks/locations/use1oTLocation";
+import { LocationData } from "@/utils/locations/locationData";
 import { toast } from "sonner";
 
 export function UnitLocationPage() {
