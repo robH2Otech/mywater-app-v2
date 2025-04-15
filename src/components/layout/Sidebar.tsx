@@ -1,5 +1,5 @@
 
-import { Home, Droplets, Filter, Bell, BarChart2, Users, Settings, Lightbulb, X, MessageSquare } from "lucide-react";
+import { Home, Droplets, Filter, Bell, BarChart2, Users, Settings, Lightbulb, X, MessageSquare, MapPin } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -16,6 +16,7 @@ export const Sidebar = ({ isMobile, closeSidebar }: SidebarProps) => {
   const navigation = [
     { name: t("nav.dashboard"), icon: Home, path: "/dashboard" },
     { name: t("nav.water.units"), icon: Droplets, path: "/units" },
+    { name: t("nav.locations"), icon: MapPin, path: "/locations" },
     { name: t("nav.filters"), icon: Filter, path: "/filters" },
     { name: t("nav.uvc"), icon: Lightbulb, path: "/uvc" },
     { name: t("nav.alerts"), icon: Bell, path: "/alerts" },
@@ -53,7 +54,9 @@ export const Sidebar = ({ isMobile, closeSidebar }: SidebarProps) => {
       {/* Navigation links */}
       <nav className="space-y-1 flex-grow overflow-y-auto p-2">
         {navigation.map((item) => {
-          const isActive = location.pathname === item.path;
+          const isActive = location.pathname === item.path || 
+                          (item.path === "/units" && location.pathname.startsWith("/units")) ||
+                          (item.path === "/locations" && location.pathname.startsWith("/locations"));
           
           return (
             <Link

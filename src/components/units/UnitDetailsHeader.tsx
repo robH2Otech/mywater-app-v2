@@ -32,7 +32,7 @@ export const UnitDetailsHeader = ({
       <h1 className="text-2xl font-bold text-white">{title}</h1>
       <div className="flex flex-wrap gap-2">
         {unitIccid && (
-          <Link to={`/units/location/${unitIccid}`} onClick={!unitIccid ? handleLocationClick : undefined}>
+          <Link to={`/locations/${unitIccid}`} onClick={!unitIccid ? handleLocationClick : undefined}>
             <Button 
               variant="outline"
               className="bg-spotify-accent hover:bg-spotify-accent-hover text-white border-none flex items-center gap-2"

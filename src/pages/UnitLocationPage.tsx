@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { MapPin, ArrowLeft } from "lucide-react";
@@ -11,6 +12,7 @@ import { collection, query, where, getDocs, limit } from "firebase/firestore";
 import { db } from "@/integrations/firebase/client";
 import { toast } from "sonner";
 
+// Location Data Types
 interface LocationData {
   latitude: number;
   longitude: number;
@@ -19,6 +21,7 @@ interface LocationData {
   timestamp?: string;
 }
 
+// 1oT API Types
 interface AuthResponse {
   access_token: string;
   token_type: string;
@@ -42,6 +45,7 @@ interface DiagnosticsResponse {
 const ONE_OT_USERNAME = 'API_USER_76219';
 const ONE_OT_PASSWORD = 'f350459ec96aa4a82f41529bc92bcbcb197eb7d734e77065b0e62378a127a935';
 
+// Main component
 export function UnitLocationPage() {
   const { iccid } = useParams<{ iccid: string }>();
   const navigate = useNavigate();
@@ -52,6 +56,7 @@ export function UnitLocationPage() {
   const [unitName, setUnitName] = useState<string>("");
   const [unitId, setUnitId] = useState<string>("");
   
+  // Fetch unit details from Firestore
   useEffect(() => {
     async function fetchUnitDetails() {
       if (!iccid) return;
@@ -64,6 +69,7 @@ export function UnitLocationPage() {
         
         if (snapshot.empty) {
           console.log("No matching unit found in Firestore");
+          setError("Unit not found with the provided ICCID");
         } else {
           const unitDoc = snapshot.docs[0];
           const unitData = unitDoc.data();
@@ -73,12 +79,14 @@ export function UnitLocationPage() {
         }
       } catch (err) {
         console.error("Error fetching unit details:", err);
+        setError("Failed to fetch unit details");
       }
     }
     
     fetchUnitDetails();
   }, [iccid]);
   
+  // Fetch location from 1oT API
   useEffect(() => {
     async function fetchLocation() {
       setIsLoading(true);
@@ -160,11 +168,12 @@ export function UnitLocationPage() {
     fetchLocation();
   }, [iccid]);
   
+  // Handle navigation back to appropriate location
   const handleBack = () => {
     if (unitId) {
       navigate(`/units/${unitId}`);
     } else {
-      navigate("/units");
+      navigate("/locations");
     }
   };
   
@@ -173,7 +182,7 @@ export function UnitLocationPage() {
   return (
     <div className="container mx-auto p-4 space-y-6 animate-fadeIn">
       <PageHeader 
-        title="Approximate Unit Location" 
+        title="Unit Location" 
         description={`Location data for unit: ${displayName}`}
         icon={MapPin}
       >
@@ -183,7 +192,7 @@ export function UnitLocationPage() {
           className="text-white bg-spotify-accent hover:bg-spotify-accent-hover"
         >
           <ArrowLeft className="h-4 w-4 mr-2" />
-          Back to Unit
+          Back
         </Button>
       </PageHeader>
       
@@ -201,7 +210,7 @@ export function UnitLocationPage() {
               onClick={handleBack} 
               className="mt-4 bg-spotify-accent hover:bg-spotify-accent-hover"
             >
-              Return to Unit Details
+              Return to {unitId ? "Unit Details" : "Locations"}
             </Button>
           </CardContent>
         </Card>
@@ -256,7 +265,7 @@ export function UnitLocationPage() {
               onClick={handleBack} 
               className="mt-4 bg-spotify-accent hover:bg-spotify-accent-hover"
             >
-              Return to Unit Details
+              Return to {unitId ? "Unit Details" : "Locations"}
             </Button>
           </CardContent>
         </Card>

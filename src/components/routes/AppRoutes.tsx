@@ -1,4 +1,3 @@
-
 import { Routes, Route, Navigate } from "react-router-dom";
 import { Layout } from "@/components/layout/Layout";
 import { PrivateDashboard } from "@/pages/PrivateDashboard";
@@ -11,6 +10,7 @@ import ClientRequests from "@/pages/ClientRequests";
 import { Units } from "@/pages/Units";
 import { UnitDetails } from "@/pages/UnitDetails";
 import { UnitLocationPage } from "@/pages/UnitLocationPage";
+import { LocationsPage } from "@/pages/LocationsPage";
 import { Filters } from "@/pages/Filters";
 import { UVC } from "@/pages/UVC";
 import { Alerts } from "@/pages/Alerts";
@@ -70,9 +70,21 @@ export function AppRoutes() {
         }
       />
 
-      {/* Make sure the location route comes before the :id route to avoid conflicts */}
+      {/* Locations main page */}
       <Route
-        path="/units/location/:iccid"
+        path="/locations"
+        element={
+          <ProtectedRoute>
+            <Layout>
+              <LocationsPage />
+            </Layout>
+          </ProtectedRoute>
+        }
+      />
+
+      {/* Unit location view route */}
+      <Route
+        path="/locations/:iccid"
         element={
           <ProtectedRoute>
             <Layout>

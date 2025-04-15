@@ -26,11 +26,21 @@ export function UnitLocationMap({ latitude, longitude, radius }: UnitLocationMap
 
         // Add OpenStreetMap tiles
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-          attribution: '© OpenStreetMap contributors'
+          attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
         }).addTo(map.current);
 
         // Create marker and circle
-        marker.current = L.marker([latitude, longitude]).addTo(map.current);
+        const locationIcon = L.icon({
+          iconUrl: 'https://unpkg.com/leaflet@1.7.1/dist/images/marker-icon.png',
+          iconRetinaUrl: 'https://unpkg.com/leaflet@1.7.1/dist/images/marker-icon-2x.png',
+          shadowUrl: 'https://unpkg.com/leaflet@1.7.1/dist/images/marker-shadow.png',
+          iconSize: [25, 41],
+          iconAnchor: [12, 41],
+          popupAnchor: [1, -34],
+          shadowSize: [41, 41]
+        });
+
+        marker.current = L.marker([latitude, longitude], { icon: locationIcon }).addTo(map.current);
         circle.current = L.circle([latitude, longitude], {
           radius: radius,
           color: '#2563eb',
