@@ -1,9 +1,9 @@
 
 import { Card } from "@/components/ui/card";
-import { PrivateUserData } from "@/types/privateUser";
+import { PrivateUser } from "@/types/privateUser";
 
 interface PrivateUserProfileProps {
-  userData: PrivateUserData;
+  userData: PrivateUser;
 }
 
 export function PrivateUserProfile({ userData }: PrivateUserProfileProps) {
