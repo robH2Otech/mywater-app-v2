@@ -7,8 +7,6 @@ import { useImpactCalculations, ImpactConfig } from "@/hooks/dashboard/useImpact
 import { ImpactSettings } from "./ImpactSettings";
 import { ReductionEquivalents } from "./ReductionEquivalents";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { useUserPreferences } from "@/hooks/dashboard/useUserPreferences";
-import { WaterConsumptionSettings } from "./WaterConsumptionSettings";
 
 interface ImpactTabsProps {
   period: "day" | "month" | "year" | "all-time";
@@ -27,7 +25,6 @@ export function ImpactTabs({
   activeTab,
   setActiveTab
 }: ImpactTabsProps) {
-  const { preferences } = useUserPreferences();
   const { 
     impactDetails,
     bottlesSaved, 
@@ -36,12 +33,7 @@ export function ImpactTabs({
     co2Saved,
     moneySaved,
     equivalents
-  } = useImpactCalculations(period, {
-    ...config,
-    bottleSize: preferences.bottleSize,
-    bottleCost: preferences.bottleCost,
-    dailyIntake: preferences.dailyIntake
-  });
+  } = useImpactCalculations(period, config);
   
   const isMobile = useIsMobile();
 
@@ -62,24 +54,28 @@ export function ImpactTabs({
       </TabsContent>
       
       <TabsContent value="financial">
-        <div className="space-y-4">
+        <div className="space-y-2">
+          <h3 className={`font-medium text-center mb-1 ${isMobile ? 'text-sm' : 'text-base'}`}>
+            Financial Impact
+          </h3>
+          
           <ImpactPeriodToggle 
             period={period} 
             setPeriod={setPeriod} 
             includeAllTime={true} 
           />
-          
-          <WaterConsumptionSettings />
-          
-          <div className="p-4 bg-spotify-dark rounded-lg text-center">
-            <h4 className="text-sm font-medium text-gray-200 mb-1">Total Money Saved</h4>
-            <p className="text-2xl font-bold text-mywater-blue">
-              €{moneySaved.toLocaleString(undefined, { maximumFractionDigits: 2, minimumFractionDigits: 2 })}
-            </p>
-            <p className="text-xs text-gray-400 mt-1">
-              Based on {preferences.bottleSize}L bottles at €{preferences.bottleCost.toFixed(2)} each
-            </p>
+
+          <div className="p-4 bg-spotify-dark rounded-lg text-center mb-2">
+            <h4 className="text-sm font-medium text-gray-200 mb-0.5">Total Money Saved</h4>
+            <p className="text-2xl font-bold text-mywater-blue">€{moneySaved.toLocaleString(undefined, { maximumFractionDigits: 2, minimumFractionDigits: 2 })}</p>
+            <p className="text-xs text-gray-400 mt-0.5">Based on {config.bottleSize}L bottles at €{config.bottleCost?.toFixed(2)} each</p>
           </div>
+          
+          <MoneySavingsCalculator 
+            baseBottlePrice={config.bottleCost || 1.1}
+            baseDailyConsumption={config.dailyIntake || 2}
+            baseBottleSize={config.bottleSize || 0.5}
+          />
         </div>
       </TabsContent>
       
