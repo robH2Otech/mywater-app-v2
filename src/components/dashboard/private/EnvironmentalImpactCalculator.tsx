@@ -10,7 +10,7 @@ import { useFirestoreUserData } from "@/hooks/dashboard/useFirestoreUserData";
 import { useAuthState } from "@/hooks/firebase/useAuthState";
 
 export function EnvironmentalImpactCalculator() {
-  const [period, setPeriod] = useState<"day" | "month" | "year" | "all-time">("year");
+  const [period, setPeriod] = useState<"week" | "month" | "year" | "all-time">("year");
   const [config, setConfig] = useState<Partial<ImpactConfig>>({
     bottleSize: 0.5,  // Default to 0.5L bottles
     bottleCost: 1.10, // Default to €1.10 per bottle
