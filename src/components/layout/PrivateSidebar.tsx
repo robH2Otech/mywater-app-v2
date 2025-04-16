@@ -1,4 +1,3 @@
-
 import { 
   Home, 
   UserCircle, 
@@ -25,8 +24,6 @@ export const PrivateSidebar = ({ isMobile, closeSidebar }: PrivateSidebarProps) 
   const location = useLocation();
   const navigate = useNavigate();
   
-  console.log("Current location pathname:", location.pathname);
-
   const handleLogout = async () => {
     try {
       await auth.signOut();
