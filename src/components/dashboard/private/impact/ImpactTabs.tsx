@@ -1,3 +1,4 @@
+
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { ImpactPeriodToggle } from "./ImpactPeriodToggle";
 import { ImpactDetails } from "./ImpactDetails";
@@ -6,7 +7,8 @@ import { useImpactCalculations, ImpactConfig } from "@/hooks/dashboard/useImpact
 import { ImpactSettings } from "./ImpactSettings";
 import { ReductionEquivalents } from "./ReductionEquivalents";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { useUserPreferences } from "@/hooks/use-user-preferences";
+import { useUserPreferences } from "@/hooks/dashboard/useUserPreferences";
+import { WaterConsumptionSettings } from "./WaterConsumptionSettings";
 
 interface ImpactTabsProps {
   period: "day" | "month" | "year" | "all-time";
