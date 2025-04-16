@@ -129,23 +129,6 @@ export function PrivateUserProfileDisplay({
                   </p>
                 </div>
                 <div className="space-y-1">
-                  <p className="text-xs font-medium text-gray-400">Referral Points</p>
-                  <p className="text-sm text-white flex items-center gap-2">
-                    <span>{(referralsCount * 50)}/150 Points</span>
-                    {isMyWaterHero && (
-                      <span className="text-xs bg-green-500/20 text-green-400 px-2 py-0.5 rounded-full">
-                        Free Cartridge Earned!
-                      </span>
-                    )}
-                  </p>
-                  <div className="h-1.5 w-full bg-gray-700 rounded-full mt-1">
-                    <div 
-                      className="h-full bg-gradient-to-r from-cyan-500 to-blue-500 rounded-full" 
-                      style={{ width: `${Math.min(100, (referralsCount * 50) / 150 * 100)}%` }}
-                    ></div>
-                  </div>
-                </div>
-                <div className="space-y-1">
                   <p className="text-xs font-medium text-gray-400">Next Replacement</p>
                   <p className="text-[10px] text-gray-400">
                     {userData?.cartridge_replacement_date 
