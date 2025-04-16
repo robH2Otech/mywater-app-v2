@@ -11,7 +11,7 @@ import { useAuthState } from "@/hooks/firebase/useAuthState";
 
 export function EnvironmentalImpactCalculator() {
   const [period, setPeriod] = useState<"day" | "month" | "year" | "all-time">("year");
-  const [config, setConfig] = useState<Partial<ImpactConfig>>({
+  const [config, setConfig] = useState<ImpactConfig>({
     bottleSize: 0.5,  // Default to 0.5L bottles
     bottleCost: 1.10, // Default to €1.10 per bottle
     userType: 'home'  // Always home user
@@ -48,7 +48,16 @@ export function EnvironmentalImpactCalculator() {
   } = useImpactCalculations(period, config);
 
   const handleConfigChange = (newConfig: Partial<ImpactConfig>) => {
-    setConfig(prev => ({ ...prev, ...newConfig }));
+    // Ensure all required properties are present when updating config
+    setConfig(prev => {
+      const updatedConfig: ImpactConfig = {
+        ...prev,
+        ...newConfig,
+        // Make sure userType is always 'home' even if the partial update tries to change it
+        userType: 'home'
+      };
+      return updatedConfig;
+    });
   };
 
   // Format numbers with specified decimal places
