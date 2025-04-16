@@ -1,3 +1,4 @@
+
 import { 
   Home, 
   UserCircle, 
@@ -8,7 +9,6 @@ import {
   Settings, 
   LogOut,
   X,
-  BarChart2,
   Calculator
 } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
@@ -40,7 +40,6 @@ export const PrivateSidebar = ({ isMobile, closeSidebar }: PrivateSidebarProps) 
     { name: "Home", icon: Home, path: "/private-dashboard" },
     { name: "My Profile", icon: UserCircle, path: "/private-dashboard/profile" },
     { name: "Refer a Friend", icon: Share2, path: "/private-dashboard/refer" },
-    { name: "Impact", icon: BarChart2, path: "/private-dashboard/impact" },
     { name: "Data Calculator", icon: Calculator, path: "/private-dashboard/data" },
     { name: "Installation Guide", icon: Wrench, path: "/private-dashboard/install" },
     { name: "Support", icon: HelpCircle, path: "/private-dashboard/support" },
@@ -79,15 +78,13 @@ export const PrivateSidebar = ({ isMobile, closeSidebar }: PrivateSidebarProps) 
             (item.path === "/private-dashboard" && location.pathname === "/private-dashboard/") ||
             (item.path !== "/private-dashboard" && location.pathname.startsWith(item.path));
           
-          console.log(`Menu item: ${item.name}, path: ${item.path}, isActive: ${isActive}, current path: ${location.pathname}`);
-          
           return (
             <Link
               key={item.name}
               to={item.path}
               className={`flex items-center gap-3 px-4 py-3 rounded-md transition-colors ${
                 isActive
-                  ? "bg-primary text-white"
+                  ? "bg-gradient-to-r from-blue-600 to-cyan-600 text-white"
                   : "text-gray-400 hover:text-white hover:bg-spotify-accent"
               }`}
               onClick={isMobile ? closeSidebar : undefined}

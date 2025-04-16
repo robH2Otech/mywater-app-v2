@@ -41,7 +41,7 @@ const DEFAULT_CONFIG: ImpactConfig = {
 };
 
 export function useImpactCalculations(
-  period: "day" | "month" | "year" | "all-time" = "year", 
+  period: "week" | "month" | "year" | "all-time" = "year", 
   config: Partial<ImpactConfig> = {}
 ) {
   // Merge default config with provided config
@@ -56,8 +56,8 @@ export function useImpactCalculations(
   // Multipliers based on selected period
   const periodMultiplier = useMemo(() => {
     switch (period) {
-      case "day":
-        return 1;
+      case "week":
+        return 7;
       case "month":
         return 30;
       case "year":
@@ -83,7 +83,7 @@ export function useImpactCalculations(
   
   // Generate impact details
   const impactDetails = useMemo(() => {
-    const yearMultiplier = period === "year" ? 1 : period === "month" ? 12 : 365;
+    const yearMultiplier = period === "year" ? 1 : period === "month" ? 12 : period === "week" ? 52 : 365;
     
     const details = [
       { 

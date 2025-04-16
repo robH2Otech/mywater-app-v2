@@ -1,7 +1,6 @@
 
 import { Button } from "@/components/ui/button";
 import { Edit, User, Home, Monitor, Award } from "lucide-react";
-import { Separator } from "@/components/ui/separator";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 interface PrivateUserProfileDisplayProps {
@@ -20,7 +19,6 @@ export function PrivateUserProfileDisplay({
   }
 
   const isMyWaterHero = (userData?.referrals_converted || 0) >= 3;
-  const referralsCount = userData?.referrals_count || 0;
 
   return (
     <div className="space-y-4">
@@ -46,7 +44,7 @@ export function PrivateUserProfileDisplay({
       
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {/* Contact Information Card */}
-        <Card className="bg-spotify-accent/10 border border-spotify-accent/30">
+        <Card className="bg-spotify-accent/10 border border-spotify-accent/30 h-full">
           <CardHeader className="pb-2 px-4 pt-4">
             <CardTitle className="text-md flex items-center gap-2">
               <User className="h-4 w-4 text-mywater-blue" />
@@ -72,7 +70,7 @@ export function PrivateUserProfileDisplay({
         </Card>
         
         {/* Address Information Card */}
-        <Card className="bg-spotify-accent/10 border border-spotify-accent/30">
+        <Card className="bg-spotify-accent/10 border border-spotify-accent/30 h-full">
           <CardHeader className="pb-2 px-4 pt-4">
             <CardTitle className="text-md flex items-center gap-2">
               <Home className="h-4 w-4 text-mywater-blue" />
@@ -104,7 +102,7 @@ export function PrivateUserProfileDisplay({
         </Card>
         
         {/* System Information Card */}
-        <Card className="bg-spotify-accent/10 border border-spotify-accent/30">
+        <Card className="bg-spotify-accent/10 border border-spotify-accent/30 h-full">
           <CardHeader className="pb-2 px-4 pt-4">
             <CardTitle className="text-md flex items-center gap-2">
               <Monitor className="h-4 w-4 text-mywater-blue" />
@@ -129,25 +127,8 @@ export function PrivateUserProfileDisplay({
                   </p>
                 </div>
                 <div className="space-y-1">
-                  <p className="text-xs font-medium text-gray-400">Referral Points</p>
-                  <p className="text-sm text-white flex items-center gap-2">
-                    <span>{(referralsCount * 50)}/150 Points</span>
-                    {isMyWaterHero && (
-                      <span className="text-xs bg-green-500/20 text-green-400 px-2 py-0.5 rounded-full">
-                        Free Cartridge Earned!
-                      </span>
-                    )}
-                  </p>
-                  <div className="h-1.5 w-full bg-gray-700 rounded-full mt-1">
-                    <div 
-                      className="h-full bg-gradient-to-r from-cyan-500 to-blue-500 rounded-full" 
-                      style={{ width: `${Math.min(100, (referralsCount * 50) / 150 * 100)}%` }}
-                    ></div>
-                  </div>
-                </div>
-                <div className="space-y-1">
                   <p className="text-xs font-medium text-gray-400">Next Replacement</p>
-                  <p className="text-[10px] text-gray-400">
+                  <p className="text-sm text-white">
                     {userData?.cartridge_replacement_date 
                       ? (userData.cartridge_replacement_date.toDate 
                          ? new Date(userData.cartridge_replacement_date.toDate()).toLocaleDateString() 

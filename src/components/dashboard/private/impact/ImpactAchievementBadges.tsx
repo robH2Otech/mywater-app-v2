@@ -32,22 +32,9 @@ export function ImpactAchievementBadges({ bottlesSaved }: ImpactAchievementBadge
   // Filter to get only earned badges
   const earnedBadges = badges.filter(badge => badge.earned);
 
-  // If no badges earned yet, show progress towards first badge
+  // If no badges earned yet, don't show anything
   if (earnedBadges.length === 0) {
-    const progressPercentage = Math.min(100, (bottlesSaved / 100) * 100);
-    
-    return (
-      <div className="flex flex-col items-center mt-3">
-        <p className="text-sm text-gray-400 mb-2">Progress to your first achievement</p>
-        <div className="w-full max-w-xs h-2 bg-gray-800 rounded-full overflow-hidden">
-          <div 
-            className="h-full bg-blue-500 rounded-full" 
-            style={{ width: `${progressPercentage}%` }}
-          ></div>
-        </div>
-        <p className="text-sm mt-1 text-gray-500">{bottlesSaved.toFixed(0)}/100 bottles saved</p>
-      </div>
-    );
+    return null;
   }
 
   // Animation variants
