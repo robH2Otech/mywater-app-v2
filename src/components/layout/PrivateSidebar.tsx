@@ -1,3 +1,4 @@
+
 import { 
   Home, 
   UserCircle, 
@@ -37,7 +38,7 @@ export const PrivateSidebar = ({ isMobile, closeSidebar }: PrivateSidebarProps) 
     { name: "Home", icon: Home, path: "/private-dashboard" },
     { name: "My Profile", icon: UserCircle, path: "/private-dashboard/profile" },
     { name: "Refer a Friend", icon: Share2, path: "/private-dashboard/refer" },
-    { name: "Data Calculator", icon: Calculator, path: "/private-dashboard/data" },
+    { name: "Impact Calculator", icon: Calculator, path: "/private-dashboard/data" },
     { name: "Installation Guide", icon: Wrench, path: "/private-dashboard/install" },
     { name: "Support", icon: HelpCircle, path: "/private-dashboard/support" },
     { name: "Shop", icon: ShoppingCart, path: "/private-dashboard/shop" },

@@ -1,4 +1,3 @@
-
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { ImpactPeriodToggle } from "./ImpactPeriodToggle";
 import { ImpactDetails } from "./ImpactDetails";
@@ -7,6 +6,7 @@ import { useImpactCalculations, ImpactConfig } from "@/hooks/dashboard/useImpact
 import { ImpactSettings } from "./ImpactSettings";
 import { ReductionEquivalents } from "./ReductionEquivalents";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { SavePreferencesButton } from "./SavePreferencesButton";
 
 interface ImpactTabsProps {
   period: "day" | "month" | "year" | "all-time";
@@ -76,6 +76,8 @@ export function ImpactTabs({
             baseDailyConsumption={config.dailyIntake || 2}
             baseBottleSize={config.bottleSize || 0.5}
           />
+          
+          <SavePreferencesButton config={config} />
         </div>
       </TabsContent>
       
