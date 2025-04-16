@@ -12,7 +12,9 @@ export function DataCalculatorPage() {
 
   return (
     <div className="container mx-auto p-4 max-w-5xl">
-      <h1 className="text-2xl font-bold mb-6 text-center bg-gradient-to-r from-cyan-300 to-blue-400 bg-clip-text text-transparent">Water Usage Data Calculator</h1>
+      <h1 className="text-2xl font-bold mb-6 text-center bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent">
+        Your Environmental Impact
+      </h1>
       <div className="bg-gradient-to-br from-blue-900/20 to-cyan-900/20 border-cyan-600/30 rounded-xl p-4 shadow-xl">
         <ImpactCalculatorContent 
           period={period}

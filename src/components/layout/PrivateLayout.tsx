@@ -20,7 +20,7 @@ export const PrivateLayout = ({ children }: PrivateLayoutProps) => {
 
   return (
     <div className="min-h-screen bg-spotify-dark flex relative">
-      {/* Mobile sidebar overlay */}
+      {/* Mobile sidebar overlay with blur effect */}
       {isMobile && showMobileSidebar && (
         <div 
           className="fixed inset-0 bg-black bg-opacity-70 z-40 animate-fadeIn backdrop-blur-sm"
@@ -28,7 +28,7 @@ export const PrivateLayout = ({ children }: PrivateLayoutProps) => {
         />
       )}
       
-      {/* Sidebar - desktop fixed, mobile absolute */}
+      {/* Enhanced sidebar animation */}
       <div 
         className={`${isMobile ? "fixed top-0 left-0 z-50" : "fixed"} 
                   ${isMobile && !showMobileSidebar ? "-translate-x-full" : "translate-x-0"} 
@@ -56,4 +56,4 @@ export const PrivateLayout = ({ children }: PrivateLayoutProps) => {
       </div>
     </div>
   );
-};
+}
