@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { ImpactTabs } from "./ImpactTabs";
@@ -60,7 +61,6 @@ export function ImpactCalculatorContent({
               onConfigChange={onConfigChange}
               activeTab={activeTab}
               setActiveTab={setActiveTab}
-              preferences={preferences}
             />
           </div>
         </Card>

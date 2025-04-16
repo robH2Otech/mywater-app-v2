@@ -1,3 +1,4 @@
+
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { ImpactPeriodToggle } from "./ImpactPeriodToggle";
 import { ImpactDetails } from "./ImpactDetails";
@@ -23,10 +24,11 @@ interface ImpactTabsProps {
   onConfigChange: (config: Partial<UserPreferences>) => void;
   activeTab: string;
   setActiveTab: (tab: string) => void;
+  preferences?: UserPreferences; // Make preferences optional
 }
 
-export function ImpactTabs({ period, setPeriod, config, onConfigChange, activeTab, setActiveTab }: ImpactTabsProps) {
-  const { preferences, savePreferences, isSaving } = useUserPreferences();
+export function ImpactTabs({ period, setPeriod, config, onConfigChange, activeTab, setActiveTab, preferences }: ImpactTabsProps) {
+  const { savePreferences, isSaving } = useUserPreferences();
   const { toast } = useToast();
   const { 
     impactDetails,
