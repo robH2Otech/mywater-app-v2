@@ -23,14 +23,14 @@ export const PrivateLayout = ({ children }: PrivateLayoutProps) => {
       {/* Mobile sidebar overlay */}
       {isMobile && showMobileSidebar && (
         <div 
-          className="fixed inset-0 bg-black bg-opacity-70 z-30 animate-fadeIn backdrop-blur-sm"
+          className="fixed inset-0 bg-black bg-opacity-50 z-30 animate-fadeIn"
           onClick={toggleMobileSidebar}
         />
       )}
       
       {/* Sidebar - desktop fixed, mobile absolute */}
       <div 
-        className={`${isMobile ? "fixed top-0 left-0 z-40 shadow-lg" : "fixed"} 
+        className={`${isMobile ? "fixed top-0 left-0 z-40" : "fixed"} 
                   ${isMobile && !showMobileSidebar ? "-translate-x-full" : "translate-x-0"} 
                   transition-transform duration-300 ease-in-out h-screen`}
       >

@@ -2,8 +2,8 @@
 import { Button } from "@/components/ui/button";
 
 interface PeriodToggleProps {
-  period: "week" | "month" | "year" | "all-time";
-  setPeriod: (value: "week" | "month" | "year" | "all-time") => void;
+  period: "day" | "month" | "year" | "all-time";
+  setPeriod: (value: "day" | "month" | "year" | "all-time") => void;
 }
 
 export function PeriodToggle({ period, setPeriod }: PeriodToggleProps) {
@@ -12,15 +12,15 @@ export function PeriodToggle({ period, setPeriod }: PeriodToggleProps) {
       <div className="inline-flex bg-black rounded-md">
         <Button
           variant="ghost"
-          onClick={() => setPeriod("week")}
+          onClick={() => setPeriod("day")}
           className={`rounded-md px-4 py-2 ${
-            period === "week" 
+            period === "day" 
               ? "bg-cyan-600 text-white" 
               : "bg-transparent text-gray-400 hover:text-white"
           }`}
           size="sm"
         >
-          Weekly
+          Daily
         </Button>
         <Button
           variant="ghost"

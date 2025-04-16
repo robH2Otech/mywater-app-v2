@@ -3,8 +3,8 @@ import { Button } from "@/components/ui/button";
 import { useIsMobile } from "@/hooks/use-mobile";
 
 interface ImpactPeriodToggleProps {
-  period: "week" | "month" | "year" | "all-time";
-  setPeriod: (value: "week" | "month" | "year" | "all-time") => void;
+  period: "day" | "month" | "year" | "all-time";
+  setPeriod: (value: "day" | "month" | "year" | "all-time") => void;
   includeAllTime?: boolean;
 }
 
@@ -16,7 +16,7 @@ export function ImpactPeriodToggle({
   const isMobile = useIsMobile();
   
   const periods = [
-    { value: "week", label: "Weekly" },
+    { value: "day", label: "Daily" },
     { value: "month", label: "Monthly" },
     { value: "year", label: "Yearly" }
   ];
@@ -32,7 +32,7 @@ export function ImpactPeriodToggle({
           <Button
             key={item.value}
             variant="ghost"
-            onClick={() => setPeriod(item.value as "week" | "month" | "year" | "all-time")}
+            onClick={() => setPeriod(item.value as "day" | "month" | "year" | "all-time")}
             className={`rounded-md px-4 py-2 ${
               period === item.value 
                 ? "bg-cyan-600 text-white" 

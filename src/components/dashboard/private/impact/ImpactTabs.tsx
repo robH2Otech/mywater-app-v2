@@ -9,8 +9,8 @@ import { ReductionEquivalents } from "./ReductionEquivalents";
 import { useIsMobile } from "@/hooks/use-mobile";
 
 interface ImpactTabsProps {
-  period: "week" | "month" | "year" | "all-time";
-  setPeriod: (value: "week" | "month" | "year" | "all-time") => void;
+  period: "day" | "month" | "year" | "all-time";
+  setPeriod: (value: "day" | "month" | "year" | "all-time") => void;
   config: Partial<ImpactConfig>;
   onConfigChange: (config: Partial<ImpactConfig>) => void;
   activeTab: string;
@@ -39,10 +39,11 @@ export function ImpactTabs({
 
   return (
     <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-      <TabsList className="grid grid-cols-3 mb-3 w-full bg-spotify-dark">
+      <TabsList className="grid grid-cols-4 mb-3 w-full bg-spotify-dark">
         <TabsTrigger value="environmental" className="text-sm md:text-base">Environment</TabsTrigger>
         <TabsTrigger value="financial" className="text-sm md:text-base">Money</TabsTrigger>
         <TabsTrigger value="equivalents" className="text-sm md:text-base">CO₂ Emissions</TabsTrigger>
+        <TabsTrigger value="settings" className="text-sm md:text-base">My Water Consumption</TabsTrigger>
       </TabsList>
       
       <TabsContent value="environmental" className="space-y-2">
@@ -85,6 +86,13 @@ export function ImpactTabs({
           plasticSaved={plasticSaved}
           bottlesSaved={bottlesSaved}
           period={period}
+        />
+      </TabsContent>
+
+      <TabsContent value="settings">
+        <ImpactSettings 
+          currentConfig={config}
+          onConfigChange={onConfigChange}
         />
       </TabsContent>
     </Tabs>

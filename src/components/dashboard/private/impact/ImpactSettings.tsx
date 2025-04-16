@@ -52,7 +52,7 @@ export function ImpactSettings({ currentConfig, onConfigChange }: ImpactSettings
           <Slider
             id="daily-water"
             min={0.5}
-            max={10}
+            max={5}
             step={0.1}
             value={[dailyIntake]}
             onValueChange={value => {

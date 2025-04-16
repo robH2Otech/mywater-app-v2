@@ -8,6 +8,7 @@ import { InstallationPage } from "./private/InstallationPage";
 import { SupportPage } from "./private/SupportPage";
 import { ShopPage } from "./private/ShopPage";
 import { SettingsPage } from "./private/SettingsPage";
+import { ImpactPage } from "./private/ImpactPage";
 import { DataCalculatorPage } from "./private/DataCalculatorPage";
 
 export function PrivateDashboard() {
@@ -17,6 +18,7 @@ export function PrivateDashboard() {
         <Route index element={<HomePage />} />
         <Route path="profile" element={<ProfilePage />} />
         <Route path="refer" element={<ReferPage />} />
+        <Route path="impact" element={<ImpactPage />} />
         <Route path="data" element={<DataCalculatorPage />} />
         <Route path="install" element={<InstallationPage />} />
         <Route path="support" element={<SupportPage />} />

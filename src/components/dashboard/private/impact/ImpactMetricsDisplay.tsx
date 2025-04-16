@@ -72,7 +72,7 @@ export function ImpactMetricsDisplay({
             title="Bottles Saved"
             value={formatNumber(bottlesSaved)}
             icon={Waves}
-            className="bg-gradient-to-br from-blue-900/30 to-cyan-900/30 border-blue-600/30"
+            className="bg-blue-900/20 border-blue-600/20"
             iconColor="text-blue-400"
           />
         </motion.div>
@@ -82,7 +82,7 @@ export function ImpactMetricsDisplay({
             title="Money Saved"
             value={formatMoney(moneySaved)}
             icon={Coins}
-            className="bg-gradient-to-br from-amber-900/30 to-yellow-900/30 border-amber-600/30"
+            className="bg-amber-900/20 border-amber-600/20"
             iconColor="text-amber-400"
           />
         </motion.div>
@@ -92,7 +92,7 @@ export function ImpactMetricsDisplay({
             title={`${formatNumber(co2Saved)} kg`}
             value="CO₂ Reduced"
             icon={Leaf}
-            className="bg-gradient-to-br from-green-900/30 to-emerald-900/30 border-emerald-600/30"
+            className="bg-emerald-900/20 border-emerald-600/20"
             iconColor="text-emerald-400"
           />
         </motion.div>
@@ -102,7 +102,7 @@ export function ImpactMetricsDisplay({
             title={`${formatNumber(plasticSaved)} kg`}
             value="Plastic Saved"
             icon={Recycle}
-            className="bg-gradient-to-br from-purple-900/30 to-pink-900/30 border-purple-600/30"
+            className="bg-green-900/20 border-green-600/20"
             iconColor="text-green-400"
           />
         </motion.div>

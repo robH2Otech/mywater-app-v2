@@ -5,7 +5,7 @@ import { ImpactMetrics } from "./ImpactMetrics";
 import { ImpactAchievements } from "./ImpactAchievements";
 
 interface ImpactSummaryProps {
-  period: "week" | "month" | "year" | "all-time";
+  period: "day" | "month" | "year" | "all-time";
   config: {
     bottleSize: number;
     bottleCost: number;
@@ -17,7 +17,7 @@ export function ImpactSummary({ period, config }: ImpactSummaryProps) {
   // Calculate period multiplier
   const periodMultiplier = useMemo(() => {
     switch (period) {
-      case "week": return 7;
+      case "day": return 1;
       case "month": return 30;
       case "year": return 365;
       case "all-time": return 365 * 2; // Assume 2 years for all-time

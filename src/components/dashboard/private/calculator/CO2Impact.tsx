@@ -1,11 +1,10 @@
-
 import { useMemo } from "react";
 import { Card } from "@/components/ui/card";
 import { calculateBottlesSaved, calculateCO2Reduction, calculatePlasticReduction } from "@/utils/formatUnitVolume";
 import { Leaf, Car, Smartphone, Trees } from "lucide-react";
 
 interface CO2ImpactProps {
-  period: "week" | "month" | "year" | "all-time";
+  period: "day" | "month" | "year" | "all-time";
   config: {
     bottleSize: number;
     bottleCost: number;
@@ -17,7 +16,7 @@ export function CO2Impact({ period, config }: CO2ImpactProps) {
   // Calculate period multiplier
   const periodMultiplier = useMemo(() => {
     switch (period) {
-      case "week": return 7;
+      case "day": return 1;
       case "month": return 30;
       case "year": return 365;
       case "all-time": return 365 * 2; // Assume 2 years for all-time
