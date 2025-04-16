@@ -1,19 +1,21 @@
 
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
+import { ImpactConfig } from "@/hooks/dashboard/useImpactCalculations";
 
 interface SavePreferencesButtonProps {
-  config: {
-    bottleSize: number;
-    bottleCost: number;
-    dailyIntake?: number;
-  };
+  config: Partial<ImpactConfig>;
 }
 
 export function SavePreferencesButton({ config }: SavePreferencesButtonProps) {
   const handleSavePreferences = () => {
-    localStorage.setItem('waterConsumptionPreferences', JSON.stringify(config));
-    toast.success('Preferences saved successfully!');
+    // Ensure we have required properties before saving
+    if (config.bottleSize !== undefined && config.bottleCost !== undefined) {
+      localStorage.setItem('waterConsumptionPreferences', JSON.stringify(config));
+      toast.success('Preferences saved successfully!');
+    } else {
+      toast.error('Unable to save preferences: missing required values');
+    }
   };
 
   return (
