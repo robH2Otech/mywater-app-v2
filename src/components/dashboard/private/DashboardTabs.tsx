@@ -10,6 +10,7 @@ import { DocumentData } from "firebase/firestore";
 import { Card } from "@/components/ui/card";
 import { TabTriggerItem } from "./TabTriggerItem";
 import { TabContentItem } from "./TabContentItem";
+import { PrivateUser } from "@/types/privateUser";
 
 interface DashboardTabsProps {
   userData: DocumentData | null;
@@ -17,6 +18,9 @@ interface DashboardTabsProps {
 
 export function DashboardTabs({ userData }: DashboardTabsProps) {
   const [activeTab, setActiveTab] = useState("profile");
+  
+  // Convert DocumentData to PrivateUser type or null
+  const privateUserData = userData as PrivateUser | null;
   
   return (
     <div className="space-y-6">
@@ -46,7 +50,7 @@ export function DashboardTabs({ userData }: DashboardTabsProps) {
           </TabsList>
           
           <TabContentItem value="profile">
-            <PrivateUserProfile userData={userData} />
+            <PrivateUserProfile userData={privateUserData} />
           </TabContentItem>
           
           <TabContentItem value="referrals">
