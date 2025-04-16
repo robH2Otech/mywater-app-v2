@@ -1,8 +1,6 @@
 
 import { useState } from "react";
 import { Card } from "@/components/ui/card";
-import { Waves, Recycle, Leaf, Coins } from "lucide-react";
-import { ImpactCard } from "./ImpactCard";
 import { ImpactTabs } from "./ImpactTabs";
 import { useImpactCalculations } from "@/hooks/dashboard/useImpactCalculations";
 import { ImpactMetricsDisplay } from "./ImpactMetricsDisplay";
@@ -15,12 +13,12 @@ interface ImpactCalculatorContentProps {
   config: {
     bottleSize: number;
     bottleCost: number;
-    userType: "home"; // Using literal type "home" instead of string
+    userType: "home";
   };
   onConfigChange: (config: Partial<{
     bottleSize: number;
     bottleCost: number;
-    userType: "home"; // Using literal type "home" to match the expected type
+    userType: "home";
   }>) => void;
   userName: string;
 }
@@ -58,7 +56,7 @@ export function ImpactCalculatorContent({
                 transition={{ delay: 0.2 }}
                 className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-blue-200 to-cyan-200 bg-clip-text text-transparent"
               >
-                {userName ? `${userName}'s` : 'Your'} Environmental Impact
+                Your Environmental Impact
               </motion.h2>
               <motion.p 
                 initial={{ opacity: 0 }}
@@ -66,7 +64,7 @@ export function ImpactCalculatorContent({
                 transition={{ delay: 0.3 }}
                 className="text-gray-400 mt-1.5"
               >
-                See how your MYWATER system helps you and our planet
+                See how MYWATER system helps you save
               </motion.p>
             </div>
 

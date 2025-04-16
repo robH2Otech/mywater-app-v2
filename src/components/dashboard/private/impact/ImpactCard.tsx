@@ -24,7 +24,7 @@ export function ImpactCard({
   compactMode = false,
 }: ImpactCardProps) {
   return (
-    <Card className={`text-center ${compactMode ? 'p-1.5' : 'p-2'} h-full bg-gradient-to-br from-indigo-600/20 to-cyan-600/20 hover:from-indigo-600/30 hover:to-cyan-600/30 transition-all duration-300 border-cyan-500/20 ${className}`}>
+    <Card className={`text-center ${compactMode ? 'p-1.5' : 'p-2'} h-full bg-gradient-to-br from-blue-600/30 to-cyan-600/30 hover:from-blue-600/40 hover:to-cyan-600/40 transition-all duration-300 border-cyan-500/30 ${className}`}>
       <CardContent className="flex flex-col items-center justify-center p-0 h-full">
         <Icon className={`${compactMode ? 'h-4 w-4 mb-0.5' : 'h-6 w-6 mb-1'} ${iconColor}`} />
         <div className={`${compactMode ? 'text-base md:text-lg' : 'text-lg sm:text-xl'} font-bold ${compactMode ? 'mb-0.5' : 'mb-1'} text-white ${valueClassName}`}>
