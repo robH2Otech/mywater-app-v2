@@ -14,7 +14,7 @@ interface ImpactCalculatorProps {
 }
 
 export function ImpactCalculator({ userName }: ImpactCalculatorProps) {
-  const [period, setPeriod] = useState<"day" | "month" | "year" | "all-time">("year");
+  const [period, setPeriod] = useState<"week" | "month" | "year" | "all-time">("year");
   const [activeTab, setActiveTab] = useState("environment");
   const [config, setConfig] = useState({
     bottleSize: 0.5, // Default to 0.5L bottles
