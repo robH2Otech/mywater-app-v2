@@ -9,7 +9,7 @@ import { useToast } from "@/hooks/use-toast";
 
 interface HydrationGoalsProps {
   waterConsumed: number; // in liters
-  period: "day" | "month" | "year" | "all-time";
+  period: "week" | "month" | "year" | "all-time";
 }
 
 export function HydrationGoals({ waterConsumed, period }: HydrationGoalsProps) {
@@ -22,8 +22,8 @@ export function HydrationGoals({ waterConsumed, period }: HydrationGoalsProps) {
   });
   const [goalInput, setGoalInput] = useState(hydrationGoal.toString());
   
-  // Calculate daily normalization factor
-  const normalizationFactor = period === "day" ? 1 : 
+  // Calculate normalization factor
+  const normalizationFactor = period === "week" ? 7 : 
                               period === "month" ? 30 : 
                               period === "year" ? 365 : 730; // all-time ~2 years
   
