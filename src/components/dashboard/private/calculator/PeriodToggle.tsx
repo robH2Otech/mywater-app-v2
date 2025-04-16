@@ -9,13 +9,13 @@ interface PeriodToggleProps {
 export function PeriodToggle({ period, setPeriod }: PeriodToggleProps) {
   return (
     <div className="flex justify-center mb-4">
-      <div className="inline-flex bg-black rounded-md">
+      <div className="inline-flex bg-black/50 rounded-lg shadow-inner">
         <Button
           variant="ghost"
           onClick={() => setPeriod("day")}
           className={`rounded-md px-4 py-2 ${
             period === "day" 
-              ? "bg-cyan-600 text-white" 
+              ? "bg-gradient-to-r from-cyan-600 to-blue-600 text-white shadow-md" 
               : "bg-transparent text-gray-400 hover:text-white"
           }`}
           size="sm"
@@ -27,7 +27,7 @@ export function PeriodToggle({ period, setPeriod }: PeriodToggleProps) {
           onClick={() => setPeriod("month")}
           className={`rounded-md px-4 py-2 ${
             period === "month" 
-              ? "bg-cyan-600 text-white" 
+              ? "bg-gradient-to-r from-cyan-600 to-blue-600 text-white shadow-md" 
               : "bg-transparent text-gray-400 hover:text-white"
           }`}
           size="sm"
@@ -39,7 +39,7 @@ export function PeriodToggle({ period, setPeriod }: PeriodToggleProps) {
           onClick={() => setPeriod("year")}
           className={`rounded-md px-4 py-2 ${
             period === "year" 
-              ? "bg-cyan-600 text-white" 
+              ? "bg-gradient-to-r from-cyan-600 to-blue-600 text-white shadow-md" 
               : "bg-transparent text-gray-400 hover:text-white"
           }`}
           size="sm"
@@ -51,7 +51,7 @@ export function PeriodToggle({ period, setPeriod }: PeriodToggleProps) {
           onClick={() => setPeriod("all-time")}
           className={`rounded-md px-4 py-2 ${
             period === "all-time" 
-              ? "bg-cyan-600 text-white" 
+              ? "bg-gradient-to-r from-cyan-600 to-blue-600 text-white shadow-md" 
               : "bg-transparent text-gray-400 hover:text-white"
           }`}
           size="sm"

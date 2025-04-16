@@ -23,16 +23,16 @@ export const PrivateLayout = ({ children }: PrivateLayoutProps) => {
       {/* Mobile sidebar overlay */}
       {isMobile && showMobileSidebar && (
         <div 
-          className="fixed inset-0 bg-black bg-opacity-50 z-30 animate-fadeIn"
+          className="fixed inset-0 bg-black bg-opacity-70 z-40 animate-fadeIn backdrop-blur-sm"
           onClick={toggleMobileSidebar}
         />
       )}
       
       {/* Sidebar - desktop fixed, mobile absolute */}
       <div 
-        className={`${isMobile ? "fixed top-0 left-0 z-40" : "fixed"} 
+        className={`${isMobile ? "fixed top-0 left-0 z-50" : "fixed"} 
                   ${isMobile && !showMobileSidebar ? "-translate-x-full" : "translate-x-0"} 
-                  transition-transform duration-300 ease-in-out h-screen`}
+                  transition-transform duration-300 ease-in-out h-screen shadow-2xl`}
       >
         <PrivateSidebar isMobile={isMobile} closeSidebar={toggleMobileSidebar} />
       </div>
@@ -45,7 +45,7 @@ export const PrivateLayout = ({ children }: PrivateLayoutProps) => {
               variant="ghost" 
               size="icon" 
               onClick={toggleMobileSidebar}
-              className="mr-2"
+              className="mr-2 text-white bg-gradient-to-r hover:bg-gradient-to-br from-cyan-700/30 to-blue-700/30"
             >
               <Menu className="h-5 w-5" />
               <span className="sr-only">Toggle menu</span>
