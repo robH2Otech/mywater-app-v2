@@ -1,6 +1,6 @@
 
 import { motion } from "framer-motion";
-import { TrendingUp } from "lucide-react";
+import { TrendingUp, Award, Star } from "lucide-react";
 
 interface ReferralRankProps {
   referralsCount: number;
@@ -16,7 +16,8 @@ export function ReferralRank({ referralsCount }: ReferralRankProps) {
         remaining: 0,
         nextAt: 10,
         color: "from-purple-400 to-pink-400",
-        progress: 100
+        progress: 100,
+        badge: <Award className="h-5 w-5 text-purple-300" />
       };
     } else if (referralsCount >= 5) {
       return {
@@ -25,7 +26,8 @@ export function ReferralRank({ referralsCount }: ReferralRankProps) {
         remaining: 10 - referralsCount,
         nextAt: 10,
         color: "from-cyan-400 to-blue-500",
-        progress: (referralsCount - 5) / 5 * 100
+        progress: (referralsCount - 5) / 5 * 100,
+        badge: <Star className="h-5 w-5 text-blue-300" />
       };
     } else if (referralsCount >= 3) {
       return {
@@ -34,7 +36,8 @@ export function ReferralRank({ referralsCount }: ReferralRankProps) {
         remaining: 5 - referralsCount,
         nextAt: 5,
         color: "from-green-400 to-teal-500",
-        progress: (referralsCount - 3) / 2 * 100
+        progress: (referralsCount - 3) / 2 * 100,
+        badge: <TrendingUp className="h-5 w-5 text-teal-300" />
       };
     } else {
       return {
@@ -43,7 +46,8 @@ export function ReferralRank({ referralsCount }: ReferralRankProps) {
         remaining: 3 - referralsCount,
         nextAt: 3,
         color: "from-blue-400 to-cyan-300",
-        progress: referralsCount / 3 * 100
+        progress: referralsCount / 3 * 100,
+        badge: <TrendingUp className="h-5 w-5 text-blue-300" />
       };
     }
   };
@@ -64,7 +68,8 @@ export function ReferralRank({ referralsCount }: ReferralRankProps) {
         </div>
       </div>
 
-      <div className="my-2 text-center">
+      <div className="my-3 text-center flex items-center justify-center gap-2">
+        {rank.badge}
         <h4 className={`text-xl font-bold bg-gradient-to-r ${rank.color} bg-clip-text text-transparent`}>
           {rank.title}
         </h4>
@@ -81,7 +86,7 @@ export function ReferralRank({ referralsCount }: ReferralRankProps) {
             />
           </div>
           <p className="text-sm text-blue-300 mt-2 text-center">
-            {rank.remaining} more referrals to next rank!
+            {rank.remaining} more successful {rank.remaining === 1 ? 'referral' : 'referrals'} to reach <span className="font-medium text-white">{rank.nextRank}</span>!
           </p>
         </>
       )}

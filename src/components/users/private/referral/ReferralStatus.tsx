@@ -1,7 +1,7 @@
 
 import React from "react";
 import { DocumentData } from "firebase/firestore";
-import { CheckCircle, XCircle, Clock } from "lucide-react";
+import { CheckCircle, Share2, Clock } from "lucide-react";
 import { motion } from "framer-motion";
 
 interface ReferralStatusProps {
@@ -17,8 +17,13 @@ export function ReferralStatus({ userData }: ReferralStatusProps) {
   
   // Define status states
   const isEligible = referralsConverted >= 3;
-  const isPending = referralsCount > 0 && referralsCount < 3;
+  const isPending = referralsCount > 0 && referralsConverted < 3;
   const isClaimed = referralRewardClaimed;
+  
+  // Get most recent referral (mock data - would be pulled from actual referrals)
+  const lastReferralDate = userData?.last_referral_date 
+    ? new Date(userData.last_referral_date) 
+    : null;
 
   const getStatusInfo = () => {
     if (isClaimed) {
@@ -35,8 +40,8 @@ export function ReferralStatus({ userData }: ReferralStatusProps) {
       return {
         icon: CheckCircle,
         iconClass: "text-yellow-400",
-        title: "Reward Ready",
-        description: "You've earned a free €150 replacement cartridge! Visit our shop to claim it.",
+        title: "Reward Ready!",
+        description: "Great job! Visit our shop to claim your free €150 replacement cartridge.",
         bgClass: "bg-yellow-900/10 border-yellow-600/20"
       };
     }
@@ -46,16 +51,18 @@ export function ReferralStatus({ userData }: ReferralStatusProps) {
         icon: Clock,
         iconClass: "text-blue-400",
         title: "In Progress",
-        description: `Share with ${3 - referralsCount} more friends to earn your free €150 replacement cartridge.`,
+        description: lastReferralDate 
+          ? `Last activity: ${lastReferralDate.toLocaleDateString()}. Keep sharing to earn your free cartridge!`
+          : `Share with ${3 - referralsConverted} more friends who complete a purchase.`,
         bgClass: "bg-blue-900/10 border-blue-700/20"
       };
     }
     
     return {
-      icon: XCircle,
-      iconClass: "text-gray-400",
-      title: "Not Started Yet",
-      description: "Share your code with friends to start earning rewards!",
+      icon: Share2,
+      iconClass: "text-cyan-400",
+      title: "Ready to Start",
+      description: "Share your code below to start earning your free €150 replacement cartridge!",
       bgClass: "bg-slate-800/20 border-slate-700/20"
     };
   };

@@ -5,6 +5,9 @@ import { Card, CardContent } from "@/components/ui/card";
 import { motion } from "framer-motion";
 import { ReferralCodeDisplay } from "./code/ReferralCodeDisplay";
 import { ShareButtons } from "./code/ShareButtons";
+import { HowItWorks } from "./components/HowItWorks";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { ChevronDown, ChevronUp } from "lucide-react";
 
 interface ReferralCodeProps {
   referralCode: string;
@@ -12,6 +15,7 @@ interface ReferralCodeProps {
 
 export function ReferralCode({ referralCode }: ReferralCodeProps) {
   const [isCopied, setIsCopied] = useState(false);
+  const [isGuideOpen, setIsGuideOpen] = useState(false);
   const { toast } = useToast();
   
   // Debug log to check the referral code
@@ -47,7 +51,7 @@ export function ReferralCode({ referralCode }: ReferralCodeProps) {
     
     const shareData = {
       title: 'Get 20% Off MYWATER',
-      text: `I'm loving my MYWATER purification system! Get 20% off your purchase using my referral code: ${referralCode}`,
+      text: `Hey! Loving my MYWATER system. Get 20% off your first purchase using my referral link or by entering my code ${referralCode} in the discount field at checkout. Enjoy clean water!`,
       url: `https://mywatertechnologies.com/shop?code=${referralCode}`
     };
 
@@ -84,6 +88,23 @@ export function ReferralCode({ referralCode }: ReferralCodeProps) {
             onCopy={copyReferralLink}
             isCopied={isCopied}
           />
+          
+          <Collapsible
+            open={isGuideOpen}
+            onOpenChange={setIsGuideOpen}
+            className="mt-6 border-t border-blue-800/30 pt-4"
+          >
+            <CollapsibleTrigger className="flex items-center justify-between w-full text-sm text-blue-300 hover:text-blue-100">
+              <span className="font-medium">How It Works</span>
+              {isGuideOpen ? 
+                <ChevronUp className="h-4 w-4" /> : 
+                <ChevronDown className="h-4 w-4" />
+              }
+            </CollapsibleTrigger>
+            <CollapsibleContent className="mt-4">
+              <HowItWorks />
+            </CollapsibleContent>
+          </Collapsible>
         </motion.div>
       </CardContent>
     </Card>
