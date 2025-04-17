@@ -1,90 +1,65 @@
 
-import { doc, updateDoc, collection, addDoc } from "firebase/firestore";
+import { useMutation } from "@tanstack/react-query";
+import { collection, doc, updateDoc, getDoc } from "firebase/firestore";
 import { db } from "@/integrations/firebase/client";
-import { useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
-import { determineUVCStatus, createUVCAlertMessage } from "@/utils/uvcStatusUtils";
+
+interface UVCStatusUpdateProps {
+  unitId: string;
+  status: "active" | "warning" | "urgent";
+}
 
 /**
- * Hook providing functions to update UVC status in Firestore
+ * Hook for updating UVC status for a unit
  */
 export function useUVCStatusUpdate() {
   const { toast } = useToast();
-  const queryClient = useQueryClient();
 
-  const updateUVCStatus = async (unitId: string, newStatus: string, unitName: string, hours: number) => {
-    try {
-      const unitDocRef = doc(db, "units", unitId);
-      await updateDoc(unitDocRef, {
-        uvc_status: newStatus,
-        updated_at: new Date().toISOString()
-      });
-
-      if (newStatus === 'warning' || newStatus === 'urgent') {
-        const alertMessage = createUVCAlertMessage(unitName, hours, newStatus);
-        
-        const alertsCollection = collection(db, "alerts");
-        await addDoc(alertsCollection, {
-          unit_id: unitId,
-          message: alertMessage,
-          status: newStatus,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-        });
-      }
-
-      await queryClient.invalidateQueries({ queryKey: ['uvc-units'] });
-      await queryClient.invalidateQueries({ queryKey: ['units'] });
-      await queryClient.invalidateQueries({ queryKey: ['unit', unitId] });
-      await queryClient.invalidateQueries({ queryKey: ['alerts'] });
+  return useMutation({
+    mutationFn: async ({ unitId, status }: UVCStatusUpdateProps) => {
+      console.log(`Updating UVC status for unit ${unitId} to ${status}`);
       
-      toast({
-        title: "Status updated",
-        description: `${unitName} UVC status updated to ${newStatus}`,
-      });
-    } catch (error) {
-      console.error('Error updating UVC status:', error);
-    }
-  };
-
-  const updateFilterStatus = async (unitId: string, newStatus: string, unitName: string, volume: number) => {
-    try {
-      const unitDocRef = doc(db, "units", unitId);
-      await updateDoc(unitDocRef, {
-        status: newStatus,
-        updated_at: new Date().toISOString()
-      });
-
-      if (newStatus === 'warning' || newStatus === 'urgent') {
-        const { createAlertMessage } = await import('@/utils/unitStatusUtils');
-        const alertMessage = createAlertMessage(unitName, volume, newStatus);
+      try {
+        // Reference to the specific unit document
+        const unitRef = doc(collection(db, "units"), unitId);
         
-        const alertsCollection = collection(db, "alerts");
-        await addDoc(alertsCollection, {
-          unit_id: unitId,
-          message: alertMessage,
-          status: newStatus,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
+        // Get current data first
+        const unitSnap = await getDoc(unitRef);
+        
+        if (!unitSnap.exists()) {
+          throw new Error(`Unit with ID ${unitId} not found`);
+        }
+        
+        // Update the UVC status
+        await updateDoc(unitRef, {
+          uvc_status: status,
+          updated_at: new Date()
         });
+        
+        console.log(`UVC status updated to ${status} for unit ${unitId}`);
+        
+        return {
+          success: true,
+          unitId,
+          status
+        };
+      } catch (error) {
+        console.error(`Error updating UVC status for unit ${unitId}:`, error);
+        throw error;
       }
-
-      await queryClient.invalidateQueries({ queryKey: ['filter-units'] });
-      await queryClient.invalidateQueries({ queryKey: ['units'] });
-      await queryClient.invalidateQueries({ queryKey: ['unit', unitId] });
-      await queryClient.invalidateQueries({ queryKey: ['alerts'] });
-      
+    },
+    onSuccess: (data) => {
       toast({
-        title: "Status updated",
-        description: `${unitName} filter status updated to ${newStatus}`,
+        title: "Status Updated",
+        description: `UVC status for unit ${data.unitId} is now ${data.status}`,
       });
-    } catch (error) {
-      console.error('Error updating filter status:', error);
+    },
+    onError: (error) => {
+      toast({
+        title: "Update Failed",
+        description: `Could not update UVC status: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        variant: "destructive",
+      });
     }
-  };
-
-  return {
-    updateUVCStatus,
-    updateFilterStatus
-  };
+  });
 }
