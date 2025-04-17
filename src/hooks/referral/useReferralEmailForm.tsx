@@ -16,7 +16,7 @@ I wanted to share something I've been really happy with – my MYWATER water pur
 
 I'm inviting you to try MYWATER with a special 20% discount! Just use this code: ${referralCode} when you purchase.
 
-Check it out here: https://mywater.com/products
+Check it out here: https://mywatertechnologies.com/shop?code=${referralCode}
 
 Best,
 ${firstName || "[Your Name]"}`;
@@ -25,12 +25,14 @@ ${firstName || "[Your Name]"}`;
   const handleFriendNameChange = (value: string) => {
     setFriendName(value);
     
-    // Update the email template with the new friend name
-    const updatedTemplate = emailMessage.replace(
-      /^Hi.*?,/m, 
-      `Hi ${value || "[Friend's Name]"},`
-    );
-    setEmailMessage(updatedTemplate);
+    // Update the email template with the new friend name if it exists
+    if (emailMessage) {
+      const updatedTemplate = emailMessage.replace(
+        /^Hi.*?,/m, 
+        `Hi ${value || "[Friend's Name]"},`
+      );
+      setEmailMessage(updatedTemplate);
+    }
   };
 
   const resetEmailTemplate = () => {
@@ -43,7 +45,7 @@ ${firstName || "[Your Name]"}`;
     if (!emailMessage) {
       setEmailMessage(generateDefaultEmail());
     }
-  }, []);
+  }, [friendName, referralCode]); // Regenerate when these values change
   
   return {
     friendName,

@@ -153,7 +153,7 @@ export function EmailForm({
         
         <Button
           onClick={onRetryDelivery}
-          disabled={isProcessing}
+          disabled={isProcessing || !friendEmail || !friendName}
           variant="outline"
           className="w-full sm:w-1/4 border-blue-700/30 hover:bg-blue-800/30"
         >

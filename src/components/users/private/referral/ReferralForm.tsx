@@ -7,6 +7,7 @@ import { Card } from "@/components/ui/card";
 import { useReferralEmailForm } from "@/hooks/referral/useReferralEmailForm";
 import { useReferralTracking } from "@/hooks/referral/useReferralTracking";
 import { EmailForm } from "./components/EmailForm";
+import { toast } from "@/hooks/use-toast";
 
 interface ReferralFormProps {
   userName: string;
@@ -63,17 +64,27 @@ export function ReferralForm({ userName, referralCode }: ReferralFormProps) {
       })
         .then(() => {
           console.log('Successfully shared');
+          toast({
+            title: "Link shared successfully!",
+            description: "Your referral link has been shared.",
+          });
         })
         .catch((error) => {
           console.log('Error sharing:', error);
           // Fallback to copying to clipboard if sharing failed
           navigator.clipboard.writeText(`${shareText}\n\n${referralLink}`);
-          console.log('Copied to clipboard instead');
+          toast({
+            title: "Link copied to clipboard!",
+            description: "Your referral link has been copied to clipboard.",
+          });
         });
     } else {
       // Fallback for browsers that don't support the Web Share API
       navigator.clipboard.writeText(`${shareText}\n\n${referralLink}`);
-      console.log('Copied to clipboard (no Web Share API)');
+      toast({
+        title: "Link copied to clipboard!",
+        description: "Your referral link has been copied to clipboard.",
+      });
     }
   };
   

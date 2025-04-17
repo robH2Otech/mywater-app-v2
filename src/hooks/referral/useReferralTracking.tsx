@@ -1,7 +1,14 @@
-
 import { useState } from "react";
-import { sendReferralEmail, processPendingEmailsForUI } from "@/utils/email";
 import { useToast } from "@/hooks/use-toast";
+import emailjs from 'emailjs-com';
+
+// EmailJS configuration
+const EMAILJS_CONFIG = {
+  SERVICE_ID: 'service_mywater',
+  TEMPLATE_ID: 'template_referral',
+  USER_ID: '20lKGYgYsf1DIICqM',
+  PUBLIC_KEY: '20lKGYgYsf1DIICqM'
+};
 
 export function useReferralTracking(
   friendName: string, 
@@ -23,6 +30,17 @@ export function useReferralTracking(
   // Extract just the first name for personalization
   const firstName = userName.split(' ')[0];
 
+  // Initialize EmailJS
+  const initEmailJS = () => {
+    try {
+      emailjs.init(EMAILJS_CONFIG.PUBLIC_KEY);
+      return true;
+    } catch (err) {
+      console.error("Error initializing EmailJS:", err);
+      return false;
+    }
+  };
+
   const handleSendEmail = async () => {
     if (!friendEmail || !friendName) {
       toast({
@@ -40,15 +58,30 @@ export function useReferralTracking(
     try {
       console.log("Attempting to send referral email to:", friendEmail);
       
-      const result = await sendReferralEmail(
-        friendEmail,
-        friendName,
-        firstName || userName,
-        referralCode,
-        emailMessage
+      // Initialize EmailJS
+      initEmailJS();
+      
+      // Create simple template parameters - keeping it minimal for better deliverability
+      const templateParams = {
+        to_email: friendEmail,
+        to_name: friendName,
+        from_name: userName,
+        subject: `${firstName} invited you to try MYWATER (20% discount!)`,
+        message: emailMessage || `I'm loving my MYWATER purification system! Get 20% off your purchase using my referral code: ${referralCode}`,
+        reply_to: "noreply@mywatertechnologies.com",
+        referral_code: referralCode,
+        link_url: `https://mywatertechnologies.com/shop?code=${referralCode}`
+      };
+      
+      // Send email directly with EmailJS
+      const response = await emailjs.send(
+        EMAILJS_CONFIG.SERVICE_ID,
+        EMAILJS_CONFIG.TEMPLATE_ID,
+        templateParams,
+        EMAILJS_CONFIG.PUBLIC_KEY
       );
       
-      console.log("Email sending result:", result);
+      console.log("Email sending result:", response);
       
       // Show success animation
       setShowSuccess(true);
@@ -77,11 +110,11 @@ export function useReferralTracking(
       
     } catch (error) {
       console.error("Error sending email:", error);
-      setErrorMessage("We couldn't deliver your invitation directly. It has been queued for automatic delivery.");
+      setErrorMessage("We couldn't deliver your invitation directly. Please try again or use the Share Link option.");
       
       toast({
         title: "Delivery issue",
-        description: "Your invitation has been saved and will be delivered shortly.",
+        description: "We couldn't send your invitation. Please try again later.",
         variant: "destructive"
       });
     } finally {
@@ -92,25 +125,44 @@ export function useReferralTracking(
   const handleRetryDelivery = async () => {
     setIsProcessing(true);
     try {
-      const count = await processPendingEmailsForUI();
+      // Initialize EmailJS
+      initEmailJS();
       
-      if (count > 0) {
-        toast({
-          title: "Success!",
-          description: `Successfully delivered ${count} pending invitations.`,
-        });
-        setSentCount(prev => prev + count);
-      } else {
-        toast({
-          title: "No pending invitations",
-          description: "All your invitations have already been processed.",
-        });
-      }
+      // Attempt to send a minimal email for better deliverability
+      const simpleParams = {
+        to_email: friendEmail,
+        to_name: friendName,
+        from_name: userName,
+        subject: `${firstName} invited you to try MYWATER with a discount!`,
+        message: `I'm loving my MYWATER purification system! Get 20% off your purchase using my referral code: ${referralCode} https://mywatertechnologies.com/shop?code=${referralCode}`,
+      };
+      
+      const response = await emailjs.send(
+        EMAILJS_CONFIG.SERVICE_ID,
+        EMAILJS_CONFIG.TEMPLATE_ID,
+        simpleParams,
+        EMAILJS_CONFIG.PUBLIC_KEY
+      );
+      
+      toast({
+        title: "Success!",
+        description: `Your invitation was delivered successfully.`,
+      });
+      
+      setSentCount(prev => prev + 1);
+      setShowSuccess(true);
+      setErrorMessage(null);
+      
+      // Reset after short delay
+      setTimeout(() => {
+        setShowSuccess(false);
+      }, 2000);
+      
     } catch (error) {
-      console.error("Error processing emails:", error);
+      console.error("Error retrying email delivery:", error);
       toast({
         title: "Retry failed",
-        description: "Please try again later or contact support.",
+        description: "Please try sharing your link instead.",
         variant: "destructive"
       });
     } finally {
