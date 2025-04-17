@@ -1,8 +1,11 @@
 
-import { Home, Droplets, Filter, Bell, BarChart2, Users, Settings, Lightbulb, X, MessageSquare, MapPin } from "lucide-react";
+import { Home, Droplets, Filter, Bell, BarChart2, Users, Settings, Lightbulb, X, MessageSquare, MapPin, LogOut } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { SidebarLogoutButton } from "./sidebar/SidebarLogoutButton";
+import { auth } from "@/integrations/firebase/client";
+import { useNavigate } from "react-router-dom";
 
 interface SidebarProps {
   isMobile?: boolean;
@@ -12,6 +15,16 @@ interface SidebarProps {
 export const Sidebar = ({ isMobile, closeSidebar }: SidebarProps) => {
   const location = useLocation();
   const { t } = useLanguage();
+  const navigate = useNavigate();
+  
+  const handleLogout = async () => {
+    try {
+      await auth.signOut();
+      navigate("/");
+    } catch (error) {
+      console.error("Error signing out:", error);
+    }
+  };
 
   const navigation = [
     { name: t("nav.dashboard"), icon: Home, path: "/dashboard" },
@@ -72,6 +85,9 @@ export const Sidebar = ({ isMobile, closeSidebar }: SidebarProps) => {
             </Link>
           );
         })}
+        
+        {/* Add Logout Button */}
+        <SidebarLogoutButton handleLogout={handleLogout} />
       </nav>
     </div>
   );

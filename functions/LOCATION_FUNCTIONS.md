@@ -22,6 +22,14 @@ The solution consists of three main Firebase Cloud Functions:
   - Prevent unnecessary database growth
   - Ensure data freshness
 
+## Configuration Details
+
+The TTL mechanism works as follows:
+
+1. When location data is saved to the `locationHistory` collection, a `createdAt` timestamp is added.
+2. Firestore TTL is configured to automatically delete documents after 24 hours based on this timestamp.
+3. The cleanupLocationHistory function serves as a backup to ensure proper data cleanup.
+
 ## Setting Up
 
 1. **Configure API Credentials**
@@ -40,37 +48,42 @@ npm install
 npm run deploy
 ```
 
-3. **Set Up Firestore Indexes** (if needed)
+3. **Set Up Firestore TTL Index**
 
-Create an index on the `locationHistory` collection with these fields:
-- `unitId` (Ascending)
-- `createdAt` (Descending)
+Create a TTL index on the `locationHistory` collection with these settings:
+- Field: `createdAt` 
+- TTL Duration: 86400 (24 hours in seconds)
 
-## Frontend Integration
+## Data Flow
 
-The client application can:
+1. **Scheduled Updates (updateAllLocations)**:
+   - Runs twice daily
+   - Queries all units with valid ICCIDs
+   - For each unit, calls the 1oT API to get current location
+   - Updates both the unit document and adds a new entry to locationHistory
 
-1. Request on-demand location updates using `useCloudLocationUpdate` hook
-2. Access historical location data using `useLocationHistory` hook
-3. View current location data in the UnitLocationDisplay component
+2. **On-demand Updates (updateUnitLocation)**:
+   - Called from the client when a specific unit's location needs updating
+   - Takes unitId and ICCID as parameters
+   - Updates both the unit document and adds a new entry to locationHistory
 
-## Security
-
-- Functions are secured with Firebase Authentication
-- Only authenticated users can request location updates
-- Data is stored securely in Firestore with appropriate security rules
+3. **Historical Data Cleanup (cleanupLocationHistory)**:
+   - Runs daily
+   - Finds and deletes locationHistory entries older than 24 hours
+   - Acts as a backup to the Firestore TTL mechanism
 
 ## Troubleshooting
 
-If location updates aren't working:
+- If location updates aren't working:
+  - Check API credentials in Firebase Functions configuration
+  - Verify that units have valid ICCID fields
+  - Check Firestore security rules allow the functions to write to both the units collection and locationHistory collection
+  - Review function logs in Firebase console
 
-1. Check that API credentials are configured correctly
-2. Verify that the ICCID format matches what the 1oT API expects
-3. Check Firebase function logs for detailed error information
-4. Ensure units have a valid ICCID field in Firestore
+## Client-Side Integration
 
-## Monitoring & Maintenance
+The client application uses these custom hooks:
+- `useLocationHistory`: Fetches the historical location data for a unit
+- `useCloudLocationUpdate`: Provides a function to trigger on-demand location updates
 
-- Monitor function execution in the Firebase console
-- Check logs for any authentication or API errors
-- The system is designed to be self-maintaining with automatic cleanup
+These hooks are integrated with the UnitLocationDisplay component to show the current and historical locations on a map.

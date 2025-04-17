@@ -23,18 +23,18 @@ export function useClientRequests() {
   
   // Initial data load - show all requests when opened to ensure something displays
   useEffect(() => {
-    fetchRequests(5);
+    fetchRequestsData(5);
   }, []);
   
   // Filter change
   useEffect(() => {
     if (activeFilter) {
       console.log(`Active filter changed to: ${activeFilter}`);
-      fetchRequests();
+      fetchRequestsData();
     }
   }, [activeFilter]);
 
-  const fetchRequests = async (count?: number) => {
+  const fetchRequestsData = async (count?: number) => {
     setIsLoading(true);
     setError(null);
     
@@ -152,7 +152,7 @@ export function useClientRequests() {
       });
       
       // Refresh to ensure we have the most up-to-date data
-      fetchRequests();
+      fetchRequestsData();
       
     } catch (error) {
       console.error("Error creating support request:", error);
@@ -174,11 +174,14 @@ export function useClientRequests() {
         title: "Email sent",
         description: `Reply sent to ${request.user_email}`,
       });
+      
+      // Refresh the requests to show updated state
+      fetchRequestsData();
     } catch (error) {
       console.error("Error sending email:", error);
       toast({
-        title: "Error",
-        description: "Failed to send email",
+        title: "Error sending email",
+        description: "Failed to send email to the user",
         variant: "destructive",
       });
     }
@@ -207,7 +210,7 @@ export function useClientRequests() {
     showCreateRequestDialog,
     setShowCreateRequestDialog,
     isSubmittingRequest,
-    fetchRequests,
+    fetchRequests: fetchRequestsData,
     handleAddComment,
     handleCreateRequest,
     handleRequestAction

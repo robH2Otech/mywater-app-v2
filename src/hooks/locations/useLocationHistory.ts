@@ -20,6 +20,7 @@ export const useLocationHistory = (unitId: string, limitCount: number = 10) => {
     setError(null);
     
     try {
+      console.log(`Fetching location history for unit ${unitId}, limit ${limitCount}`);
       const historyRef = collection(db, 'locationHistory');
       const historyQuery = query(
         historyRef,
@@ -31,9 +32,12 @@ export const useLocationHistory = (unitId: string, limitCount: number = 10) => {
       const snapshot = await getDocs(historyQuery);
       
       if (snapshot.empty) {
+        console.log(`No location history found for unit ${unitId}`);
         setHistory([]);
         return;
       }
+      
+      console.log(`Found ${snapshot.docs.length} location history records for unit ${unitId}`);
       
       const historyData = snapshot.docs.map(doc => {
         const data = doc.data();

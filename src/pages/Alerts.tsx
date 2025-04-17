@@ -1,136 +1,97 @@
 
-import { useQuery } from "@tanstack/react-query";
-import { useState } from "react";
-import { useToast } from "@/hooks/use-toast";
+import { useState, useEffect } from "react";
+import { PageHeader } from "@/components/shared/PageHeader";
+import { Card } from "@/components/ui/card";
+import { AlertsList } from "@/components/alerts/AlertsList";
 import { CreateAlertDialog } from "@/components/alerts/CreateAlertDialog";
 import { AlertDetailsDialog } from "@/components/alerts/AlertDetailsDialog";
-import { PageHeader } from "@/components/shared/PageHeader";
-import { LoadingSkeleton } from "@/components/shared/LoadingSkeleton";
-import { AlertsList } from "@/components/alerts/AlertsList";
-import { collection, getDocs } from "firebase/firestore";
-import { db } from "@/integrations/firebase/client";
-import { UnitData, AlertData } from "@/types/analytics";
-import { determineUnitStatus } from "@/utils/unitStatusUtils";
-import { RecentAlerts } from "@/components/dashboard/RecentAlerts";
+import { Button } from "@/components/ui/button";
+import { PlusCircle, Bell, MessageSquare } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useQueryClient } from "@tanstack/react-query";
+import { ClientRequestsContent } from "@/components/requests/ClientRequestsContent";
+import { fetchRecentRequests } from "@/services/requestService";
+import { SupportRequest } from "@/types/supportRequests";
 
-interface UnitWithAlerts extends UnitData {
-  alerts: AlertData[];
-}
+export default function Alerts() {
+  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+  const [selectedAlertId, setSelectedAlertId] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<string>("alerts");
+  const [recentRequests, setRecentRequests] = useState<SupportRequest[]>([]);
+  const [isLoadingRequests, setIsLoadingRequests] = useState(false);
+  const queryClient = useQueryClient();
 
-export const Alerts = () => {
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [selectedAlert, setSelectedAlert] = useState<any>(null);
-  const { toast } = useToast();
+  // Fetch recent client requests when the tab changes to "requests"
+  useEffect(() => {
+    if (activeTab === "requests") {
+      loadRecentRequests();
+    }
+  }, [activeTab]);
 
-  const { data: units = [], isLoading: unitsLoading, error: unitsError } = useQuery({
-    queryKey: ["units"],
-    queryFn: async () => {
-      console.log("Fetching units data...");
-      try {
-        const unitsCollection = collection(db, "units");
-        const unitsSnapshot = await getDocs(unitsCollection);
-        const unitsData = unitsSnapshot.docs.map(doc => {
-          const data = doc.data();
-          // Calculate the correct status based on volume
-          const calculatedStatus = determineUnitStatus(data.total_volume);
-          
-          return {
-            id: doc.id,
-            ...data,
-            // Override with calculated status
-            status: calculatedStatus
-          };
-        }) as UnitData[];
-        console.log("Units data:", unitsData);
-        return unitsData;
-      } catch (error) {
-        console.error("Error fetching units:", error);
-        throw error;
-      }
-    },
-  });
-
-  const { data: alerts = [], isLoading: alertsLoading, error: alertsError } = useQuery({
-    queryKey: ["alerts"],
-    queryFn: async () => {
-      console.log("Fetching alerts data...");
-      try {
-        const alertsCollection = collection(db, "alerts");
-        const alertsSnapshot = await getDocs(alertsCollection);
-        const alertsData = alertsSnapshot.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data()
-        })) as AlertData[];
-        console.log("Alerts data:", alertsData);
-        return alertsData;
-      } catch (error) {
-        console.error("Error fetching alerts:", error);
-        throw error;
-      }
-    },
-  });
-
-  const unitsWithAlerts = units.map(unit => ({
-    ...unit,
-    alerts: alerts.filter(alert => alert.unit_id === unit.id)
-  })) as UnitWithAlerts[];
-
-  if (unitsError || alertsError) {
-    console.error("Error in Alerts component:", unitsError || alertsError);
-    toast({
-      title: "Error loading alerts",
-      description: "There was a problem loading the alerts. Please try again.",
-      variant: "destructive",
-    });
-    return <div>Error loading alerts. Please try again.</div>;
-  }
-
-  if (unitsLoading || alertsLoading) {
-    return <LoadingSkeleton />;
-  }
+  const loadRecentRequests = async () => {
+    setIsLoadingRequests(true);
+    try {
+      const requests = await fetchRecentRequests(7); // last 7 days
+      setRecentRequests(requests);
+    } catch (error) {
+      console.error("Error loading recent requests:", error);
+    } finally {
+      setIsLoadingRequests(false);
+    }
+  };
 
   return (
     <div className="space-y-6">
-      <PageHeader
-        title="Alerts"
-        description="Manage and monitor system alerts"
-        onAddClick={() => setIsDialogOpen(true)}
-        addButtonText="New Alert"
-      />
-      
-      <div className="grid grid-cols-1 gap-6">
-        {/* Recent Alerts Section */}
-        <div className="w-full">
-          <RecentAlerts />
-        </div>
-
-        {/* All Alerts List */}
-        <div className="bg-spotify-darker rounded-lg p-6">
-          <h2 className="text-xl font-semibold text-white mb-4">All Alerts</h2>
-          <AlertsList
-            units={unitsWithAlerts}
-            onAlertClick={setSelectedAlert}
-          />
-        </div>
+      <div className="flex justify-between items-center">
+        <PageHeader
+          title="Alerts & Notifications"
+          description="Manage system alerts and client support requests"
+        />
+        {activeTab === "alerts" && (
+          <Button onClick={() => setIsCreateDialogOpen(true)} className="bg-mywater-blue hover:bg-mywater-blue/90">
+            <PlusCircle className="mr-2 h-4 w-4" />
+            Create Alert
+          </Button>
+        )}
       </div>
+      
+      <Tabs 
+        value={activeTab} 
+        onValueChange={setActiveTab}
+        className="space-y-4"
+      >
+        <TabsList>
+          <TabsTrigger value="alerts" className="flex items-center gap-2">
+            <Bell className="h-4 w-4" />
+            System Alerts
+          </TabsTrigger>
+          <TabsTrigger value="requests" className="flex items-center gap-2">
+            <MessageSquare className="h-4 w-4" />
+            Client Requests
+          </TabsTrigger>
+        </TabsList>
+        
+        <TabsContent value="alerts">
+          <Card className="p-4 bg-spotify-darker">
+            <AlertsList onAlertClick={(id) => setSelectedAlertId(id)} />
+          </Card>
+        </TabsContent>
+        
+        <TabsContent value="requests">
+          <ClientRequestsContent />
+        </TabsContent>
+      </Tabs>
 
-      <CreateAlertDialog 
-        open={isDialogOpen} 
-        onOpenChange={setIsDialogOpen}
-        onCreateAlert={() => {
-          toast({
-            title: "Alert created",
-            description: "The alert has been created successfully.",
-          });
-          setIsDialogOpen(false);
-        }}
+      <CreateAlertDialog
+        open={isCreateDialogOpen}
+        onOpenChange={setIsCreateDialogOpen}
       />
 
       <AlertDetailsDialog
-        open={!!selectedAlert}
-        onOpenChange={(open) => !open && setSelectedAlert(null)}
-        alert={selectedAlert}
+        open={!!selectedAlertId}
+        onOpenChange={(open) => !open && setSelectedAlertId(null)}
+        alertId={selectedAlertId}
       />
     </div>
   );
-};
+}

@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -12,6 +12,11 @@ export function LandingPage() {
   const navigate = useNavigate();
   const [selectedOption, setSelectedOption] = useState<string>("private");
   const { language, setLanguage, t } = useLanguage();
+  
+  // Set default language to French when the component mounts
+  useEffect(() => {
+    setLanguage('fr');
+  }, []);
 
   const handleContinue = () => {
     if (selectedOption === "business") {

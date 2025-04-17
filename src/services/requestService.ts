@@ -1,3 +1,4 @@
+
 import { 
   collection, 
   query, 
@@ -12,7 +13,7 @@ import {
   DocumentData 
 } from "firebase/firestore";
 import { db } from "@/integrations/firebase/client";
-import { sendEmailDirect } from "@/utils/email";  // Updated import path
+import { sendEmailDirect } from "@/utils/email";
 import { SupportRequest, Comment, RequestFormData } from "@/types/supportRequests";
 
 // Sample data to ensure we always show some requests
@@ -331,7 +332,24 @@ export const createSupportRequest = async (formData: RequestFormData): Promise<S
  */
 export const sendReplyToRequest = async (request: SupportRequest): Promise<boolean> => {
   try {
-    // Send email
+    console.log(`Sending email to ${request.user_email}`);
+    
+    // First, create an entry in the emailHistory collection to track this email
+    const emailHistoryRef = collection(db, "emailHistory");
+    const emailData = {
+      recipient: request.user_email,
+      recipient_name: request.user_name,
+      subject: `RE: ${request.subject}`,
+      message: `Dear ${request.user_name},\n\nThank you for contacting MYWATER Support. A team member will assist you shortly.\n\nBest regards,\nMYWATER Support Team`,
+      request_id: request.id,
+      sent_at: new Date(),
+      sent_by: "system", // This could be updated to include the current user's ID
+      status: "sending"
+    };
+    
+    const emailDoc = await addDoc(emailHistoryRef, emailData);
+    
+    // Now send the actual email
     await sendEmailDirect(
       request.user_email,
       request.user_name,
@@ -340,9 +358,83 @@ export const sendReplyToRequest = async (request: SupportRequest): Promise<boole
       `Dear ${request.user_name},\n\nThank you for contacting MYWATER Support. A team member will assist you shortly.\n\nBest regards,\nMYWATER Support Team`
     );
     
+    // Update the email history record to show it was sent successfully
+    await updateDoc(doc(db, "emailHistory", emailDoc.id), {
+      status: "sent",
+      sent_at: new Date() // Update with exact sent time
+    });
+    
+    // Also update the request to show an email was sent
+    const requestRef = doc(db, "support_requests", request.id);
+    await updateDoc(requestRef, { 
+      last_email_sent: new Date(),
+      updated_at: new Date()
+    });
+    
     return true;
   } catch (error) {
     console.error("Error sending email:", error);
     throw error;
+  }
+};
+
+/**
+ * Fetch recent support requests for the last 7 days
+ */
+export const fetchRecentRequests = async (days: number = 7): Promise<SupportRequest[]> => {
+  try {
+    // Calculate the date for N days ago
+    const daysAgo = new Date();
+    daysAgo.setDate(daysAgo.getDate() - days);
+    
+    const requestsRef = collection(db, "support_requests");
+    const requestsQuery = query(
+      requestsRef,
+      where("created_at", ">=", daysAgo),
+      orderBy("created_at", "desc")
+    );
+    
+    const querySnapshot = await getDocs(requestsQuery);
+    
+    if (querySnapshot.empty) {
+      // Return sample data filtered by date
+      return sampleRequests.filter(req => {
+        return req.created_at > daysAgo;
+      });
+    }
+    
+    const requestsData: SupportRequest[] = [];
+    
+    querySnapshot.forEach((doc) => {
+      const data = doc.data() as DocumentData;
+      const createdAt = data.created_at as Timestamp;
+      const createdDate = createdAt ? createdAt.toDate() : new Date();
+      
+      requestsData.push({
+        id: doc.id,
+        user_id: data.user_id || "",
+        user_name: data.user_name || "",
+        user_email: data.user_email || "",
+        subject: data.subject || "",
+        message: data.message || "",
+        support_type: data.support_type || "",
+        purifier_model: data.purifier_model || "",
+        status: data.status as "new" | "in_progress" | "resolved",
+        created_at: createdDate,
+        comments: data.comments || [],
+        assigned_to: data.assigned_to || "",
+      });
+    });
+    
+    return requestsData;
+  } catch (error) {
+    console.error("Error fetching recent support requests:", error);
+    
+    // Return filtered sample data on error
+    return sampleRequests.filter(req => {
+      const daysAgo = new Date();
+      daysAgo.setDate(daysAgo.getDate() - days);
+      return req.created_at > daysAgo;
+    });
   }
 };

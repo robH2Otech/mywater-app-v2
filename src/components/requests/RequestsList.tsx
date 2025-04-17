@@ -1,19 +1,19 @@
 
+import { useState } from "react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Button } from "@/components/ui/button";
+import { RequestCard } from "./RequestCard";
+import { NoRequestsFound } from "./NoRequestsFound";
+import { RequestsTabTrigger } from "./RequestsTabTrigger";
 import { SupportRequest } from "@/types/supportRequests";
-import { Tabs, TabsList } from "@/components/ui/tabs";
-import { RequestsTabTrigger } from "@/components/requests/RequestsTabTrigger";
-import { RequestCard } from "@/components/requests/RequestCard";
-import { NoRequestsFound } from "@/components/requests/NoRequestsFound";
-import { LoadingSkeleton } from "@/components/shared/LoadingSkeleton";
-import { AlertCircle } from "lucide-react";
-import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
+import { RefreshCcw, AlertTriangle } from "lucide-react";
 
 interface RequestsListProps {
-  requests: SupportRequest[];
+  requests: SupportRequest[] | null | undefined;
   isLoading: boolean;
   error: string | null;
   activeFilter: string;
-  onFilterChange: (value: string) => void;
+  onFilterChange: (filter: string) => void;
   onRetry: () => void;
   onAction: (action: 'status' | 'email' | 'comment', request: SupportRequest, newStatus?: "new" | "in_progress" | "resolved") => void;
 }
@@ -27,54 +27,119 @@ export function RequestsList({
   onRetry,
   onAction
 }: RequestsListProps) {
-  // Debug info
-  console.log(`RequestsList: activeFilter=${activeFilter}, isLoading=${isLoading}, error=${error}, requests.length=${requests?.length || 0}`);
+  const [isEmailSending, setIsEmailSending] = useState<string | null>(null);
   
+  if (error) {
+    return (
+      <div className="flex flex-col items-center justify-center p-8 text-center animate-fadeIn space-y-4">
+        <AlertTriangle className="h-12 w-12 text-red-500" />
+        <h3 className="text-lg font-medium">Failed to load requests</h3>
+        <p className="text-sm text-gray-400">{error}</p>
+        <Button 
+          onClick={onRetry} 
+          variant="secondary" 
+          className="mt-2"
+        >
+          <RefreshCcw className="mr-2 h-4 w-4" /> Try Again
+        </Button>
+      </div>
+    );
+  }
+  
+  if (isLoading) {
+    return (
+      <div className="animate-pulse space-y-4">
+        {Array.from({ length: 3 }).map((_, i) => (
+          <div key={i} className="bg-gray-800 rounded-lg p-4 h-32"></div>
+        ))}
+      </div>
+    );
+  }
+
+  if (!requests || requests.length === 0) {
+    return <NoRequestsFound />;
+  }
+
+  const handleEmailAction = async (request: SupportRequest) => {
+    try {
+      setIsEmailSending(request.id);
+      await onAction('email', request);
+    } finally {
+      setIsEmailSending(null);
+    }
+  };
+
   return (
-    <>
-      <Tabs 
-        defaultValue={activeFilter} 
-        value={activeFilter}
-        onValueChange={onFilterChange}
-        className="w-full mb-4"
-      >
-        <TabsList className="bg-spotify-dark mb-4">
-          <RequestsTabTrigger value="new" label="New" />
-          <RequestsTabTrigger value="in_progress" label="In Progress" />
-          <RequestsTabTrigger value="resolved" label="Resolved" />
-          <RequestsTabTrigger value="all" label="All Requests" />
-        </TabsList>
-      </Tabs>
+    <Tabs
+      defaultValue={activeFilter}
+      value={activeFilter}
+      onValueChange={onFilterChange}
+      className="w-full"
+    >
+      <TabsList className="grid grid-cols-4 mb-4">
+        <RequestsTabTrigger value="all" label="All Requests" />
+        <RequestsTabTrigger value="new" label="New" />
+        <RequestsTabTrigger value="in_progress" label="In Progress" />
+        <RequestsTabTrigger value="resolved" label="Resolved" />
+      </TabsList>
       
-      {isLoading ? (
-        <LoadingSkeleton />
-      ) : error ? (
-        <Alert variant="destructive" className="bg-red-900/20 border border-red-900/30">
-          <AlertCircle className="h-5 w-5 text-red-400" />
-          <AlertTitle className="text-lg font-medium text-white">Error</AlertTitle>
-          <AlertDescription className="text-gray-400">
-            {error}
-            <button 
-              onClick={onRetry}
-              className="ml-2 text-mywater-blue hover:text-mywater-blue/80 underline"
-            >
-              Try again
-            </button>
-          </AlertDescription>
-        </Alert>
-      ) : requests && requests.length > 0 ? (
-        <div className="space-y-4">
-          {requests.map((request) => (
-            <RequestCard 
-              key={request.id} 
-              request={request} 
-              onAction={onAction} 
+      <TabsContent value="all" className="space-y-4">
+        {requests.map((request) => (
+          <RequestCard
+            key={request.id}
+            request={request}
+            onStatusChange={(status) => onAction('status', request, status)}
+            onComment={() => onAction('comment', request)}
+            onEmail={() => handleEmailAction(request)}
+            isEmailSending={isEmailSending === request.id}
+          />
+        ))}
+      </TabsContent>
+      
+      <TabsContent value="new" className="space-y-4">
+        {requests
+          .filter((request) => request.status === "new")
+          .map((request) => (
+            <RequestCard
+              key={request.id}
+              request={request}
+              onStatusChange={(status) => onAction('status', request, status)}
+              onComment={() => onAction('comment', request)}
+              onEmail={() => handleEmailAction(request)}
+              isEmailSending={isEmailSending === request.id}
             />
           ))}
-        </div>
-      ) : (
-        <NoRequestsFound filterType={activeFilter} />
-      )}
-    </>
+      </TabsContent>
+      
+      <TabsContent value="in_progress" className="space-y-4">
+        {requests
+          .filter((request) => request.status === "in_progress")
+          .map((request) => (
+            <RequestCard
+              key={request.id}
+              request={request}
+              onStatusChange={(status) => onAction('status', request, status)}
+              onComment={() => onAction('comment', request)}
+              onEmail={() => handleEmailAction(request)}
+              isEmailSending={isEmailSending === request.id}
+            />
+          ))}
+      </TabsContent>
+      
+      <TabsContent value="resolved" className="space-y-4">
+        {requests
+          .filter((request) => request.status === "resolved")
+          .map((request) => (
+            <RequestCard
+              key={request.id}
+              request={request}
+              onStatusChange={(status) => onAction('status', request, status)}
+              onComment={() => onAction('comment', request)}
+              onEmail={() => handleEmailAction(request)}
+              isEmailSending={isEmailSending === request.id}
+            />
+          ))}
+      </TabsContent>
+    </Tabs>
   );
 }

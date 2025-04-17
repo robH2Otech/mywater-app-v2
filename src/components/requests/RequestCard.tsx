@@ -1,161 +1,136 @@
 
-import { format } from "date-fns";
+import { SupportRequest } from "@/types/supportRequests";
+import { formatDistanceToNow } from "date-fns";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { 
-  MessageSquare, 
-  Clock, 
-  CheckCircle, 
-  Mail
-} from "lucide-react";
-
-interface Comment {
-  id: string;
-  author: string;
-  content: string;
-  created_at: Date;
-}
-
-interface SupportRequest {
-  id: string;
-  user_id: string;
-  user_name: string;
-  user_email: string;
-  subject: string;
-  message: string;
-  support_type: string;
-  purifier_model: string;
-  status: "new" | "in_progress" | "resolved";
-  created_at: Date;
-  comments?: Comment[];
-  assigned_to?: string;
-}
+import { Card, CardContent, CardFooter } from "@/components/ui/card";
+import { Lightbulb, Wrench, Package, AlertCircle, Clock, CheckCircle2, Send, MessageSquare } from "lucide-react";
 
 interface RequestCardProps {
   request: SupportRequest;
-  onAction: (action: 'status' | 'email' | 'comment', request: SupportRequest, newStatus?: "new" | "in_progress" | "resolved") => void;
+  onStatusChange: (status: "new" | "in_progress" | "resolved") => void;
+  onComment: () => void;
+  onEmail: () => void;
+  isEmailSending?: boolean;
 }
 
-export function RequestCard({ request, onAction }: RequestCardProps) {
-  const getStatusBadgeVariant = (status: string) => {
-    switch (status) {
-      case "new": return "destructive";
-      case "in_progress": return "default";
-      case "resolved": return "secondary";
-      default: return "outline";
-    }
-  };
+const getSupportTypeIcon = (type: string) => {
+  switch (type.toLowerCase()) {
+    case 'installation':
+    case 'technical':
+      return <Wrench className="h-5 w-5" />;
+    case 'maintenance':
+      return <Lightbulb className="h-5 w-5" />;
+    case 'product':
+      return <Package className="h-5 w-5" />;
+    default:
+      return <AlertCircle className="h-5 w-5" />;
+  }
+};
 
-  const getSupportTypeBadgeVariant = (type: string) => {
-    switch (type) {
-      case "technical": return "default";
-      case "installation": return "secondary";
-      case "maintenance": return "outline";
-      case "order": return "secondary";
-      default: return "outline";
-    }
-  };
+const getStatusClasses = (status: string) => {
+  switch (status) {
+    case 'new':
+      return "bg-orange-500 text-white";
+    case 'in_progress':
+      return "bg-blue-500 text-white";
+    case 'resolved':
+      return "bg-green-500 text-white";
+    default:
+      return "bg-gray-500 text-white";
+  }
+};
 
+export function RequestCard({ 
+  request, 
+  onStatusChange, 
+  onComment,
+  onEmail,
+  isEmailSending = false
+}: RequestCardProps) {
+  const formattedTime = request.created_at 
+    ? formatDistanceToNow(new Date(request.created_at), { addSuffix: true })
+    : 'Unknown time';
+    
+  const timeString = request.created_at
+    ? new Date(request.created_at).toLocaleString()
+    : 'Unknown date';
+    
   return (
-    <div 
-      className="bg-spotify-accent/20 p-4 rounded-md border border-spotify-accent/30 hover:border-spotify-accent/60 transition-colors mb-4"
-    >
-      <div className="flex justify-between items-start">
-        <div>
-          <div className="flex items-center gap-2 flex-wrap">
-            <h3 className="text-lg font-medium text-white">{request.subject}</h3>
-            <Badge variant={getSupportTypeBadgeVariant(request.support_type)}>
-              {request.support_type}
-            </Badge>
-            <Badge variant={getStatusBadgeVariant(request.status)}>
-              {request.status.replace("_", " ")}
-            </Badge>
+    <Card className="bg-spotify-dark hover:bg-spotify-dark/80 transition-colors">
+      <CardContent className="pt-6">
+        <div className="flex justify-between items-start gap-4">
+          <div className="flex-1">
+            <div className="flex items-center gap-2 mb-2">
+              <h3 className="text-lg font-semibold">{request.subject}</h3>
+              <span className={`px-2 py-0.5 text-xs rounded-full ${getStatusClasses(request.status)}`}>
+                {request.status.replace('_', ' ')}
+              </span>
+              {request.support_type && (
+                <span className="px-2 py-0.5 text-xs rounded-full bg-gray-700 text-gray-200">
+                  {request.support_type}
+                </span>
+              )}
+            </div>
+            
+            <p className="text-gray-400 text-sm">From: {request.user_name} ({request.user_email})</p>
+            {request.purifier_model && (
+              <p className="text-gray-400 text-sm">Model: {request.purifier_model}</p>
+            )}
+            <p className="mt-2">{request.message}</p>
           </div>
-          <p className="text-sm text-gray-400">
-            From: {request.user_name} ({request.user_email})
-          </p>
-          <p className="text-sm text-gray-400 mt-1">
-            Model: {request.purifier_model}
-          </p>
-          {request.assigned_to && (
-            <p className="text-sm text-mywater-blue mt-1">
-              Assigned to: {request.assigned_to}
-            </p>
-          )}
-        </div>
-        <span className="text-xs text-gray-400">
-          {format(request.created_at, "MM/dd/yyyy, h:mm:ss a")}
-        </span>
-      </div>
-      
-      <p className="mt-2 text-white/80 line-clamp-2">{request.message}</p>
-      
-      {/* Display comments if any */}
-      {request.comments && request.comments.length > 0 && (
-        <div className="mt-3 border-t border-gray-700 pt-3">
-          <h4 className="text-sm font-medium text-gray-400 mb-2">Comments:</h4>
-          <div className="space-y-2 max-h-60 overflow-y-auto">
-            {request.comments.map((comment) => (
-              <div key={comment.id} className="bg-spotify-accent/40 p-2 rounded text-sm">
-                <div className="flex justify-between items-center">
-                  <span className="font-medium text-mywater-blue">{comment.author}</span>
-                  <span className="text-xs text-gray-500">
-                    {comment.created_at instanceof Date 
-                      ? format(comment.created_at, "MM/dd/yyyy, h:mm a")
-                      : "Unknown date"}
-                  </span>
-                </div>
-                <p className="text-white/90 mt-1">{comment.content}</p>
-              </div>
-            ))}
+          
+          <div className="text-right text-sm text-gray-400">
+            <time title={timeString}>{formattedTime}</time>
           </div>
         </div>
-      )}
+      </CardContent>
       
-      <div className="mt-4 flex justify-end gap-2 flex-wrap">
+      <CardFooter className="pt-2 border-t border-gray-800 flex justify-end gap-2 flex-wrap">
         {request.status !== "in_progress" && (
           <Button 
-            size="sm" 
-            variant="outline"
-            onClick={() => onAction('status', request, "in_progress")}
+            variant="outline" 
+            size="sm"
+            onClick={() => onStatusChange("in_progress")}
+            className="flex gap-1 items-center"
           >
-            <Clock className="h-4 w-4 mr-2" />
-            Mark In Progress
+            <Clock className="h-4 w-4" />
+            <span>Mark In Progress</span>
           </Button>
         )}
         
         {request.status !== "resolved" && (
           <Button 
-            size="sm" 
-            variant="outline"
-            onClick={() => onAction('status', request, "resolved")}
+            variant="outline" 
+            size="sm"
+            onClick={() => onStatusChange("resolved")}
+            className="flex gap-1 items-center"
           >
-            <CheckCircle className="h-4 w-4 mr-2" />
-            Mark Resolved
+            <CheckCircle2 className="h-4 w-4" />
+            <span>Mark Resolved</span>
           </Button>
         )}
         
-        <Button 
-          size="sm" 
-          variant="default"
-          className="bg-mywater-blue hover:bg-mywater-blue/90"
-          onClick={() => onAction('email', request)}
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={onComment}
+          className="flex gap-1 items-center"
         >
-          <Mail className="h-4 w-4 mr-2" />
-          Reply by Email
+          <MessageSquare className="h-4 w-4" />
+          <span>Comment</span>
         </Button>
         
-        {request.status === "in_progress" && (
-          <Button 
-            size="sm" 
-            variant="secondary"
-            onClick={() => onAction('comment', request)}
-          >
-            <MessageSquare className="h-4 w-4 mr-2" />
-            Add Comment
-          </Button>
-        )}
-      </div>
-    </div>
+        <Button
+          variant="default"
+          size="sm"
+          onClick={onEmail}
+          disabled={isEmailSending}
+          className="flex gap-1 items-center bg-mywater-blue hover:bg-mywater-blue/90"
+        >
+          <Send className="h-4 w-4" />
+          <span>{isEmailSending ? "Sending..." : "Reply by Email"}</span>
+        </Button>
+      </CardFooter>
+    </Card>
   );
 }
