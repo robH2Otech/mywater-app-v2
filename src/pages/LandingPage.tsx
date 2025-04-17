@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ArrowRight, Droplet, Shield, Users, Globe } from "lucide-react";
+import { ArrowRight, Droplet, Shield, Users, Globe, Rocket } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import MatrixRain from "@/components/ui/matrix-rain";
 
@@ -97,7 +97,7 @@ export function LandingPage() {
                   </li>
                   <li className="flex items-start gap-2">
                     <Shield className="h-5 w-5 text-mywater-blue shrink-0 mt-0.5" />
-                    <span>Calculate your environmental impact and your achievements</span>
+                    <span>{t("environmental_impact")}</span>
                   </li>
                 </ul>
               </CardContent>
@@ -134,6 +134,14 @@ export function LandingPage() {
             </Card>
           </TabsContent>
         </Tabs>
+
+        {/* CTA Banner */}
+        <div className="bg-gradient-to-r from-cyan-600 to-blue-600 p-4 rounded-lg text-white text-center">
+          <p className="flex items-center justify-center gap-2 font-medium">
+            <Rocket className="h-5 w-5" />
+            {t("join_cta")}
+          </p>
+        </div>
 
         <Button 
           onClick={handleContinue}

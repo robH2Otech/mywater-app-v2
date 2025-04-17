@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useEffect, ReactNode } from "react";
 
 // Available languages
@@ -324,13 +323,14 @@ const translations: Translations = {
     "home_user_description": "Pour les utilisateurs particuliers avec des produits de purification MYWATER",
     "business_water_management": "Gestion de l'Eau Professionnelle",
     "business_description": "Pour les clients commerciaux gérant plusieurs unités de purification d'eau",
-    "track_maintenance": "Suivez le calendrier d'entretien de votre purificateur",
-    "refer_friends": "Parrainez des amis et gagnez des cartouches de remplacement gratuites",
-    "get_reminders": "Recevez des rappels pour les remplacements de cartouches",
+    "track_maintenance": "Suivez le calendrier d'entretien de votre purificateur pour ne jamais manquer un changement de filtre",
+    "refer_friends": "Gagnez des cartouches de remplacement gratuites en parrainant des amis qui se soucient de l'eau propre",
+    "environmental_impact": "Mesurez votre impact environnemental et célébrez chaque étape durable",
     "monitor_units": "Surveillez et gérez plusieurs unités de purification d'eau",
     "advanced_analytics": "Outils d'analyse et de rapports avancés",
     "technical_support": "Support technique et gestion des services",
     "continue": "Continuer",
+    "join_cta": "🚀 Rejoignez MYWATER maintenant - rendez l'eau propre plus intelligente et plus écologique !",
   }
 };
 
