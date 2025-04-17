@@ -76,6 +76,59 @@ async function getDeviceLocation(iccid: string, token: string): Promise<OneOTDia
 }
 
 /**
+ * Store location data with timestamp and add to history
+ */
+async function storeLocationData(unitId: string, locationData: any): Promise<void> {
+  const db = admin.firestore();
+  const now = admin.firestore.FieldValue.serverTimestamp();
+  
+  // Current location data to update on the unit
+  const locationUpdate = {
+    lastKnownLatitude: locationData.latitude,
+    lastKnownLongitude: locationData.longitude,
+    lastKnownRadius: locationData.radius,
+    lastKnownCountry: locationData.lastCountry,
+    lastKnownOperator: locationData.lastOperator,
+    locationLastFetchedAt: now
+  };
+  
+  // Update unit with current location
+  await db.collection('units').doc(unitId).update(locationUpdate);
+  
+  // Also store in history collection with TTL
+  const historyData = {
+    ...locationUpdate,
+    unitId,
+    createdAt: now,
+    // Add a field for TTL queries - expire after 24 hours
+    expireAt: admin.firestore.Timestamp.fromMillis(Date.now() + (24 * 60 * 60 * 1000))
+  };
+  
+  await db.collection('locationHistory').add(historyData);
+  
+  // Clean up expired location history
+  const twentyFourHoursAgo = admin.firestore.Timestamp.fromMillis(Date.now() - (24 * 60 * 60 * 1000));
+  const expiredDocs = await db.collection('locationHistory')
+    .where('expireAt', '<', twentyFourHoursAgo)
+    .limit(100) // Process in batches to avoid timeout
+    .get();
+  
+  // Delete expired docs
+  const batch = db.batch();
+  let deletionCount = 0;
+  
+  expiredDocs.docs.forEach(doc => {
+    batch.delete(doc.ref);
+    deletionCount++;
+  });
+  
+  if (deletionCount > 0) {
+    await batch.commit();
+    functions.logger.info(`Deleted ${deletionCount} expired location history records`);
+  }
+}
+
+/**
  * Cloud Function to update locations for all units
  */
 export const updateAllLocations = functions.pubsub
@@ -103,15 +156,8 @@ export const updateAllLocations = functions.pubsub
           // Get location data from 1oT API
           const locationData = await getDeviceLocation(iccid, token);
           
-          // Update Firestore
-          await unitDoc.ref.update({
-            lastKnownLatitude: locationData.latitude,
-            lastKnownLongitude: locationData.longitude,
-            lastKnownRadius: locationData.radius,
-            lastKnownCountry: locationData.lastCountry,
-            lastKnownOperator: locationData.lastOperator,
-            locationLastFetchedAt: admin.firestore.FieldValue.serverTimestamp()
-          });
+          // Store location data with timestamp
+          await storeLocationData(unitDoc.id, locationData);
           
           functions.logger.info(`Updated location for unit ${unitDoc.id} with ICCID ${iccid}`);
           return { success: true, iccid };
@@ -163,15 +209,8 @@ export const updateUnitLocation = functions.https.onCall(async (data, context) =
     // Get location data
     const locationData = await getDeviceLocation(iccid, token);
     
-    // Update Firestore
-    await db.collection('units').doc(unitId).update({
-      lastKnownLatitude: locationData.latitude,
-      lastKnownLongitude: locationData.longitude,
-      lastKnownRadius: locationData.radius,
-      lastKnownCountry: locationData.lastCountry,
-      lastKnownOperator: locationData.lastOperator,
-      locationLastFetchedAt: admin.firestore.FieldValue.serverTimestamp()
-    });
+    // Store location data with timestamp and history
+    await storeLocationData(unitId, locationData);
     
     return {
       success: true,
@@ -180,7 +219,8 @@ export const updateUnitLocation = functions.https.onCall(async (data, context) =
         longitude: locationData.longitude,
         radius: locationData.radius,
         lastCountry: locationData.lastCountry,
-        lastOperator: locationData.lastOperator
+        lastOperator: locationData.lastOperator,
+        timestamp: new Date().toISOString()
       }
     };
   } catch (error) {
@@ -191,3 +231,51 @@ export const updateUnitLocation = functions.https.onCall(async (data, context) =
     );
   }
 });
+
+/**
+ * Cloud Function to delete expired location history records
+ * This is a backup to ensure old records are removed even if the inline deletion fails
+ */
+export const cleanupLocationHistory = functions.pubsub
+  .schedule('0 3 * * *')  // Run at 3am every day
+  .timeZone('UTC')
+  .onRun(async () => {
+    const db = admin.firestore();
+    
+    try {
+      const twentyFourHoursAgo = admin.firestore.Timestamp.fromMillis(Date.now() - (24 * 60 * 60 * 1000));
+      const expiredDocs = await db.collection('locationHistory')
+        .where('expireAt', '<', twentyFourHoursAgo)
+        .get();
+      
+      if (expiredDocs.empty) {
+        functions.logger.info('No expired location history records to delete');
+        return null;
+      }
+      
+      // Delete in batches to avoid write limits
+      const batchSize = 500;
+      let deletedCount = 0;
+      const batches = [];
+      
+      for (let i = 0; i < expiredDocs.docs.length; i += batchSize) {
+        const batch = db.batch();
+        const currentBatch = expiredDocs.docs.slice(i, i + batchSize);
+        
+        currentBatch.forEach(doc => {
+          batch.delete(doc.ref);
+          deletedCount++;
+        });
+        
+        batches.push(batch.commit());
+      }
+      
+      await Promise.all(batches);
+      functions.logger.info(`Successfully deleted ${deletedCount} expired location history records`);
+      
+      return { success: true, deletedCount };
+    } catch (error) {
+      functions.logger.error('Error cleaning up location history:', error);
+      throw error;
+    }
+  });

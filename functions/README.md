@@ -1,12 +1,14 @@
 
-# Firebase Cloud Functions for Location Tracking
+# Firebase Cloud Functions for MYWATER App
 
-This folder contains Firebase Cloud Functions to track and update location data for units with cellular connectivity.
+This folder contains Firebase Cloud Functions for the MYWATER application, including location tracking features.
 
 ## Functions
 
+### Location Tracking
 1. `updateAllLocations` - Scheduled function that runs twice daily (6 AM and 6 PM UTC) to update all units' location data
 2. `updateUnitLocation` - On-demand HTTP callable function to update location for a specific unit
+3. `cleanupLocationHistory` - Daily function to remove location data older than 24 hours
 
 ## Setup
 
@@ -30,6 +32,14 @@ firebase functions:config:set oneot.endpoint="https://api.1ot.com/v1"
 ```bash
 npm run deploy
 ```
+
+## Location Data Management
+
+Location data is stored in two places:
+- Current location in the unit document
+- Historical data in the `locationHistory` collection with 24-hour TTL
+
+For detailed information, see [LOCATION_FUNCTIONS.md](./LOCATION_FUNCTIONS.md)
 
 ## Usage
 
@@ -69,3 +79,4 @@ npm run serve
 
 - Make sure your Firestore security rules allow the functions to write to the units collection
 - The scheduled function uses Google Cloud Scheduler, which requires a billing account to be set up
+

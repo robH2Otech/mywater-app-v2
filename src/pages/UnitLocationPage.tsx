@@ -1,17 +1,18 @@
 
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { MapPin, ArrowLeft } from "lucide-react";
+import { MapPin, ArrowLeft, Clock } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { LoadingSkeleton } from "@/components/shared/LoadingSkeleton";
 import { PageHeader } from "@/components/shared/PageHeader";
-import { collection, query, where, getDocs, limit } from "firebase/firestore";
+import { collection, query, where, getDocs, limit, doc, getDoc } from "firebase/firestore";
 import { db } from "@/integrations/firebase/client";
 import { use1oTLocation } from "@/hooks/locations/use1oTLocation";
 import { useCloudLocationUpdate } from "@/hooks/locations/useCloudLocationUpdate";
 import { UnitLocationDisplay } from "@/components/locations/UnitLocationDisplay";
+import { LocationData } from "@/utils/locations/locationData";
 
 export function UnitLocationPage() {
   const { iccid } = useParams<{ iccid: string }>();
@@ -21,6 +22,7 @@ export function UnitLocationPage() {
   const [unitId, setUnitId] = useState<string>("");
   const [unitFetchError, setUnitFetchError] = useState<string | null>(null);
   const [unitFetched, setUnitFetched] = useState<boolean>(false);
+  const [storedLocationData, setStoredLocationData] = useState<LocationData | null>(null);
   
   // Use our custom hooks
   const { isLoading: isLoadingLocation, error: locationError, locationData, fetchLocationData } = use1oTLocation();
@@ -58,6 +60,20 @@ export function UnitLocationPage() {
             setUnitName(unitData.name || "Unnamed Unit");
             setUnitId(matchingUnit.id);
             setUnitFetched(true);
+            
+            // Check for existing location data
+            if (unitData.lastKnownLatitude && unitData.lastKnownLongitude) {
+              setStoredLocationData({
+                latitude: unitData.lastKnownLatitude,
+                longitude: unitData.lastKnownLongitude,
+                radius: unitData.lastKnownRadius || 500,
+                lastCountry: unitData.lastKnownCountry,
+                lastOperator: unitData.lastKnownOperator,
+                timestamp: unitData.locationLastFetchedAt ? 
+                  new Date(unitData.locationLastFetchedAt.toDate()).toISOString() : 
+                  new Date().toISOString()
+              });
+            }
           } else {
             setUnitFetchError("Unit not found with the provided ICCID");
           }
@@ -67,6 +83,20 @@ export function UnitLocationPage() {
           setUnitName(unitData.name || "Unnamed Unit");
           setUnitId(unitDoc.id);
           setUnitFetched(true);
+          
+          // Check for existing location data
+          if (unitData.lastKnownLatitude && unitData.lastKnownLongitude) {
+            setStoredLocationData({
+              latitude: unitData.lastKnownLatitude,
+              longitude: unitData.lastKnownLongitude,
+              radius: unitData.lastKnownRadius || 500,
+              lastCountry: unitData.lastKnownCountry,
+              lastOperator: unitData.lastKnownOperator,
+              timestamp: unitData.locationLastFetchedAt ? 
+                new Date(unitData.locationLastFetchedAt.toDate()).toISOString() : 
+                new Date().toISOString()
+            });
+          }
         }
       } catch (err) {
         console.error("Error fetching unit details:", err);
@@ -77,18 +107,18 @@ export function UnitLocationPage() {
     fetchUnitDetails();
   }, [iccid]);
   
-  // Fetch location data when unit is identified
+  // Fetch location data when unit is identified only if no stored data
   useEffect(() => {
-    if (iccid && unitFetched) {
+    if (iccid && unitFetched && !storedLocationData) {
       setTimeout(() => {
         fetchLocationData(iccid);
       }, 300);
-    } else if (iccid && !unitFetched && !unitFetchError) {
+    } else if (iccid && !unitFetched && !unitFetchError && !storedLocationData) {
       setTimeout(() => {
         fetchLocationData(iccid);
       }, 300);
     }
-  }, [iccid, unitFetched, unitFetchError, fetchLocationData]);
+  }, [iccid, unitFetched, unitFetchError, storedLocationData, fetchLocationData]);
   
   // Navigation handler
   const handleBack = () => {
@@ -105,20 +135,29 @@ export function UnitLocationPage() {
       // Use cloud function if available
       const updatedLocation = await updateUnitLocation(unitId, iccid);
       if (updatedLocation) {
-        // If cloud update was successful, use that data
+        setStoredLocationData(updatedLocation);
         return;
       }
       // Fall back to client-side fetching
-      fetchLocationData(iccid);
+      const data = await fetchLocationData(iccid);
+      if (data) {
+        setStoredLocationData(data);
+      }
     } else if (iccid) {
       // Just use client-side fetching
-      fetchLocationData(iccid);
+      const data = await fetchLocationData(iccid);
+      if (data) {
+        setStoredLocationData(data);
+      }
     }
   };
   
   const displayName = unitName || iccid || "Unknown Unit";
   const displayError = unitFetchError || locationError;
   const isUpdatingLocation = isLoadingLocation || isUpdating;
+  
+  // Determine which location data to display
+  const displayLocationData = storedLocationData || locationData;
   
   return (
     <div className="container mx-auto p-4 space-y-6 animate-fadeIn">
@@ -137,9 +176,9 @@ export function UnitLocationPage() {
         </Button>
       </PageHeader>
       
-      {isUpdatingLocation || (!unitFetched && !unitFetchError) ? (
+      {isUpdatingLocation || (!unitFetched && !unitFetchError && !displayLocationData) ? (
         <LoadingSkeleton />
-      ) : displayError && !locationData ? (
+      ) : displayError && !displayLocationData ? (
         <Card className="bg-spotify-darker border-red-500/20">
           <CardContent className="p-6">
             <Alert variant="destructive" className="bg-red-900/20 border-red-500/30 text-red-200">
@@ -164,12 +203,22 @@ export function UnitLocationPage() {
             </div>
           </CardContent>
         </Card>
-      ) : locationData ? (
-        <UnitLocationDisplay 
-          locationData={locationData}
-          onRefresh={handleRetryFetch}
-          isLoading={isUpdatingLocation}
-        />
+      ) : displayLocationData ? (
+        <>
+          <UnitLocationDisplay 
+            locationData={displayLocationData}
+            onRefresh={handleRetryFetch}
+            isLoading={isUpdatingLocation}
+          />
+          {storedLocationData && (
+            <Card className="bg-spotify-darker">
+              <CardContent className="p-4 text-sm text-gray-400 flex items-center">
+                <Clock className="h-4 w-4 mr-2 text-spotify-accent" />
+                Location data is stored for 24 hours and then automatically refreshed.
+              </CardContent>
+            </Card>
+          )}
+        </>
       ) : (
         <Card className="bg-spotify-darker border-yellow-500/20">
           <CardContent className="p-6">

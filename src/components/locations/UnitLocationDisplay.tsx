@@ -2,9 +2,11 @@
 import React from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { RefreshCw } from "lucide-react";
+import { RefreshCw, Info } from "lucide-react";
 import { LocationData } from "@/utils/locations/locationData";
 import { UnitLocationMap } from "@/components/units/UnitLocationMap";
+import { format, formatDistanceToNow, isValid } from "date-fns";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface UnitLocationDisplayProps {
   locationData: LocationData;
@@ -17,6 +19,17 @@ export function UnitLocationDisplay({
   onRefresh, 
   isLoading 
 }: UnitLocationDisplayProps) {
+  // Parse timestamp and format it
+  const timestamp = locationData.timestamp ? new Date(locationData.timestamp) : null;
+  const isValidDate = timestamp && isValid(timestamp);
+  const formattedDate = isValidDate 
+    ? format(timestamp, "MMM d, yyyy 'at' h:mm a") 
+    : "Unknown";
+  
+  const timeAgo = isValidDate
+    ? formatDistanceToNow(timestamp, { addSuffix: true })
+    : "";
+
   return (
     <div className="space-y-6">
       <Card className="bg-spotify-darker">
@@ -52,11 +65,33 @@ export function UnitLocationDisplay({
             </div>
           )}
           
-          {locationData.timestamp && (
-            <p className="text-xs text-gray-400">
-              Location data captured at: {new Date(locationData.timestamp).toLocaleString()}
-            </p>
-          )}
+          <div className="bg-spotify-dark/40 p-4 rounded-md border border-spotify-accent/10">
+            <div className="flex justify-between items-center">
+              <div>
+                <p className="text-sm text-gray-300 flex items-center">
+                  <span className="font-medium">Last Updated:</span> 
+                  <span className="ml-2">{formattedDate}</span>
+                  {timeAgo && <span className="text-xs text-gray-400 ml-2">({timeAgo})</span>}
+                </p>
+                <p className="text-xs text-gray-400 mt-1">
+                  Location data is stored for 24 hours and then automatically refreshed
+                </p>
+              </div>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <div className="cursor-help">
+                      <Info className="h-4 w-4 text-spotify-accent" />
+                    </div>
+                  </TooltipTrigger>
+                  <TooltipContent className="bg-spotify-darker text-white border-spotify-accent/30 p-3 max-w-xs">
+                    <p>Location data is updated twice daily at 6:00 and 18:00 UTC.</p>
+                    <p className="mt-1">Historical data is retained for 24 hours.</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            </div>
+          </div>
           
           <div className="p-3 bg-blue-900/20 border border-blue-500/20 rounded-md">
             <p className="text-sm text-gray-300">

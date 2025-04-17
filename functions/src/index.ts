@@ -1,6 +1,6 @@
 
 import * as admin from 'firebase-admin';
-import { updateAllLocations, updateUnitLocation } from './locations/updateLocations';
+import { updateAllLocations, updateUnitLocation, cleanupLocationHistory } from './locations/updateLocations';
 
 // Initialize Firebase Admin
 admin.initializeApp();
@@ -8,5 +8,6 @@ admin.initializeApp();
 // Export the Cloud Functions
 export {
   updateAllLocations,
-  updateUnitLocation
+  updateUnitLocation,
+  cleanupLocationHistory
 };
