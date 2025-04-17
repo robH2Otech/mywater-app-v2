@@ -8,6 +8,7 @@ import { useReferralEmailForm } from "@/hooks/referral/useReferralEmailForm";
 import { useReferralTracking } from "@/hooks/referral/useReferralTracking";
 import { EmailForm } from "./components/EmailForm";
 import { toast } from "@/hooks/use-toast";
+import { ShareOptions } from "./components/ShareOptions";
 
 interface ReferralFormProps {
   userName: string;
@@ -16,6 +17,7 @@ interface ReferralFormProps {
 
 export function ReferralForm({ userName, referralCode }: ReferralFormProps) {
   const [isEmailFormVisible, setIsEmailFormVisible] = useState(false);
+  const [isShareOptionsVisible, setIsShareOptionsVisible] = useState(false);
 
   const { 
     friendName,
@@ -49,43 +51,63 @@ export function ReferralForm({ userName, referralCode }: ReferralFormProps) {
 
   const toggleEmailForm = () => {
     setIsEmailFormVisible(!isEmailFormVisible);
+    if (isShareOptionsVisible) setIsShareOptionsVisible(false);
   };
 
-  const handleShareLink = () => {
+  const toggleShareOptions = () => {
+    setIsShareOptionsVisible(!isShareOptionsVisible);
+    if (isEmailFormVisible) setIsEmailFormVisible(false);
+  };
+
+  // Generate referral text and link for sharing
+  const getReferralContent = () => {
     const referralLink = `https://mywatertechnologies.com/shop?code=${referralCode}`;
     const shareText = `I'm loving my MYWATER water purification system and thought you might like it too! Get 20% off with my referral code: ${referralCode}`;
     
+    return {
+      title: 'MYWATER - Get 20% Off!',
+      text: shareText,
+      url: referralLink
+    };
+  };
+  
+  // Handle sharing with Web Share API or fallback to clipboard
+  const handleShareLink = async () => {
+    const { title, text, url } = getReferralContent();
+    
+    // Show sharing options on mobile
+    if (window.innerWidth <= 768) {
+      toggleShareOptions();
+      return;
+    }
+    
     // Try to use the Web Share API if available
     if (navigator.share) {
-      navigator.share({
-        title: 'MYWATER - Get 20% Off!',
-        text: shareText,
-        url: referralLink,
-      })
-        .then(() => {
-          console.log('Successfully shared');
-          toast({
-            title: "Link shared successfully!",
-            description: "Your referral link has been shared.",
-          });
-        })
-        .catch((error) => {
-          console.log('Error sharing:', error);
-          // Fallback to copying to clipboard if sharing failed
-          navigator.clipboard.writeText(`${shareText}\n\n${referralLink}`);
-          toast({
-            title: "Link copied to clipboard!",
-            description: "Your referral link has been copied to clipboard.",
-          });
+      try {
+        await navigator.share({ title, text, url });
+        console.log('Successfully shared');
+        toast({
+          title: "Link shared successfully!",
+          description: "Your referral link has been shared.",
         });
+      } catch (error) {
+        console.log('Error sharing:', error);
+        // Fallback to copying to clipboard if sharing failed
+        copyToClipboard(`${text}\n\n${url}`);
+      }
     } else {
       // Fallback for browsers that don't support the Web Share API
-      navigator.clipboard.writeText(`${shareText}\n\n${referralLink}`);
-      toast({
-        title: "Link copied to clipboard!",
-        description: "Your referral link has been copied to clipboard.",
-      });
+      copyToClipboard(`${text}\n\n${url}`);
     }
+  };
+  
+  // Helper function to copy content to clipboard
+  const copyToClipboard = (content: string) => {
+    navigator.clipboard.writeText(content);
+    toast({
+      title: "Link copied to clipboard!",
+      description: "Your referral link has been copied to clipboard.",
+    });
   };
   
   return (
@@ -125,6 +147,24 @@ export function ReferralForm({ userName, referralCode }: ReferralFormProps) {
       </div>
       
       <AnimatePresence>
+        {isShareOptionsVisible && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.3 }}
+            className="overflow-hidden"
+          >
+            <Card className="border-blue-500/20 bg-blue-900/10 p-4 rounded-md mt-3">
+              <ShareOptions 
+                referralContent={getReferralContent()}
+                userName={userName}
+                referralCode={referralCode}
+              />
+            </Card>
+          </motion.div>
+        )}
+        
         {isEmailFormVisible && (
           <motion.div
             initial={{ height: 0, opacity: 0 }}

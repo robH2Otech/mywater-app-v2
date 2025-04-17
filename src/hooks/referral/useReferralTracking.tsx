@@ -1,14 +1,8 @@
+
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import emailjs from 'emailjs-com';
-
-// EmailJS configuration
-const EMAILJS_CONFIG = {
-  SERVICE_ID: 'service_mywater',
-  TEMPLATE_ID: 'template_referral',
-  USER_ID: '20lKGYgYsf1DIICqM',
-  PUBLIC_KEY: '20lKGYgYsf1DIICqM'
-};
+import { EMAILJS_CONFIG, createReferralEmailParams } from "@/utils/emailUtil";
 
 export function useReferralTracking(
   friendName: string, 
@@ -26,9 +20,6 @@ export function useReferralTracking(
   const [showSuccess, setShowSuccess] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const { toast } = useToast();
-  
-  // Extract just the first name for personalization
-  const firstName = userName.split(' ')[0];
 
   // Initialize EmailJS
   const initEmailJS = () => {
@@ -61,17 +52,14 @@ export function useReferralTracking(
       // Initialize EmailJS
       initEmailJS();
       
-      // Create simple template parameters - keeping it minimal for better deliverability
-      const templateParams = {
-        to_email: friendEmail,
-        to_name: friendName,
-        from_name: userName,
-        subject: `${firstName} invited you to try MYWATER (20% discount!)`,
-        message: emailMessage || `I'm loving my MYWATER purification system! Get 20% off your purchase using my referral code: ${referralCode}`,
-        reply_to: "noreply@mywatertechnologies.com",
-        referral_code: referralCode,
-        link_url: `https://mywatertechnologies.com/shop?code=${referralCode}`
-      };
+      // Create email parameters using our utility function
+      const templateParams = createReferralEmailParams(
+        friendEmail,
+        friendName,
+        userName,
+        referralCode,
+        emailMessage
+      );
       
       // Send email directly with EmailJS
       const response = await emailjs.send(
@@ -128,13 +116,14 @@ export function useReferralTracking(
       // Initialize EmailJS
       initEmailJS();
       
-      // Attempt to send a minimal email for better deliverability
+      // Create simplified parameters for better deliverability
       const simpleParams = {
         to_email: friendEmail,
         to_name: friendName,
         from_name: userName,
-        subject: `${firstName} invited you to try MYWATER with a discount!`,
+        subject: `${userName.split(' ')[0]} invited you to try MYWATER with a discount!`,
         message: `I'm loving my MYWATER purification system! Get 20% off your purchase using my referral code: ${referralCode} https://mywatertechnologies.com/shop?code=${referralCode}`,
+        referral_code: referralCode,
       };
       
       const response = await emailjs.send(
