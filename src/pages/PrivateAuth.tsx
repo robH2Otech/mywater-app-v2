@@ -54,7 +54,7 @@ export function PrivateAuth() {
             </div>
           </div>
           <h2 className="text-3xl font-bold text-white bg-gradient-to-r from-cyan-400 to-blue-500 bg-clip-text text-transparent">
-            MYWATER Home User Portal
+            MYWATER Private User Portal
           </h2>
           <p className="mt-2 text-gray-400">
             {authMode === "login"

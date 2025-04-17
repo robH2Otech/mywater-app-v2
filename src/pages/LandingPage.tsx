@@ -97,7 +97,7 @@ export function LandingPage() {
                   </li>
                   <li className="flex items-start gap-2">
                     <Shield className="h-5 w-5 text-mywater-blue shrink-0 mt-0.5" />
-                    <span>{t("get_reminders")}</span>
+                    <span>Calculate your environmental impact and your achievements</span>
                   </li>
                 </ul>
               </CardContent>

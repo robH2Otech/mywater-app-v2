@@ -15,6 +15,8 @@ import { Link, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { auth } from "@/integrations/firebase/client";
 import { useNavigate } from "react-router-dom";
+import { SidebarHeader } from "./sidebar/SidebarHeader";
+import { SidebarNavigation } from "./sidebar/SidebarNavigation";
 
 interface PrivateSidebarProps {
   isMobile?: boolean;
@@ -47,62 +49,18 @@ export const PrivateSidebar = ({ isMobile, closeSidebar }: PrivateSidebarProps) 
 
   return (
     <div className={`h-screen ${isMobile ? "w-[250px]" : "w-64"} bg-spotify-darker border-r border-white/10 flex flex-col`}>
-      <div className="flex items-center justify-between p-4">
-        <div className="flex items-center gap-2">
-          <img src="/lovable-uploads/f2f80940-5fa8-45b6-a3dd-78b6282cf10e.png" alt="Water Filter" className="h-8 w-8 object-contain" />
-          <div className="flex flex-col">
-            <h1 className="text-xl font-bold text-white leading-tight">MYWATER</h1>
-            <span className="text-sm text-white/80">Home User</span>
-          </div>
-        </div>
-        
-        {isMobile && (
-          <Button 
-            variant="ghost" 
-            size="icon" 
-            onClick={closeSidebar}
-            className="text-gray-400 hover:text-white"
-          >
-            <X className="h-5 w-5" />
-            <span className="sr-only">Close menu</span>
-          </Button>
-        )}
-      </div>
+      <SidebarHeader 
+        isMobile={isMobile} 
+        closeSidebar={closeSidebar} 
+      />
       
-      <nav className="space-y-1 flex-grow overflow-y-auto p-2">
-        {navigation.map((item) => {
-          const isActive = 
-            location.pathname === item.path || 
-            (item.path === "/private-dashboard" && location.pathname === "/private-dashboard/") ||
-            (item.path !== "/private-dashboard" && location.pathname.startsWith(item.path));
-          
-          console.log(`Menu item: ${item.name}, path: ${item.path}, isActive: ${isActive}, current path: ${location.pathname}`);
-          
-          return (
-            <Link
-              key={item.name}
-              to={item.path}
-              className={`flex items-center gap-3 px-4 py-3 rounded-md transition-colors ${
-                isActive
-                  ? "bg-gradient-to-r from-cyan-600 to-blue-600 text-white"
-                  : "text-gray-400 hover:text-white hover:bg-spotify-accent"
-              }`}
-              onClick={isMobile ? closeSidebar : undefined}
-            >
-              <item.icon className="h-5 w-5 flex-shrink-0" />
-              <span className="truncate">{item.name}</span>
-            </Link>
-          );
-        })}
-        
-        <button
-          onClick={handleLogout}
-          className="w-full flex items-center gap-3 px-4 py-3 rounded-md transition-colors text-gray-400 hover:text-white hover:bg-spotify-accent"
-        >
-          <LogOut className="h-5 w-5 flex-shrink-0" />
-          <span className="truncate">Log Out</span>
-        </button>
-      </nav>
+      <SidebarNavigation 
+        navigation={navigation}
+        location={location}
+        isMobile={isMobile}
+        closeSidebar={closeSidebar}
+        handleLogout={handleLogout}
+      />
     </div>
   );
 }
