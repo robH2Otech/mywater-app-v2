@@ -198,7 +198,7 @@ export const sendEmailDirect = async (
         to_name: toName,
         from_name: fromName,
         subject: `${fromName} invited you to try MYWATER with a discount!`,
-        message: `${fromName} has invited you to try MYWATER with a 20% discount! Visit https://mywater.com/products and use code ${referralCode}`,
+        message: `${fromName} has invited you to try MYWATER with a 20% discount! Visit https://mywater.com/products and use code MYWATER20`,
         reply_to: "noreply@mywatertechnologies.com"
       };
       

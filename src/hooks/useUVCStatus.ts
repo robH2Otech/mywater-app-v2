@@ -8,10 +8,10 @@ import { useUVCStatusUpdate } from "./uvc/useUVCStatusUpdate";
  */
 export function useUVCStatus(units: any[]) {
   const { processedUnits } = useUVCStatusMonitoring(units);
-  const { updateUVCStatus } = useUVCStatusUpdate();
+  const uvcStatusMutation = useUVCStatusUpdate();
 
   return { 
     processedUnits,
-    updateUVCStatus 
+    updateUVCStatus: uvcStatusMutation.mutate 
   };
 }
