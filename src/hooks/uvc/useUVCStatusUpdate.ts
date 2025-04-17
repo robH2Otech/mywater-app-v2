@@ -1,5 +1,5 @@
 
-import { doc, updateDoc, collection, addDoc } from "firebase/firestore";
+import { doc, updateDoc, collection, addDoc, getDoc } from "firebase/firestore";
 import { db } from "@/integrations/firebase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
@@ -34,8 +34,9 @@ export function useUVCStatusUpdate() {
       // Create alert if status is warning or urgent
       if (newStatus === 'warning' || newStatus === 'urgent') {
         // Get the unit name first
-        const unitSnapshot = await doc(db, "units", unitId).get();
-        const unitName = unitSnapshot.data()?.name || "Unknown Unit";
+        const unitSnapshot = await getDoc(doc(db, "units", unitId));
+        const unitData = unitSnapshot.data();
+        const unitName = unitData?.name || "Unknown Unit";
         
         const alertMessage = createUVCAlertMessage(unitName, uvcHours, newStatus);
         

@@ -61,9 +61,24 @@ export function useUVCData() {
                 
                 // Sort by timestamp in descending order
                 measurements.sort((a, b) => {
-                  const timeA = a.timestamp?.toDate?.() || new Date(a.timestamp || 0);
-                  const timeB = b.timestamp?.toDate?.() || new Date(b.timestamp || 0);
-                  return timeB.getTime() - timeA.getTime();
+                  // Handle potential undefined timestamps safely
+                  const getTimestamp = (item: any) => {
+                    if (!item || !item.timestamp) return 0;
+                    
+                    // Handle Firebase timestamp objects
+                    if (typeof item.timestamp.toDate === 'function') {
+                      return item.timestamp.toDate().getTime();
+                    }
+                    
+                    // Handle string or number timestamps
+                    if (typeof item.timestamp === 'string' || typeof item.timestamp === 'number') {
+                      return new Date(item.timestamp).getTime();
+                    }
+                    
+                    return 0;
+                  };
+                  
+                  return getTimestamp(b) - getTimestamp(a);
                 });
                 
                 // Get the latest measurement
