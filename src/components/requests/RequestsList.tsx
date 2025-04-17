@@ -57,7 +57,7 @@ export function RequestsList({
   }
 
   if (!requests || requests.length === 0) {
-    return <NoRequestsFound />;
+    return <NoRequestsFound filterType={activeFilter} />;
   }
 
   const handleEmailAction = async (request: SupportRequest) => {
