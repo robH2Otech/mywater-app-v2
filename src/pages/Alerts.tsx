@@ -13,7 +13,8 @@ import { ClientRequestsContent } from "@/components/requests/ClientRequestsConte
 import { fetchRecentRequests } from "@/services/requestService";
 import { SupportRequest } from "@/types/supportRequests";
 
-export default function Alerts() {
+// Change from default export to named export to match the import in AppRoutes.tsx
+export function Alerts() {
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [selectedAlertId, setSelectedAlertId] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<string>("alerts");
@@ -38,6 +39,41 @@ export default function Alerts() {
     } finally {
       setIsLoadingRequests(false);
     }
+  };
+
+  // Mock units array with alerts for display in AlertsList
+  const units = [
+    {
+      id: "unit1",
+      name: "MYWATER 001",
+      location: "Paris, France",
+      alerts: [
+        {
+          id: "alert1",
+          message: "Filter replacement required",
+          status: "urgent",
+          created_at: new Date().toISOString()
+        }
+      ]
+    },
+    {
+      id: "unit2",
+      name: "MYWATER 002",
+      location: "Lyon, France",
+      alerts: [
+        {
+          id: "alert2",
+          message: "Low water pressure detected",
+          status: "warning",
+          created_at: new Date().toISOString()
+        }
+      ]
+    }
+  ];
+
+  const handleCreateAlert = () => {
+    console.log("Creating new alert");
+    // Implementation would go here
   };
 
   return (
@@ -73,7 +109,7 @@ export default function Alerts() {
         
         <TabsContent value="alerts">
           <Card className="p-4 bg-spotify-darker">
-            <AlertsList onAlertClick={(id) => setSelectedAlertId(id)} />
+            <AlertsList units={units} onAlertClick={(id) => setSelectedAlertId(id)} />
           </Card>
         </TabsContent>
         
@@ -85,13 +121,17 @@ export default function Alerts() {
       <CreateAlertDialog
         open={isCreateDialogOpen}
         onOpenChange={setIsCreateDialogOpen}
+        onCreateAlert={handleCreateAlert}
       />
 
       <AlertDetailsDialog
         open={!!selectedAlertId}
         onOpenChange={(open) => !open && setSelectedAlertId(null)}
-        alertId={selectedAlertId}
+        alert={selectedAlertId ? units.flatMap(u => u.alerts).find(a => a.id === selectedAlertId) : null}
       />
     </div>
   );
 }
+
+// Also add a default export that references the named export
+export default Alerts;

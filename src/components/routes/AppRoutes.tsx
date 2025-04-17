@@ -14,7 +14,8 @@ import { UnitLocationPage } from "@/pages/UnitLocationPage";
 import { LocationsPage } from "@/pages/LocationsPage";
 import { Filters } from "@/pages/Filters";
 import { UVC } from "@/pages/UVC";
-import { Alerts } from "@/pages/Alerts";
+// Change to import the default export
+import Alerts from "@/pages/Alerts";
 import { Analytics } from "@/pages/Analytics";
 import { Users } from "@/pages/Users";
 import { Settings } from "@/pages/Settings";
