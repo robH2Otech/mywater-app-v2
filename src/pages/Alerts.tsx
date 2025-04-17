@@ -9,11 +9,10 @@ import { Button } from "@/components/ui/button";
 import { PlusCircle, Bell, MessageSquare } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useQueryClient } from "@tanstack/react-query";
-import { ClientRequestsContent } from "@/components/requests/ClientRequestsContent";
+import { RecentRequestsTab } from "@/components/alerts/RecentRequestsTab";
 import { fetchRecentRequests } from "@/services/requestService";
 import { SupportRequest } from "@/types/supportRequests";
 
-// Change from default export to named export to match the import in AppRoutes.tsx
 export function Alerts() {
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [selectedAlertId, setSelectedAlertId] = useState<string | null>(null);
@@ -114,7 +113,9 @@ export function Alerts() {
         </TabsContent>
         
         <TabsContent value="requests">
-          <ClientRequestsContent />
+          <Card className="p-4 bg-spotify-darker">
+            <RecentRequestsTab />
+          </Card>
         </TabsContent>
       </Tabs>
 
@@ -133,5 +134,5 @@ export function Alerts() {
   );
 }
 
-// Also add a default export that references the named export
+// Default export
 export default Alerts;

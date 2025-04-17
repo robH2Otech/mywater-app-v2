@@ -150,7 +150,7 @@ export function LandingPage() {
         </Button>
 
         <div className="pt-8 text-center text-sm text-gray-500">
-          <p>© 2025 MYWATER. All rights reserved.</p>
+          <p>{language === 'en' ? '© 2025 MYWATER Technologies. All rights reserved.' : '© 2025 MYWATER Technologies. Tous droits réservés.'}</p>
         </div>
       </div>
     </div>

@@ -3,7 +3,8 @@ import { SupportRequest } from "@/types/supportRequests";
 import { formatDistanceToNow } from "date-fns";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
-import { Lightbulb, Wrench, Package, AlertCircle, Clock, CheckCircle2, Send, MessageSquare } from "lucide-react";
+import { Lightbulb, Wrench, Package, AlertCircle, Clock, CheckCircle2, MessageSquare } from "lucide-react";
+import { EmailSender } from "./EmailSender";
 
 interface RequestCardProps {
   request: SupportRequest;
@@ -44,8 +45,7 @@ export function RequestCard({
   request, 
   onStatusChange, 
   onComment,
-  onEmail,
-  isEmailSending = false
+  onEmail
 }: RequestCardProps) {
   const formattedTime = request.created_at 
     ? formatDistanceToNow(new Date(request.created_at), { addSuffix: true })
@@ -120,16 +120,7 @@ export function RequestCard({
           <span>Comment</span>
         </Button>
         
-        <Button
-          variant="default"
-          size="sm"
-          onClick={onEmail}
-          disabled={isEmailSending}
-          className="flex gap-1 items-center bg-mywater-blue hover:bg-mywater-blue/90"
-        >
-          <Send className="h-4 w-4" />
-          <span>{isEmailSending ? "Sending..." : "Reply by Email"}</span>
-        </Button>
+        <EmailSender request={request} onEmailSent={onEmail} />
       </CardFooter>
     </Card>
   );

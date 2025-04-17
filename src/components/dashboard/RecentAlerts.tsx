@@ -1,10 +1,12 @@
-
 import { useQuery } from "@tanstack/react-query";
 import { Card } from "@/components/ui/card";
-import { Bell } from "lucide-react";
+import { Bell, MessageSquare, AlertTriangle } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { collection, query, getDocs, getDoc, doc, orderBy, limit } from "firebase/firestore";
+import { collection, query, getDocs, getDoc, doc, orderBy, limit, where, Timestamp } from "firebase/firestore";
 import { db } from "@/integrations/firebase/client";
+import { fetchRecentRequests } from "@/services/requestService";
+import { useState, useEffect } from "react";
+import { SupportRequest } from "@/types/supportRequests";
 
 interface Alert {
   id: string;
@@ -19,17 +21,33 @@ interface Alert {
 
 export const RecentAlerts = () => {
   const navigate = useNavigate();
-  const { data: alerts = [], isError, isLoading } = useQuery({
+  const [clientRequests, setClientRequests] = useState<SupportRequest[]>([]);
+  
+  useEffect(() => {
+    const loadClientRequests = async () => {
+      try {
+        const requests = await fetchRecentRequests(7);
+        const filteredRequests = requests.filter(r => 
+          r.status === 'new' || r.status === 'in_progress'
+        );
+        setClientRequests(filteredRequests);
+      } catch (error) {
+        console.error("Error loading recent client requests:", error);
+      }
+    };
+    
+    loadClientRequests();
+  }, []);
+  
+  const { data: systemAlerts = [], isError, isLoading } = useQuery({
     queryKey: ["recent-alerts"],
     queryFn: async () => {
-      // Calculate date 7 days ago
       const sevenDaysAgo = new Date();
       sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
 
       try {
-        console.log("Fetching recent alerts...");
+        console.log("Fetching recent system alerts...");
         
-        // Get alerts - Note: Removing the "where" clause that was causing the index error
         const alertsCollection = collection(db, "alerts");
         const alertsQuery = query(
           alertsCollection,
@@ -43,9 +61,6 @@ export const RecentAlerts = () => {
           ...doc.data()
         })) as Alert[];
         
-        console.log("Raw alerts data:", alertsData);
-        
-        // Get unit details for each alert
         const enrichedAlerts = await Promise.all(alertsData.map(async (alert) => {
           if (alert.unit_id) {
             try {
@@ -70,9 +85,6 @@ export const RecentAlerts = () => {
           };
         }));
         
-        console.log("Enriched alerts data:", enrichedAlerts);
-        
-        // Filter for alerts in the last 7 days and with warning/urgent status
         const recentAlerts = enrichedAlerts.filter(alert => {
           if (!alert.created_at) return false;
           
@@ -83,7 +95,6 @@ export const RecentAlerts = () => {
           return isRecent && isActive;
         });
         
-        // Remove duplicates based on message and unit_id combination
         const uniqueAlerts = recentAlerts.reduce((acc: Alert[], current) => {
           const exists = acc.some(
             alert => alert.message === current.message && alert.unit_id === current.unit_id
@@ -102,6 +113,8 @@ export const RecentAlerts = () => {
     },
   });
 
+  const hasAlerts = (systemAlerts && systemAlerts.length > 0) || (clientRequests && clientRequests.length > 0);
+
   if (isError) {
     return <div>Error loading recent alerts</div>;
   }
@@ -113,16 +126,23 @@ export const RecentAlerts = () => {
     >
       <div className="flex items-center justify-between mb-4">
         <h2 className="text-lg font-semibold text-white">Recent Alerts (Last 7 Days)</h2>
-        <Bell className={`h-5 w-5 ${alerts.length > 0 ? 'text-red-500' : 'text-gray-400'}`} />
+        <div className="flex items-center gap-2">
+          {systemAlerts && systemAlerts.length > 0 && (
+            <Bell className="h-5 w-5 text-red-500" />
+          )}
+          {clientRequests && clientRequests.length > 0 && (
+            <MessageSquare className="h-5 w-5 text-blue-500" />
+          )}
+        </div>
       </div>
       <div className="space-y-4">
         {isLoading ? (
           <div className="text-center py-4">
             <p className="text-gray-400">Loading alerts...</p>
           </div>
-        ) : alerts.length > 0 ? (
+        ) : hasAlerts ? (
           <>
-            {alerts.map((alert) => (
+            {systemAlerts && systemAlerts.map((alert) => (
               <div 
                 key={alert.id} 
                 className={`p-4 rounded-lg ${
@@ -130,11 +150,14 @@ export const RecentAlerts = () => {
                 }`}
               >
                 <div className="flex justify-between items-start">
-                  <div>
-                    <h3 className="font-semibold text-white">
-                      {alert.unit?.name || 'Unknown Unit'}
-                    </h3>
-                    <p className="text-sm text-gray-300 mt-1">{alert.message}</p>
+                  <div className="flex gap-2 items-start">
+                    <AlertTriangle className="h-4 w-4 text-yellow-400 mt-1 shrink-0" />
+                    <div>
+                      <h3 className="font-semibold text-white">
+                        {alert.unit?.name || 'Unknown Unit'}
+                      </h3>
+                      <p className="text-sm text-gray-300 mt-1">{alert.message}</p>
+                    </div>
                   </div>
                   <span className={`text-xs px-2 py-1 rounded-full ${
                     alert.status === 'urgent' ? 'bg-red-500/30 text-red-200' : 'bg-yellow-500/30 text-yellow-200'
@@ -147,6 +170,34 @@ export const RecentAlerts = () => {
                 </p>
               </div>
             ))}
+            
+            {clientRequests.slice(0, 3).map((request) => (
+              <div 
+                key={request.id} 
+                className="p-4 rounded-lg bg-blue-500/10"
+              >
+                <div className="flex justify-between items-start">
+                  <div className="flex gap-2 items-start">
+                    <MessageSquare className="h-4 w-4 text-blue-400 mt-1 shrink-0" />
+                    <div>
+                      <h3 className="font-semibold text-white">
+                        {request.subject}
+                      </h3>
+                      <p className="text-sm text-gray-300 mt-1">From: {request.user_name}</p>
+                    </div>
+                  </div>
+                  <span className={`text-xs px-2 py-1 rounded-full ${
+                    request.status === 'new' ? 'bg-orange-500/30 text-orange-200' : 'bg-blue-500/30 text-blue-200'
+                  }`}>
+                    {request.status.replace('_', ' ')}
+                  </span>
+                </div>
+                <p className="text-xs text-gray-400 mt-2">
+                  {request.created_at && new Date(request.created_at).toLocaleDateString()}
+                </p>
+              </div>
+            ))}
+            
             <div className="text-center pt-2">
               <p className="text-sm text-gray-400 hover:text-gray-300">
                 Click to view all alerts →
