@@ -164,6 +164,8 @@ const translations: Translations = {
     "dashboard.volume.today": "Total Volume Today",
     
     // Landing page
+    "welcome_to": "Welcome to",
+    "app_subtitle": "Drink cleaner water, save money and stay informed.",
     "private_user": "Private User",
     "business_client": "Business Client",
     "home_water_purification": "Home Water Purification",
@@ -177,7 +179,6 @@ const translations: Translations = {
     "advanced_analytics": "Advanced analytics and reporting tools",
     "technical_support": "Technical support and service management",
     "continue": "Continue",
-    "join_cta": "🚀 Join MYWATER now - make clean water smarter and greener!",
   },
   fr: {
     // Dashboard
@@ -318,6 +319,8 @@ const translations: Translations = {
     "dashboard.volume.today": "Volume total aujourd'hui",
     
     // Landing page
+    "welcome_to": "Bienvenue à",
+    "app_subtitle": "Buvez de l'eau plus propre, économisez de l'argent et restez informé.",
     "private_user": "Utilisateur Privé",
     "business_client": "Client Professionnel",
     "home_water_purification": "Purification d'Eau Domestique",
@@ -331,7 +334,6 @@ const translations: Translations = {
     "advanced_analytics": "Outils d'analyse et de rapports avancés",
     "technical_support": "Support technique et gestion des services",
     "continue": "Continuer",
-    "join_cta": "🚀 Rejoignez MYWATER maintenant - rendez l'eau propre plus intelligente et plus écologique !",
   }
 };
 

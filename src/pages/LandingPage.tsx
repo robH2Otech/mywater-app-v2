@@ -60,10 +60,10 @@ export function LandingPage() {
         {/* Hero Section */}
         <div className="text-center space-y-4">
           <h1 className="text-4xl md:text-5xl font-bold text-white">
-            Welcome to <span className="text-mywater-blue">MYWATER app</span>
+            {t("welcome_to")} <span className="text-mywater-blue">MYWATER app</span>
           </h1>
           <p className="text-lg text-gray-400 max-w-2xl mx-auto">
-            Drink cleaner water, save money and stay informed.
+            {t("app_subtitle")}
           </p>
         </div>
 
@@ -134,13 +134,6 @@ export function LandingPage() {
             </Card>
           </TabsContent>
         </Tabs>
-
-        {/* CTA Banner */}
-        <div className="bg-gradient-to-r from-cyan-600 to-blue-600 p-4 rounded-lg text-white text-center">
-          <p className="flex items-center justify-center gap-2 font-medium">
-            {t("join_cta")}
-          </p>
-        </div>
 
         <Button 
           onClick={handleContinue}
