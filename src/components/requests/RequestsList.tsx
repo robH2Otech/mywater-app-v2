@@ -76,7 +76,7 @@ export function RequestsList({
       onValueChange={onFilterChange}
       className="w-full"
     >
-      <TabsList className="grid grid-cols-2 md:grid-cols-4 mb-4">
+      <TabsList className="grid grid-cols-4 mb-4">
         <RequestsTabTrigger value="all" label="All Requests" />
         <RequestsTabTrigger value="new" label="New" />
         <RequestsTabTrigger value="in_progress" label="In Progress" />

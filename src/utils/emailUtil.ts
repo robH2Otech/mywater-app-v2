@@ -1,11 +1,11 @@
 
-// Re-export all email utility functions from the main email file
+// This file is kept for backward compatibility
+// Re-export all email utility functions from the new files
 export {
-  sendEmailDirect,
-  initEmailJS,
-  EMAILJS_CONFIG,
   sendEmailWithEmailJS,
+  EMAILJS_CONFIG,
   generateReferralEmailTemplate,
+  sendEmailDirect,
   processPendingEmails,
   sendReferralEmail,
   processPendingEmailsForUI

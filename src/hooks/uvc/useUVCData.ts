@@ -1,9 +1,9 @@
 
 import { useQuery } from "@tanstack/react-query";
-import { collection, getDocs, query, where, doc, getDoc } from "firebase/firestore";
+import { collection, getDocs, query, where } from "firebase/firestore";
 import { db } from "@/integrations/firebase/client";
 import { useToast } from "@/hooks/use-toast";
-import { getMeasurementsCollectionPath } from "@/hooks/measurements/useMeasurementCollection";
+import { processUnitUVCData } from "./uvcDataUtils";
 
 export interface UnitWithUVC {
   id: string;
@@ -16,12 +16,11 @@ export interface UnitWithUVC {
   total_volume?: number;
   location?: string;
   unit_type?: string;
-  latest_measurement?: any;
   [key: string]: any;
 }
 
 /**
- * Hook for fetching UVC data with proper synchronization from latest measurements
+ * Hook for fetching UVC data with proper processing of UVC hours
  */
 export function useUVCData() {
   const { toast } = useToast();
@@ -29,86 +28,35 @@ export function useUVCData() {
   return useQuery({
     queryKey: ["uvc-units"],
     queryFn: async () => {
-      console.log("Fetching and synchronizing UVC units data...");
+      console.log("Fetching UVC units data...");
       try {
-        // Get all units first
+        // Get all units first - not just limited to UVC unit_type
+        // Some units may have UVC but not be marked as UVC type
         const unitsCollection = collection(db, "units");
         const unitsSnapshot = await getDocs(unitsCollection);
         
-        // Process each unit with its latest measurements
-        const unitsWithMeasurements = await Promise.all(
-          unitsSnapshot.docs.map(async (unitDoc) => {
-            const unitData = unitDoc.data() as UnitWithUVC;
-            unitData.id = unitDoc.id;
-            
-            try {
-              // Get the latest measurement for this unit
-              const measurementsPath = getMeasurementsCollectionPath(unitDoc.id);
-              const measurementsCollection = collection(db, measurementsPath);
-              const measurementsQuery = query(
-                measurementsCollection,
-                where("timestamp", "!=", null)
-              );
-              
-              const measurementsSnapshot = await getDocs(measurementsQuery);
-              
-              if (!measurementsSnapshot.empty) {
-                // Sort measurements by timestamp to get the latest
-                const measurements = measurementsSnapshot.docs.map(doc => ({
-                  id: doc.id,
-                  ...doc.data()
-                }));
-                
-                // Sort by timestamp in descending order
-                measurements.sort((a, b) => {
-                  // Handle potential undefined timestamps safely
-                  const getTimestamp = (item: any) => {
-                    if (!item || !item.timestamp) return 0;
-                    
-                    // Handle Firebase timestamp objects
-                    if (typeof item.timestamp.toDate === 'function') {
-                      return item.timestamp.toDate().getTime();
-                    }
-                    
-                    // Handle string or number timestamps
-                    if (typeof item.timestamp === 'string' || typeof item.timestamp === 'number') {
-                      return new Date(item.timestamp).getTime();
-                    }
-                    
-                    return 0;
-                  };
-                  
-                  return getTimestamp(b) - getTimestamp(a);
-                });
-                
-                // Get the latest measurement
-                const latestMeasurement = measurements[0];
-                
-                // Store this in the unit data
-                unitData.latest_measurement = latestMeasurement;
-                
-                console.log(`Unit ${unitData.id} latest measurement:`, latestMeasurement);
-              } else {
-                console.log(`No measurements found for unit ${unitData.id}`);
-              }
-            } catch (measurementError) {
-              console.error(`Error fetching measurements for unit ${unitDoc.id}:`, measurementError);
-            }
-            
-            return unitData;
-          })
-        );
+        // Process each unit and accumulate UVC hours from measurements
+        const unitsPromises = unitsSnapshot.docs.map(async (unitDoc) => {
+          return processUnitUVCData(unitDoc);
+        });
         
-        // Filter only units that have UVC functionality
-        const uvcUnits = unitsWithMeasurements.filter(unit => 
+        const allUnitsData = await Promise.all(unitsPromises) as UnitWithUVC[];
+        
+        // Filter only units that have UVC after processing
+        // This includes units with UVC type OR units with UVC hours
+        const unitsData = allUnitsData.filter(unit => 
           unit.unit_type === 'uvc' || 
-          (unit.uvc_hours !== undefined && unit.uvc_hours > 0) ||
-          (unit.latest_measurement?.uvc_hours && unit.latest_measurement.uvc_hours > 0)
+          (unit.uvc_hours !== undefined && unit.uvc_hours > 0)
         );
         
-        console.log("UVC units synchronized with measurements:", uvcUnits.length);
+        console.log("UVC units data processed successfully:", unitsData.length);
         
-        return uvcUnits;
+        // Log detailed info for debugging each unit
+        unitsData.forEach(unit => {
+          console.log(`Unit ${unit.id}: ${unit.name}, UVC Hours: ${unit.uvc_hours}, Accumulated: ${unit.is_uvc_accumulated}, Status: ${unit.uvc_status}`);
+        });
+        
+        return unitsData;
       } catch (error) {
         console.error("Error fetching UVC units:", error);
         toast({
