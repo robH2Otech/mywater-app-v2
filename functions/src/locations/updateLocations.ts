@@ -100,7 +100,7 @@ async function storeLocationData(unitId: string, locationData: any): Promise<voi
     ...locationUpdate,
     unitId,
     createdAt: now,
-    // Add a field for TTL queries - expire after 24 hours
+    // TTL field for automatic deletion after 24 hours
     expireAt: admin.firestore.Timestamp.fromMillis(Date.now() + (24 * 60 * 60 * 1000))
   };
   
