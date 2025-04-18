@@ -1,6 +1,7 @@
 
 import * as admin from 'firebase-admin';
 import { updateAllLocations, updateUnitLocation, cleanupLocationHistory } from './locations/updateLocations';
+import { onOrderCreated } from './orders/orderWebhook';
 
 // Initialize Firebase Admin
 admin.initializeApp();
@@ -40,5 +41,6 @@ setupFirestoreTTL().catch(console.error);
 export {
   updateAllLocations,
   updateUnitLocation,
-  cleanupLocationHistory
+  cleanupLocationHistory,
+  onOrderCreated
 };

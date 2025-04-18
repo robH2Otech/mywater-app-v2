@@ -16,8 +16,17 @@ export interface PrivateUser {
   referral_reward_earned: boolean; // Whether 3 successful referrals have been achieved
   referral_reward_claimed: boolean; // Whether the free cartridge has been claimed
   user_rank: string;               // User's referral rank
+  order_history?: OrderHistoryItem[]; // User's order history
   created_at: Date;
   updated_at: Date;
+}
+
+export interface OrderHistoryItem {
+  order_id: string;
+  purchase_date: Date;
+  product: string;
+  amount: number;
+  currency: string;
 }
 
 export interface Referral {
@@ -50,4 +59,32 @@ export interface ReferralRank {
   next_rank_title: string;   // Title of the next rank
   next_rank_referrals: number; // Referrals needed for next rank
   color_class: string;       // CSS color class for styling
+}
+
+export interface Order {
+  order_id: string;
+  user_id?: string;
+  email: string;
+  name: string;
+  products: OrderProduct[];
+  total: number;
+  currency: string;
+  shipping_address: ShippingAddress;
+  discount_code?: string;
+  status: string;
+  created_at: Date;
+  linked_to_user: boolean;
+}
+
+export interface OrderProduct {
+  name: string;
+  price: number;
+  quantity: number;
+}
+
+export interface ShippingAddress {
+  address: string;
+  city: string;
+  country: string;
+  postal_code: string;
 }
