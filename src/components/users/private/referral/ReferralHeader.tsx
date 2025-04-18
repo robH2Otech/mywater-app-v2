@@ -45,7 +45,7 @@ export function ReferralHeader({
         <div className="grid grid-cols-2 gap-4">
           <div className="p-3 bg-blue-950/50 rounded-md text-center">
             <p className="text-xs text-blue-300">For Your Friend</p>
-            <p className="text-lg font-bold text-white mt-1">20% OFF</p>
+            <p className="text-lg font-bold text-white mt-1">10% OFF</p>
             <p className="text-xs text-blue-300 mt-1">First Purchase</p>
           </div>
           <div className="p-3 bg-blue-950/50 rounded-md text-center">

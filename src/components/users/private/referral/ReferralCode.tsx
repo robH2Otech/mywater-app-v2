@@ -4,10 +4,9 @@ import { useToast } from "@/hooks/use-toast";
 import { Card, CardContent } from "@/components/ui/card";
 import { motion } from "framer-motion";
 import { ReferralCodeDisplay } from "./code/ReferralCodeDisplay";
-import { ShareButtons } from "./code/ShareButtons";
-import { HowItWorks } from "./components/HowItWorks";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { ChevronDown, ChevronUp } from "lucide-react";
+import { HowItWorks } from "./components/HowItWorks";
 
 interface ReferralCodeProps {
   referralCode: string;
@@ -39,40 +38,6 @@ export function ReferralCode({ referralCode }: ReferralCodeProps) {
     });
   };
   
-  const handleShare = async () => {
-    if (!referralCode) {
-      toast({
-        title: "No referral code found",
-        description: "Please refresh the page or contact support",
-        variant: "destructive"
-      });
-      return;
-    }
-    
-    const shareData = {
-      title: 'Get 20% Off MYWATER',
-      text: `Hey! Loving my MYWATER system. Get 20% off your first purchase using my referral link or by entering my code ${referralCode} in the discount field at checkout. Enjoy clean water!`,
-      url: `https://mywatertechnologies.com/shop?code=${referralCode}`
-    };
-
-    if (navigator.share) {
-      try {
-        await navigator.share(shareData);
-        toast({
-          title: "Shared!",
-          description: "Thanks for sharing MYWATER with your friends",
-        });
-      } catch (err) {
-        if (err instanceof Error && err.name !== "AbortError") {
-          console.error("Error sharing:", err);
-          copyReferralLink(); // Fallback to copying
-        }
-      }
-    } else {
-      copyReferralLink(); // Fallback for browsers without share API
-    }
-  };
-  
   return (
     <Card className="overflow-hidden border-2 border-blue-500/30 bg-gradient-to-br from-blue-900/20 to-blue-700/5">
       <CardContent className="p-6 space-y-6">
@@ -82,12 +47,15 @@ export function ReferralCode({ referralCode }: ReferralCodeProps) {
           className="space-y-4"
         >
           <ReferralCodeDisplay referralCode={referralCode} />
-          <ShareButtons 
-            referralCode={referralCode}
-            onShare={handleShare}
-            onCopy={copyReferralLink}
-            isCopied={isCopied}
-          />
+          
+          <div className="flex space-x-4">
+            <button 
+              onClick={copyReferralLink} 
+              className="flex-grow bg-black/50 px-4 py-2 rounded text-sm text-white hover:bg-black/70 transition-colors"
+            >
+              Copy Link
+            </button>
+          </div>
           
           <Collapsible
             open={isGuideOpen}
