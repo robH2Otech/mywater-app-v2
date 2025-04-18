@@ -1,14 +1,12 @@
 
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Send, Share2 } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
+import { Share2 } from "lucide-react";
+import { motion } from "framer-motion";
 import { Card } from "@/components/ui/card";
-import { useReferralEmailForm } from "@/hooks/referral/useReferralEmailForm";
-import { useReferralTracking } from "@/hooks/referral/useReferralTracking";
-import { EmailForm } from "./components/EmailForm";
-import { toast } from "@/hooks/use-toast";
+import { createReferralShareContent } from "@/utils/emailUtil";
 import { ShareOptions } from "./components/ShareOptions";
+import { toast } from "@/hooks/use-toast";
 
 interface ReferralFormProps {
   userName: string;
@@ -16,100 +14,17 @@ interface ReferralFormProps {
 }
 
 export function ReferralForm({ userName, referralCode }: ReferralFormProps) {
-  const [isEmailFormVisible, setIsEmailFormVisible] = useState(false);
   const [isShareOptionsVisible, setIsShareOptionsVisible] = useState(false);
-
-  const { 
-    friendName,
-    setFriendName,
-    friendEmail, 
-    setFriendEmail,
-    emailMessage, 
-    setEmailMessage,
-    resetEmailTemplate,
-    handleFriendNameChange,
-  } = useReferralEmailForm(userName, referralCode);
-  
-  const {
-    isSending,
-    isProcessing,
-    sentCount,
-    showSuccess,
-    errorMessage,
-    handleSendEmail,
-    handleRetryDelivery
-  } = useReferralTracking(
-    friendName, 
-    friendEmail, 
-    userName, 
-    referralCode, 
-    emailMessage,
-    setFriendName,
-    setFriendEmail,
-    setEmailMessage
-  );
-
-  const toggleEmailForm = () => {
-    setIsEmailFormVisible(!isEmailFormVisible);
-    if (isShareOptionsVisible) setIsShareOptionsVisible(false);
-  };
 
   const toggleShareOptions = () => {
     setIsShareOptionsVisible(!isShareOptionsVisible);
-    if (isEmailFormVisible) setIsEmailFormVisible(false);
   };
 
-  // Generate referral text and link for sharing
-  const getReferralContent = () => {
-    const referralLink = `https://mywatertechnologies.com/shop?code=${referralCode}`;
-    const shareText = `I'm loving my MYWATER water purification system and thought you might like it too! Get 20% off with my referral code: ${referralCode}`;
-    
-    return {
-      title: 'MYWATER - Get 20% Off!',
-      text: shareText,
-      url: referralLink
-    };
-  };
-  
-  // Handle sharing with Web Share API or fallback to clipboard
   const handleShareLink = async () => {
-    const { title, text, url } = getReferralContent();
-    
-    // Show sharing options on mobile
-    if (window.innerWidth <= 768) {
-      toggleShareOptions();
-      return;
-    }
-    
-    // Try to use the Web Share API if available
-    if (navigator.share) {
-      try {
-        await navigator.share({ title, text, url });
-        console.log('Successfully shared');
-        toast({
-          title: "Link shared successfully!",
-          description: "Your referral link has been shared.",
-        });
-      } catch (error) {
-        console.log('Error sharing:', error);
-        // Fallback to copying to clipboard if sharing failed
-        copyToClipboard(`${text}\n\n${url}`);
-      }
-    } else {
-      // Fallback for browsers that don't support the Web Share API
-      copyToClipboard(`${text}\n\n${url}`);
-    }
+    const shareData = createReferralShareContent(userName, referralCode);
+    toggleShareOptions();
   };
-  
-  // Helper function to copy content to clipboard
-  const copyToClipboard = (content: string) => {
-    navigator.clipboard.writeText(content);
-    toast({
-      title: "Link copied to clipboard!",
-      description: "Your referral link has been copied to clipboard.",
-    });
-  };
-  
+
   return (
     <motion.div 
       initial={{ opacity: 0 }}
@@ -123,76 +38,32 @@ export function ReferralForm({ userName, referralCode }: ReferralFormProps) {
         </h3>
       </div>
       
-      {/* Primary Sharing Options */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-        <Button
-          onClick={handleShareLink}
-          className="w-full h-12 bg-gradient-to-r from-indigo-500 to-blue-600 hover:from-indigo-600 hover:to-blue-700 transition-all"
+      {/* Share Button */}
+      <Button
+        onClick={handleShareLink}
+        className="w-full h-12 bg-gradient-to-r from-indigo-500 to-blue-600 hover:from-indigo-600 hover:to-blue-700 transition-all"
+      >
+        <Share2 className="h-5 w-5 mr-2" />
+        Share Your Invite
+      </Button>
+
+      {isShareOptionsVisible && (
+        <motion.div
+          initial={{ height: 0, opacity: 0 }}
+          animate={{ height: 'auto', opacity: 1 }}
+          exit={{ height: 0, opacity: 0 }}
+          transition={{ duration: 0.3 }}
+          className="overflow-hidden"
         >
-          <Share2 className="h-5 w-5 mr-2" />
-          Share Your Link
-        </Button>
-        
-        <Button
-          onClick={toggleEmailForm}
-          className={`w-full h-12 transition-all ${
-            isEmailFormVisible 
-              ? "bg-blue-700 hover:bg-blue-800" 
-              : "bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600"
-          }`}
-        >
-          <Send className="h-5 w-5 mr-2" />
-          {isEmailFormVisible ? 'Hide Email Form' : 'Invite via Email'}
-        </Button>
-      </div>
-      
-      <AnimatePresence>
-        {isShareOptionsVisible && (
-          <motion.div
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: 'auto', opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: 0.3 }}
-            className="overflow-hidden"
-          >
-            <Card className="border-blue-500/20 bg-blue-900/10 p-4 rounded-md mt-3">
-              <ShareOptions 
-                referralContent={getReferralContent()}
-                userName={userName}
-                referralCode={referralCode}
-              />
-            </Card>
-          </motion.div>
-        )}
-        
-        {isEmailFormVisible && (
-          <motion.div
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: 'auto', opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: 0.3 }}
-            className="overflow-hidden"
-          >
-            <Card className="border-blue-500/20 bg-blue-900/10 p-4 rounded-md mt-3">
-              <EmailForm
-                friendName={friendName}
-                friendEmail={friendEmail}
-                emailMessage={emailMessage}
-                isSending={isSending}
-                isProcessing={isProcessing}
-                showSuccess={showSuccess}
-                errorMessage={errorMessage}
-                onFriendNameChange={handleFriendNameChange}
-                onFriendEmailChange={setFriendEmail}
-                onEmailMessageChange={(e) => setEmailMessage(e.target.value)}
-                onResetTemplate={resetEmailTemplate}
-                onSendEmail={handleSendEmail}
-                onRetryDelivery={handleRetryDelivery}
-              />
-            </Card>
-          </motion.div>
-        )}
-      </AnimatePresence>
+          <Card className="border-blue-500/20 bg-blue-900/10 p-4 rounded-md mt-3">
+            <ShareOptions 
+              referralContent={createReferralShareContent(userName, referralCode)}
+              userName={userName}
+              referralCode={referralCode}
+            />
+          </Card>
+        </motion.div>
+      )}
     </motion.div>
   );
 }

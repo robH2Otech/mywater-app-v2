@@ -17,7 +17,7 @@ export function ReferralTitle() {
           You Earn: Free €150 Cartridge!
         </p>
         <p className="text-blue-300">
-          Your Friends Get: 20% Off Their Purchase
+          Your Friends Get: 10% Off Their Purchase
         </p>
       </div>
     </motion.div>
