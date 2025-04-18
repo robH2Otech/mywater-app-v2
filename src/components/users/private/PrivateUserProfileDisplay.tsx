@@ -96,7 +96,7 @@ export function PrivateUserProfileDisplay({
               </div>
               
               <div className="flex items-center justify-center">
-                <CartridgeDonutChart percentUsed={cartridgeUsagePercent} />
+                <CartridgeDonutChart percentage={cartridgeUsagePercent} />
               </div>
             </div>
           </Card>
