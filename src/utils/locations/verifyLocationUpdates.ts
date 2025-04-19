@@ -4,6 +4,8 @@ import { db } from '@/integrations/firebase/client';
 
 export const verifyLocationUpdates = async (unitId: string): Promise<boolean> => {
   try {
+    console.log(`Verifying location updates for unit: ${unitId}`);
+    
     // Get the last 2 location history records for this unit
     const historyRef = collection(db, 'locationHistory');
     const historyQuery = query(
@@ -21,17 +23,22 @@ export const verifyLocationUpdates = async (unitId: string): Promise<boolean> =>
     }
     
     // Log the timestamps to verify scheduled updates
-    snapshot.docs.forEach((doc, index) => {
+    const updates = snapshot.docs.map((doc, index) => {
       const data = doc.data();
-      console.log(`Location update ${index + 1}:`, {
-        timestamp: data.createdAt?.toDate(),
+      const timestamp = data.createdAt?.toDate();
+      return {
+        index: index + 1,
+        timestamp: timestamp ? timestamp.toISOString() : 'Unknown',
         coords: {
           lat: data.latitude,
           lng: data.longitude
-        }
-      });
+        },
+        radius: data.radius || 0,
+        country: data.lastCountry || 'Unknown'
+      };
     });
     
+    console.log(`Found ${updates.length} location updates for unit ${unitId}:`, updates);
     return true;
   } catch (error) {
     console.error('Error verifying location updates:', error);

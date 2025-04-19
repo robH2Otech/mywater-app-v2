@@ -1,6 +1,6 @@
 
 import * as admin from 'firebase-admin';
-import { updateAllLocations, updateUnitLocation, cleanupLocationHistory } from './locations/updateLocations';
+import { updateAllLocations, manualLocationUpdate, cleanupLocationHistory } from './locations/updateLocations';
 import { onOrderCreated } from './orders/orderWebhook';
 
 // Initialize Firebase Admin
@@ -40,7 +40,7 @@ setupFirestoreTTL().catch(console.error);
 // Export the Cloud Functions
 export {
   updateAllLocations,
-  updateUnitLocation,
+  manualLocationUpdate,
   cleanupLocationHistory,
   onOrderCreated
 };
