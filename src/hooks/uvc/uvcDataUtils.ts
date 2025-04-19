@@ -1,10 +1,7 @@
 
-import { collection, getDocs, query, where, orderBy, limit, doc, getDoc } from "firebase/firestore";
-import { db } from "@/integrations/firebase/client";
 import { determineUVCStatus } from "@/utils/uvcStatusUtils";
 import { determineUnitStatus } from "@/utils/unitStatusUtils";
 import { UnitWithUVC } from "./useUVCData";
-import { getMeasurementsCollectionPath } from "@/hooks/measurements/useMeasurementCollection";
 import { fetchLatestMeasurement } from "./measurementUtils";
 import { calculateTotalUVCHours } from "./uvcHoursUtils";
 import { processUnitBaseData } from "./unitDataUtils";
@@ -34,35 +31,19 @@ export async function processUnitUVCData(
   // If we don't have preloaded measurement data, get it now
   const measurementData = preloadedMeasurementData || await fetchLatestMeasurement(unitId);
   
-  // If the unit already has accumulated UVC hours, just use those
-  if (unitData.is_uvc_accumulated) {
-    console.log(`Unit ${unitId} - Using accumulated hours (${baseUvcHours}), not fetching measurements`);
-    
-    // Calculate the correct filter status based on volume
-    const filterStatus = determineUnitStatus(totalVolume);
-    
-    // Calculate the UVC status based on accumulated hours
-    const uvcStatus = determineUVCStatus(baseUvcHours);
-    
-    return {
-      id: unitId,
-      ...unitData,
-      status: filterStatus,
-      uvc_status: uvcStatus,
-      uvc_hours: baseUvcHours,
-      is_uvc_accumulated: true,
-      total_volume: totalVolume,
-      latest_measurement_timestamp: measurementData.timestamp
-    };
-  }
-  
   try {
-    // Calculate total UVC hours
-    const totalUvcHours = calculateTotalUVCHours(
-      baseUvcHours, 
-      measurementData, 
-      unitData.is_uvc_accumulated
-    );
+    // IMPORTANT CHANGE: We should always prioritize measurement data for the latest UVC hours,
+    // regardless of the is_uvc_accumulated flag
+    let totalUvcHours = baseUvcHours;
+    
+    // If we have measurement data, we should use that as the latest value instead of the base value
+    if (measurementData.hasMeasurementData && measurementData.latestMeasurementUvcHours > 0) {
+      // Use the measurement value directly as it's more current
+      totalUvcHours = measurementData.latestMeasurementUvcHours;
+      console.log(`Unit ${unitId} - Using direct measurement UVC hours: ${totalUvcHours}`);
+    } else {
+      console.log(`Unit ${unitId} - Using base UVC hours: ${totalUvcHours}`);
+    }
     
     console.log(`Unit ${unitId} - Final calculated UVC hours: ${totalUvcHours}`);
     

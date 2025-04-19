@@ -5,6 +5,7 @@ import { db } from "@/integrations/firebase/client";
 import { useToast } from "@/hooks/use-toast";
 import { processUnitUVCData } from "./uvcDataUtils";
 import { fetchLatestMeasurement } from "./measurementUtils";
+import { getMeasurementsCollectionPath } from "@/hooks/measurements/useMeasurementCollection";
 
 export interface UnitWithUVC {
   id: string;
@@ -36,21 +37,26 @@ export function useUVCData() {
         const unitsCollection = collection(db, "units");
         const unitsSnapshot = await getDocs(unitsCollection);
         
-        // Process each unit and accumulate UVC hours from measurements
+        // Process each unit and directly fetch latest measurements
         const unitsPromises = unitsSnapshot.docs.map(async (unitDoc) => {
           const unitData = unitDoc.data();
           const unitId = unitDoc.id;
           
-          // Always get the latest measurement first to ensure fresh data
+          // Get the correct measurements collection path for this unit
+          const measurementsPath = getMeasurementsCollectionPath(unitId);
+          console.log(`Getting latest measurements from ${measurementsPath} for unit ${unitId}`);
+          
+          // Fetch the latest measurement directly from the measurements collection
           const measurementData = await fetchLatestMeasurement(unitId);
           
-          // Add the measurement data to the unit for processing
+          // Process the unit with its measurement data
           return processUnitUVCData(unitDoc, measurementData);
         });
         
+        // Wait for all units to be processed
         const allUnitsData = await Promise.all(unitsPromises) as UnitWithUVC[];
         
-        // Filter only units that have UVC after processing
+        // Filter only units that have UVC related data
         const unitsData = allUnitsData.filter(unit => 
           unit.unit_type === 'uvc' || 
           (unit.uvc_hours !== undefined && unit.uvc_hours > 0)
@@ -60,7 +66,7 @@ export function useUVCData() {
         
         // Log detailed info for debugging each unit
         unitsData.forEach(unit => {
-          console.log(`Unit ${unit.id}: ${unit.name}, UVC Hours: ${unit.uvc_hours}, Accumulated: ${unit.is_uvc_accumulated}, Status: ${unit.uvc_status}`);
+          console.log(`Unit ${unit.id}: ${unit.name}, UVC Hours: ${unit.uvc_hours}, Accumulated: ${unit.is_uvc_accumulated}, Status: ${unit.uvc_status}, Latest Timestamp: ${unit.latest_measurement_timestamp}`);
         });
         
         return unitsData;
@@ -75,7 +81,7 @@ export function useUVCData() {
       }
     },
     // Set a shorter staleTime to ensure data is refreshed more frequently
-    staleTime: 10 * 1000, // 10 seconds stale time (reduced from 30)
+    staleTime: 5 * 1000, // 5 seconds stale time (reduced for more frequent updates)
     refetchOnMount: true,
     refetchOnWindowFocus: true,
   });

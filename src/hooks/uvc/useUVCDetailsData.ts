@@ -39,21 +39,22 @@ export function useUVCDetailsData(unitId: string | undefined, isEnabled: boolean
         baseUvcHours = 0;
       }
       
-      // If this unit doesn't already use accumulated hours, get the latest measurement data
+      // Get the latest measurement data
       let totalUvcHours = baseUvcHours;
       let latestMeasurementTimestamp = null;
       
-      if (!latestUnitData.is_uvc_accumulated) {
-        const measurementData = await fetchLatestMeasurement(unitId);
-        
-        if (measurementData.hasMeasurementData) {
-          // Add measurement hours to the base hours
-          totalUvcHours += measurementData.latestMeasurementUvcHours;
-          latestMeasurementTimestamp = measurementData.timestamp;
-          console.log(`UVCDetailsData - Unit ${unitId}: Base ${baseUvcHours} + Measurement ${measurementData.latestMeasurementUvcHours} = Total ${totalUvcHours}`);
+      // Always get latest measurement data
+      const measurementData = await fetchLatestMeasurement(unitId);
+      
+      if (measurementData.hasMeasurementData) {
+        // Use measurement hours directly as they are the most current
+        if (measurementData.latestMeasurementUvcHours > 0) {
+          totalUvcHours = measurementData.latestMeasurementUvcHours;
         }
+        latestMeasurementTimestamp = measurementData.timestamp;
+        console.log(`UVCDetailsData - Using measurement UVC hours: ${totalUvcHours} for unit ${unitId}`);
       } else {
-        console.log(`UVCDetailsData - Unit ${unitId}: Using accumulated hours (${baseUvcHours}), not adding measurement hours`);
+        console.log(`UVCDetailsData - No measurement data found for unit ${unitId}, using base hours: ${totalUvcHours}`);
       }
       
       // Extract the installation date if available

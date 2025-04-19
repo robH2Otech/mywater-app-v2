@@ -1,34 +1,28 @@
 
-import { normalizeUVCHours } from "./uvcHoursUtils";
-import { determineUnitStatus } from "@/utils/unitStatusUtils";
-
 /**
- * Processes the basic data from a unit document
+ * Process the basic unit data from a Firestore document
  */
-export function processUnitBaseData(unitDoc: any): {
-  id: string;
-  unitData: any;
-  baseUvcHours: number;
-  totalVolume: number;
-} {
+export function processUnitBaseData(unitDoc: any) {
   const unitData = unitDoc.data();
   const unitId = unitDoc.id;
   
-  console.log(`Processing unit ${unitId} (${unitData.name})`);
+  // Parse UVC hours from unit document
+  let baseUvcHours = unitData.uvc_hours;
+  if (typeof baseUvcHours === 'string') {
+    baseUvcHours = parseFloat(baseUvcHours);
+  } else if (baseUvcHours === undefined || baseUvcHours === null) {
+    baseUvcHours = 0;
+  }
   
-  // Get base UVC hours from unit document
-  const baseUvcHours = normalizeUVCHours(unitData.uvc_hours);
-  
-  console.log(`Unit ${unitId} - Base UVC hours from database: ${baseUvcHours}`);
-  console.log(`Unit ${unitId} - is_uvc_accumulated flag: ${unitData.is_uvc_accumulated}`);
-  
-  // Ensure total_volume is a number
+  // Parse total volume to ensure it's a number
   let totalVolume = unitData.total_volume;
   if (typeof totalVolume === 'string') {
     totalVolume = parseFloat(totalVolume);
   } else if (totalVolume === undefined || totalVolume === null) {
     totalVolume = 0;
   }
+  
+  console.log(`Unit ${unitId} base data - Name: ${unitData.name}, UVC Hours: ${baseUvcHours}, Type: ${unitData.unit_type}`);
   
   return {
     id: unitId,

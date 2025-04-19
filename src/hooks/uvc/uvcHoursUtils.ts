@@ -9,18 +9,16 @@ export function calculateTotalUVCHours(
   measurementData: { latestMeasurementUvcHours: number; hasMeasurementData: boolean },
   isUvcAccumulated?: boolean
 ): number {
-  let totalUvcHours = baseUvcHours;
-  
-  // If we have measurement data, add it to the base UVC hours, but only if the
-  // unit is not already using accumulated values
-  if (measurementData.hasMeasurementData && !isUvcAccumulated) {
-    totalUvcHours += measurementData.latestMeasurementUvcHours;
-    console.log(`Adding measurement hours to base: ${baseUvcHours} + ${measurementData.latestMeasurementUvcHours} = ${totalUvcHours}`);
-  } else if (isUvcAccumulated) {
-    console.log(`Using accumulated hours (${baseUvcHours}), not adding measurement hours`);
+  // For UVC units, we should prioritize measurement data as it's more current
+  if (measurementData.hasMeasurementData && measurementData.latestMeasurementUvcHours > 0) {
+    // Use the measurement value directly
+    console.log(`Using measurement hours directly: ${measurementData.latestMeasurementUvcHours}`);
+    return measurementData.latestMeasurementUvcHours;
   }
   
-  return totalUvcHours;
+  // Fallback to base hours if no measurement data
+  console.log(`Using base UVC hours: ${baseUvcHours}`);
+  return baseUvcHours;
 }
 
 /**

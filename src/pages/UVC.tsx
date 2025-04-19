@@ -23,15 +23,15 @@ export const UVC = () => {
   const handleRefresh = useCallback(async () => {
     setIsRefreshing(true);
     try {
-      // First sync all units to ensure measurements are stored in unit documents
-      if (units.length > 0) {
-        await syncAllUnits(units);
-      }
-      
-      // Then invalidate all relevant queries to ensure fresh data
+      // Invalidate queries to ensure fresh data
       await queryClient.invalidateQueries({ queryKey: ["uvc-units"] });
       await queryClient.invalidateQueries({ queryKey: ["units"] });
       await queryClient.invalidateQueries({ queryKey: ["measurements"] });
+      
+      // First sync all units to update unit records with latest measurement data
+      if (units.length > 0) {
+        await syncAllUnits(units);
+      }
       
       // Explicitly refetch UVC data
       await refetch();
@@ -52,12 +52,17 @@ export const UVC = () => {
     }
   }, [queryClient, refetch, toast, syncAllUnits, units]);
 
-  // Auto-sync on initial load
+  // Auto-sync when component mounts
   useEffect(() => {
-    if (units.length > 0 && !isRefreshing && !isSyncing) {
-      handleRefresh();
-    }
-  }, [units.length]); // Only run when units are first loaded
+    const initialSync = async () => {
+      if (!isLoading && units.length > 0 && !isRefreshing && !isSyncing) {
+        console.log("Performing initial UVC data sync...");
+        await handleRefresh();
+      }
+    };
+    
+    initialSync();
+  }, [isLoading, units.length]); // Run when loading completes and units are available
 
   if (error) {
     console.error("Error in UVC component:", error);

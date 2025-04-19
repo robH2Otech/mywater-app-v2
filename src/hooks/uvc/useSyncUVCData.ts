@@ -35,35 +35,24 @@ export function useSyncUVCData() {
       // Get the latest measurement data
       const measurementData = await fetchLatestMeasurement(unitId);
       
-      if (!measurementData.hasMeasurementData) {
-        console.log(`No measurement data found for unit ${unitId}`);
+      if (!measurementData.hasMeasurementData || measurementData.latestMeasurementUvcHours <= 0) {
+        console.log(`No valid measurement data found for unit ${unitId}`);
         return false;
       }
       
-      // Get base UVC hours from unit document
-      let baseUvcHours = unitData.uvc_hours;
-      if (typeof baseUvcHours === 'string') {
-        baseUvcHours = parseFloat(baseUvcHours);
-      } else if (baseUvcHours === undefined || baseUvcHours === null) {
-        baseUvcHours = 0;
-      }
-      
-      // Get measurement UVC hours
+      // Always update with measurement data directly as it's the most current
       const measurementUvcHours = measurementData.latestMeasurementUvcHours;
       
-      // Calculate the total UVC hours (simple addition if not accumulated)
-      const totalUvcHours = baseUvcHours + measurementUvcHours;
+      console.log(`Unit ${unitId}: Using measurement UVC hours=${measurementUvcHours} as the total`);
       
-      console.log(`Unit ${unitId}: Base hours=${baseUvcHours}, Measurement hours=${measurementUvcHours}, Total=${totalUvcHours}`);
-      
-      // Update the unit document with accumulated hours
+      // Update the unit document with latest hours and set flag
       await updateDoc(unitDocRef, {
-        uvc_hours: totalUvcHours,
+        uvc_hours: measurementUvcHours,
         is_uvc_accumulated: true,
         last_sync_timestamp: new Date().toISOString()
       });
       
-      console.log(`Successfully synchronized unit ${unitId} UVC data: ${totalUvcHours} hours`);
+      console.log(`Successfully synchronized unit ${unitId} UVC data: ${measurementUvcHours} hours`);
       return true;
     } catch (error) {
       console.error(`Error syncing UVC data for unit ${unitId}:`, error);
@@ -83,12 +72,15 @@ export function useSyncUVCData() {
     try {
       console.log(`Syncing ${units.length} UVC units...`);
       
-      // Only sync units that are not already using accumulated hours
-      const unitsToSync = units.filter(unit => !unit.is_uvc_accumulated);
+      // Sync all units that have UVC functionality
+      const unitsToSync = units.filter(unit => 
+        unit.unit_type === 'uvc' || unit.uvc_hours !== undefined
+      );
+      
       console.log(`Found ${unitsToSync.length} units that need syncing`);
       
       if (unitsToSync.length === 0) {
-        console.log("All units are already using accumulated hours");
+        console.log("No units to sync");
         setLastSyncTime(new Date());
         setIsSyncing(false);
         return;
