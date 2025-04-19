@@ -1,3 +1,4 @@
+
 import { collection, query, where, orderBy, limit, getDocs } from "firebase/firestore";
 import { db } from "@/integrations/firebase/client";
 import { getMeasurementsCollectionPath } from "@/hooks/measurements/useMeasurementCollection";
@@ -50,10 +51,23 @@ export async function fetchLatestMeasurement(unitId: string): Promise<{
           : latestMeasurement.volume;
       }
       
+      // Get the timestamp
+      let timestamp = null;
+      if (latestMeasurement.timestamp) {
+        // Handle both Firebase timestamp objects and string timestamps
+        if (typeof latestMeasurement.timestamp === 'object' && latestMeasurement.timestamp.toDate) {
+          timestamp = latestMeasurement.timestamp.toDate().toISOString();
+        } else if (latestMeasurement.timestamp instanceof Date) {
+          timestamp = latestMeasurement.timestamp.toISOString();
+        } else {
+          timestamp = latestMeasurement.timestamp;
+        }
+      }
+      
       return {
         latestMeasurementUvcHours: uvcHours,
         hasMeasurementData: true,
-        timestamp: latestMeasurement.timestamp,
+        timestamp: timestamp,
         volume
       };
     }
@@ -69,35 +83,5 @@ export async function fetchLatestMeasurement(unitId: string): Promise<{
       latestMeasurementUvcHours: 0,
       hasMeasurementData: false
     };
-  }
-}
-
-/**
- * Fetches the latest cumulative UVC hours for a unit
- * This includes both the base value and any additional hours from measurements
- */
-export async function fetchCumulativeUVCHours(
-  unitId: string,
-  baseHours: number = 0,
-  isAccumulated: boolean = false
-): Promise<number> {
-  try {
-    // If already using accumulated hours, just return the base hours
-    if (isAccumulated) {
-      return baseHours;
-    }
-    
-    // Otherwise, fetch and add the latest measurement hours
-    const { latestMeasurementUvcHours, hasMeasurementData } = await fetchLatestMeasurement(unitId);
-    
-    if (hasMeasurementData) {
-      return baseHours + latestMeasurementUvcHours;
-    }
-    
-    // If no measurements, return the base hours
-    return baseHours;
-  } catch (error) {
-    console.error(`Error calculating cumulative UVC hours for unit ${unitId}:`, error);
-    return baseHours;
   }
 }

@@ -33,8 +33,6 @@ export function UVCCard({
   onEditClick,
   unit_type
 }: UVCCardProps) {
-  const [isHovered, setIsHovered] = useState(false);
-  
   // Calculate the percentage of UVC life used
   const percentage = calculateUVCLifePercentage(uvc_hours);
   
@@ -57,8 +55,6 @@ export function UVCCard({
     <Card 
       className="p-6 bg-spotify-darker hover:bg-spotify-accent/40 transition-colors cursor-pointer relative group"
       onClick={onClick}
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
     >
       {onEditClick && (
         <Button
@@ -97,11 +93,15 @@ export function UVCCard({
             <span className="text-gray-400">UVC Hours</span>
             <span className="text-white font-semibold">{formattedHours}</span>
           </div>
-          <Progress className="h-2.5 mt-1" value={percentage} indicatorClassName={
-            percentage < 67 ? "bg-mywater-blue" :
-            percentage < 93 ? "bg-yellow-500" :
-            "bg-red-500"
-          } />
+          <Progress 
+            className="h-2.5 mt-1" 
+            value={percentage} 
+            indicatorClassName={
+              percentage < 67 ? "bg-mywater-blue" :
+              percentage < 93 ? "bg-yellow-500" :
+              "bg-red-500"
+            } 
+          />
         </div>
         
         <div className="flex justify-between text-sm">

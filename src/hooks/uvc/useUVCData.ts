@@ -1,9 +1,10 @@
 
 import { useQuery } from "@tanstack/react-query";
-import { collection, getDocs, query, where } from "firebase/firestore";
+import { collection, getDocs, query, where, doc, getDoc } from "firebase/firestore";
 import { db } from "@/integrations/firebase/client";
 import { useToast } from "@/hooks/use-toast";
 import { processUnitUVCData } from "./uvcDataUtils";
+import { fetchLatestMeasurement } from "./measurementUtils";
 
 export interface UnitWithUVC {
   id: string;
@@ -16,6 +17,7 @@ export interface UnitWithUVC {
   total_volume?: number;
   location?: string;
   unit_type?: string;
+  latest_measurement_timestamp?: string;
   [key: string]: any;
 }
 
@@ -30,20 +32,25 @@ export function useUVCData() {
     queryFn: async () => {
       console.log("Fetching UVC units data with latest measurements...");
       try {
-        // Get all units first - not just limited to UVC unit_type
-        // Some units may have UVC but not be marked as UVC type
+        // Get all units first
         const unitsCollection = collection(db, "units");
         const unitsSnapshot = await getDocs(unitsCollection);
         
         // Process each unit and accumulate UVC hours from measurements
         const unitsPromises = unitsSnapshot.docs.map(async (unitDoc) => {
-          return processUnitUVCData(unitDoc);
+          const unitData = unitDoc.data();
+          const unitId = unitDoc.id;
+          
+          // Always get the latest measurement first to ensure fresh data
+          const measurementData = await fetchLatestMeasurement(unitId);
+          
+          // Add the measurement data to the unit for processing
+          return processUnitUVCData(unitDoc, measurementData);
         });
         
         const allUnitsData = await Promise.all(unitsPromises) as UnitWithUVC[];
         
         // Filter only units that have UVC after processing
-        // This includes units with UVC type OR units with UVC hours
         const unitsData = allUnitsData.filter(unit => 
           unit.unit_type === 'uvc' || 
           (unit.uvc_hours !== undefined && unit.uvc_hours > 0)
