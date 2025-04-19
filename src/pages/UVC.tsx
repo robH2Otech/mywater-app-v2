@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { PageHeader } from "@/components/shared/PageHeader";
 import { LoadingSkeleton } from "@/components/shared/LoadingSkeleton";
 import { UVCList } from "@/components/uvc/UVCList";
@@ -13,21 +13,25 @@ import { useToast } from "@/hooks/use-toast";
 export const UVC = () => {
   const [selectedUnit, setSelectedUnit] = useState<UnitWithUVC | null>(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
-  const { data: units = [], isLoading, error } = useUVCData();
+  const { data: units = [], isLoading, error, refetch } = useUVCData();
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
   // Function to manually refresh UVC data
-  const handleRefresh = async () => {
+  const handleRefresh = useCallback(async () => {
     setIsRefreshing(true);
     try {
+      // Invalidate all relevant queries to ensure fresh data
       await queryClient.invalidateQueries({ queryKey: ["uvc-units"] });
       await queryClient.invalidateQueries({ queryKey: ["units"] });
       await queryClient.invalidateQueries({ queryKey: ["measurements"] });
       
+      // Explicitly refetch UVC data
+      await refetch();
+      
       toast({
         title: "Data refreshed",
-        description: "UVC data has been updated",
+        description: "UVC data has been updated from latest measurements",
       });
     } catch (error) {
       console.error("Error refreshing UVC data:", error);
@@ -39,7 +43,7 @@ export const UVC = () => {
     } finally {
       setIsRefreshing(false);
     }
-  };
+  }, [queryClient, refetch, toast]);
 
   if (error) {
     console.error("Error in UVC component:", error);

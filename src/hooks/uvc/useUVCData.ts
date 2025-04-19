@@ -28,7 +28,7 @@ export function useUVCData() {
   return useQuery({
     queryKey: ["uvc-units"],
     queryFn: async () => {
-      console.log("Fetching UVC units data...");
+      console.log("Fetching UVC units data with latest measurements...");
       try {
         // Get all units first - not just limited to UVC unit_type
         // Some units may have UVC but not be marked as UVC type
@@ -68,7 +68,7 @@ export function useUVCData() {
       }
     },
     // Set a shorter staleTime to ensure data is refreshed more frequently
-    staleTime: 30 * 1000, // 30 seconds stale time
+    staleTime: 10 * 1000, // 10 seconds stale time (reduced from 30)
     refetchOnMount: true,
     refetchOnWindowFocus: true,
   });

@@ -3,6 +3,7 @@ import { useState } from "react";
 import { UVCCard } from "./UVCCard";
 import { UVCDetailsDialog } from "./UVCDetailsDialog";
 import { useUVCStatusMutation } from "@/hooks/uvc/useUVCStatusMutation";
+import { useQueryClient } from "@tanstack/react-query";
 
 interface UVCListProps {
   units: any[];
@@ -14,9 +15,10 @@ export function UVCList({ units, onUVCClick }: UVCListProps) {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const uvcMutation = useUVCStatusMutation();
+  const queryClient = useQueryClient();
 
-  console.log("UVCList - Units:", units.map(u => 
-    `${u.id}: ${u.name}, UVC Hours: ${u.uvc_hours}, Status: ${u.uvc_status}`
+  console.log("UVCList - Units with UVC data:", units.map(u => 
+    `${u.id}: ${u.name}, UVC Hours: ${u.uvc_hours}, Status: ${u.uvc_status}, Is Accumulated: ${u.is_uvc_accumulated}`
   ));
 
   const handleEditClick = (e: React.MouseEvent, unit: any) => {
@@ -42,6 +44,12 @@ export function UVCList({ units, onUVCClick }: UVCListProps) {
         unitName: selectedUnit.name || '',
         installationDate: updatedData.uvc_installation_date
       });
+      
+      // Force refresh all related data
+      await queryClient.invalidateQueries({ queryKey: ["uvc-units"] });
+      await queryClient.invalidateQueries({ queryKey: ["units"] });
+      await queryClient.invalidateQueries({ queryKey: ["unit", selectedUnit.id] });
+      await queryClient.invalidateQueries({ queryKey: ["measurements"] });
       
       setIsEditDialogOpen(false);
     } catch (error) {

@@ -1,4 +1,3 @@
-
 import { collection, getDocs, query, where, orderBy, limit, doc, getDoc } from "firebase/firestore";
 import { db } from "@/integrations/firebase/client";
 import { determineUVCStatus } from "@/utils/uvcStatusUtils";

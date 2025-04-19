@@ -3,8 +3,10 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { calculateUVCLifePercentage } from "@/utils/uvcStatusUtils";
 import { StatusIcon } from "./StatusIcon";
-import { Lightbulb, ChevronRight, Edit } from "lucide-react";
+import { Lightbulb, ChevronRight, Edit, RefreshCw, Clock } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
+import { useState } from "react";
+import { formatDistanceToNow } from "date-fns";
 
 interface UVCCardProps {
   id: string;
@@ -12,6 +14,7 @@ interface UVCCardProps {
   uvc_hours?: number | null;
   uvc_status?: 'active' | 'warning' | 'urgent';
   uvc_installation_date?: string | null;
+  latest_measurement_timestamp?: string;
   location?: string;
   onClick?: () => void;
   onEditClick?: (e: React.MouseEvent) => void;
@@ -24,11 +27,14 @@ export function UVCCard({
   uvc_hours, 
   uvc_status, 
   uvc_installation_date, 
+  latest_measurement_timestamp,
   location, 
   onClick,
   onEditClick,
   unit_type
 }: UVCCardProps) {
+  const [isHovered, setIsHovered] = useState(false);
+  
   // Calculate the percentage of UVC life used
   const percentage = calculateUVCLifePercentage(uvc_hours);
   
@@ -42,8 +48,18 @@ export function UVCCard({
     ? new Date(uvc_installation_date).toLocaleDateString() 
     : 'Not set';
   
+  // Format last updated time if available
+  const lastUpdated = latest_measurement_timestamp 
+    ? formatDistanceToNow(new Date(latest_measurement_timestamp), { addSuffix: true })
+    : null;
+  
   return (
-    <Card className="p-6 bg-spotify-darker hover:bg-spotify-accent/40 transition-colors cursor-pointer relative group" onClick={onClick}>
+    <Card 
+      className="p-6 bg-spotify-darker hover:bg-spotify-accent/40 transition-colors cursor-pointer relative group"
+      onClick={onClick}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+    >
       {onEditClick && (
         <Button
           variant="ghost"
@@ -65,6 +81,12 @@ export function UVCCard({
             {name}
           </h3>
           {location && <p className="text-gray-400 text-sm">{location}</p>}
+          {lastUpdated && (
+            <p className="text-gray-500 text-xs flex items-center mt-1">
+              <Clock className="h-3 w-3 mr-1" />
+              Updated {lastUpdated}
+            </p>
+          )}
         </div>
         <StatusIcon status={uvc_status} />
       </div>
@@ -75,7 +97,11 @@ export function UVCCard({
             <span className="text-gray-400">UVC Hours</span>
             <span className="text-white font-semibold">{formattedHours}</span>
           </div>
-          <Progress className="h-2.5 mt-1" value={percentage} />
+          <Progress className="h-2.5 mt-1" value={percentage} indicatorClassName={
+            percentage < 67 ? "bg-mywater-blue" :
+            percentage < 93 ? "bg-yellow-500" :
+            "bg-red-500"
+          } />
         </div>
         
         <div className="flex justify-between text-sm">
