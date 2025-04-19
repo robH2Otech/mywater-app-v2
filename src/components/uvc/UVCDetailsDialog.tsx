@@ -11,15 +11,23 @@ import { UVCDialogForm } from "./UVCDialogForm";
 import { UVCDialogActions } from "./UVCDialogActions";
 import { UVCDialogLoader } from "./UVCDialogLoader";
 import { getMeasurementsCollectionPath } from "@/hooks/measurements/useMeasurementCollection";
+import { fetchLatestMeasurement } from "@/hooks/uvc/measurementUtils";
 
 interface UVCDetailsDialogProps {
   unit: any;
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSave?: (updatedData: any) => void;
+  isSaving?: boolean;
 }
 
-export function UVCDetailsDialog({ unit, open, onOpenChange, onSave }: UVCDetailsDialogProps) {
+export function UVCDetailsDialog({ 
+  unit, 
+  open, 
+  onOpenChange, 
+  onSave,
+  isSaving = false
+}: UVCDetailsDialogProps) {
   const [formData, setFormData] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
@@ -32,74 +40,45 @@ export function UVCDetailsDialog({ unit, open, onOpenChange, onSave }: UVCDetail
         try {
           console.log(`UVCDetailsDialog - Fetching latest data for unit ${unit.id}`);
           
-          // Get the latest data from Firestore for this unit
+          // Get the latest unit data from Firestore
           const unitDocRef = doc(db, "units", unit.id);
           const unitSnapshot = await getDoc(unitDocRef);
           
           if (unitSnapshot.exists()) {
-            const latestData = unitSnapshot.data();
-            console.log(`UVCDetailsDialog - Latest data for unit ${unit.id}:`, latestData);
+            const latestUnitData = unitSnapshot.data();
+            console.log(`UVCDetailsDialog - Latest unit data for ${unit.id}:`, latestUnitData);
             
             // Parse base UVC hours from unit document
-            let baseUvcHours = latestData.uvc_hours;
+            let baseUvcHours = latestUnitData.uvc_hours;
             if (typeof baseUvcHours === 'string') {
               baseUvcHours = parseFloat(baseUvcHours);
             } else if (baseUvcHours === undefined || baseUvcHours === null) {
               baseUvcHours = 0;
             }
             
-            console.log(`UVCDetailsDialog - Unit ${unit.id} - Base UVC hours: ${baseUvcHours}`);
-            console.log(`UVCDetailsDialog - Unit ${unit.id} - is_uvc_accumulated flag: ${latestData.is_uvc_accumulated}`);
-            
-            // Only fetch measurement data if this unit doesn't already use accumulated hours
+            // If this unit doesn't already use accumulated hours, get the latest measurement data
             let totalUvcHours = baseUvcHours;
             
-            if (!latestData.is_uvc_accumulated) {
-              // Get latest measurement data for this unit to add to the base hours
-              try {
-                // Use correct measurements collection path
-                const collectionPath = getMeasurementsCollectionPath(unit.id);
-                const measurementsQuery = query(
-                  collection(db, collectionPath),
-                  orderBy("timestamp", "desc"),
-                  limit(1)
-                );
-                
-                const measurementsSnapshot = await getDocs(measurementsQuery);
-                
-                if (!measurementsSnapshot.empty) {
-                  const latestMeasurement = measurementsSnapshot.docs[0].data();
-                  console.log(`UVCDetailsDialog - Latest measurement for unit ${unit.id}:`, latestMeasurement);
-                  
-                  if (latestMeasurement.uvc_hours !== undefined) {
-                    const measurementUvcHours = typeof latestMeasurement.uvc_hours === 'string' 
-                      ? parseFloat(latestMeasurement.uvc_hours) 
-                      : (latestMeasurement.uvc_hours || 0);
-                    
-                    // Add measurement hours to the base hours
-                    totalUvcHours += measurementUvcHours;
-                    console.log(`UVCDetailsDialog - Unit ${unit.id}: Base UVC hours ${baseUvcHours} + Measurement ${measurementUvcHours} = Total ${totalUvcHours}`);
-                  }
-                }
-              } catch (error) {
-                console.error("Error fetching measurement data:", error);
+            if (!latestUnitData.is_uvc_accumulated) {
+              const measurementData = await fetchLatestMeasurement(unit.id);
+              
+              if (measurementData.hasMeasurementData) {
+                // Add measurement hours to the base hours
+                totalUvcHours += measurementData.latestMeasurementUvcHours;
+                console.log(`UVCDetailsDialog - Unit ${unit.id}: Base ${baseUvcHours} + Measurement ${measurementData.latestMeasurementUvcHours} = Total ${totalUvcHours}`);
               }
             } else {
               console.log(`UVCDetailsDialog - Unit ${unit.id}: Using accumulated hours (${baseUvcHours}), not adding measurement hours`);
             }
             
+            // Set form data with the calculated total hours
             setFormData({
               uvc_hours: formatDecimal(totalUvcHours),
-              uvc_installation_date: latestData.uvc_installation_date ? new Date(latestData.uvc_installation_date) : null,
-            });
-            
-            console.log(`UVCDetailsDialog - Setting form data for unit ${unit.id}:`, {
-              uvc_hours: formatDecimal(totalUvcHours),
-              uvc_installation_date: latestData.uvc_installation_date
+              uvc_installation_date: latestUnitData.uvc_installation_date ? new Date(latestUnitData.uvc_installation_date) : null,
             });
           } else {
             // Fallback to the data passed in props
-            console.log(`UVCDetailsDialog - Unit ${unit.id} not found in Firestore, using props data:`, unit);
+            console.log(`UVCDetailsDialog - Unit ${unit.id} not found in Firestore, using props data`);
             
             setFormData({
               uvc_hours: formatDecimal(unit.uvc_hours || 0),
@@ -139,7 +118,6 @@ export function UVCDetailsDialog({ unit, open, onOpenChange, onSave }: UVCDetail
         ...formData,
         uvc_hours: hours,
       });
-      onOpenChange(false);
     }
   };
 
@@ -165,7 +143,8 @@ export function UVCDetailsDialog({ unit, open, onOpenChange, onSave }: UVCDetail
             <UVCDialogForm formData={formData} setFormData={setFormData} />
             <UVCDialogActions 
               onCancel={() => onOpenChange(false)} 
-              onSave={handleSave} 
+              onSave={handleSave}
+              isSaving={isSaving} 
             />
           </div>
         )}

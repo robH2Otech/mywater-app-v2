@@ -1,63 +1,53 @@
 
 import { useMutation } from "@tanstack/react-query";
-import { collection, doc, updateDoc, getDoc } from "firebase/firestore";
+import { doc, updateDoc } from "firebase/firestore";
 import { db } from "@/integrations/firebase/client";
+import { determineUVCStatus } from "@/utils/uvcStatusUtils";
 import { useToast } from "@/hooks/use-toast";
 
-interface UVCStatusUpdateProps {
-  unitId: string;
-  status: "active" | "warning" | "urgent";
-}
-
 /**
- * Hook for updating UVC status for a unit
+ * Hook for updating UVC status in the database
  */
 export function useUVCStatusUpdate() {
   const { toast } = useToast();
-
+  
   return useMutation({
-    mutationFn: async ({ unitId, status }: UVCStatusUpdateProps) => {
-      console.log(`Updating UVC status for unit ${unitId} to ${status}`);
+    mutationFn: async ({ 
+      unitId, 
+      uvcHours, 
+      isAccumulated = true 
+    }: { 
+      unitId: string; 
+      uvcHours: number; 
+      isAccumulated?: boolean;
+    }) => {
+      console.log(`Updating UVC status for unit ${unitId}: ${uvcHours} hours (accumulated: ${isAccumulated})`);
       
-      try {
-        // Reference to the specific unit document
-        const unitRef = doc(collection(db, "units"), unitId);
-        
-        // Get current data first
-        const unitSnap = await getDoc(unitRef);
-        
-        if (!unitSnap.exists()) {
-          throw new Error(`Unit with ID ${unitId} not found`);
-        }
-        
-        // Update the UVC status
-        await updateDoc(unitRef, {
-          uvc_status: status,
-          updated_at: new Date()
-        });
-        
-        console.log(`UVC status updated to ${status} for unit ${unitId}`);
-        
-        return {
-          success: true,
-          unitId,
-          status
-        };
-      } catch (error) {
-        console.error(`Error updating UVC status for unit ${unitId}:`, error);
-        throw error;
-      }
+      // Calculate new status based on hours
+      const uvcStatus = determineUVCStatus(uvcHours);
+      
+      // Update the unit document
+      const unitDocRef = doc(db, "units", unitId);
+      await updateDoc(unitDocRef, {
+        uvc_hours: uvcHours,
+        uvc_status: uvcStatus,
+        is_uvc_accumulated: isAccumulated,
+        updated_at: new Date().toISOString()
+      });
+      
+      return { unitId, uvcHours, uvcStatus };
     },
-    onSuccess: (data) => {
+    onSuccess: ({ unitId, uvcHours }) => {
       toast({
-        title: "Status Updated",
-        description: `UVC status for unit ${data.unitId} is now ${data.status}`,
+        title: "UVC status updated",
+        description: `Updated UVC hours to ${uvcHours.toFixed(1)} for unit ${unitId}`,
       });
     },
     onError: (error) => {
+      console.error("Error updating UVC status:", error);
       toast({
-        title: "Update Failed",
-        description: `Could not update UVC status: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        title: "Failed to update UVC status",
+        description: "An error occurred while updating UVC status",
         variant: "destructive",
       });
     }

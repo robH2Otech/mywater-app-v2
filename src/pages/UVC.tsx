@@ -7,7 +7,7 @@ import { UVCDetailsHandler } from "@/components/uvc/UVCDetailsHandler";
 import { useUVCData, UnitWithUVC } from "@/hooks/uvc/useUVCData";
 import { useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
-import { RefreshCw } from "lucide-react";
+import { RefreshCw, Lightbulb } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 export const UVC = () => {
@@ -23,6 +23,8 @@ export const UVC = () => {
     try {
       await queryClient.invalidateQueries({ queryKey: ["uvc-units"] });
       await queryClient.invalidateQueries({ queryKey: ["units"] });
+      await queryClient.invalidateQueries({ queryKey: ["measurements"] });
+      
       toast({
         title: "Data refreshed",
         description: "UVC data has been updated",
@@ -48,16 +50,13 @@ export const UVC = () => {
     return <LoadingSkeleton />;
   }
 
-  // We already filtered out non-UVC units in useUVCData
-  // Just use the units as-is
-  const uvcUnits = units;
-
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <PageHeader
           title="UVC Maintenance"
           description="Track and manage UVC bulb lifetime and maintenance schedules"
+          icon={Lightbulb}
         />
         <Button
           onClick={handleRefresh}
@@ -70,7 +69,7 @@ export const UVC = () => {
       </div>
       
       <UVCList
-        units={uvcUnits}
+        units={units}
         onUVCClick={setSelectedUnit}
       />
 

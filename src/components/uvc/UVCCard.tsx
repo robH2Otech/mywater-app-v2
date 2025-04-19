@@ -1,10 +1,9 @@
 
-import { useState } from 'react';
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { calculateUVCLifePercentage } from "@/utils/uvcStatusUtils";
 import { StatusIcon } from "./StatusIcon";
-import { Lightbulb, ChevronRight } from "lucide-react";
+import { Lightbulb, ChevronRight, Edit } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 
 interface UVCCardProps {
@@ -15,6 +14,7 @@ interface UVCCardProps {
   uvc_installation_date?: string | null;
   location?: string;
   onClick?: () => void;
+  onEditClick?: (e: React.MouseEvent) => void;
   unit_type?: string;
 }
 
@@ -26,6 +26,7 @@ export function UVCCard({
   uvc_installation_date, 
   location, 
   onClick,
+  onEditClick,
   unit_type
 }: UVCCardProps) {
   // Calculate the percentage of UVC life used
@@ -42,7 +43,21 @@ export function UVCCard({
     : 'Not set';
   
   return (
-    <Card className="p-6 bg-spotify-darker hover:bg-spotify-accent/40 transition-colors cursor-pointer" onClick={onClick}>
+    <Card className="p-6 bg-spotify-darker hover:bg-spotify-accent/40 transition-colors cursor-pointer relative group" onClick={onClick}>
+      {onEditClick && (
+        <Button
+          variant="ghost"
+          size="icon"
+          className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity"
+          onClick={(e) => {
+            e.stopPropagation();
+            onEditClick(e);
+          }}
+        >
+          <Edit className="h-4 w-4" />
+        </Button>
+      )}
+      
       <div className="flex justify-between items-start mb-4">
         <div>
           <h3 className="text-xl font-semibold text-white flex items-center gap-2">

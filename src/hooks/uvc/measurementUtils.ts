@@ -1,23 +1,22 @@
 
-import { collection, getDocs, query, where, orderBy, limit } from "firebase/firestore";
+import { collection, query, where, orderBy, limit, getDocs } from "firebase/firestore";
 import { db } from "@/integrations/firebase/client";
 import { getMeasurementsCollectionPath } from "@/hooks/measurements/useMeasurementCollection";
-import { Measurement } from "@/utils/measurements/types";
 
 /**
- * Fetches the latest measurement for a unit
+ * Fetches the latest measurement data for a unit
  */
-export async function fetchLatestMeasurement(unitId: string): Promise<{ 
+export async function fetchLatestMeasurement(unitId: string): Promise<{
   latestMeasurementUvcHours: number;
   hasMeasurementData: boolean;
 }> {
-  let latestMeasurementUvcHours = 0;
-  let hasMeasurementData = false;
-  
   try {
-    // Use the correct collection path based on unit ID
+    console.log(`Fetching latest measurement for unit ${unitId}`);
+    
+    // Use the correct measurements collection path based on unit ID
     const collectionPath = getMeasurementsCollectionPath(unitId);
     
+    // Query the latest measurement
     const measurementsQuery = query(
       collection(db, collectionPath),
       orderBy("timestamp", "desc"),
@@ -26,20 +25,35 @@ export async function fetchLatestMeasurement(unitId: string): Promise<{
     
     const measurementsSnapshot = await getDocs(measurementsQuery);
     
+    // Check if we found any measurements
     if (!measurementsSnapshot.empty) {
-      const latestMeasurementData = measurementsSnapshot.docs[0].data();
-      if (latestMeasurementData.uvc_hours !== undefined) {
-        latestMeasurementUvcHours = typeof latestMeasurementData.uvc_hours === 'string' 
-          ? parseFloat(latestMeasurementData.uvc_hours) 
-          : (latestMeasurementData.uvc_hours || 0);
-        hasMeasurementData = true;
-        
-        console.log(`Unit ${unitId} - Latest measurement UVC hours: ${latestMeasurementUvcHours}`);
+      const latestMeasurement = measurementsSnapshot.docs[0].data();
+      console.log(`Latest measurement for unit ${unitId}:`, latestMeasurement);
+      
+      // Extract UVC hours from the measurement
+      if (latestMeasurement.uvc_hours !== undefined) {
+        const uvcHours = typeof latestMeasurement.uvc_hours === 'string' 
+          ? parseFloat(latestMeasurement.uvc_hours) 
+          : (latestMeasurement.uvc_hours || 0);
+          
+        console.log(`Latest UVC hours for unit ${unitId}: ${uvcHours}`);
+        return {
+          latestMeasurementUvcHours: uvcHours,
+          hasMeasurementData: true
+        };
       }
     }
-  } catch (measurementError) {
-    console.error(`Error fetching measurements for unit ${unitId}:`, measurementError);
+    
+    console.log(`No measurement data found for unit ${unitId} in collection: ${collectionPath}`);
+    return {
+      latestMeasurementUvcHours: 0,
+      hasMeasurementData: false
+    };
+  } catch (error) {
+    console.error(`Error fetching latest measurement for unit ${unitId}:`, error);
+    return {
+      latestMeasurementUvcHours: 0,
+      hasMeasurementData: false
+    };
   }
-  
-  return { latestMeasurementUvcHours, hasMeasurementData };
 }

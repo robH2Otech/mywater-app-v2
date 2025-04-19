@@ -2,7 +2,7 @@
 import { Check, AlertTriangle, AlertOctagon } from "lucide-react";
 
 interface StatusIconProps {
-  status: string;
+  status?: 'active' | 'warning' | 'urgent';
 }
 
 export function StatusIcon({ status }: StatusIconProps) {
@@ -14,17 +14,5 @@ export function StatusIcon({ status }: StatusIconProps) {
     case "active":
     default:
       return <Check className="h-5 w-5 text-mywater-blue" />;
-  }
-}
-
-export function getStatusText(status: string): string {
-  switch (status) {
-    case "urgent":
-      return "Replace Soon";
-    case "warning":
-      return "Maintenance Required";
-    case "active":
-    default:
-      return "Active";
   }
 }
