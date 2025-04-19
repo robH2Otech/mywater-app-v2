@@ -56,10 +56,14 @@ export function useUVCDetailsData(unitId: string | undefined, isEnabled: boolean
         console.log(`UVCDetailsData - Unit ${unitId}: Using accumulated hours (${baseUvcHours}), not adding measurement hours`);
       }
       
+      // Extract the installation date if available
+      const uvcInstallationDate = latestUnitData.uvc_installation_date || null;
+      
       return {
         ...latestUnitData,
         id: unitId,
         uvc_hours: totalUvcHours,
+        uvc_installation_date: uvcInstallationDate,
         latest_measurement_timestamp: latestMeasurementTimestamp
       };
     },
