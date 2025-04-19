@@ -1,8 +1,9 @@
 
 import { useState, useCallback } from 'react';
 import { toast } from 'sonner';
-import { LocationData } from '@/utils/locations/locationData';
+import { LocationData, MOCK_LOCATIONS } from '@/utils/locations/locationData';
 import { httpsCallable, getFunctions } from 'firebase/functions';
+import { verifyLocationUpdates } from '@/utils/locations/verifyLocationUpdates';
 
 export const use1oTLocation = () => {
   const [isLoading, setIsLoading] = useState<boolean>(false);
@@ -39,10 +40,16 @@ export const use1oTLocation = () => {
         return location;
       } else {
         // Try client-side fallback for development environment
-        if (window.location.hostname.includes('localhost') || 
-            window.location.hostname.includes('lovable')) {
-          const { MOCK_LOCATIONS } = await import('@/utils/locations/locationData');
-          const mockLocation = MOCK_LOCATIONS[iccid] || MOCK_LOCATIONS.default;
+        const isDevelopment = window.location.hostname.includes('localhost') || 
+                            window.location.hostname.includes('lovable');
+                            
+        if (isDevelopment) {
+          // Try to find best matching mock data
+          const mockLocationKey = Object.keys(MOCK_LOCATIONS).find(key => 
+            key === iccid || key.includes(iccid) || iccid.includes(key)
+          ) || 'default';
+          
+          const mockLocation = MOCK_LOCATIONS[mockLocationKey];
           console.log("Using mock location data:", mockLocation);
           setLocationData(mockLocation);
           toast.success("Using mock location data (development)");
@@ -54,14 +61,43 @@ export const use1oTLocation = () => {
 
     } catch (err) {
       console.error("Error fetching location data:", err);
-      const errorMessage = err instanceof Error ? err.message : "An unknown error occurred";
+      // Check if error is from Firebase Functions
+      let errorMessage = "Failed to load location data";
+      
+      if (err && typeof err === 'object' && 'message' in err) {
+        errorMessage = (err as Error).message;
+      }
+      
+      // Try to verify if the unit has any location history data
+      if (iccid) {
+        try {
+          // This will check if there are any location updates for this unit
+          const hasLocationHistory = await verifyLocationUpdates(iccid);
+          
+          if (hasLocationHistory) {
+            errorMessage += ". Previous location data exists but couldn't be retrieved.";
+          }
+        } catch (verifyErr) {
+          console.error("Error verifying location history:", verifyErr);
+        }
+      }
+      
       setError(errorMessage);
-      toast.error("Failed to load location data. Please try again.");
+      toast.error(errorMessage);
+      
+      // Try development fallback one more time
+      if (window.location.hostname.includes('localhost') || 
+          window.location.hostname.includes('lovable')) {
+        const mockData = MOCK_LOCATIONS[iccid] || MOCK_LOCATIONS.default;
+        setLocationData(mockData);
+        return mockData;
+      }
+      
       return null;
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [functions]);
 
   return {
     isLoading,

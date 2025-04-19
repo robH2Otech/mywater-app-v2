@@ -1,18 +1,17 @@
 
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { MapPin, ArrowLeft, Clock } from "lucide-react";
-import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Alert, AlertDescription } from "@/components/ui/alert";
 import { LoadingSkeleton } from "@/components/shared/LoadingSkeleton";
-import { PageHeader } from "@/components/shared/PageHeader";
-import { collection, query, where, getDocs, limit, doc, getDoc } from "firebase/firestore";
+import { collection, query, where, getDocs, limit } from "firebase/firestore";
 import { db } from "@/integrations/firebase/client";
 import { use1oTLocation } from "@/hooks/locations/use1oTLocation";
 import { useCloudLocationUpdate } from "@/hooks/locations/useCloudLocationUpdate";
 import { UnitLocationDisplay } from "@/components/locations/UnitLocationDisplay";
 import { LocationData } from "@/utils/locations/locationData";
+import { UnitLocationHeader } from "@/components/locations/UnitLocationHeader";
+import { UnitLocationInfo } from "@/components/locations/UnitLocationInfo";
+import { NoLocationData } from "@/components/locations/NoLocationData";
+import { StoredLocationNote } from "@/components/locations/StoredLocationNote";
 
 export function UnitLocationPage() {
   const { iccid } = useParams<{ iccid: string }>();
@@ -161,48 +160,17 @@ export function UnitLocationPage() {
   
   return (
     <div className="container mx-auto p-4 space-y-6 animate-fadeIn">
-      <PageHeader 
-        title="Unit Location" 
-        description={`Location data for unit: ${displayName}`}
-        icon={MapPin}
-      >
-        <Button 
-          onClick={handleBack} 
-          variant="outline"
-          className="text-white bg-spotify-accent hover:bg-spotify-accent-hover"
-        >
-          <ArrowLeft className="h-4 w-4 mr-2" />
-          Back
-        </Button>
-      </PageHeader>
+      <UnitLocationHeader displayName={displayName} onBack={handleBack} />
       
       {isUpdatingLocation || (!unitFetched && !unitFetchError && !displayLocationData) ? (
         <LoadingSkeleton />
       ) : displayError && !displayLocationData ? (
-        <Card className="bg-spotify-darker border-red-500/20">
-          <CardContent className="p-6">
-            <Alert variant="destructive" className="bg-red-900/20 border-red-500/30 text-red-200">
-              <AlertDescription className="text-red-200">
-                {displayError}
-              </AlertDescription>
-            </Alert>
-            <div className="flex gap-3 mt-4">
-              <Button 
-                onClick={handleRetryFetch}
-                className="bg-spotify-accent hover:bg-spotify-accent-hover flex items-center gap-2"
-              >
-                Retry
-              </Button>
-              <Button 
-                onClick={handleBack} 
-                variant="outline"
-                className="border-spotify-accent text-spotify-accent hover:bg-spotify-accent/10"
-              >
-                Return to {unitId ? "Unit Details" : "Locations"}
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
+        <UnitLocationInfo 
+          displayError={displayError}
+          onRetryFetch={handleRetryFetch}
+          onBack={handleBack}
+          unitId={unitId}
+        />
       ) : displayLocationData ? (
         <>
           <UnitLocationDisplay 
@@ -210,27 +178,10 @@ export function UnitLocationPage() {
             onRefresh={handleRetryFetch}
             isLoading={isUpdatingLocation}
           />
-          {storedLocationData && (
-            <Card className="bg-spotify-darker">
-              <CardContent className="p-4 text-sm text-gray-400 flex items-center">
-                <Clock className="h-4 w-4 mr-2 text-spotify-accent" />
-                Location data is stored for 24 hours and then automatically refreshed.
-              </CardContent>
-            </Card>
-          )}
+          {storedLocationData && <StoredLocationNote />}
         </>
       ) : (
-        <Card className="bg-spotify-darker border-yellow-500/20">
-          <CardContent className="p-6">
-            <p className="text-yellow-300">No location data available for this unit.</p>
-            <Button 
-              onClick={handleBack} 
-              className="mt-4 bg-spotify-accent hover:bg-spotify-accent-hover"
-            >
-              Return to {unitId ? "Unit Details" : "Locations"}
-            </Button>
-          </CardContent>
-        </Card>
+        <NoLocationData onBack={handleBack} unitId={unitId} />
       )}
     </div>
   );
