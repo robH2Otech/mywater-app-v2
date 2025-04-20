@@ -3,6 +3,7 @@ import { useState, useCallback } from 'react';
 import { toast } from 'sonner';
 import { LocationData, MOCK_LOCATIONS } from '@/utils/locations/locationData';
 import { httpsCallable, getFunctions } from 'firebase/functions';
+import { verifyLocationUpdates } from '@/utils/locations/verifyLocationUpdates';
 
 export const use1oTLocation = () => {
   const [isLoading, setIsLoading] = useState<boolean>(false);
@@ -21,7 +22,13 @@ export const use1oTLocation = () => {
     setError(null);
 
     try {
-      console.log(`Fetching location for ICCID: ${iccid}`);
+      // Normalize ICCID by removing any potential formatting
+      const normalizedIccid = iccid.replace(/\s+/g, '').trim();
+      console.log(`Fetching location for normalized ICCID: ${normalizedIccid}`);
+      
+      // Check if this unit has location history first
+      const hasLocationHistory = await verifyLocationUpdates(normalizedIccid);
+      console.log(`Unit with ICCID ${normalizedIccid} has location history: ${hasLocationHistory}`);
       
       // Call the Cloud Function to get real location data
       const manualUpdate = httpsCallable<
@@ -29,11 +36,12 @@ export const use1oTLocation = () => {
         { success: boolean; location: LocationData }
       >(functions, 'manualLocationUpdate');
 
-      const result = await manualUpdate({ iccid });
+      const result = await manualUpdate({ iccid: normalizedIccid });
       console.log("Location update result:", result.data);
       
       if (result.data.success && result.data.location) {
         const location = result.data.location;
+        console.log("Location data received:", location);
         setLocationData(location);
         toast.success("Location data updated successfully");
         return location;
@@ -43,10 +51,23 @@ export const use1oTLocation = () => {
                             window.location.hostname.includes('lovable');
                             
         if (isDevelopment) {
-          // Try to find a matching mock data or use default
-          const mockLocationKey = Object.keys(MOCK_LOCATIONS).find(key => 
-            key === iccid || key.includes(iccid) || iccid.includes(key)
-          ) || 'default';
+          // Prioritize matching exact ICCID in mock data
+          let mockLocationKey = Object.keys(MOCK_LOCATIONS).find(key => key === normalizedIccid);
+          
+          // If no exact match, try partial match
+          if (!mockLocationKey) {
+            mockLocationKey = Object.keys(MOCK_LOCATIONS).find(key => 
+              key.includes(normalizedIccid) || normalizedIccid.includes(key)
+            );
+          }
+          
+          // If still no match, use country-specific mock or default
+          if (!mockLocationKey && normalizedIccid.startsWith('894450')) {
+            // Use Slovenia mock for specific prefix
+            mockLocationKey = 'si-mock-001';
+          }
+          
+          mockLocationKey = mockLocationKey || 'default';
           
           const mockLocation = MOCK_LOCATIONS[mockLocationKey];
           console.log("Using mock location data:", mockLocation);
@@ -66,9 +87,24 @@ export const use1oTLocation = () => {
       // Final fallback to mock data for development environments
       if (window.location.hostname.includes('localhost') || 
           window.location.hostname.includes('lovable')) {
-        const mockData = MOCK_LOCATIONS['default'];
-        setLocationData(mockData);
-        return mockData;
+        try {
+          // Try to match ICCID with a specific mock
+          const iccidLastDigits = iccid.slice(-4);
+          let mockLocation;
+          
+          if (iccid.includes('894450270122185221') || iccidLastDigits === '5221') {
+            // Unit in Slovenia
+            mockLocation = MOCK_LOCATIONS['894450270122185221'];
+          } else {
+            mockLocation = MOCK_LOCATIONS['default'];
+          }
+          
+          setLocationData(mockLocation);
+          return mockLocation;
+        } catch (mockErr) {
+          console.error("Error using fallback mock data:", mockErr);
+          return null;
+        }
       }
       
       return null;

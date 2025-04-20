@@ -11,6 +11,7 @@ import { LocationData } from "@/utils/locations/locationData";
 import { UnitLocationHeader } from "@/components/locations/UnitLocationHeader";
 import { UnitLocationInfo } from "@/components/locations/UnitLocationInfo";
 import { NoLocationData } from "@/components/locations/NoLocationData";
+import { findUnitIdByIccid } from "@/utils/locations/verifyLocationUpdates";
 import { toast } from "sonner";
 
 export function UnitLocationPage() {
@@ -22,9 +23,10 @@ export function UnitLocationPage() {
   const [unitFetchError, setUnitFetchError] = useState<string | null>(null);
   const [unitFetched, setUnitFetched] = useState<boolean>(false);
   const [locationData, setLocationData] = useState<LocationData | null>(null);
+  const [retryCount, setRetryCount] = useState<number>(0);
   
   // Use our custom hooks
-  const { isLoading: isLoadingLocation, locationData: freshLocationData, fetchLocationData } = use1oTLocation();
+  const { isLoading: isLoadingLocation, locationData: freshLocationData, fetchLocationData, error: locationError } = use1oTLocation();
   const { isUpdating, updateUnitLocation } = useCloudLocationUpdate();
   
   // Fetch unit details from Firestore
@@ -36,29 +38,89 @@ export function UnitLocationPage() {
       }
       
       try {
-        console.log(`Fetching unit details for ICCID: ${iccid}`);
-        const unitsRef = collection(db, "units");
-        const q = query(unitsRef, where("iccid", "==", iccid), limit(1));
-        const snapshot = await getDocs(q);
+        const normalizedIccid = iccid.replace(/\s+/g, '').trim();
+        console.log(`Fetching unit details for normalized ICCID: ${normalizedIccid}`);
         
-        if (snapshot.empty) {
-          // Try a more flexible search approach
-          console.log("No exact ICCID match found, trying partial match");
-          const allUnitsRef = collection(db, "units");
-          const allUnitsSnapshot = await getDocs(allUnitsRef);
+        // First, try to find unit ID from ICCID
+        const foundUnitId = await findUnitIdByIccid(normalizedIccid);
+        
+        if (foundUnitId) {
+          console.log(`Found unit ID: ${foundUnitId}`);
+          // Fetch complete unit data
+          const unitDoc = await getDoc(doc(db, "units", foundUnitId));
           
-          const matchingUnit = allUnitsSnapshot.docs.find(doc => {
-            const unitData = doc.data();
-            const unitIccid = unitData.iccid;
-            if (!unitIccid) return false;
-            
-            return unitIccid.includes(iccid) || iccid.includes(unitIccid);
-          });
-          
-          if (matchingUnit) {
-            const unitData = matchingUnit.data();
+          if (unitDoc.exists()) {
+            const unitData = unitDoc.data();
             setUnitName(unitData.name || "Unnamed Unit");
-            setUnitId(matchingUnit.id);
+            setUnitId(foundUnitId);
+            setUnitFetched(true);
+            
+            console.log("Unit data:", unitData);
+            
+            // Use existing location data if available
+            if (unitData.lastKnownLatitude && unitData.lastKnownLongitude) {
+              console.log("Setting location data from unit document");
+              setLocationData({
+                latitude: unitData.lastKnownLatitude,
+                longitude: unitData.lastKnownLongitude,
+                radius: unitData.lastKnownRadius || 500,
+                lastCountry: unitData.lastKnownCountry,
+                lastOperator: unitData.lastKnownOperator,
+                timestamp: unitData.locationLastFetchedAt ? 
+                  new Date(unitData.locationLastFetchedAt.toDate()).toISOString() : 
+                  new Date().toISOString()
+              });
+            }
+          } else {
+            setUnitFetchError("Unit document not found");
+          }
+        } else {
+          // If unit ID not found, try standard query approach
+          const unitsRef = collection(db, "units");
+          const q = query(unitsRef, where("iccid", "==", normalizedIccid), limit(1));
+          const snapshot = await getDocs(q);
+          
+          if (snapshot.empty) {
+            // Try a more flexible search approach
+            console.log("No exact ICCID match found, trying partial match");
+            const allUnitsRef = collection(db, "units");
+            const allUnitsSnapshot = await getDocs(allUnitsRef);
+            
+            const matchingUnit = allUnitsSnapshot.docs.find(doc => {
+              const unitData = doc.data();
+              const unitIccid = unitData.iccid;
+              if (!unitIccid) return false;
+              
+              return unitIccid.includes(normalizedIccid) || normalizedIccid.includes(unitIccid);
+            });
+            
+            if (matchingUnit) {
+              const unitData = matchingUnit.data();
+              setUnitName(unitData.name || "Unnamed Unit");
+              setUnitId(matchingUnit.id);
+              setUnitFetched(true);
+              
+              // Use existing location data if available
+              if (unitData.lastKnownLatitude && unitData.lastKnownLongitude) {
+                setLocationData({
+                  latitude: unitData.lastKnownLatitude,
+                  longitude: unitData.lastKnownLongitude,
+                  radius: unitData.lastKnownRadius || 500,
+                  lastCountry: unitData.lastKnownCountry,
+                  lastOperator: unitData.lastKnownOperator,
+                  timestamp: unitData.locationLastFetchedAt ? 
+                    new Date(unitData.locationLastFetchedAt.toDate()).toISOString() : 
+                    new Date().toISOString()
+                });
+              }
+            } else {
+              setUnitFetchError("Unit not found with the provided ICCID");
+            }
+          } else {
+            const unitDoc = snapshot.docs[0];
+            const unitData = unitDoc.data();
+            setUnitName(unitData.name || "Unnamed Unit");
+            setUnitId(unitDoc.id);
             setUnitFetched(true);
             
             // Use existing location data if available
@@ -74,28 +136,6 @@ export function UnitLocationPage() {
                   new Date().toISOString()
               });
             }
-          } else {
-            setUnitFetchError("Unit not found with the provided ICCID");
-          }
-        } else {
-          const unitDoc = snapshot.docs[0];
-          const unitData = unitDoc.data();
-          setUnitName(unitData.name || "Unnamed Unit");
-          setUnitId(unitDoc.id);
-          setUnitFetched(true);
-          
-          // Use existing location data if available
-          if (unitData.lastKnownLatitude && unitData.lastKnownLongitude) {
-            setLocationData({
-              latitude: unitData.lastKnownLatitude,
-              longitude: unitData.lastKnownLongitude,
-              radius: unitData.lastKnownRadius || 500,
-              lastCountry: unitData.lastKnownCountry,
-              lastOperator: unitData.lastKnownOperator,
-              timestamp: unitData.locationLastFetchedAt ? 
-                new Date(unitData.locationLastFetchedAt.toDate()).toISOString() : 
-                new Date().toISOString()
-            });
           }
         }
       } catch (err) {
@@ -107,24 +147,36 @@ export function UnitLocationPage() {
     fetchUnitDetails();
   }, [iccid]);
   
-  // Fetch fresh location data when unit is identified only if no stored data
+  // Fetch fresh location data when unit is identified
   useEffect(() => {
-    if (iccid && unitFetched && !locationData) {
-      // Add slight delay to prevent race conditions
-      const timer = setTimeout(() => {
-        console.log("Fetching fresh location data for:", iccid);
-        fetchLocationData(iccid);
-      }, 300);
-      return () => clearTimeout(timer);
-    }
-  }, [iccid, unitFetched, locationData, fetchLocationData]);
+    if (!iccid || !unitFetched) return;
+    
+    // Add slight delay to prevent race conditions
+    const timer = setTimeout(() => {
+      console.log(`Fetching fresh location data for ICCID: ${iccid}, has existing data: ${!!locationData}`);
+      
+      // Always try to get fresh data from cloud function
+      handleRetryFetch();
+    }, 300);
+    
+    return () => clearTimeout(timer);
+  }, [iccid, unitFetched, retryCount]);
   
   // Update state when fresh location data is received
   useEffect(() => {
     if (freshLocationData) {
+      console.log("Received fresh location data:", freshLocationData);
       setLocationData(freshLocationData);
     }
   }, [freshLocationData]);
+  
+  // Update error state when location error occurs
+  useEffect(() => {
+    if (locationError) {
+      console.log("Location error:", locationError);
+      setUnitFetchError(locationError);
+    }
+  }, [locationError]);
   
   // Navigation handler
   const handleBack = () => {
@@ -139,15 +191,34 @@ export function UnitLocationPage() {
   const handleRetryFetch = async () => {
     if (unitId && iccid) {
       toast.info("Requesting location update...");
+      console.log(`Manual location update request for unit ${unitId} with ICCID ${iccid}`);
+      
       // Use real cloud function update
       const updatedLocation = await updateUnitLocation(unitId, iccid);
       if (updatedLocation) {
+        console.log("Location updated successfully:", updatedLocation);
         setLocationData(updatedLocation);
+      } else if (!locationData) {
+        // If cloud update failed and we don't have data, try 1oT direct fetch
+        console.log("Cloud update failed, trying direct 1oT fetch");
+        const data = await fetchLocationData(iccid);
+        if (data) {
+          console.log("Direct fetch successful:", data);
+          setLocationData(data);
+        } else {
+          // If all else fails, increment retry counter to try again
+          setRetryCount(prev => prev + 1);
+          console.log("All location fetch attempts failed");
+        }
       }
     } else if (iccid) {
+      console.log(`Direct location fetch for ICCID ${iccid} (no unit ID)`);
       const data = await fetchLocationData(iccid);
       if (data) {
         setLocationData(data);
+      } else {
+        // If direct fetch fails, increment retry counter
+        setRetryCount(prev => prev + 1);
       }
     }
   };
