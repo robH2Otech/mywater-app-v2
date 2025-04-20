@@ -1,287 +1,106 @@
 
-import { useState, useEffect } from "react";
-import { useParams, useNavigate } from "react-router-dom";
-import { LoadingSkeleton } from "@/components/shared/LoadingSkeleton";
-import { collection, query, where, getDocs, limit, doc, getDoc } from "firebase/firestore";
-import { db } from "@/integrations/firebase/client";
-import { use1oTLocation } from "@/hooks/locations/use1oTLocation";
-import { useCloudLocationUpdate } from "@/hooks/locations/useCloudLocationUpdate";
-import { UnitLocationDisplay } from "@/components/locations/UnitLocationDisplay";
-import { LocationData } from "@/utils/locations/locationData";
-import { UnitLocationHeader } from "@/components/locations/UnitLocationHeader";
-import { UnitLocationInfo } from "@/components/locations/UnitLocationInfo";
-import { NoLocationData } from "@/components/locations/NoLocationData";
-import { findUnitIdByIccid } from "@/utils/locations/verifyLocationUpdates";
-import { toast } from "sonner";
+import { useParams } from 'react-router-dom';
+import { useUnitLocation } from '@/hooks/locations/useUnitLocation';
+import { useQuery } from '@tanstack/react-query';
+import { getDoc, doc } from 'firebase/firestore';
+import { db } from '@/integrations/firebase/client';
+import { PageHeader } from '@/components/shared/PageHeader';
+import { UnitLocationMap } from '@/components/locations/UnitLocationMap';
+import { UnitLocationDetails } from '@/components/locations/UnitLocationDetails';
+import { Button } from '@/components/ui/button';
+import { RefreshCcw } from 'lucide-react';
 
 export function UnitLocationPage() {
   const { iccid } = useParams<{ iccid: string }>();
-  const navigate = useNavigate();
   
-  console.log(`UnitLocationPage loaded with ICCID param: ${iccid}`);
-  
-  const [unitName, setUnitName] = useState<string>("");
-  const [unitId, setUnitId] = useState<string>("");
-  const [unitFetchError, setUnitFetchError] = useState<string | null>(null);
-  const [unitFetched, setUnitFetched] = useState<boolean>(false);
-  const [locationData, setLocationData] = useState<LocationData | null>(null);
-  const [retryCount, setRetryCount] = useState<number>(0);
-  const [logMessages, setLogMessages] = useState<string[]>([]);
-  
-  const addLog = (message: string) => {
-    console.log(`[UnitLocation] ${message}`);
-    setLogMessages(prev => [...prev, `${new Date().toISOString()}: ${message}`]);
-  };
-  
-  // Use our custom hooks
-  const { isLoading: isLoadingLocation, locationData: freshLocationData, fetchLocationData, error: locationError } = use1oTLocation();
-  const { isUpdating, updateUnitLocation } = useCloudLocationUpdate();
-  
-  // Fetch unit details from Firestore
-  useEffect(() => {
-    async function fetchUnitDetails() {
-      if (!iccid) {
-        setUnitFetchError("No ICCID provided");
-        addLog("Error: No ICCID provided");
-        return;
-      }
+  // Fetch unit details based on ICCID
+  const { data: unit, isLoading: isLoadingUnit } = useQuery({
+    queryKey: ['unit-by-iccid', iccid],
+    queryFn: async () => {
+      if (!iccid) return null;
+      console.log(`Fetching unit details for ICCID: ${iccid}`);
       
+      // Query for unit with matching ICCID
       try {
-        const normalizedIccid = iccid.replace(/\s+/g, '').trim();
-        addLog(`Fetching unit details for normalized ICCID: ${normalizedIccid}`);
+        // Try to get the unit directly if we know the ID format
+        const unitsCollection = await getDocs(query(
+          collection(db, "units"), 
+          where("iccid", "==", iccid)
+        ));
         
-        // First, try to find unit ID from ICCID
-        const foundUnitId = await findUnitIdByIccid(normalizedIccid);
+        if (!unitsCollection.empty) {
+          const unitDoc = unitsCollection.docs[0];
+          console.log(`Found unit with ID: ${unitDoc.id}`);
+          return {
+            id: unitDoc.id,
+            ...unitDoc.data()
+          };
+        }
         
-        if (foundUnitId) {
-          addLog(`Found unit ID: ${foundUnitId}`);
-          // Fetch complete unit data
-          const unitDoc = await getDoc(doc(db, "units", foundUnitId));
-          
-          if (unitDoc.exists()) {
-            const unitData = unitDoc.data();
-            setUnitName(unitData.name || "Unnamed Unit");
-            setUnitId(foundUnitId);
-            setUnitFetched(true);
-            
-            addLog(`Unit data retrieved: name=${unitData.name}, has location data: ${!!(unitData.lastKnownLatitude && unitData.lastKnownLongitude)}`);
-            
-            // Use existing location data if available
-            if (unitData.lastKnownLatitude && unitData.lastKnownLongitude) {
-              addLog(`Setting location data from unit document: ${unitData.lastKnownLatitude}, ${unitData.lastKnownLongitude}`);
-              setLocationData({
-                latitude: unitData.lastKnownLatitude,
-                longitude: unitData.lastKnownLongitude,
-                radius: unitData.lastKnownRadius || 500,
-                lastCountry: unitData.lastKnownCountry,
-                lastOperator: unitData.lastKnownOperator,
-                timestamp: unitData.locationLastFetchedAt ? 
-                  new Date(unitData.locationLastFetchedAt.toDate()).toISOString() : 
-                  new Date().toISOString()
-              });
-            }
-          } else {
-            setUnitFetchError("Unit document not found");
-            addLog("Error: Unit document not found");
-          }
-        } else {
-          // If unit ID not found, try standard query approach
-          addLog("Unit ID not found directly, trying query approach");
-          const unitsRef = collection(db, "units");
-          const q = query(unitsRef, where("iccid", "==", normalizedIccid), limit(1));
-          const snapshot = await getDocs(q);
-          
-          if (snapshot.empty) {
-            // Try a more flexible search approach
-            addLog("No exact ICCID match found, trying partial match");
-            const allUnitsRef = collection(db, "units");
-            const allUnitsSnapshot = await getDocs(allUnitsRef);
-            
-            const matchingUnit = allUnitsSnapshot.docs.find(doc => {
-              const unitData = doc.data();
-              const unitIccid = unitData.iccid;
-              if (!unitIccid) return false;
-              
-              return unitIccid.includes(normalizedIccid) || normalizedIccid.includes(unitIccid);
-            });
-            
-            if (matchingUnit) {
-              const unitData = matchingUnit.data();
-              setUnitName(unitData.name || "Unnamed Unit");
-              setUnitId(matchingUnit.id);
-              setUnitFetched(true);
-              addLog(`Found unit with partial ICCID match: ${matchingUnit.id}, ${unitData.name}`);
-              
-              // Use existing location data if available
-              if (unitData.lastKnownLatitude && unitData.lastKnownLongitude) {
-                addLog(`Setting location data from partial match: ${unitData.lastKnownLatitude}, ${unitData.lastKnownLongitude}`);
-                setLocationData({
-                  latitude: unitData.lastKnownLatitude,
-                  longitude: unitData.lastKnownLongitude,
-                  radius: unitData.lastKnownRadius || 500,
-                  lastCountry: unitData.lastKnownCountry,
-                  lastOperator: unitData.lastKnownOperator,
-                  timestamp: unitData.locationLastFetchedAt ? 
-                    new Date(unitData.locationLastFetchedAt.toDate()).toISOString() : 
-                    new Date().toISOString()
-                });
-              }
-            } else {
-              setUnitFetchError("Unit not found with the provided ICCID");
-              addLog(`Error: No unit found with ICCID ${normalizedIccid} (either exact or partial match)`);
-            }
-          } else {
-            const unitDoc = snapshot.docs[0];
-            const unitData = unitDoc.data();
-            setUnitName(unitData.name || "Unnamed Unit");
-            setUnitId(unitDoc.id);
-            setUnitFetched(true);
-            addLog(`Found unit with exact ICCID match: ${unitDoc.id}, ${unitData.name}`);
-            
-            // Use existing location data if available
-            if (unitData.lastKnownLatitude && unitData.lastKnownLongitude) {
-              addLog(`Setting location data from exact match: ${unitData.lastKnownLatitude}, ${unitData.lastKnownLongitude}`);
-              setLocationData({
-                latitude: unitData.lastKnownLatitude,
-                longitude: unitData.lastKnownLongitude,
-                radius: unitData.lastKnownRadius || 500,
-                lastCountry: unitData.lastKnownCountry,
-                lastOperator: unitData.lastKnownOperator,
-                timestamp: unitData.locationLastFetchedAt ? 
-                  new Date(unitData.locationLastFetchedAt.toDate()).toISOString() : 
-                  new Date().toISOString()
-              });
-            }
-          }
-        }
-      } catch (err) {
-        console.error("Error fetching unit details:", err);
-        setUnitFetchError("Failed to fetch unit details");
-        addLog(`Error fetching unit details: ${err instanceof Error ? err.message : 'Unknown error'}`);
+        console.log("No unit found with this ICCID");
+        return null;
+      } catch (error) {
+        console.error("Error fetching unit:", error);
+        return null;
       }
-    }
-    
-    fetchUnitDetails();
-  }, [iccid]);
+    },
+    enabled: !!iccid
+  });
+
+  // Use the location hook to get and update location data
+  const { locationData, isLoading: isLoadingLocation, error, refreshLocation } = 
+    useUnitLocation(unit?.id, iccid);
+
+  const isLoading = isLoadingUnit || isLoadingLocation;
   
-  // Fetch fresh location data when unit is identified
-  useEffect(() => {
-    if (!iccid || !unitFetched) return;
-    
-    // Add slight delay to prevent race conditions
-    const timer = setTimeout(() => {
-      addLog(`Fetching fresh location data for ICCID: ${iccid}, has existing data: ${!!locationData}`);
-      
-      // Always try to get fresh data from cloud function
-      handleRetryFetch();
-    }, 300);
-    
-    return () => clearTimeout(timer);
-  }, [iccid, unitFetched, retryCount]);
-  
-  // Update state when fresh location data is received
-  useEffect(() => {
-    if (freshLocationData) {
-      addLog(`Received fresh location data: ${JSON.stringify(freshLocationData)}`);
-      setLocationData(freshLocationData);
-    }
-  }, [freshLocationData]);
-  
-  // Update error state when location error occurs
-  useEffect(() => {
-    if (locationError) {
-      addLog(`Location error: ${locationError}`);
-      setUnitFetchError(locationError);
-    }
-  }, [locationError]);
-  
-  // Navigation handler
-  const handleBack = () => {
-    if (unitId) {
-      navigate(`/units/${unitId}`);
-    } else {
-      navigate("/locations");
-    }
+  const handleRefresh = () => {
+    refreshLocation();
   };
-  
-  // Update location handler
-  const handleRetryFetch = async () => {
-    if (unitId && iccid) {
-      toast.info("Requesting location update...");
-      addLog(`Manual location update request for unit ${unitId} with ICCID ${iccid}`);
-      
-      // Use real cloud function update
-      const updatedLocation = await updateUnitLocation(unitId, iccid);
-      if (updatedLocation) {
-        addLog(`Location updated successfully: ${JSON.stringify(updatedLocation)}`);
-        setLocationData(updatedLocation);
-      } else if (!locationData) {
-        // If cloud update failed and we don't have data, try 1oT direct fetch
-        addLog(`Cloud update failed, trying direct 1oT fetch for ICCID ${iccid}`);
-        const data = await fetchLocationData(iccid);
-        if (data) {
-          addLog(`Direct fetch successful: ${JSON.stringify(data)}`);
-          setLocationData(data);
-        } else {
-          // If all else fails, increment retry counter to try again
-          setRetryCount(prev => prev + 1);
-          addLog("All location fetch attempts failed");
-        }
-      }
-    } else if (iccid) {
-      addLog(`Direct location fetch for ICCID ${iccid} (no unit ID)`);
-      const data = await fetchLocationData(iccid);
-      if (data) {
-        addLog(`Direct fetch successful with no unit ID: ${JSON.stringify(data)}`);
-        setLocationData(data);
-      } else {
-        // If direct fetch fails, increment retry counter
-        setRetryCount(prev => prev + 1);
-        addLog("Direct fetch failed with no unit ID");
-      }
-    }
-  };
-  
-  const displayName = unitName || iccid || "Unknown Unit";
-  const displayError = unitFetchError;
-  const isUpdatingLocation = isLoadingLocation || isUpdating;
-  
+
   return (
-    <div className="container mx-auto p-4 space-y-6 animate-fadeIn">
-      <UnitLocationHeader displayName={displayName} onBack={handleBack} />
-      
-      {isUpdatingLocation && !locationData ? (
-        <LoadingSkeleton />
-      ) : displayError && !locationData ? (
-        <UnitLocationInfo 
-          displayError={displayError}
-          onRetryFetch={handleRetryFetch}
-          onBack={handleBack}
-          unitId={unitId}
+    <div className="space-y-6">
+      <div className="flex justify-between items-center">
+        <PageHeader 
+          title={unit?.name || 'Unit Location'}
+          description={`Location data for ICCID: ${iccid || '---'}`}
         />
-      ) : locationData ? (
-        <UnitLocationDisplay 
-          locationData={locationData}
-          onRefresh={handleRetryFetch}
-          isLoading={isUpdatingLocation}
-        />
-      ) : (
-        <NoLocationData onBack={handleBack} unitId={unitId} />
-      )}
+        
+        <Button 
+          onClick={handleRefresh} 
+          disabled={isLoading}
+          className="flex items-center gap-2"
+        >
+          <RefreshCcw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
+          Refresh Location
+        </Button>
+      </div>
       
-      {/* Hidden debug logs for development */}
-      {(window.location.hostname.includes('localhost') || window.location.hostname.includes('lovable')) && (
-        <div className="mt-8 bg-gray-900 text-xs text-gray-300 p-4 rounded-lg opacity-50 hover:opacity-100 transition-opacity">
-          <details>
-            <summary className="cursor-pointer">Debug Logs ({logMessages.length})</summary>
-            <pre className="mt-2 overflow-auto max-h-60">
-              {logMessages.map((log, i) => (
-                <div key={i} className="py-1">{log}</div>
-              ))}
-            </pre>
-          </details>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="md:col-span-2">
+          <UnitLocationMap 
+            locationData={locationData} 
+            isLoading={isLoading} 
+          />
+        </div>
+        
+        <div>
+          <UnitLocationDetails 
+            locationData={locationData}
+            unitName={unit?.name || 'Unknown Unit'}
+            iccid={iccid || '---'}
+            isLoading={isLoading}
+          />
+        </div>
+      </div>
+      
+      {error && (
+        <div className="p-4 bg-red-500/20 border border-red-500/50 rounded-lg">
+          <p className="text-red-300">{error}</p>
         </div>
       )}
     </div>
   );
 }
+
+// Import fix for the module imports in the function above
+import { collection, getDocs, query, where } from 'firebase/firestore';

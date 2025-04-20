@@ -3,7 +3,6 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { MapPin } from 'lucide-react';
-import { toast } from 'sonner';
 
 interface UnitLocationLinkProps {
   unitId: string;
