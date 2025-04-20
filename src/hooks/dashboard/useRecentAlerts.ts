@@ -1,9 +1,8 @@
 
 import { useQuery } from "@tanstack/react-query";
-import { collection, query, getDocs, getDoc, doc, orderBy, limit, where, Timestamp, DocumentData } from "firebase/firestore";
+import { collection, query, getDocs, getDoc, doc, orderBy, limit, where, Timestamp } from "firebase/firestore";
 import { db } from "@/integrations/firebase/client";
 import { fetchRecentRequests } from "@/services/requestService";
-import { SupportRequest } from "@/types/supportRequests";
 
 // Unified type for displaying alerts in the dashboard
 export interface DashboardAlert {
@@ -14,14 +13,6 @@ export interface DashboardAlert {
   created_at: Date;
   type: 'system' | 'request';
   source_id: string;
-}
-
-interface SystemAlert {
-  id: string;
-  unit_id: string;
-  message: string;
-  created_at: string | Timestamp;
-  status: string;
 }
 
 /**
@@ -45,6 +36,8 @@ export const useRecentAlerts = () => {
         // 2. Fetch client support requests
         await fetchClientRequests(sevenDaysAgo, dashboardAlerts);
         
+        console.log(`Combined alerts total: ${dashboardAlerts.length}`);
+        
         // Sort all alerts by date (newest first) and limit to 5
         return dashboardAlerts
           .sort((a, b) => b.created_at.getTime() - a.created_at.getTime())
@@ -65,7 +58,7 @@ async function fetchSystemAlerts(sevenDaysAgo: Date, dashboardAlerts: DashboardA
   const alertsCollection = collection(db, "alerts");
   const alertsQuery = query(
     alertsCollection,
-    where("status", "in", ["warning", "urgent"]),
+    where("created_at", ">=", sevenDaysAgo),
     orderBy("created_at", "desc"),
     limit(10) // Fetch more to ensure we have enough after filtering
   );
@@ -75,7 +68,7 @@ async function fetchSystemAlerts(sevenDaysAgo: Date, dashboardAlerts: DashboardA
   
   // Process system alerts
   const alertPromises = alertsSnapshot.docs.map(async (docSnapshot) => {
-    const data = docSnapshot.data() as SystemAlert;
+    const data = docSnapshot.data();
     let alertDate: Date;
     
     // Handle different date formats
@@ -124,10 +117,10 @@ async function fetchSystemAlerts(sevenDaysAgo: Date, dashboardAlerts: DashboardA
 async function fetchClientRequests(sevenDaysAgo: Date, dashboardAlerts: DashboardAlert[]) {
   try {
     const requests = await fetchRecentRequests(7);
-    console.log(`Retrieved ${requests.length} client requests`);
+    console.log(`Retrieved ${requests.length} client requests for dashboard`);
     
     // Add client requests to dashboard alerts
-    requests.forEach((request: SupportRequest) => {
+    requests.forEach((request) => {
       let requestDate: Date;
       
       if (request.created_at instanceof Date) {

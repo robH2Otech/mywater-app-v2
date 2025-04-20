@@ -9,7 +9,6 @@ interface AlertItemProps {
 export const AlertItem: React.FC<AlertItemProps> = ({ alert }) => {
   return (
     <div 
-      key={alert.id} 
       className={`p-4 rounded-lg ${
         alert.status === 'urgent' ? 'bg-red-500/20' : 'bg-yellow-500/20'
       }`}

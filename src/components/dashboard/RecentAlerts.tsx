@@ -14,6 +14,8 @@ export const RecentAlerts = () => {
     navigate('/alerts');
   };
 
+  console.log(`Rendering Recent Alerts: ${combinedAlerts.length} alerts available`);
+
   return (
     <Card 
       className="p-6 glass cursor-pointer hover:bg-white/5 transition-colors"
