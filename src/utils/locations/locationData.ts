@@ -24,7 +24,7 @@ export interface LocationData {
   lastOperator?: string;
 }
 
-// Mock location data for different units with the correct coordinates from the images
+// Mock location data for different units when in development environment
 export const MOCK_LOCATIONS: Record<string, LocationData> = {
   // Default location (Tallinn, Estonia - 1oT headquarters)
   default: {
@@ -35,6 +35,17 @@ export const MOCK_LOCATIONS: Record<string, LocationData> = {
     deviceName: 'Default Device',
     lastCountry: 'Estonia',
     lastOperator: 'Telia',
+    timestamp: new Date().toISOString()
+  },
+  // Slovenia location from screenshot
+  'si-mock-001': {
+    latitude: 45.9666,
+    longitude: 14.2932,
+    radius: 1896,
+    cellId: 'mock-cell-sl-001',
+    deviceName: 'Slovenia Device',
+    lastCountry: 'Slovenia',
+    lastOperator: 'Mobitel',
     timestamp: new Date().toISOString()
   },
   // For specific units with their actual ICCIDs
@@ -69,4 +80,3 @@ export const MOCK_LOCATIONS: Record<string, LocationData> = {
     timestamp: new Date().toISOString()
   }
 };
-

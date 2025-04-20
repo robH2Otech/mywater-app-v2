@@ -1,8 +1,6 @@
 
 import { useState } from 'react';
 import { httpsCallable, getFunctions } from 'firebase/functions';
-import { doc, updateDoc, serverTimestamp, collection, addDoc, Timestamp } from 'firebase/firestore';
-import { db } from '@/integrations/firebase/client';
 import { toast } from 'sonner';
 import { LocationData } from '@/utils/locations/locationData';
 
@@ -18,55 +16,19 @@ export const useCloudLocationUpdate = () => {
 
     setIsUpdating(true);
     try {
-      const updateFn = httpsCallable<
-        { unitId: string; iccid: string },
-        { success: boolean; location: LocationData }
-      >(functions, 'updateUnitLocation');
-
       toast.info('Requesting location data update...');
-
-      const result = await updateFn({ unitId, iccid });
       
-      if (result.data.success) {
-        // Add client-side timestamp for immediate UI update
-        const locationWithTimestamp = {
-          ...result.data.location,
-          timestamp: new Date().toISOString()
-        };
-        
-        // Update the UI immediately
+      // Use the manualLocationUpdate Cloud Function
+      const updateFn = httpsCallable<
+        { iccid: string },
+        { success: boolean; location: LocationData }
+      >(functions, 'manualLocationUpdate');
+
+      const result = await updateFn({ iccid });
+      
+      if (result.data.success && result.data.location) {
         toast.success('Location data updated successfully');
-        
-        // Also store in local history
-        try {
-          // Update the unit document with latest location
-          const unitRef = doc(db, "units", unitId);
-          await updateDoc(unitRef, {
-            lastKnownLatitude: locationWithTimestamp.latitude,
-            lastKnownLongitude: locationWithTimestamp.longitude,
-            lastKnownRadius: locationWithTimestamp.radius,
-            lastKnownCountry: locationWithTimestamp.lastCountry,
-            lastKnownOperator: locationWithTimestamp.lastOperator,
-            locationLastFetchedAt: serverTimestamp()
-          });
-          
-          // Add to location history with TTL
-          await addDoc(collection(db, "locationHistory"), {
-            unitId,
-            latitude: locationWithTimestamp.latitude,
-            longitude: locationWithTimestamp.longitude, 
-            radius: locationWithTimestamp.radius,
-            lastCountry: locationWithTimestamp.lastCountry,
-            lastOperator: locationWithTimestamp.lastOperator,
-            createdAt: serverTimestamp(),
-            expireAt: Timestamp.fromMillis(Date.now() + (24 * 60 * 60 * 1000))
-          });
-        } catch (err) {
-          console.error("Error updating local location data:", err);
-          // This is non-critical as the cloud function already updated the data
-        }
-        
-        return locationWithTimestamp;
+        return result.data.location;
       } else {
         toast.error('Failed to update location data');
         return null;

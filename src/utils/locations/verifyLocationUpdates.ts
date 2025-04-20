@@ -1,47 +1,46 @@
 
-import { collection, query, where, orderBy, limit, getDocs } from 'firebase/firestore';
-import { db } from '@/integrations/firebase/client';
+import { collection, query, where, getDocs, orderBy, limit } from "firebase/firestore";
+import { db } from "@/integrations/firebase/client";
 
-export const verifyLocationUpdates = async (unitId: string): Promise<boolean> => {
+/**
+ * Verify if a unit has any location history or updates
+ * @param iccid The unit's ICCID to check
+ * @returns Boolean indicating if the unit has any location history
+ */
+export async function verifyLocationUpdates(iccid: string): Promise<boolean> {
   try {
-    console.log(`Verifying location updates for unit: ${unitId}`);
+    if (!iccid) return false;
     
-    // Get the last 2 location history records for this unit
-    const historyRef = collection(db, 'locationHistory');
-    const historyQuery = query(
-      historyRef,
-      where('unitId', '==', unitId),
-      orderBy('createdAt', 'desc'),
-      limit(2)
-    );
-    
-    const snapshot = await getDocs(historyQuery);
+    // First, find the unit ID associated with this ICCID
+    const unitsRef = collection(db, "units");
+    const q = query(unitsRef, where("iccid", "==", iccid), limit(1));
+    const snapshot = await getDocs(q);
     
     if (snapshot.empty) {
-      console.log('No location history found for unit:', unitId);
-      return false;
+      // Try alternative search
+      const allUnitsSnapshot = await getDocs(collection(db, "units"));
+      const matchingUnit = allUnitsSnapshot.docs.find(doc => {
+        const unitData = doc.data();
+        return unitData.iccid && 
+               (unitData.iccid.includes(iccid) || iccid.includes(unitData.iccid));
+      });
+      
+      if (!matchingUnit) return false;
+      
+      const unitId = matchingUnit.id;
+      const unitData = matchingUnit.data();
+      
+      // Check if unit already has location data
+      return !!(unitData.lastKnownLatitude && unitData.lastKnownLongitude);
+    } else {
+      const unitId = snapshot.docs[0].id;
+      const unitData = snapshot.docs[0].data();
+      
+      // Check if unit already has location data
+      return !!(unitData.lastKnownLatitude && unitData.lastKnownLongitude);
     }
-    
-    // Log the timestamps to verify scheduled updates
-    const updates = snapshot.docs.map((doc, index) => {
-      const data = doc.data();
-      const timestamp = data.createdAt?.toDate();
-      return {
-        index: index + 1,
-        timestamp: timestamp ? timestamp.toISOString() : 'Unknown',
-        coords: {
-          lat: data.latitude,
-          lng: data.longitude
-        },
-        radius: data.radius || 0,
-        country: data.lastCountry || 'Unknown'
-      };
-    });
-    
-    console.log(`Found ${updates.length} location updates for unit ${unitId}:`, updates);
-    return true;
   } catch (error) {
-    console.error('Error verifying location updates:', error);
+    console.error("Error verifying location updates:", error);
     return false;
   }
-};
+}

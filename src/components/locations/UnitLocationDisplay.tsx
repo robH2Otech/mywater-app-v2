@@ -74,7 +74,7 @@ export function UnitLocationDisplay({
                   {timeAgo && <span className="text-xs text-gray-400 ml-2">({timeAgo})</span>}
                 </p>
                 <p className="text-xs text-gray-400 mt-1">
-                  Location data is stored for 24 hours and then automatically refreshed
+                  Location data is updated twice daily at 6 AM and 6 PM UTC
                 </p>
               </div>
               <TooltipProvider>
@@ -85,8 +85,8 @@ export function UnitLocationDisplay({
                     </div>
                   </TooltipTrigger>
                   <TooltipContent className="bg-spotify-darker text-white border-spotify-accent/30 p-3 max-w-xs">
-                    <p>Location data is updated twice daily at 6:00 and 18:00 UTC.</p>
-                    <p className="mt-1">Historical data is retained for 24 hours.</p>
+                    <p>Location data is updated automatically twice daily.</p>
+                    <p className="mt-1">Manual updates can be triggered using the Refresh button.</p>
                   </TooltipContent>
                 </Tooltip>
               </TooltipProvider>
