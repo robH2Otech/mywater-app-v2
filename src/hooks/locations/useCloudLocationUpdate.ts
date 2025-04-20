@@ -91,4 +91,3 @@ export const useCloudLocationUpdate = () => {
     updateUnitLocation
   };
 };
-

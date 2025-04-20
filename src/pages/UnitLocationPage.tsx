@@ -2,13 +2,14 @@
 import { useParams } from 'react-router-dom';
 import { useUnitLocation } from '@/hooks/locations/useUnitLocation';
 import { useQuery } from '@tanstack/react-query';
-import { getDoc, doc } from 'firebase/firestore';
+import { collection, getDocs, query, where } from 'firebase/firestore';
 import { db } from '@/integrations/firebase/client';
 import { PageHeader } from '@/components/shared/PageHeader';
 import { UnitLocationMap } from '@/components/locations/UnitLocationMap';
 import { UnitLocationDetails } from '@/components/locations/UnitLocationDetails';
 import { Button } from '@/components/ui/button';
 import { RefreshCcw } from 'lucide-react';
+import { UnitData } from '@/types/analytics';
 
 export function UnitLocationPage() {
   const { iccid } = useParams<{ iccid: string }>();
@@ -31,10 +32,12 @@ export function UnitLocationPage() {
         if (!unitsCollection.empty) {
           const unitDoc = unitsCollection.docs[0];
           console.log(`Found unit with ID: ${unitDoc.id}`);
+          const unitData = unitDoc.data();
           return {
             id: unitDoc.id,
-            ...unitDoc.data()
-          };
+            name: unitData.name || 'Unknown Unit',
+            ...unitData
+          } as UnitData;
         }
         
         console.log("No unit found with this ICCID");
@@ -101,6 +104,3 @@ export function UnitLocationPage() {
     </div>
   );
 }
-
-// Import fix for the module imports in the function above
-import { collection, getDocs, query, where } from 'firebase/firestore';

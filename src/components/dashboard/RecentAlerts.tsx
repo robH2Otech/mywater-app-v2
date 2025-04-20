@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Card } from "@/components/ui/card";
 import { Bell } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { collection, query, getDocs, getDoc, doc, orderBy, limit, where, Timestamp } from "firebase/firestore";
+import { collection, query, getDocs, getDoc, doc, orderBy, limit, where, Timestamp, DocumentData, QueryDocumentSnapshot } from "firebase/firestore";
 import { db } from "@/integrations/firebase/client";
 import { fetchRecentRequests } from "@/services/requestService";
 import { SupportRequest } from "@/types/supportRequests";
@@ -58,8 +58,8 @@ export const RecentAlerts = () => {
         console.log(`Retrieved ${alertsSnapshot.size} system alerts`);
         
         // Process system alerts
-        const alertPromises = alertsSnapshot.docs.map(async (doc) => {
-          const data = doc.data();
+        const alertPromises = alertsSnapshot.docs.map(async (docSnapshot: QueryDocumentSnapshot<DocumentData>) => {
+          const data = docSnapshot.data();
           let alertDate: Date;
           
           // Handle different date formats
@@ -79,7 +79,8 @@ export const RecentAlerts = () => {
               try {
                 const unitDoc = await getDoc(doc(db, "units", data.unit_id));
                 if (unitDoc.exists()) {
-                  unitName = unitDoc.data().name || "Unknown Unit";
+                  const unitData = unitDoc.data();
+                  unitName = unitData.name || "Unknown Unit";
                 }
               } catch (error) {
                 console.error("Error fetching unit:", error);
@@ -87,13 +88,13 @@ export const RecentAlerts = () => {
             }
             
             dashboardAlerts.push({
-              id: doc.id,
+              id: docSnapshot.id,
               title: unitName,
               message: data.message || "No message",
               status: data.status || "warning",
               created_at: alertDate,
               type: 'system',
-              source_id: doc.id
+              source_id: docSnapshot.id
             });
           }
         });
