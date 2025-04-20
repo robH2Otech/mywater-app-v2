@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { SupportRequest, RequestFormData } from "@/types/supportRequests";
 import { 
@@ -13,7 +13,7 @@ import {
 export function useClientRequests() {
   const [requests, setRequests] = useState<SupportRequest[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [activeFilter, setActiveFilter] = useState<string>("all"); // Default to "all" for better initial display
+  const [activeFilter, setActiveFilter] = useState<string>("all");
   const [selectedRequest, setSelectedRequest] = useState<SupportRequest | null>(null);
   const [showCommentDialog, setShowCommentDialog] = useState(false);
   const [showCreateRequestDialog, setShowCreateRequestDialog] = useState(false);
@@ -34,7 +34,7 @@ export function useClientRequests() {
     }
   }, [activeFilter]);
 
-  const fetchRequestsData = async (count?: number) => {
+  const fetchRequestsData = useCallback(async (count?: number) => {
     setIsLoading(true);
     setError(null);
     
@@ -61,7 +61,7 @@ export function useClientRequests() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [activeFilter, toast]);
 
   const handleFilterChange = (filter: string) => {
     console.log(`Changing filter from ${activeFilter} to ${filter}`);

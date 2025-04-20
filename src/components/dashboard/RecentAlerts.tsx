@@ -27,9 +27,7 @@ export const RecentAlerts = () => {
       </div>
       <div className="space-y-4">
         {isLoading ? (
-          <div className="text-center py-4">
-            <p className="text-gray-400">Loading alerts...</p>
-          </div>
+          <LoadingSkeleton className="h-24" />
         ) : isError ? (
           <div className="text-center py-4">
             <p className="text-red-400">Error loading recent alerts</p>
