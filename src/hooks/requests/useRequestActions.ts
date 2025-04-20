@@ -90,7 +90,8 @@ export function useRequestActions(
 
     try {
       const newRequest = await createSupportRequest(formData);
-      setRequests(prev => [newRequest, ...prev]);
+      // Fix the type issue here - explicitly specify the new array as SupportRequest[]
+      setRequests([newRequest, ...requests]);
       setShowCreateRequestDialog(false);
       
       toast({

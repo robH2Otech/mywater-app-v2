@@ -26,7 +26,11 @@ export function useClientRequests() {
     handleCreateRequest,
     handleReplyByEmail,
     setSelectedRequest
-  } = useRequestActions(requests, (newRequests) => setRequests(newRequests), fetchRequests);
+  } = useRequestActions(requests, (newRequests: SupportRequest[]) => {
+    // This was the error - there was no setRequests function from useRequestFilter
+    // We need to re-fetch requests instead of trying to update the state directly
+    fetchRequests();
+  }, fetchRequests);
 
   // Initial data load
   useEffect(() => {
