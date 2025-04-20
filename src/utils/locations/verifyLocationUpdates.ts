@@ -41,6 +41,11 @@ export async function verifyLocationUpdates(iccid: string): Promise<boolean> {
       // Check if unit already has location data
       const hasLocation = !!(unitData.lastKnownLatitude && unitData.lastKnownLongitude);
       console.log(`Unit ${unitId} has location data: ${hasLocation}`);
+      
+      if (hasLocation) {
+        console.log(`Location data for unit ${unitId}: ${unitData.lastKnownLatitude}, ${unitData.lastKnownLongitude}`);
+      }
+      
       return hasLocation;
     } else {
       const unitId = snapshot.docs[0].id;
@@ -49,6 +54,11 @@ export async function verifyLocationUpdates(iccid: string): Promise<boolean> {
       // Check if unit already has location data
       const hasLocation = !!(unitData.lastKnownLatitude && unitData.lastKnownLongitude);
       console.log(`Unit ${unitId} has location data: ${hasLocation}`);
+      
+      if (hasLocation) {
+        console.log(`Location data for unit ${unitId}: ${unitData.lastKnownLatitude}, ${unitData.lastKnownLongitude}`);
+      }
+      
       return hasLocation;
     }
   } catch (error) {
@@ -67,6 +77,7 @@ export async function findUnitIdByIccid(iccid: string): Promise<string | null> {
     if (!iccid) return null;
     
     const normalizedIccid = iccid.replace(/\s+/g, '').trim();
+    console.log(`Finding unit ID for normalized ICCID: ${normalizedIccid}`);
     
     // First try exact match
     const unitsRef = collection(db, "units");
@@ -74,20 +85,34 @@ export async function findUnitIdByIccid(iccid: string): Promise<string | null> {
     const snapshot = await getDocs(q);
     
     if (!snapshot.empty) {
-      return snapshot.docs[0].id;
+      const unitId = snapshot.docs[0].id;
+      console.log(`Found unit ID ${unitId} with exact ICCID match`);
+      return unitId;
     }
     
     // Try flexible matching
+    console.log(`No exact match found, trying flexible matching for ICCID: ${normalizedIccid}`);
     const allUnitsSnapshot = await getDocs(collection(db, "units"));
     const matchingUnit = allUnitsSnapshot.docs.find(doc => {
       const unitData = doc.data();
-      return unitData.iccid && (
-        unitData.iccid.includes(normalizedIccid) || 
-        normalizedIccid.includes(unitData.iccid)
-      );
+      const unitIccid = unitData.iccid;
+      if (!unitIccid) return false;
+      
+      // Try to match either direction
+      if (unitIccid.includes(normalizedIccid) || normalizedIccid.includes(unitIccid)) {
+        console.log(`Found partial match: Unit ICCID=${unitIccid}, Search ICCID=${normalizedIccid}`);
+        return true;
+      }
+      return false;
     });
     
-    return matchingUnit ? matchingUnit.id : null;
+    if (matchingUnit) {
+      console.log(`Found unit ID ${matchingUnit.id} with flexible ICCID matching`);
+      return matchingUnit.id;
+    } else {
+      console.log(`No unit found with ICCID ${normalizedIccid} (either exact or flexible match)`);
+      return null;
+    }
   } catch (error) {
     console.error("Error finding unit by ICCID:", error);
     return null;

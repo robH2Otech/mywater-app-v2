@@ -18,12 +18,20 @@ export function UnitLocationPage() {
   const { iccid } = useParams<{ iccid: string }>();
   const navigate = useNavigate();
   
+  console.log(`UnitLocationPage loaded with ICCID param: ${iccid}`);
+  
   const [unitName, setUnitName] = useState<string>("");
   const [unitId, setUnitId] = useState<string>("");
   const [unitFetchError, setUnitFetchError] = useState<string | null>(null);
   const [unitFetched, setUnitFetched] = useState<boolean>(false);
   const [locationData, setLocationData] = useState<LocationData | null>(null);
   const [retryCount, setRetryCount] = useState<number>(0);
+  const [logMessages, setLogMessages] = useState<string[]>([]);
+  
+  const addLog = (message: string) => {
+    console.log(`[UnitLocation] ${message}`);
+    setLogMessages(prev => [...prev, `${new Date().toISOString()}: ${message}`]);
+  };
   
   // Use our custom hooks
   const { isLoading: isLoadingLocation, locationData: freshLocationData, fetchLocationData, error: locationError } = use1oTLocation();
@@ -34,18 +42,19 @@ export function UnitLocationPage() {
     async function fetchUnitDetails() {
       if (!iccid) {
         setUnitFetchError("No ICCID provided");
+        addLog("Error: No ICCID provided");
         return;
       }
       
       try {
         const normalizedIccid = iccid.replace(/\s+/g, '').trim();
-        console.log(`Fetching unit details for normalized ICCID: ${normalizedIccid}`);
+        addLog(`Fetching unit details for normalized ICCID: ${normalizedIccid}`);
         
         // First, try to find unit ID from ICCID
         const foundUnitId = await findUnitIdByIccid(normalizedIccid);
         
         if (foundUnitId) {
-          console.log(`Found unit ID: ${foundUnitId}`);
+          addLog(`Found unit ID: ${foundUnitId}`);
           // Fetch complete unit data
           const unitDoc = await getDoc(doc(db, "units", foundUnitId));
           
@@ -55,11 +64,11 @@ export function UnitLocationPage() {
             setUnitId(foundUnitId);
             setUnitFetched(true);
             
-            console.log("Unit data:", unitData);
+            addLog(`Unit data retrieved: name=${unitData.name}, has location data: ${!!(unitData.lastKnownLatitude && unitData.lastKnownLongitude)}`);
             
             // Use existing location data if available
             if (unitData.lastKnownLatitude && unitData.lastKnownLongitude) {
-              console.log("Setting location data from unit document");
+              addLog(`Setting location data from unit document: ${unitData.lastKnownLatitude}, ${unitData.lastKnownLongitude}`);
               setLocationData({
                 latitude: unitData.lastKnownLatitude,
                 longitude: unitData.lastKnownLongitude,
@@ -73,16 +82,18 @@ export function UnitLocationPage() {
             }
           } else {
             setUnitFetchError("Unit document not found");
+            addLog("Error: Unit document not found");
           }
         } else {
           // If unit ID not found, try standard query approach
+          addLog("Unit ID not found directly, trying query approach");
           const unitsRef = collection(db, "units");
           const q = query(unitsRef, where("iccid", "==", normalizedIccid), limit(1));
           const snapshot = await getDocs(q);
           
           if (snapshot.empty) {
             // Try a more flexible search approach
-            console.log("No exact ICCID match found, trying partial match");
+            addLog("No exact ICCID match found, trying partial match");
             const allUnitsRef = collection(db, "units");
             const allUnitsSnapshot = await getDocs(allUnitsRef);
             
@@ -99,9 +110,11 @@ export function UnitLocationPage() {
               setUnitName(unitData.name || "Unnamed Unit");
               setUnitId(matchingUnit.id);
               setUnitFetched(true);
+              addLog(`Found unit with partial ICCID match: ${matchingUnit.id}, ${unitData.name}`);
               
               // Use existing location data if available
               if (unitData.lastKnownLatitude && unitData.lastKnownLongitude) {
+                addLog(`Setting location data from partial match: ${unitData.lastKnownLatitude}, ${unitData.lastKnownLongitude}`);
                 setLocationData({
                   latitude: unitData.lastKnownLatitude,
                   longitude: unitData.lastKnownLongitude,
@@ -115,6 +128,7 @@ export function UnitLocationPage() {
               }
             } else {
               setUnitFetchError("Unit not found with the provided ICCID");
+              addLog(`Error: No unit found with ICCID ${normalizedIccid} (either exact or partial match)`);
             }
           } else {
             const unitDoc = snapshot.docs[0];
@@ -122,9 +136,11 @@ export function UnitLocationPage() {
             setUnitName(unitData.name || "Unnamed Unit");
             setUnitId(unitDoc.id);
             setUnitFetched(true);
+            addLog(`Found unit with exact ICCID match: ${unitDoc.id}, ${unitData.name}`);
             
             // Use existing location data if available
             if (unitData.lastKnownLatitude && unitData.lastKnownLongitude) {
+              addLog(`Setting location data from exact match: ${unitData.lastKnownLatitude}, ${unitData.lastKnownLongitude}`);
               setLocationData({
                 latitude: unitData.lastKnownLatitude,
                 longitude: unitData.lastKnownLongitude,
@@ -141,6 +157,7 @@ export function UnitLocationPage() {
       } catch (err) {
         console.error("Error fetching unit details:", err);
         setUnitFetchError("Failed to fetch unit details");
+        addLog(`Error fetching unit details: ${err instanceof Error ? err.message : 'Unknown error'}`);
       }
     }
     
@@ -153,7 +170,7 @@ export function UnitLocationPage() {
     
     // Add slight delay to prevent race conditions
     const timer = setTimeout(() => {
-      console.log(`Fetching fresh location data for ICCID: ${iccid}, has existing data: ${!!locationData}`);
+      addLog(`Fetching fresh location data for ICCID: ${iccid}, has existing data: ${!!locationData}`);
       
       // Always try to get fresh data from cloud function
       handleRetryFetch();
@@ -165,7 +182,7 @@ export function UnitLocationPage() {
   // Update state when fresh location data is received
   useEffect(() => {
     if (freshLocationData) {
-      console.log("Received fresh location data:", freshLocationData);
+      addLog(`Received fresh location data: ${JSON.stringify(freshLocationData)}`);
       setLocationData(freshLocationData);
     }
   }, [freshLocationData]);
@@ -173,7 +190,7 @@ export function UnitLocationPage() {
   // Update error state when location error occurs
   useEffect(() => {
     if (locationError) {
-      console.log("Location error:", locationError);
+      addLog(`Location error: ${locationError}`);
       setUnitFetchError(locationError);
     }
   }, [locationError]);
@@ -191,34 +208,36 @@ export function UnitLocationPage() {
   const handleRetryFetch = async () => {
     if (unitId && iccid) {
       toast.info("Requesting location update...");
-      console.log(`Manual location update request for unit ${unitId} with ICCID ${iccid}`);
+      addLog(`Manual location update request for unit ${unitId} with ICCID ${iccid}`);
       
       // Use real cloud function update
       const updatedLocation = await updateUnitLocation(unitId, iccid);
       if (updatedLocation) {
-        console.log("Location updated successfully:", updatedLocation);
+        addLog(`Location updated successfully: ${JSON.stringify(updatedLocation)}`);
         setLocationData(updatedLocation);
       } else if (!locationData) {
         // If cloud update failed and we don't have data, try 1oT direct fetch
-        console.log("Cloud update failed, trying direct 1oT fetch");
+        addLog(`Cloud update failed, trying direct 1oT fetch for ICCID ${iccid}`);
         const data = await fetchLocationData(iccid);
         if (data) {
-          console.log("Direct fetch successful:", data);
+          addLog(`Direct fetch successful: ${JSON.stringify(data)}`);
           setLocationData(data);
         } else {
           // If all else fails, increment retry counter to try again
           setRetryCount(prev => prev + 1);
-          console.log("All location fetch attempts failed");
+          addLog("All location fetch attempts failed");
         }
       }
     } else if (iccid) {
-      console.log(`Direct location fetch for ICCID ${iccid} (no unit ID)`);
+      addLog(`Direct location fetch for ICCID ${iccid} (no unit ID)`);
       const data = await fetchLocationData(iccid);
       if (data) {
+        addLog(`Direct fetch successful with no unit ID: ${JSON.stringify(data)}`);
         setLocationData(data);
       } else {
         // If direct fetch fails, increment retry counter
         setRetryCount(prev => prev + 1);
+        addLog("Direct fetch failed with no unit ID");
       }
     }
   };
@@ -248,6 +267,20 @@ export function UnitLocationPage() {
         />
       ) : (
         <NoLocationData onBack={handleBack} unitId={unitId} />
+      )}
+      
+      {/* Hidden debug logs for development */}
+      {(window.location.hostname.includes('localhost') || window.location.hostname.includes('lovable')) && (
+        <div className="mt-8 bg-gray-900 text-xs text-gray-300 p-4 rounded-lg opacity-50 hover:opacity-100 transition-opacity">
+          <details>
+            <summary className="cursor-pointer">Debug Logs ({logMessages.length})</summary>
+            <pre className="mt-2 overflow-auto max-h-60">
+              {logMessages.map((log, i) => (
+                <div key={i} className="py-1">{log}</div>
+              ))}
+            </pre>
+          </details>
+        </div>
       )}
     </div>
   );

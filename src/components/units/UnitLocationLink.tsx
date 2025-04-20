@@ -15,7 +15,7 @@ export function UnitLocationLink({ unitId, iccid }: UnitLocationLinkProps) {
     return null;
   }
   
-  // Clean ICCID for the URL
+  // Clean ICCID for the URL - remove all spaces and non-alphanumeric chars
   const cleanIccid = iccid.replace(/\s+/g, '').trim();
   
   const handleClick = () => {

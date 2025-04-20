@@ -26,20 +26,20 @@ export interface LocationData {
 
 // Mock location data for different units when in development environment
 export const MOCK_LOCATIONS: Record<string, LocationData> = {
-  // Default location (Tallinn, Estonia - 1oT headquarters)
-  default: {
-    latitude: 59.4369,
-    longitude: 24.7535, 
-    radius: 500,
+  // Slovenia location for 003 unit (from 1oT console data)
+  'default': {
+    latitude: 45.9646,
+    longitude: 14.2932, 
+    radius: 1896,
     cellId: 'mock-cell-default',
-    deviceName: 'Default Device',
-    lastCountry: 'Estonia',
-    lastOperator: 'Telia',
+    deviceName: 'MYWATER 003 UVC',
+    lastCountry: 'Slovenia',
+    lastOperator: 'Mobitel',
     timestamp: new Date().toISOString()
   },
-  // Slovenia location from screenshot
+  // Slovenia location from 1oT console
   'si-mock-001': {
-    latitude: 45.9666,
+    latitude: 45.9646,
     longitude: 14.2932,
     radius: 1896,
     cellId: 'mock-cell-sl-001',
@@ -50,33 +50,33 @@ export const MOCK_LOCATIONS: Record<string, LocationData> = {
   },
   // For specific units with their actual ICCIDs
   '894450270122185223': {
-    latitude: 45.9646,  // Updated to match the 1oT console data
-    longitude: 14.2932, // Updated to match the 1oT console data
-    radius: 1896,       // Updated to match the 1oT console data
+    latitude: 45.9646,
+    longitude: 14.2932,
+    radius: 1896,
     cellId: 'mock-cell-003',
     deviceName: 'MYWATER 003 UVC',
-    lastCountry: 'Slovenia', // Updated to match the 1oT console data
-    lastOperator: 'Mobitel', // Updated to match the 1oT console data
+    lastCountry: 'Slovenia',
+    lastOperator: 'Mobitel',
     timestamp: new Date().toISOString()
   },
   '894450270122185222': {
-    latitude: 45.9646, // Updated to match the 1oT console data
-    longitude: 14.2932, // Updated to match the 1oT console data
-    radius: 1896, // Updated to match the 1oT console data
+    latitude: 45.9646,
+    longitude: 14.2932,
+    radius: 1896,
     cellId: 'mock-cell-002',
     deviceName: 'MYWATER 002',
-    lastCountry: 'Slovenia', // Updated to match the 1oT console data
-    lastOperator: 'Mobitel', // Updated to match the 1oT console data
+    lastCountry: 'Slovenia',
+    lastOperator: 'Mobitel',
     timestamp: new Date().toISOString()
   },
   '894450270122185221': {
-    latitude: 45.9646, // Updated to match the 1oT console data
-    longitude: 14.2932, // Updated to match the 1oT console data
-    radius: 1896, // Updated to match the 1oT console data
+    latitude: 45.9646,
+    longitude: 14.2932,
+    radius: 1896,
     cellId: 'mock-cell-001',
     deviceName: 'MYWATER 001',
-    lastCountry: 'Slovenia', // Updated to match the 1oT console data
-    lastOperator: 'Mobitel', // Updated to match the 1oT console data
+    lastCountry: 'Slovenia',
+    lastOperator: 'Mobitel',
     timestamp: new Date().toISOString()
   }
 };

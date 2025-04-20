@@ -48,26 +48,19 @@ export const use1oTLocation = () => {
       } else {
         // Fall back to mock data for development/testing environments
         const isDevelopment = window.location.hostname.includes('localhost') || 
-                            window.location.hostname.includes('lovable');
-                            
+                              window.location.hostname.includes('lovable');
+                              
         if (isDevelopment) {
+          console.log(`No location data from API for ${normalizedIccid}, using mock data`);
           // Prioritize matching exact ICCID in mock data
-          let mockLocationKey = Object.keys(MOCK_LOCATIONS).find(key => key === normalizedIccid);
+          let mockLocationKey = normalizedIccid;
           
           // If no exact match, try partial match
-          if (!mockLocationKey) {
+          if (!MOCK_LOCATIONS[mockLocationKey]) {
             mockLocationKey = Object.keys(MOCK_LOCATIONS).find(key => 
               key.includes(normalizedIccid) || normalizedIccid.includes(key)
-            );
+            ) || 'default';
           }
-          
-          // If still no match, use country-specific mock or default
-          if (!mockLocationKey && normalizedIccid.startsWith('894450')) {
-            // Use Slovenia mock for specific prefix
-            mockLocationKey = 'si-mock-001';
-          }
-          
-          mockLocationKey = mockLocationKey || 'default';
           
           const mockLocation = MOCK_LOCATIONS[mockLocationKey];
           console.log("Using mock location data:", mockLocation);
@@ -88,19 +81,29 @@ export const use1oTLocation = () => {
       if (window.location.hostname.includes('localhost') || 
           window.location.hostname.includes('lovable')) {
         try {
+          console.log('Using fallback mock data after error');
           // Try to match ICCID with a specific mock
-          const iccidLastDigits = iccid.slice(-4);
-          let mockLocation;
+          const normalizedIccid = iccid.replace(/\s+/g, '').trim();
           
-          if (iccid.includes('894450270122185221') || iccidLastDigits === '5221') {
-            // Unit in Slovenia
-            mockLocation = MOCK_LOCATIONS['894450270122185221'];
-          } else {
-            mockLocation = MOCK_LOCATIONS['default'];
+          // Try exact match first
+          if (MOCK_LOCATIONS[normalizedIccid]) {
+            setLocationData(MOCK_LOCATIONS[normalizedIccid]);
+            return MOCK_LOCATIONS[normalizedIccid];
           }
           
-          setLocationData(mockLocation);
-          return mockLocation;
+          // Then try partial match
+          const mockKey = Object.keys(MOCK_LOCATIONS).find(key => 
+            key.includes(normalizedIccid) || normalizedIccid.includes(key)
+          );
+          
+          if (mockKey) {
+            setLocationData(MOCK_LOCATIONS[mockKey]);
+            return MOCK_LOCATIONS[mockKey];
+          }
+          
+          // Last resort - default mock
+          setLocationData(MOCK_LOCATIONS['default']);
+          return MOCK_LOCATIONS['default'];
         } catch (mockErr) {
           console.error("Error using fallback mock data:", mockErr);
           return null;
