@@ -2,7 +2,7 @@
 import { useState } from 'react';
 import { httpsCallable, getFunctions } from 'firebase/functions';
 import { toast } from 'sonner';
-import { LocationData } from '@/utils/locations/locationData';
+import { LocationData, MOCK_LOCATIONS } from '@/utils/locations/locationData';
 import { verifyLocationUpdates } from '@/utils/locations/verifyLocationUpdates';
 
 export const useCloudLocationUpdate = () => {
@@ -91,3 +91,4 @@ export const useCloudLocationUpdate = () => {
     updateUnitLocation
   };
 };
+
