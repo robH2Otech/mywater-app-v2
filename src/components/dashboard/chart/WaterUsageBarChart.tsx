@@ -19,7 +19,7 @@ interface WaterUsageBarChartProps {
 export const WaterUsageBarChart = ({ data, isLoading }: WaterUsageBarChartProps) => {
   const { t } = useLanguage();
 
-  console.log("Rendering WaterUsageBarChart with data:", data);
+  console.log("Rendering WaterUsageBarChart with data:", data?.length);
 
   if (isLoading) {
     return (

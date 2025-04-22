@@ -19,7 +19,7 @@ export const calculateHourlyFlowRates = (measurements: any[]): FlowRate[] => {
     return timeA.getTime() - timeB.getTime();
   });
 
-  console.log("Sorted measurements:", sortedMeasurements);
+  console.log("Sorted measurements:", sortedMeasurements.length);
 
   // Calculate flow rates between consecutive measurements
   const flowRates = [];
@@ -70,6 +70,6 @@ export const calculateHourlyFlowRates = (measurements: any[]): FlowRate[] => {
     }
   }
   
-  console.log("Calculated flow rates:", flowRates);
+  console.log("Calculated flow rates:", flowRates.length);
   return flowRates;
 };
