@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from "react";
-import { Timestamp, collection, query, where, orderBy, getDocs } from "firebase/firestore";
+import { Timestamp, collection, query, where, orderBy, getDocs, limit } from "firebase/firestore";
 import { db } from "@/integrations/firebase/client";
 import { subDays, subHours, subMonths } from "date-fns";
 import { calculateHourlyFlowRates } from "@/utils/chart/waterUsageCalculations";
@@ -24,20 +24,25 @@ export const useWaterUsageData = (units: any[] = [], timeRange: TimeRange) => {
       // Calculate date range based on selected timeRange
       const endDate = new Date();
       let startDate: Date;
+      let measurementLimit: number;
       
       switch (range) {
         case "7d":
           startDate = subDays(endDate, 7);
+          measurementLimit = 168; // 24hrs * 7 days
           break;
         case "30d":
           startDate = subDays(endDate, 30);
+          measurementLimit = 96; // Reduced for performance, ~3 per day
           break;
         case "6m":
           startDate = subMonths(endDate, 6);
+          measurementLimit = 180; // Reduced for performance, ~1 per day
           break;
         case "24h":
         default:
           startDate = subHours(endDate, 24);
+          measurementLimit = 48; // 2 per hour for 24 hours
           break;
       }
 
@@ -54,14 +59,19 @@ export const useWaterUsageData = (units: any[] = [], timeRange: TimeRange) => {
           collection(db, collectionPath),
           where("timestamp", ">=", Timestamp.fromDate(startDate)),
           where("timestamp", "<=", Timestamp.fromDate(endDate)),
-          orderBy("timestamp", "asc")
+          orderBy("timestamp", "asc"),
+          limit(measurementLimit)
         );
         
         const querySnapshot = await getDocs(q);
-        const measurements = querySnapshot.docs.map(doc => ({
-          ...doc.data(),
-          id: doc.id
-        }));
+        const measurements = querySnapshot.docs.map(doc => {
+          const data = doc.data();
+          return {
+            ...data,
+            id: doc.id,
+            timestamp: data.timestamp
+          };
+        });
         
         allMeasurements.push(...measurements);
       }
