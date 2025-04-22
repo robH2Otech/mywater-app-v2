@@ -1,5 +1,11 @@
 
 import { Card } from "@/components/ui/card";
+import { useEffect, useState } from "react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useLanguage } from "@/contexts/LanguageContext";
+import { subDays, subHours, subMonths, format } from "date-fns";
+import { collection, query, where, orderBy, getDocs, Timestamp } from "firebase/firestore";
+import { db } from "@/integrations/firebase/client";
 import {
   BarChart,
   Bar,
@@ -9,14 +15,7 @@ import {
   Tooltip,
   ResponsiveContainer
 } from "recharts";
-import { useEffect, useState } from "react";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useLanguage } from "@/contexts/LanguageContext";
-import { subDays, subHours, subMonths, format, parseISO } from "date-fns";
-import { collection, query, where, orderBy, getDocs, Timestamp } from "firebase/firestore";
-import { db } from "@/integrations/firebase/client";
 
-// Define time range options
 type TimeRange = "24h" | "7d" | "30d" | "6m";
 
 interface WaterUsageChartProps {
@@ -29,7 +28,37 @@ export const WaterUsageChart = ({ units = [] }: WaterUsageChartProps) => {
   const [chartData, setChartData] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(false);
 
-  // Function to get measurements for all units in the specified time range
+  const calculateHourlyFlowRates = (measurements: any[]) => {
+    if (!measurements || measurements.length < 2) return [];
+    
+    // Sort measurements by timestamp in ascending order
+    const sortedMeasurements = [...measurements].sort((a, b) => {
+      const timeA = a.timestamp instanceof Date ? a.timestamp : new Date(a.timestamp);
+      const timeB = b.timestamp instanceof Date ? b.timestamp : new Date(b.timestamp);
+      return timeA.getTime() - timeB.getTime();
+    });
+
+    // Calculate flow rates between consecutive measurements
+    const flowRates = [];
+    for (let i = 0; i < sortedMeasurements.length - 1; i++) {
+      const current = sortedMeasurements[i];
+      const next = sortedMeasurements[i + 1];
+      
+      const currentVolume = typeof current.volume === 'number' ? current.volume : parseFloat(current.volume);
+      const nextVolume = typeof next.volume === 'number' ? next.volume : parseFloat(next.volume);
+      
+      const volumeDiff = nextVolume - currentVolume;
+      const currentTime = current.timestamp instanceof Date ? current.timestamp : new Date(current.timestamp);
+      
+      flowRates.push({
+        name: format(currentTime, 'HH:mm'),
+        volume: Number(volumeDiff.toFixed(2)) // Round to 2 decimal places
+      });
+    }
+    
+    return flowRates;
+  };
+
   const fetchMeasurementsForTimeRange = async (range: TimeRange) => {
     if (!units || units.length === 0) {
       return [];
@@ -47,195 +76,64 @@ export const WaterUsageChart = ({ units = [] }: WaterUsageChartProps) => {
       switch (range) {
         case "7d":
           startDate = subDays(endDate, 7);
-          formatPattern = "MMM dd"; // Jun 15 format
+          formatPattern = "MMM dd";
           break;
         case "30d":
           startDate = subDays(endDate, 30);
-          formatPattern = "MMM dd"; // Jun 15 format
+          formatPattern = "MMM dd";
           break;
         case "6m":
           startDate = subMonths(endDate, 6);
-          formatPattern = "MMM yyyy"; // Jun 2023 format
+          formatPattern = "MMM yyyy";
           break;
         case "24h":
         default:
           startDate = subHours(endDate, 24);
-          formatPattern = "H"; // Just the hour (0-23)
+          formatPattern = "HH:mm";
           break;
       }
-      
-      console.log(`Date range: ${startDate.toISOString()} to ${endDate.toISOString()}`);
-      
-      const startTimestamp = Timestamp.fromDate(startDate);
-      const endTimestamp = Timestamp.fromDate(endDate);
-      
-      // Collect all measurements from all units
+
+      // Collect measurements for all units
       const allMeasurements = [];
-      
       for (const unit of units) {
-        // Skip if no unit ID
         if (!unit.id) continue;
         
-        // Determine collection path based on unit ID format
         const collectionPath = unit.id.startsWith('MYWATER_') 
           ? `units/${unit.id}/data` 
           : `units/${unit.id}/measurements`;
         
-        console.log(`Querying measurements for unit ${unit.id} from ${collectionPath}`);
-        
-        // Query measurements for this unit within the date range
         const q = query(
           collection(db, collectionPath),
-          where("timestamp", ">=", startTimestamp),
-          where("timestamp", "<=", endTimestamp),
+          where("timestamp", ">=", Timestamp.fromDate(startDate)),
+          where("timestamp", "<=", Timestamp.fromDate(endDate)),
           orderBy("timestamp", "asc")
         );
         
         const querySnapshot = await getDocs(q);
-        console.log(`Found ${querySnapshot.size} measurements for unit ${unit.id}`);
+        const measurements = querySnapshot.docs.map(doc => ({
+          ...doc.data(),
+          id: doc.id
+        }));
         
-        // Map documents to proper format and add to collection
-        querySnapshot.docs.forEach(doc => {
-          const data = doc.data();
-          let timestamp = null;
-          
-          // Handle different timestamp formats
-          if (data.timestamp instanceof Timestamp) {
-            timestamp = data.timestamp.toDate();
-          } else if (typeof data.timestamp === 'string') {
-            try {
-              timestamp = parseISO(data.timestamp);
-            } catch (e) {
-              console.error("Invalid timestamp format:", data.timestamp);
-              return;
-            }
-          }
-          
-          if (!timestamp) return;
-          
-          // Add to measurements with proper unit info
-          allMeasurements.push({
-            timestamp,
-            volume: typeof data.volume === 'number' ? data.volume : 0,
-            unitId: unit.id,
-            unitName: unit.name || 'Unknown Unit'
-          });
-        });
+        allMeasurements.push(...measurements);
       }
       
-      // Group measurements based on the time range
-      const groupedData = new Map();
+      // Calculate hourly flow rates
+      const flowRates = calculateHourlyFlowRates(allMeasurements);
+      console.log('Calculated flow rates:', flowRates);
       
-      allMeasurements.forEach(measurement => {
-        const formattedDate = format(measurement.timestamp, formatPattern);
-        
-        if (!groupedData.has(formattedDate)) {
-          groupedData.set(formattedDate, {
-            name: formattedDate,
-            volume: 0
-          });
-        }
-        
-        // Accumulate volume for this time period
-        const entry = groupedData.get(formattedDate);
-        entry.volume += measurement.volume;
-      });
-      
-      // Convert to array for chart and sort chronologically
-      let sortedData = Array.from(groupedData.values());
-      
-      // For 24h format, ensure proper sorting by hour
-      if (range === "24h") {
-        sortedData = sortedData.sort((a, b) => {
-          return parseInt(a.name) - parseInt(b.name);
-        });
-      } else {
-        sortedData = sortedData.sort((a, b) => {
-          return a.name.localeCompare(b.name);
-        });
-      }
-      
-      console.log(`Generated ${sortedData.length} data points for chart`);
-      
-      // Ensure we have data - use placeholder if empty
-      if (sortedData.length === 0) {
-        return generatePlaceholderData(range);
-      }
-      
-      // Format volumes to 1 decimal place
-      return sortedData.map(item => ({
-        ...item,
-        volume: Number(item.volume.toFixed(1))
-      }));
+      setChartData(flowRates);
     } catch (error) {
       console.error("Error fetching measurements for chart:", error);
-      return generatePlaceholderData(range);
+      setChartData([]);
     } finally {
       setIsLoading(false);
     }
   };
 
-  // Generate placeholder data for different time ranges
-  const generatePlaceholderData = (range: TimeRange) => {
-    console.log(`Generating placeholder data for ${range}`);
-    const endDate = new Date();
-    const dataPoints = [];
-    
-    switch (range) {
-      case "7d":
-        // Generate daily data for last 7 days with varying volumes
-        for (let i = 0; i < 7; i++) {
-          const date = subDays(endDate, 6 - i);
-          dataPoints.push({
-            name: format(date, "MMM dd"),
-            volume: Number((Math.random() * 15 + 5 * (i + 1)).toFixed(1))
-          });
-        }
-        break;
-      case "30d":
-        // Generate several data points across 30 days with varying volumes
-        for (let i = 0; i < 10; i++) {
-          const date = subDays(endDate, 30 - (i * 3));
-          dataPoints.push({
-            name: format(date, "MMM dd"),
-            volume: Number((Math.random() * 30 + 30).toFixed(1))
-          });
-        }
-        break;
-      case "6m":
-        // Generate monthly data for last 6 months with varying volumes
-        for (let i = 0; i < 6; i++) {
-          const date = subMonths(endDate, 5 - i);
-          dataPoints.push({
-            name: format(date, "MMM yyyy"),
-            volume: Number((Math.random() * 100 + 150).toFixed(1))
-          });
-        }
-        break;
-      case "24h":
-      default:
-        // Generate hourly data for last 24 hours (only hours, no minutes)
-        for (let i = 0; i < 24; i++) {
-          dataPoints.push({
-            name: i.toString(), // Just hour number as string
-            volume: Number((Math.random() * 5 + 1).toFixed(1))
-          });
-        }
-        break;
-    }
-    
-    console.log(`Generated ${dataPoints.length} placeholder data points for ${range}`);
-    return dataPoints;
-  };
-
-  // Update chart data when time range or units change
+  // Fetch data when time range changes or units update
   useEffect(() => {
-    const updateChartData = async () => {
-      const data = await fetchMeasurementsForTimeRange(timeRange);
-      setChartData(data);
-    };
-    
-    updateChartData();
+    fetchMeasurementsForTimeRange(timeRange);
   }, [timeRange, units]);
 
   return (
@@ -274,10 +172,10 @@ export const WaterUsageChart = ({ units = [] }: WaterUsageChartProps) => {
               />
               <YAxis 
                 stroke="#666"
-                tickFormatter={(value) => `${value} m³`}
+                tickFormatter={(value) => `${value} m³/h`}
               />
               <Tooltip
-                formatter={(value: number) => [`${value} m³`, 'Volume']}
+                formatter={(value: number) => [`${value} m³/h`, 'Volume per hour']}
                 contentStyle={{ backgroundColor: '#222', border: '1px solid #444', color: '#fff' }}
               />
               <Bar 
