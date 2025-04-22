@@ -7,7 +7,10 @@ export interface FlowRate {
 }
 
 export const calculateHourlyFlowRates = (measurements: any[]): FlowRate[] => {
-  if (!measurements || measurements.length < 2) return [];
+  if (!measurements || measurements.length < 2) {
+    console.log("Not enough measurements to calculate flow rates", measurements);
+    return [];
+  }
   
   // Sort measurements by timestamp in ascending order
   const sortedMeasurements = [...measurements].sort((a, b) => {
@@ -15,6 +18,8 @@ export const calculateHourlyFlowRates = (measurements: any[]): FlowRate[] => {
     const timeB = b.timestamp instanceof Date ? b.timestamp : new Date(b.timestamp);
     return timeA.getTime() - timeB.getTime();
   });
+
+  console.log("Sorted measurements:", sortedMeasurements);
 
   // Calculate flow rates between consecutive measurements
   const flowRates = [];
@@ -26,20 +31,27 @@ export const calculateHourlyFlowRates = (measurements: any[]): FlowRate[] => {
     const nextTime = next.timestamp instanceof Date ? next.timestamp : new Date(next.timestamp);
     
     // Get volume values, ensuring they are numbers
-    const currentVolume = typeof current.volume === 'number' ? current.volume : parseFloat(current.volume || '0');
-    const nextVolume = typeof next.volume === 'number' ? next.volume : parseFloat(next.volume || '0');
+    let volumeDiff;
     
-    // Alternative: If using cumulative_volume, use that instead
-    const currCumulativeVolume = current.cumulative_volume !== undefined ? 
-      (typeof current.cumulative_volume === 'number' ? current.cumulative_volume : parseFloat(current.cumulative_volume || '0')) : 
-      currentVolume;
+    // If cumulative_volume exists, use that for more accurate calculations
+    if (next.cumulative_volume !== undefined && current.cumulative_volume !== undefined) {
+      const currentCumulativeVolume = typeof current.cumulative_volume === 'number' 
+        ? current.cumulative_volume 
+        : parseFloat(current.cumulative_volume || '0');
       
-    const nextCumulativeVolume = next.cumulative_volume !== undefined ? 
-      (typeof next.cumulative_volume === 'number' ? next.cumulative_volume : parseFloat(next.cumulative_volume || '0')) : 
-      nextVolume;
-    
-    // Calculate volume difference
-    const volumeDiff = nextCumulativeVolume - currCumulativeVolume;
+      const nextCumulativeVolume = typeof next.cumulative_volume === 'number' 
+        ? next.cumulative_volume 
+        : parseFloat(next.cumulative_volume || '0');
+      
+      volumeDiff = nextCumulativeVolume - currentCumulativeVolume;
+    } else {
+      // Fallback to individual volume measurements
+      const currentVolume = typeof current.volume === 'number' 
+        ? current.volume 
+        : parseFloat(current.volume || '0');
+      
+      volumeDiff = currentVolume; // Use the individual measurement as the volume
+    }
     
     // Calculate time difference in hours
     const timeDiffMs = nextTime.getTime() - currentTime.getTime();
@@ -58,5 +70,6 @@ export const calculateHourlyFlowRates = (measurements: any[]): FlowRate[] => {
     }
   }
   
+  console.log("Calculated flow rates:", flowRates);
   return flowRates;
 };

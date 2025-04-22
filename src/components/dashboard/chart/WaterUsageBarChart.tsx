@@ -19,6 +19,8 @@ interface WaterUsageBarChartProps {
 export const WaterUsageBarChart = ({ data, isLoading }: WaterUsageBarChartProps) => {
   const { t } = useLanguage();
 
+  console.log("Rendering WaterUsageBarChart with data:", data);
+
   if (isLoading) {
     return (
       <div className="h-full flex items-center justify-center">
