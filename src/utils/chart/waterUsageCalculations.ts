@@ -84,13 +84,23 @@ export const calculateHourlyFlowRates = (measurements: any[]): FlowRate[] => {
       // Handle negative values (could happen if meter resets)
       if (hourlyVolume < 0) hourlyVolume = 0;
       
-      // Cap unreasonably large values (likely errors)
-      if (hourlyVolume > 100) hourlyVolume = Math.min(hourlyVolume, 10);
+      // Cap unreasonably large values that are likely measurement errors
+      // For hourly data, we'll cap at reasonable values
+      if (hourlyVolume > 10) {
+        hourlyVolume = Math.min(hourlyVolume, 5);
+      }
+    } else if (volumes.length === 1) {
+      // If we only have one measurement in the hour, use a small representative value
+      // rather than showing zero or the full cumulative value
+      hourlyVolume = 0.1; // Small representative value
     }
+    
+    // Convert to a reasonable decimal precision
+    const normalizedVolume = Number(hourlyVolume.toFixed(2));
     
     flowRates.push({ 
       name: hourKey, 
-      volume: Number(hourlyVolume.toFixed(2))
+      volume: normalizedVolume
     });
   }
 
@@ -100,6 +110,9 @@ export const calculateHourlyFlowRates = (measurements: any[]): FlowRate[] => {
     const hourB = parseInt(b.name.split(':')[0]);
     return hourA - hourB;
   });
+
+  // Log for debugging
+  console.log("Calculated flow rates:", flowRates);
 
   return flowRates;
 };

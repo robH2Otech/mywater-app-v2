@@ -29,10 +29,13 @@ const getYAxisMax = (data: any[], timeRange: TimeRange = "24h") => {
   const maxVolume = Math.max(...data.map(item => item.volume || 0));
   
   if (timeRange === "24h") {
-    // For 24h, start with 10m³ minimum and scale up as needed
-    if (maxVolume <= 10) return 10;
-    // Use a reasonable scale based on actual data - round up to nearest 5
-    return Math.ceil(maxVolume * 1.2 / 5) * 5;
+    // For hourly data (24h), we want a more granular scale
+    if (maxVolume <= 3) return 3;  // If max is small, show scale up to 3
+    if (maxVolume <= 5) return 5;  // If medium, show scale up to 5
+    if (maxVolume <= 10) return 10; // If larger, show scale up to 10
+    
+    // For anything larger, scale appropriately
+    return Math.ceil(maxVolume * 1.2);
   }
   
   if (timeRange === "7d") return Math.max(1000, Math.ceil(maxVolume * 1.1));
