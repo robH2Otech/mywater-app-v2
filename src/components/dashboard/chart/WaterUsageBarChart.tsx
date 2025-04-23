@@ -38,6 +38,11 @@ export const WaterUsageBarChart = ({ data, isLoading }: WaterUsageBarChartProps)
     );
   }
 
+  // Find the maximum flow rate to set appropriate Y-axis domain
+  const maxVolume = Math.max(...data.map(item => item.volume || 0));
+  // Set minumum Y-axis value to 0 and maximum to either 10 or maxVolume if greater
+  const yAxisMax = Math.max(10, Math.ceil(maxVolume * 1.1)); // Add 10% buffer
+
   return (
     <ResponsiveContainer width="100%" height="100%">
       <BarChart data={data} margin={{ top: 20, right: 30, left: 20, bottom: 20 }}>
@@ -50,6 +55,7 @@ export const WaterUsageBarChart = ({ data, isLoading }: WaterUsageBarChartProps)
         />
         <YAxis 
           stroke="#666"
+          domain={[0, yAxisMax]}
           tickFormatter={(value) => `${value}`}
           label={{ value: 'm³/h', angle: -90, position: 'insideLeft', fill: '#666' }}
         />

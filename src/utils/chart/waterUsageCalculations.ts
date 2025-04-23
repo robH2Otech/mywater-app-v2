@@ -30,7 +30,7 @@ export const calculateHourlyFlowRates = (measurements: any[]): FlowRate[] => {
     const currentTime = current.timestamp instanceof Date ? current.timestamp : new Date(current.timestamp);
     const nextTime = next.timestamp instanceof Date ? next.timestamp : new Date(next.timestamp);
     
-    // Get volume values, ensuring they are numbers
+    // Calculate volumetric difference
     let volumeDiff;
     
     // If cumulative_volume exists, use that for more accurate calculations
@@ -50,19 +50,18 @@ export const calculateHourlyFlowRates = (measurements: any[]): FlowRate[] => {
         ? current.volume 
         : parseFloat(current.volume || '0');
       
-      volumeDiff = currentVolume; // Use the individual measurement as the volume
+      volumeDiff = currentVolume;
     }
     
     // Calculate time difference in hours
     const timeDiffMs = nextTime.getTime() - currentTime.getTime();
     const timeDiffHours = timeDiffMs / (1000 * 60 * 60);
     
-    // Calculate flow rate in m³/h
-    // If time difference is too small, avoid division by near-zero
-    const hourlyRate = timeDiffHours > 0.01 ? volumeDiff / timeDiffHours : 0;
+    // Calculate flow rate in m³/h - ensure we don't divide by very small numbers
+    const hourlyRate = timeDiffHours > 0.01 ? volumeDiff / timeDiffHours : volumeDiff;
     
-    // Only include valid measurements with positive flow rates
-    if (!isNaN(hourlyRate) && hourlyRate >= 0) {
+    // Only include valid measurements with reasonable flow rates (filter out nonsensical values)
+    if (!isNaN(hourlyRate) && hourlyRate >= 0 && hourlyRate < 1000) {
       flowRates.push({
         name: format(currentTime, 'HH:mm'),
         volume: Number(hourlyRate.toFixed(2))  // Flow rate in m³/h
