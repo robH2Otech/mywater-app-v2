@@ -19,26 +19,18 @@ export const calculateHourlyFlowRates = (measurements: any[]): FlowRate[] => {
     return [];
   }
 
-  // Sort measurements by timestamp in ascending order
+  // Sort measurements by timestamp in ascending order (oldest first)
   const sortedMeasurements = [...measurements].sort((a, b) => {
     const timeA = a.timestamp instanceof Date ? a.timestamp : new Date(a.timestamp);
     const timeB = b.timestamp instanceof Date ? b.timestamp : new Date(b.timestamp);
     return timeA.getTime() - timeB.getTime();
   });
 
-  // Create data structure for hourly buckets
-  const now = new Date();
-  const hourlyData: { [hour: string]: { volumes: number[], timestamps: Date[] } } = {};
-  
-  // Initialize all 24 hour buckets
-  for (let i = 0; i < 24; i++) {
-    const hourKey = i.toString().padStart(2, '0') + ':00';
-    hourlyData[hourKey] = { volumes: [], timestamps: [] };
-  }
-
   // Group measurements by hour
-  for (const measurement of sortedMeasurements) {
-    if (!measurement.timestamp) continue;
+  const hourlyMeasurements: { [key: string]: any[] } = {};
+  
+  sortedMeasurements.forEach(measurement => {
+    if (!measurement.timestamp) return;
     
     const timestamp = measurement.timestamp instanceof Date 
       ? measurement.timestamp 
@@ -46,73 +38,77 @@ export const calculateHourlyFlowRates = (measurements: any[]): FlowRate[] => {
     
     const hourKey = timestamp.getHours().toString().padStart(2, '0') + ':00';
     
-    // Parse volume ensuring we have a number
-    let volume = 0;
-    if (measurement.volume !== undefined) {
-      volume = typeof measurement.volume === 'number' 
-        ? measurement.volume 
-        : parseFloat(measurement.volume || '0');
+    if (!hourlyMeasurements[hourKey]) {
+      hourlyMeasurements[hourKey] = [];
     }
     
-    // Only store valid measurements
-    if (!isNaN(volume) && hourKey in hourlyData) {
-      hourlyData[hourKey].volumes.push(volume);
-      hourlyData[hourKey].timestamps.push(timestamp);
-    }
-  }
-
-  // Calculate actual hourly flow rates (not cumulative)
-  const flowRates: FlowRate[] = [];
-
-  // Process each hour
-  for (const hourKey of Object.keys(hourlyData)) {
-    const { volumes, timestamps } = hourlyData[hourKey];
-    let hourlyVolume = 0;
-    
-    if (volumes.length >= 2) {
-      // Sort by timestamp to ensure we're calculating correctly
-      const paired = timestamps.map((time, idx) => ({ time, volume: volumes[idx] }))
-        .sort((a, b) => a.time.getTime() - b.time.getTime());
-      
-      // Get the first and last reading in this hour
-      const firstReading = paired[0].volume;
-      const lastReading = paired[paired.length - 1].volume;
-      
-      // The hourly flow rate is the difference between last and first reading
-      hourlyVolume = lastReading - firstReading;
-      
-      // Handle negative values (could happen if meter resets)
-      if (hourlyVolume < 0) hourlyVolume = 0;
-      
-      // Cap unreasonably large values that are likely measurement errors
-      // For hourly data, we'll cap at reasonable values
-      if (hourlyVolume > 10) {
-        hourlyVolume = Math.min(hourlyVolume, 5);
-      }
-    } else if (volumes.length === 1) {
-      // If we only have one measurement in the hour, use a small representative value
-      // rather than showing zero or the full cumulative value
-      hourlyVolume = 0.1; // Small representative value
-    }
-    
-    // Convert to a reasonable decimal precision
-    const normalizedVolume = Number(hourlyVolume.toFixed(2));
-    
-    flowRates.push({ 
-      name: hourKey, 
-      volume: normalizedVolume
+    hourlyMeasurements[hourKey].push({
+      ...measurement,
+      parsedTimestamp: timestamp
     });
-  }
+  });
 
-  // Ensure the flowRates are sorted by hour
-  flowRates.sort((a, b) => {
+  // Calculate actual hourly flow rates by finding the difference between
+  // the first and last measurement in each hour
+  const flowRates: FlowRate[] = [];
+  
+  Object.entries(hourlyMeasurements).forEach(([hourKey, hourMeasurements]) => {
+    if (hourMeasurements.length < 2) {
+      // If we have only one measurement in the hour, we can't calculate a flow rate
+      // So we'll add a minimal representative value
+      flowRates.push({
+        name: hourKey,
+        volume: 0.1 // Small placeholder value
+      });
+      return;
+    }
+    
+    // Sort the measurements within this hour
+    hourMeasurements.sort((a, b) => a.parsedTimestamp.getTime() - b.parsedTimestamp.getTime());
+    
+    // Get first and last measurements for this hour
+    const firstMeasurement = hourMeasurements[0];
+    const lastMeasurement = hourMeasurements[hourMeasurements.length - 1];
+    
+    // Calculate the volume difference - this is the actual hourly flow rate
+    let firstVolume = typeof firstMeasurement.volume === 'number' 
+      ? firstMeasurement.volume 
+      : parseFloat(firstMeasurement.volume || '0');
+      
+    let lastVolume = typeof lastMeasurement.volume === 'number' 
+      ? lastMeasurement.volume 
+      : parseFloat(lastMeasurement.volume || '0');
+    
+    // Calculate difference
+    let hourlyVolume = lastVolume - firstVolume;
+    
+    // Handle negative or unrealistic values
+    if (hourlyVolume < 0) hourlyVolume = 0;
+    
+    // Format to two decimal places
+    const formattedVolume = Number(hourlyVolume.toFixed(2));
+    
+    flowRates.push({
+      name: hourKey,
+      volume: formattedVolume
+    });
+  });
+
+  // Ensure we have entries for all 24 hours
+  const hours = Array.from({ length: 24 }, (_, i) => i.toString().padStart(2, '0') + ':00');
+  const result = hours.map(hour => {
+    const existing = flowRates.find(rate => rate.name === hour);
+    return existing || { name: hour, volume: 0 };
+  });
+
+  // Sort by hour
+  result.sort((a, b) => {
     const hourA = parseInt(a.name.split(':')[0]);
     const hourB = parseInt(b.name.split(':')[0]);
     return hourA - hourB;
   });
-
-  // Log for debugging
-  console.log("Calculated flow rates:", flowRates);
-
-  return flowRates;
+  
+  console.log("Calculated hourly flow rates:", result);
+  
+  return result;
 };

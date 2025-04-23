@@ -1,4 +1,3 @@
-
 import {
   BarChart,
   Bar,
@@ -29,15 +28,17 @@ const getYAxisMax = (data: any[], timeRange: TimeRange = "24h") => {
   const maxVolume = Math.max(...data.map(item => item.volume || 0));
   
   if (timeRange === "24h") {
-    // For hourly data (24h), we want a more granular scale
-    if (maxVolume <= 3) return 3;  // If max is small, show scale up to 3
-    if (maxVolume <= 5) return 5;  // If medium, show scale up to 5
-    if (maxVolume <= 10) return 10; // If larger, show scale up to 10
+    // For hourly data, set appropriate scale based on max value
+    if (maxVolume <= 1) return 1;
+    if (maxVolume <= 3) return 3;
+    if (maxVolume <= 5) return 5;
+    if (maxVolume <= 10) return 10;
     
-    // For anything larger, scale appropriately
-    return Math.ceil(maxVolume * 1.2);
+    // For anything larger, round up to nearest integer
+    return Math.ceil(maxVolume);
   }
   
+  // Keep original scaling for other time ranges
   if (timeRange === "7d") return Math.max(1000, Math.ceil(maxVolume * 1.1));
   if (timeRange === "30d") return Math.max(1000, Math.ceil(maxVolume * 1.1));
   if (timeRange === "6m") return Math.max(20000, Math.ceil(maxVolume * 1.1));
