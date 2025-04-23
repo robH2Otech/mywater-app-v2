@@ -3,9 +3,11 @@ import { useState, useEffect } from "react";
 import { Timestamp, collection, query, where, orderBy, getDocs, limit } from "firebase/firestore";
 import { db } from "@/integrations/firebase/client";
 import { subDays, subHours, subMonths } from "date-fns";
-import { calculateHourlyFlowRates } from "@/utils/chart/waterUsageCalculations";
-import { groupByDay, groupByImportantDays, groupByMonth } from "@/hooks/chart/useGroupedData";
 import { generateSampleData } from "@/utils/chart/sampleChartData";
+import { getHourlyFlowRates } from "@/utils/chart/getHourlyFlowRates";
+import { getDailyTotals } from "@/utils/chart/getDailyTotals";
+import { getImportantDaysTotals } from "@/utils/chart/getImportantDaysTotals";
+import { getMonthlyTotals } from "@/utils/chart/getMonthlyTotals";
 
 export type TimeRange = "24h" | "7d" | "30d" | "6m";
 
@@ -102,32 +104,19 @@ export const useWaterUsageData = (units: any[] = [], timeRange: TimeRange) => {
         return;
       }
 
-      // Process data based on time range
+      // Use new utilities for data transformation
       switch (range) {
         case "24h":
-          try {
-            chart = calculateHourlyFlowRates(allMeasurements);
-            console.log(`Calculated ${chart.length} hourly flow rates`);
-
-            if (chart.length === 0) {
-              chart = generateSampleData("24h");
-            }
-          } catch (error) {
-            console.error("Error calculating hourly flow rates:", error);
-            chart = generateSampleData("24h");
-          }
-          break;
-          
+          chart = getHourlyFlowRates(allMeasurements);
+          break;      
         case "7d":
-          chart = groupByDay(allMeasurements);
-          break;
-          
+          chart = getDailyTotals(allMeasurements);
+          break;      
         case "30d":
-          chart = groupByImportantDays(allMeasurements);
-          break;
-          
+          chart = getImportantDaysTotals(allMeasurements);
+          break;      
         case "6m":
-          chart = groupByMonth(allMeasurements);
+          chart = getMonthlyTotals(allMeasurements);
           break;
       }
 
