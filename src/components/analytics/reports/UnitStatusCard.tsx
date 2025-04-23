@@ -1,4 +1,3 @@
-
 import { Card } from "@/components/ui/card";
 import { UnitData } from "@/types/analytics";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -17,11 +16,10 @@ export function UnitStatusCard({ unit }: UnitStatusCardProps) {
     if (isNaN(numericVolume)) return "0";
     
     // Use m³ for UVC units, L for other types
-    if (unit.unit_type === 'uvc') {
-      return `${Math.round(numericVolume)} m³`;
-    } else {
-      return `${Math.round(numericVolume)} L`;
-    }
+    const isFilterUnit = unit.unit_type === 'drop' || unit.unit_type === 'office';
+    const volumeUnit = isFilterUnit ? 'L' : 'm³';
+    
+    return `${Math.round(numericVolume)} ${volumeUnit}`;
   };
   
   // Format UVC hours with whole numbers

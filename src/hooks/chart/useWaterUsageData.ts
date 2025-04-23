@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Timestamp, collection, query, where, orderBy, getDocs, limit } from "firebase/firestore";
 import { db } from "@/integrations/firebase/client";
@@ -117,8 +116,15 @@ export const useWaterUsageData = (units: any[] = [], timeRange: TimeRange) => {
 
       const allMeasurements = [];
 
+      let unitTypeIsFilter = false;
+
       for (const unit of units) {
         if (!unit.id) continue;
+        
+        if (unit.unit_type === 'drop' || unit.unit_type === 'office') {
+          unitTypeIsFilter = true;
+        }
+        
         const collectionPath = unit.id.startsWith("MYWATER_")
           ? `units/${unit.id}/data`
           : `units/${unit.id}/measurements`;
@@ -164,7 +170,6 @@ export const useWaterUsageData = (units: any[] = [], timeRange: TimeRange) => {
           chart = calculateHourlyFlowRates(allMeasurements);
           console.log(`Calculated ${chart.length} hourly flow rates`);
           
-          // If no hourly data was calculated, use sample data
           if (chart.length === 0) {
             chart = generateSampleData("24h");
           }
@@ -180,7 +185,12 @@ export const useWaterUsageData = (units: any[] = [], timeRange: TimeRange) => {
         chart = groupByMonth(allMeasurements);
       }
 
-      setChartData(chart);
+      const chartWithUnits = chart.map(item => ({
+        ...item,
+        volumeUnit: unitTypeIsFilter ? 'L' : 'm³'
+      }));
+
+      setChartData(chartWithUnits);
     } catch (error) {
       console.error(`Error fetching ${timeRange} data:`, error);
       setChartData(generateSampleData(range));

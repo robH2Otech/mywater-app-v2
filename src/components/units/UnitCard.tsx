@@ -1,4 +1,3 @@
-
 import { Check, AlertTriangle, AlertOctagon, MapPin, Edit } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Card } from "@/components/ui/card";
@@ -89,12 +88,9 @@ export const UnitCard = ({
       const numVolume = typeof volume === 'string' ? parseFloat(volume) : volume;
       if (isNaN(numVolume)) return "N/A";
       
-      // Format based on unit type - UVC units are in m³, DROP and Office units are in L
-      if (isUVCUnit) {
-        return Math.round(numVolume).toLocaleString() + " m³";
-      } else {
-        return Math.round(numVolume).toLocaleString() + " L";
-      }
+      // UVC units are in m³, DROP and Office units are in L
+      const volumeUnit = isFilterUnit ? 'L' : 'm³';
+      return `${Math.round(numVolume).toLocaleString()} ${volumeUnit}`;
     } catch (err) {
       console.error("Error formatting volume:", volume, err);
       return "N/A";
@@ -152,7 +148,7 @@ export const UnitCard = ({
             )}
             {isUVCUnit && uvc_hours && (
               <p className="text-sm text-gray-400">
-                UVC Hours: {formatVolume(uvc_hours)}
+                UVC Hours: {Math.round(Number(uvc_hours)).toLocaleString()}
               </p>
             )}
           </div>
@@ -184,4 +180,3 @@ export const UnitCard = ({
     </>
   );
 };
-

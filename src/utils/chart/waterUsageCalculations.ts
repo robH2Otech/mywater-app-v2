@@ -21,6 +21,11 @@ export const calculateHourlyFlowRates = (measurements: any[]): FlowRate[] => {
 
   console.log("Sorted measurements:", sortedMeasurements.length);
 
+  // Determine if measurements are from a filter unit (DROP or office)
+  const isFilter = measurements.some(m => {
+    return m.unit_type === 'drop' || m.unit_type === 'office';
+  });
+  
   // Group measurements by hour
   const hourlyData: { [hourKey: string]: { timestamps: Date[], volumes: number[] } } = {};
   

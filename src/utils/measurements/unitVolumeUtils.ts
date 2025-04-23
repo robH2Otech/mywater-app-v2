@@ -64,8 +64,13 @@ export async function getLatestVolumeData(unitIds: string[]): Promise<number> {
 /**
  * Format volume for display with proper units
  * Ensures the number isn't too large and adds appropriate formatting
+ * @param volume - The volume value
+ * @param unitType - The unit type ('uvc', 'drop', or 'office')
  */
-export function formatTotalVolume(volume: number | undefined | null): string {
+export function formatTotalVolume(
+  volume: number | undefined | null,
+  unitType: string = 'uvc'
+): string {
   if (volume === undefined || volume === null || isNaN(volume) || !isFinite(volume)) {
     return "0";
   }
@@ -73,11 +78,15 @@ export function formatTotalVolume(volume: number | undefined | null): string {
   // Cap maximum display value to prevent unrealistic numbers
   const cappedVolume = Math.min(volume, 999999);
   
+  // Choose the appropriate unit based on unit type
+  const isFilterUnit = unitType === 'drop' || unitType === 'office';
+  const unit = isFilterUnit ? ' L' : ' m³';
+  
   // Format with appropriate decimal places - For large numbers, don't show decimal places
   if (cappedVolume >= 1000) {
-    return formatThousands(Math.floor(cappedVolume));
+    return formatThousands(Math.floor(cappedVolume)) + unit;
   } else {
     // For smaller numbers, show up to 2 decimal places, but only if needed
-    return formatThousands(parseFloat(cappedVolume.toFixed(2)));
+    return formatThousands(parseFloat(cappedVolume.toFixed(2))) + unit;
   }
 }

@@ -1,4 +1,3 @@
-
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Check, AlertTriangle, AlertOctagon, MapPin, Edit, Calendar } from "lucide-react";
@@ -40,7 +39,12 @@ export function FilterCard({ unit, onEditClick, onClick }: FilterCardProps) {
     try {
       const numVolume = typeof volume === 'string' ? parseFloat(volume) : volume;
       if (isNaN(numVolume)) return 'N/A';
-      return Math.round(numVolume).toLocaleString();
+      
+      // Choose the unit based on unit_type
+      const unit_type = unit.unit_type || 'uvc';
+      const volumeUnit = (unit_type === 'drop' || unit_type === 'office') ? 'L' : 'm³';
+      
+      return `${Math.round(numVolume).toLocaleString()} ${volumeUnit}`;
     } catch (err) {
       console.error("Error formatting volume:", volume, err);
       return 'N/A';
@@ -86,7 +90,7 @@ export function FilterCard({ unit, onEditClick, onClick }: FilterCardProps) {
           
           <div className="space-y-2 text-left">
             <div className="text-sm text-gray-400">
-              Volume: {formatVolume(unit.total_volume)} m³
+              Volume: {formatVolume(unit.total_volume)}
             </div>
             {unit.last_maintenance && (
               <div className="flex items-center gap-2 text-sm text-gray-400">

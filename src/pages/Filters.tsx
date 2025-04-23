@@ -40,6 +40,9 @@ export const Filters = () => {
             totalVolume = 0;
           }
           
+          // Ensure unit_type is set
+          const unitType = data.unit_type || 'uvc';
+          
           // Calculate the correct status based on volume
           const calculatedStatus = determineUnitStatus(totalVolume);
           
@@ -50,6 +53,8 @@ export const Filters = () => {
             status: calculatedStatus,
             // Ensure total_volume is a number
             total_volume: totalVolume,
+            // Ensure unit_type is set
+            unit_type: unitType,
             filters: [] // Will be populated with filters below
           };
         }) as UnitWithFilters[];

@@ -22,12 +22,15 @@ export const UnitDetailsCard = ({ unit }: UnitDetailsCardProps) => {
     }
   };
 
-  // Format volume with whole numbers only
+  // Format volume with whole numbers only and appropriate units based on type
   const formatVolume = (volume: number | string | undefined | null) => {
     if (volume === undefined || volume === null) return "0";
     const numericVolume = typeof volume === 'string' ? parseFloat(volume) : volume;
     if (isNaN(numericVolume)) return "0";
-    return Math.round(numericVolume).toLocaleString();
+    
+    // Set unit based on unit_type
+    const unit = unit.unit_type === 'drop' || unit.unit_type === 'office' ? 'L' : 'm³';
+    return `${Math.round(numericVolume).toLocaleString()} ${unit}`;
   };
 
   return (
@@ -70,7 +73,7 @@ export const UnitDetailsCard = ({ unit }: UnitDetailsCardProps) => {
         </div>
 
         <div className="space-y-1 md:space-y-2">
-          <label className="text-sm text-gray-400">Volume (m³)</label>
+          <label className="text-sm text-gray-400">Volume {unit.unit_type === 'drop' || unit.unit_type === 'office' ? '(L)' : '(m³)'}</label>
           <Input
             value={formatVolume(unit?.total_volume)}
             readOnly
