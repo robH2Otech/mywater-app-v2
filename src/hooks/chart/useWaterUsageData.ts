@@ -145,10 +145,12 @@ export const useWaterUsageData = (units: any[] = [], timeRange: TimeRange) => {
           });
           allMeasurements.push(...measurements);
         } catch (err) {
-          // Continue
+          console.log(`Error fetching measurements for unit ${unit.id}:`, err);
         }
       }
 
+      console.log(`Fetched ${allMeasurements.length} measurements for ${range} chart`);
+      
       let chart: any[] = [];
 
       if (allMeasurements.length < 2) {
@@ -158,8 +160,18 @@ export const useWaterUsageData = (units: any[] = [], timeRange: TimeRange) => {
       }
 
       if (range === "24h") {
-        const { calculateHourlyFlowRates } = await import("@/utils/chart/waterUsageCalculations");
-        chart = calculateHourlyFlowRates(allMeasurements);
+        try {
+          chart = calculateHourlyFlowRates(allMeasurements);
+          console.log(`Calculated ${chart.length} hourly flow rates`);
+          
+          // If no hourly data was calculated, use sample data
+          if (chart.length === 0) {
+            chart = generateSampleData("24h");
+          }
+        } catch (error) {
+          console.error("Error calculating hourly flow rates:", error);
+          chart = generateSampleData("24h");
+        }
       } else if (range === "7d") {
         chart = groupByDay(allMeasurements);
       } else if (range === "30d") {
@@ -170,7 +182,8 @@ export const useWaterUsageData = (units: any[] = [], timeRange: TimeRange) => {
 
       setChartData(chart);
     } catch (error) {
-      setChartData(generateSampleData("24h"));
+      console.error(`Error fetching ${timeRange} data:`, error);
+      setChartData(generateSampleData(range));
     } finally {
       setIsLoading(false);
     }
