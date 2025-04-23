@@ -15,8 +15,6 @@ export const WaterUsageChart = ({ units = [] }: WaterUsageChartProps) => {
   const [timeRange, setTimeRange] = useState<TimeRange>("24h");
   const { chartData, isLoading } = useWaterUsageData(units, timeRange);
 
-  console.log("WaterUsageChart rendering with units:", units.length, "and data:", chartData?.length || 0);
-
   return (
     <Card className="p-6 glass lg:col-span-2">
       <div className="flex justify-between items-center mb-4">
@@ -36,9 +34,8 @@ export const WaterUsageChart = ({ units = [] }: WaterUsageChartProps) => {
           </SelectContent>
         </Select>
       </div>
-      
       <div className="h-[300px]">
-        <WaterUsageBarChart data={chartData} isLoading={isLoading} />
+        <WaterUsageBarChart data={chartData} isLoading={isLoading} timeRange={timeRange} />
       </div>
     </Card>
   );

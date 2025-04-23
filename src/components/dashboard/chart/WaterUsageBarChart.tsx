@@ -10,16 +10,40 @@ import {
   Legend
 } from "recharts";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { TimeRange } from "@/hooks/chart/useWaterUsageData";  // for legend names
 
 interface WaterUsageBarChartProps {
   data: any[];
   isLoading?: boolean;
+  timeRange?: TimeRange; // We want to adjust labels and axes for each chart
 }
 
-export const WaterUsageBarChart = ({ data, isLoading }: WaterUsageBarChartProps) => {
-  const { t } = useLanguage();
+const legendByRange = {
+  "24h": "Hourly Flow Rate (m³/h)",
+  "7d": "Daily Flow Rate (m³/h)",
+  "30d": "Monthly Flow Rate (m³/h)",
+  "6m": "Last 6-months Flow Rate (m³/h)"
+};
 
-  console.log("Rendering WaterUsageBarChart with data:", data?.length);
+const getYAxisMax = (data: any[], timeRange: TimeRange = "24h") => {
+  const maxVolume = Math.max(...data.map(item => item.volume || 0));
+  if (timeRange === "24h") return Math.max(10, Math.ceil(maxVolume * 1.1));
+  if (timeRange === "7d") return Math.max(1000, Math.ceil(maxVolume * 1.1));
+  if (timeRange === "30d") return Math.max(1000, Math.ceil(maxVolume * 1.1));
+  if (timeRange === "6m") return Math.max(20000, Math.ceil(maxVolume * 1.1));
+  return Math.ceil(maxVolume * 1.1);
+}
+
+const getXAxisLabel = (range: TimeRange) => {
+  if (range === "24h") return "Time";
+  if (range === "7d") return "Day";
+  if (range === "30d") return "Day";
+  if (range === "6m") return "Month";
+  return "";
+};
+
+export const WaterUsageBarChart = ({ data, isLoading, timeRange = "24h" }: WaterUsageBarChartProps) => {
+  const { t } = useLanguage();
 
   if (isLoading) {
     return (
@@ -28,7 +52,7 @@ export const WaterUsageBarChart = ({ data, isLoading }: WaterUsageBarChartProps)
       </div>
     );
   }
-  
+
   if (!data || data.length === 0) {
     return (
       <div className="h-full flex items-center justify-center flex-col">
@@ -38,44 +62,45 @@ export const WaterUsageBarChart = ({ data, isLoading }: WaterUsageBarChartProps)
     );
   }
 
-  // Find the maximum flow rate to set appropriate Y-axis domain
-  const maxVolume = Math.max(...data.map(item => item.volume || 0));
-  // Set minumum Y-axis value to 0 and maximum to either 10 or maxVolume if greater
-  const yAxisMax = Math.max(10, Math.ceil(maxVolume * 1.1)); // Add 10% buffer
+  const yAxisMax = getYAxisMax(data, timeRange);
 
   return (
     <ResponsiveContainer width="100%" height="100%">
       <BarChart data={data} margin={{ top: 20, right: 30, left: 20, bottom: 20 }}>
         <CartesianGrid strokeDasharray="3 3" stroke="#282828" />
-        <XAxis 
-          dataKey="name" 
-          stroke="#666" 
+        <XAxis
+          dataKey="name"
+          stroke="#666"
           tickMargin={10}
-          label={{ value: 'Time', position: 'insideBottom', offset: -10, fill: '#666' }}
+          label={{ value: getXAxisLabel(timeRange), position: "insideBottom", offset: -10, fill: "#666" }}
+          // For 30d, show only key ticks
+          interval={timeRange === "30d" ? 0 : undefined}
+          tickFormatter={label => label}
         />
-        <YAxis 
+        <YAxis
           stroke="#666"
           domain={[0, yAxisMax]}
           tickFormatter={(value) => `${value}`}
           label={{ value: 'm³/h', angle: -90, position: 'insideLeft', fill: '#666' }}
         />
         <Tooltip
-          formatter={(value: number) => [`${value} m³/h`, 'Flow Rate']}
+          formatter={(value: number) => [`${value} m³/h`, legendByRange[timeRange] ]}
           contentStyle={{ backgroundColor: '#222', border: '1px solid #444', color: '#fff' }}
-          labelFormatter={(label) => `Time: ${label}`}
+          labelFormatter={(label) => `${getXAxisLabel(timeRange)}: ${label}`}
         />
-        <Legend 
-          verticalAlign="top" 
-          height={36} 
-          formatter={() => "Hourly Flow Rate (m³/h)"}
+        <Legend
+          verticalAlign="top"
+          height={36}
+          formatter={() => legendByRange[timeRange]}
         />
-        <Bar 
-          dataKey="volume" 
+        <Bar
+          dataKey="volume"
           fill="#39afcd"
-          name="Flow Rate"
+          name={legendByRange[timeRange]}
           radius={[4, 4, 0, 0]}
         />
       </BarChart>
     </ResponsiveContainer>
   );
 };
+
