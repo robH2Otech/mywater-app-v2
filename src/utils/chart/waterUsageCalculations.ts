@@ -28,17 +28,17 @@ export const calculateHourlyFlowRates = (measurements: any[]): FlowRate[] => {
 
   // Create buckets for each hour in the last 24 hours
   const now = new Date();
-  const buckets: Record<string, { measurements: any[], startVolume: number | null, endVolume: number | null }> = {};
+  const buckets: Record<string, { measurements: any[], totalVolume: number }> = {};
   
   // Initialize all 24 hour buckets
   for (let offset = 23; offset >= 0; offset--) {
     const hour = new Date(now);
     hour.setHours(now.getHours() - offset, 0, 0, 0); // Reset minutes, seconds, ms
     const hourKey = hour.getHours().toString().padStart(2, '0') + ':00';
-    buckets[hourKey] = { measurements: [], startVolume: null, endVolume: null };
+    buckets[hourKey] = { measurements: [], totalVolume: 0 };
   }
 
-  // Place measurements in appropriate hourly buckets
+  // Group measurements by hour
   for (const measurement of sortedMeasurements) {
     if (!measurement.timestamp) continue;
     
@@ -50,17 +50,10 @@ export const calculateHourlyFlowRates = (measurements: any[]): FlowRate[] => {
     
     // Only process measurements within our 24h window
     if (hourKey in buckets) {
-      const volume = typeof measurement.volume === "number" 
-        ? measurement.volume 
-        : parseFloat(measurement.volume || "0");
-        
-      if (!isNaN(volume)) {
-        buckets[hourKey].measurements.push({
-          ...measurement,
-          parsedVolume: volume,
-          timestamp: timestamp
-        });
-      }
+      buckets[hourKey].measurements.push({
+        ...measurement,
+        timestamp: timestamp
+      });
     }
   }
 
@@ -71,8 +64,8 @@ export const calculateHourlyFlowRates = (measurements: any[]): FlowRate[] => {
     const bucket = buckets[hourKey];
     let hourlyVolume = 0;
     
-    // Sort measurements within the bucket by timestamp
-    if (bucket.measurements.length > 0) {
+    if (bucket.measurements.length >= 2) {
+      // Sort measurements within the hour by timestamp
       bucket.measurements.sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime());
       
       // Get first and last measurement in this hour
@@ -80,20 +73,24 @@ export const calculateHourlyFlowRates = (measurements: any[]): FlowRate[] => {
       const lastMeasurement = bucket.measurements[bucket.measurements.length - 1];
       
       // Calculate volume difference within this hour
-      if (lastMeasurement.parsedVolume >= firstMeasurement.parsedVolume) {
-        hourlyVolume = lastMeasurement.parsedVolume - firstMeasurement.parsedVolume;
-      } else {
-        // If there's a reset or anomaly, take average of measurements
-        const volumes = bucket.measurements.map(m => m.parsedVolume);
-        hourlyVolume = volumes.length > 0 ? 
-          volumes.reduce((sum, vol) => sum + vol, 0) / volumes.length : 0;
-      }
+      const firstVolume = typeof firstMeasurement.volume === 'number' 
+        ? firstMeasurement.volume 
+        : parseFloat(firstMeasurement.volume || '0');
+        
+      const lastVolume = typeof lastMeasurement.volume === 'number' 
+        ? lastMeasurement.volume 
+        : parseFloat(lastMeasurement.volume || '0');
+      
+      // Ensure we calculate the actual usage during this hour, not the cumulative total
+      hourlyVolume = lastVolume - firstVolume;
+      
+      // Handle negative values (could happen if meter resets)
+      if (hourlyVolume < 0) hourlyVolume = 0;
+      
+      // Cap unreasonably large values (likely errors)
+      if (hourlyVolume > 1000) hourlyVolume = 0;
     }
     
-    // Ensure we're not showing negative or astronomical values (likely errors)
-    if (hourlyVolume < 0) hourlyVolume = 0;
-    if (hourlyVolume > 1000000) hourlyVolume = 0; // Cap unreasonable values
-
     flowRates.push({ 
       name: hourKey, 
       volume: Number(hourlyVolume.toFixed(2))

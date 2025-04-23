@@ -29,9 +29,9 @@ const getYAxisMax = (data: any[], timeRange: TimeRange = "24h") => {
   const maxVolume = Math.max(...data.map(item => item.volume || 0));
   
   if (timeRange === "24h") {
-    // Dynamic scaling for hourly data
-    if (maxVolume <= 10) return 10;  // Default minimum for clarity
-    // Round up to next multiple of 10 for cleaner scale
+    // Dynamic scaling for hourly data - start with 10 as minimum
+    if (maxVolume <= 10) return 10;
+    // Round up to next multiple of 10 for cleaner scale if above 10
     return Math.ceil(maxVolume * 1.2 / 10) * 10;
   }
   
