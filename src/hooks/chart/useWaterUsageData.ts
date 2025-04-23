@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Timestamp, collection, query, where, orderBy, getDocs, limit } from "firebase/firestore";
 import { db } from "@/integrations/firebase/client";
@@ -57,22 +58,24 @@ function groupByImportantDays(measurements: any[]): any[] {
 }
 
 function groupByMonth(measurements: any[]): any[] {
-  const monthMap: { [month: string]: { month: Date, total: number, count: number } } = {};
+  const monthMap: { [month: string]: { monthDate: Date, total: number, count: number } } = {};
   for (const m of measurements) {
     if (!m.timestamp) continue;
     const d = new Date(m.timestamp);
     const monthStr = format(d, "yyyy-MM");
     if (!monthMap[monthStr]) {
-      monthMap[monthStr] = { month: new Date(d.getFullYear(), d.getMonth(), 1), total: 0, count: 0 };
+      monthMap[monthStr] = { monthDate: new Date(d.getFullYear(), d.getMonth(), 1), total: 0, count: 0 };
     }
     const v = typeof m.volume === "number" ? m.volume : parseFloat(m.volume ?? "0");
     monthMap[monthStr].total += v;
     monthMap[monthStr].count += 1;
   }
-  return Object.values(monthMap).map(({ month, total, count }) => ({
-    name: format(month, "MMM yyyy"),
-    volume: count > 0 ? Number((total / count).toFixed(2)) : 0
-  })).sort((a, b) => a.month.getTime() - b.month.getTime());
+  return Object.values(monthMap)
+    .map(({ monthDate, total, count }) => ({
+      name: format(monthDate, "MMM yyyy"),
+      volume: count > 0 ? Number((total / count).toFixed(2)) : 0
+    }))
+    .sort((a, b) => new Date(a.name).getTime() - new Date(b.name).getTime());
 }
 
 export const useWaterUsageData = (units: any[] = [], timeRange: TimeRange) => {
