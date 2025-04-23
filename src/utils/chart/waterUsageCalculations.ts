@@ -27,7 +27,7 @@ export const calculateHourlyFlowRates = (measurements: any[]): FlowRate[] => {
   });
 
   // Group measurements by hour
-  const hourlyMeasurements: { [key: string]: any[] } = {};
+  const hourlyGroups: { [key: string]: any[] } = {};
   
   sortedMeasurements.forEach(measurement => {
     if (!measurement.timestamp) return;
@@ -38,21 +38,23 @@ export const calculateHourlyFlowRates = (measurements: any[]): FlowRate[] => {
     
     const hourKey = timestamp.getHours().toString().padStart(2, '0') + ':00';
     
-    if (!hourlyMeasurements[hourKey]) {
-      hourlyMeasurements[hourKey] = [];
+    if (!hourlyGroups[hourKey]) {
+      hourlyGroups[hourKey] = [];
     }
     
-    hourlyMeasurements[hourKey].push({
+    hourlyGroups[hourKey].push({
       ...measurement,
-      parsedTimestamp: timestamp
+      parsedTimestamp: timestamp,
+      volume: typeof measurement.volume === 'number' 
+        ? measurement.volume 
+        : parseFloat(measurement.volume || '0')
     });
   });
 
-  // Calculate actual hourly flow rates by finding the difference between
-  // the first and last measurement in each hour
+  // Calculate flow rates for each hour
   const flowRates: FlowRate[] = [];
   
-  Object.entries(hourlyMeasurements).forEach(([hourKey, hourMeasurements]) => {
+  Object.entries(hourlyGroups).forEach(([hourKey, hourMeasurements]) => {
     if (hourMeasurements.length < 2) {
       // If we have only one measurement in the hour, we can't calculate a flow rate
       // So we'll add a minimal representative value
@@ -63,30 +65,26 @@ export const calculateHourlyFlowRates = (measurements: any[]): FlowRate[] => {
       return;
     }
     
-    // Sort the measurements within this hour
+    // Sort measurements within this hour by timestamp
     hourMeasurements.sort((a, b) => a.parsedTimestamp.getTime() - b.parsedTimestamp.getTime());
     
     // Get first and last measurements for this hour
     const firstMeasurement = hourMeasurements[0];
     const lastMeasurement = hourMeasurements[hourMeasurements.length - 1];
     
-    // Calculate the volume difference - this is the actual hourly flow rate
-    let firstVolume = typeof firstMeasurement.volume === 'number' 
-      ? firstMeasurement.volume 
-      : parseFloat(firstMeasurement.volume || '0');
-      
-    let lastVolume = typeof lastMeasurement.volume === 'number' 
-      ? lastMeasurement.volume 
-      : parseFloat(lastMeasurement.volume || '0');
+    // Calculate volume difference between first and last reading in the hour
+    const firstVolume = firstMeasurement.volume;
+    const lastVolume = lastMeasurement.volume;
     
-    // Calculate difference
-    let hourlyVolume = lastVolume - firstVolume;
+    // Calculate difference (hourly usage)
+    let hourlyUsage = lastVolume - firstVolume;
     
-    // Handle negative or unrealistic values
-    if (hourlyVolume < 0) hourlyVolume = 0;
+    // Handle negative or unrealistic values (over 20 m³ per hour)
+    if (hourlyUsage < 0) hourlyUsage = 0;
+    if (hourlyUsage > 20) hourlyUsage = 20; // Cap at realistic maximum
     
     // Format to two decimal places
-    const formattedVolume = Number(hourlyVolume.toFixed(2));
+    const formattedVolume = Number(hourlyUsage.toFixed(2));
     
     flowRates.push({
       name: hourKey,

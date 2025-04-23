@@ -1,3 +1,4 @@
+
 import {
   BarChart,
   Bar,
@@ -29,13 +30,15 @@ const getYAxisMax = (data: any[], timeRange: TimeRange = "24h") => {
   
   if (timeRange === "24h") {
     // For hourly data, set appropriate scale based on max value
+    // Using more reasonable ranges for hourly flow rates
+    if (maxVolume <= 0.5) return 0.5;
     if (maxVolume <= 1) return 1;
-    if (maxVolume <= 3) return 3;
+    if (maxVolume <= 2) return 2;
     if (maxVolume <= 5) return 5;
     if (maxVolume <= 10) return 10;
     
-    // For anything larger, round up to nearest integer
-    return Math.ceil(maxVolume);
+    // For larger values, round up to next 5
+    return Math.ceil(maxVolume / 5) * 5;
   }
   
   // Keep original scaling for other time ranges
