@@ -61,41 +61,46 @@ export const useWaterUsageData = (units: any[] = [], timeRange: TimeRange) => {
         
         console.log(`Fetching from collection: ${collectionPath}`);
         
-        const q = query(
-          collection(db, collectionPath),
-          where("timestamp", ">=", Timestamp.fromDate(startDate)),
-          where("timestamp", "<=", Timestamp.fromDate(endDate)),
-          orderBy("timestamp", "asc"),
-          limit(measurementLimit)
-        );
-        
-        const querySnapshot = await getDocs(q);
-        console.log(`Found ${querySnapshot.size} measurements for unit ${unit.id}`);
-        
-        if (querySnapshot.empty) {
-          console.log("No measurements found for unit:", unit.id);
-          continue;
-        }
-        
-        const measurements = querySnapshot.docs.map(doc => {
-          const data = doc.data();
+        try {
+          const q = query(
+            collection(db, collectionPath),
+            where("timestamp", ">=", Timestamp.fromDate(startDate)),
+            where("timestamp", "<=", Timestamp.fromDate(endDate)),
+            orderBy("timestamp", "asc"),
+            limit(measurementLimit)
+          );
           
-          // Convert Firestore timestamp to JS Date
-          let timestamp = data.timestamp;
-          if (timestamp && typeof timestamp.toDate === 'function') {
-            timestamp = timestamp.toDate();
-          } else if (typeof timestamp === 'string') {
-            timestamp = new Date(timestamp);
+          const querySnapshot = await getDocs(q);
+          console.log(`Found ${querySnapshot.size} measurements for unit ${unit.id}`);
+          
+          if (querySnapshot.empty) {
+            console.log("No measurements found for unit:", unit.id);
+            continue;
           }
           
-          return {
-            ...data,
-            id: doc.id,
-            timestamp: timestamp
-          };
-        });
-        
-        allMeasurements.push(...measurements);
+          const measurements = querySnapshot.docs.map(doc => {
+            const data = doc.data();
+            
+            // Convert Firestore timestamp to JS Date
+            let timestamp = data.timestamp;
+            if (timestamp && typeof timestamp.toDate === 'function') {
+              timestamp = timestamp.toDate();
+            } else if (typeof timestamp === 'string') {
+              timestamp = new Date(timestamp);
+            }
+            
+            return {
+              ...data,
+              id: doc.id,
+              timestamp: timestamp
+            };
+          });
+          
+          allMeasurements.push(...measurements);
+        } catch (err) {
+          console.error(`Error fetching measurements for unit ${unit.id}:`, err);
+          // Continue to process other units even if one fails
+        }
       }
       
       console.log("All measurements collected:", allMeasurements.length);
@@ -105,12 +110,23 @@ export const useWaterUsageData = (units: any[] = [], timeRange: TimeRange) => {
         console.log("No actual measurements found, generating sample data");
         const sampleData = generateSampleData(24);
         setChartData(sampleData);
+      } else if (allMeasurements.length === 1) {
+        // If only one measurement, we can't calculate flow rates
+        console.log("Only one measurement found, generating sample data");
+        const sampleData = generateSampleData(24);
+        setChartData(sampleData);
       } else {
         // Calculate hourly flow rates from measurements
         const flowRates = calculateHourlyFlowRates(allMeasurements);
         console.log('Calculated flow rates for chart:', flowRates.length);
         
-        setChartData(flowRates);
+        if (flowRates.length === 0) {
+          // If no flow rates could be calculated, use sample data
+          const sampleData = generateSampleData(24);
+          setChartData(sampleData);
+        } else {
+          setChartData(flowRates);
+        }
       }
     } catch (error) {
       console.error("Error fetching measurements for chart:", error);
