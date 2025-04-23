@@ -26,43 +26,66 @@ export const calculateHourlyFlowRates = (measurements: any[]): FlowRate[] => {
     return m.unit_type === 'drop' || m.unit_type === 'office';
   });
   
-  // Group measurements by hour
-  const hourlyData: { [hourKey: string]: { timestamps: Date[], volumes: number[] } } = {};
+  // Map to store hourly data with volume sums and counts
+  const hourlyData: Record<string, { total: number; count: number }> = {};
   
-  for (const measurement of sortedMeasurements) {
+  // Group data by hour and calculate totals
+  for (let i = 0; i < sortedMeasurements.length; i++) {
+    const measurement = sortedMeasurements[i];
+    
+    // Get timestamp for the measurement
     const timestamp = measurement.timestamp instanceof Date 
       ? measurement.timestamp 
       : new Date(measurement.timestamp);
     
-    // Create hour key in format "HH:00"
-    const hourKey = format(timestamp, "HH:00");
+    // Create hour key (format: "HH:00")
+    const hour = timestamp.getHours();
+    const hourKey = `${hour.toString().padStart(2, '0')}:00`;
     
+    // Initialize the hourly data entry if it doesn't exist
     if (!hourlyData[hourKey]) {
-      hourlyData[hourKey] = { timestamps: [], volumes: [] };
+      hourlyData[hourKey] = { total: 0, count: 0 };
     }
     
-    const volume = typeof measurement.volume === 'number' 
-      ? measurement.volume 
-      : parseFloat(measurement.volume || '0');
+    // Extract volume as a number
+    let volume = 0;
+    if (typeof measurement.volume === 'number') {
+      volume = measurement.volume;
+    } else if (typeof measurement.volume === 'string' && measurement.volume.trim() !== '') {
+      volume = parseFloat(measurement.volume);
+    }
     
-    hourlyData[hourKey].timestamps.push(timestamp);
-    hourlyData[hourKey].volumes.push(volume);
+    // Skip invalid volumes
+    if (isNaN(volume)) {
+      continue;
+    }
+    
+    // Add to hourly total and increment count
+    hourlyData[hourKey].total += volume;
+    hourlyData[hourKey].count += 1;
   }
   
-  // Calculate average flow rate for each hour
+  // Create hourly flow rates array from the collected data
   const flowRates: FlowRate[] = [];
   
-  Object.entries(hourlyData).forEach(([hourKey, data]) => {
-    if (data.volumes.length > 0) {
-      const totalVolume = data.volumes.reduce((sum, vol) => sum + vol, 0);
-      const avgVolume = totalVolume / data.volumes.length;
-      
+  // Create entries for all 24 hours (even empty ones)
+  for (let hour = 0; hour < 24; hour++) {
+    const hourKey = `${hour.toString().padStart(2, '0')}:00`;
+    const data = hourlyData[hourKey];
+    
+    if (data && data.count > 0) {
       flowRates.push({
         name: hourKey,
-        volume: Number(avgVolume.toFixed(2))
+        volume: Number((data.total / data.count).toFixed(2))
+      });
+    } else {
+      // Add empty entry
+      flowRates.push({
+        name: hourKey,
+        volume: 0
       });
     }
-  });
+  }
   
   // Sort by hour
   flowRates.sort((a, b) => {
