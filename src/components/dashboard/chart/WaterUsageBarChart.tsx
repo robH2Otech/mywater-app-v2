@@ -27,10 +27,18 @@ const legendByRange = {
 
 const getYAxisMax = (data: any[], timeRange: TimeRange = "24h") => {
   const maxVolume = Math.max(...data.map(item => item.volume || 0));
-  if (timeRange === "24h") return Math.max(10, Math.ceil(maxVolume * 1.1));
+  
+  if (timeRange === "24h") {
+    // Dynamic scaling for hourly data
+    if (maxVolume <= 10) return 10;  // Default minimum for clarity
+    // Round up to next multiple of 10 for cleaner scale
+    return Math.ceil(maxVolume * 1.2 / 10) * 10;
+  }
+  
   if (timeRange === "7d") return Math.max(1000, Math.ceil(maxVolume * 1.1));
   if (timeRange === "30d") return Math.max(1000, Math.ceil(maxVolume * 1.1));
   if (timeRange === "6m") return Math.max(20000, Math.ceil(maxVolume * 1.1));
+  
   return Math.ceil(maxVolume * 1.1);
 }
 
@@ -63,6 +71,7 @@ export const WaterUsageBarChart = ({ data, isLoading, timeRange = "24h" }: Water
   }
 
   const yAxisMax = getYAxisMax(data, timeRange);
+  const volumeUnit = data[0]?.volumeUnit || 'm³';  // Use unit from data if available
 
   return (
     <ResponsiveContainer width="100%" height="100%">
@@ -81,10 +90,10 @@ export const WaterUsageBarChart = ({ data, isLoading, timeRange = "24h" }: Water
           stroke="#666"
           domain={[0, yAxisMax]}
           tickFormatter={(value) => `${value}`}
-          label={{ value: 'm³/h', angle: -90, position: 'insideLeft', fill: '#666' }}
+          label={{ value: volumeUnit + '/h', angle: -90, position: 'insideLeft', fill: '#666' }}
         />
         <Tooltip
-          formatter={(value: number) => [`${value} m³/h`, legendByRange[timeRange] ]}
+          formatter={(value: number) => [`${value} ${volumeUnit}/h`, legendByRange[timeRange] ]}
           contentStyle={{ backgroundColor: '#222', border: '1px solid #444', color: '#fff' }}
           labelFormatter={(label) => `${getXAxisLabel(timeRange)}: ${label}`}
         />
@@ -103,4 +112,3 @@ export const WaterUsageBarChart = ({ data, isLoading, timeRange = "24h" }: Water
     </ResponsiveContainer>
   );
 };
-
