@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Timestamp, collection, query, where, orderBy, getDocs, limit } from "firebase/firestore";
 import { db } from "@/integrations/firebase/client";
-import { subDays, subHours, subMonths, endOfDay, startOfDay, format, isSameDay, isSameMonth, addDays, addMonths } from "date-fns";
+import { subDays, subHours, subMonths, format, addMonths } from "date-fns";
 import { calculateHourlyFlowRates } from "@/utils/chart/waterUsageCalculations";
 
 export type TimeRange = "24h" | "7d" | "30d" | "6m";
@@ -110,21 +110,18 @@ export const useWaterUsageData = (units: any[] = [], timeRange: TimeRange) => {
         case "24h":
         default:
           startDate = subHours(endDate, 24);
-          measurementLimit = 48;
+          measurementLimit = 100;
           break;
       }
 
       const allMeasurements = [];
-
       let unitTypeIsFilter = false;
 
       for (const unit of units) {
         if (!unit.id) continue;
-        
         if (unit.unit_type === 'drop' || unit.unit_type === 'office') {
           unitTypeIsFilter = true;
         }
-        
         const collectionPath = unit.id.startsWith("MYWATER_")
           ? `units/${unit.id}/data`
           : `units/${unit.id}/measurements`;
@@ -156,7 +153,7 @@ export const useWaterUsageData = (units: any[] = [], timeRange: TimeRange) => {
       }
 
       console.log(`Fetched ${allMeasurements.length} measurements for ${range} chart`);
-      
+
       let chart: any[] = [];
 
       if (allMeasurements.length < 2) {
@@ -169,7 +166,7 @@ export const useWaterUsageData = (units: any[] = [], timeRange: TimeRange) => {
         try {
           chart = calculateHourlyFlowRates(allMeasurements);
           console.log(`Calculated ${chart.length} hourly flow rates`);
-          
+
           if (chart.length === 0) {
             chart = generateSampleData("24h");
           }
