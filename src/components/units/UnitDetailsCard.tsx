@@ -28,9 +28,9 @@ export const UnitDetailsCard = ({ unit }: UnitDetailsCardProps) => {
     const numericVolume = typeof volume === 'string' ? parseFloat(volume) : volume;
     if (isNaN(numericVolume)) return "0";
     
-    // Set unit based on unit_type
-    const unit = unit.unit_type === 'drop' || unit.unit_type === 'office' ? 'L' : 'm³';
-    return `${Math.round(numericVolume).toLocaleString()} ${unit}`;
+    // Set unit based on unit_type - using props.unit instead of unit
+    const volumeUnit = unit.unit_type === 'drop' || unit.unit_type === 'office' ? 'L' : 'm³';
+    return `${Math.round(numericVolume).toLocaleString()} ${volumeUnit}`;
   };
 
   return (
