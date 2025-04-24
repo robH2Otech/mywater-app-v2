@@ -1,7 +1,7 @@
 
 import { useState, useEffect } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { onSnapshot } from "firebase/firestore";
+import { onSnapshot, getDocs } from "firebase/firestore";
 import { ProcessedMeasurement } from "@/utils/measurements/types";
 import { 
   updateUnitTotalVolume
@@ -26,7 +26,7 @@ export function useRealtimeMeasurements(unitId: string, count: number = 24) {
     
     try {
       const measurementsQuery = createMeasurementsQuery(unitId, count);
-      const querySnapshot = await measurementsQuery.get?.();
+      const querySnapshot = await getDocs(measurementsQuery);
       
       if (querySnapshot) {
         // Process docs and ensure we get the most recent measurements
