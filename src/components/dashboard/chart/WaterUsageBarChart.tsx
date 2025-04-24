@@ -10,7 +10,8 @@ import {
   Legend
 } from "recharts";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { TimeRange } from "@/hooks/chart/useWaterUsageData";  // for legend names
+import { TimeRange } from "@/hooks/chart/useWaterUsageData";
+import { useEffect, useState } from "react";
 
 interface WaterUsageBarChartProps {
   data: any[];
@@ -32,6 +33,7 @@ const getYAxisMax = (data: any[], timeRange: TimeRange = "24h") => {
   
   // For hourly data, set appropriate scale based on max value 
   if (timeRange === "24h") {
+    if (maxVolume <= 0.05) return 0.05;
     if (maxVolume <= 0.1) return 0.1;
     if (maxVolume <= 0.2) return 0.2;
     if (maxVolume <= 0.5) return 0.5;
@@ -62,11 +64,45 @@ const getXAxisLabel = (range: TimeRange) => {
 
 export const WaterUsageBarChart = ({ data, isLoading, timeRange = "24h" }: WaterUsageBarChartProps) => {
   const { t } = useLanguage();
+  const [processedData, setProcessedData] = useState<any[]>([]);
+  const [maxYAxis, setMaxYAxis] = useState<number>(1);
+
+  // Process data when it changes
+  useEffect(() => {
+    if (!data || data.length === 0) return;
+    
+    console.log(`Processing ${data.length} data points for chart display`);
+    
+    // Format data for chart display (round values for cleaner display)
+    const processed = data.map(item => ({
+      ...item,
+      volume: Number(Number(item.volume).toFixed(4)), // Keep 4 decimal places for small values
+    }));
+    
+    // Set the Y-axis maximum based on the data
+    const yMax = getYAxisMax(processed, timeRange);
+    setMaxYAxis(yMax);
+    setProcessedData(processed);
+    
+    // Log some diagnostic info
+    const nonZeroPoints = processed.filter(item => item.volume > 0).length;
+    console.log(`Chart has ${nonZeroPoints} non-zero data points out of ${processed.length} total`);
+    console.log(`Y-axis maximum set to ${yMax}`);
+    
+    if (nonZeroPoints > 0) {
+      const maxPoint = processed.reduce((max, item) => 
+        item.volume > max.volume ? item : max, processed[0]);
+      console.log(`Maximum data point: ${maxPoint.name} = ${maxPoint.volume}`);
+    }
+  }, [data, timeRange]);
 
   if (isLoading) {
     return (
       <div className="h-full flex items-center justify-center">
-        <p>{t("chart.loading")}</p>
+        <div className="flex flex-col items-center">
+          <div className="w-10 h-10 border-t-2 border-b-2 border-blue-500 rounded-full animate-spin"></div>
+          <p className="text-gray-400 mt-2">{t("chart.loading")}</p>
+        </div>
       </div>
     );
   }
@@ -76,6 +112,12 @@ export const WaterUsageBarChart = ({ data, isLoading, timeRange = "24h" }: Water
       <div className="h-full flex items-center justify-center flex-col">
         <p className="text-gray-400">{t("chart.no_data")}</p>
         <p className="text-xs text-gray-500 mt-2">No flow rate data available</p>
+        <button
+          className="mt-4 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors"
+          onClick={() => window.location.reload()}
+        >
+          Refresh Data
+        </button>
       </div>
     );
   }
@@ -87,11 +129,16 @@ export const WaterUsageBarChart = ({ data, isLoading, timeRange = "24h" }: Water
       <div className="h-full flex items-center justify-center flex-col">
         <p className="text-gray-400">No water usage recorded</p>
         <p className="text-xs text-gray-500 mt-2">All flow rates are zero for this period</p>
+        <button
+          className="mt-4 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors"
+          onClick={() => window.location.reload()}
+        >
+          Refresh Data
+        </button>
       </div>
     );
   }
 
-  const yAxisMax = getYAxisMax(data, timeRange);
   const volumeUnit = data[0]?.volumeUnit || 'm³';  // Use unit from data if available
 
   const formatTooltipValue = (value: any, name: string, props: any) => {
@@ -101,7 +148,20 @@ export const WaterUsageBarChart = ({ data, isLoading, timeRange = "24h" }: Water
     const units = dataPoint?.unitIds?.length > 0 
       ? `Units: ${dataPoint.unitIds.join(', ')}` 
       : 'No unit data';
-    return [`${value} ${volumeUnit}`, units];
+    
+    // Format the value based on its magnitude
+    let formattedValue = value;
+    if (value < 0.01) {
+      formattedValue = value.toFixed(4);
+    } else if (value < 0.1) {
+      formattedValue = value.toFixed(3);
+    } else if (value < 1) {
+      formattedValue = value.toFixed(2);
+    } else {
+      formattedValue = value.toFixed(1);
+    }
+    
+    return [`${formattedValue} ${volumeUnit}`, units];
   };
   
   const formatXAxis = (label: string) => {
@@ -111,9 +171,17 @@ export const WaterUsageBarChart = ({ data, isLoading, timeRange = "24h" }: Water
     return label;
   };
 
+  const formatYAxis = (value: number) => {
+    if (value === 0) return '0';
+    if (value < 0.01) return value.toFixed(3);
+    if (value < 0.1) return value.toFixed(2);
+    if (value < 1) return value.toFixed(1);
+    return value.toString();
+  };
+
   return (
     <ResponsiveContainer width="100%" height="100%">
-      <BarChart data={data} margin={{ top: 20, right: 30, left: 20, bottom: 20 }}>
+      <BarChart data={processedData} margin={{ top: 20, right: 30, left: 20, bottom: 20 }}>
         <CartesianGrid strokeDasharray="3 3" stroke="#282828" />
         <XAxis
           dataKey="name"
@@ -125,8 +193,8 @@ export const WaterUsageBarChart = ({ data, isLoading, timeRange = "24h" }: Water
         />
         <YAxis
           stroke="#666"
-          domain={[0, yAxisMax]}
-          tickFormatter={(value) => `${value}`}
+          domain={[0, maxYAxis]}
+          tickFormatter={formatYAxis}
           label={{ value: `${volumeUnit}/${timeRange === "24h" ? "h" : timeRange === "7d" || timeRange === "30d" ? "day" : "month"}`, angle: -90, position: 'insideLeft', fill: '#666' }}
         />
         <Tooltip

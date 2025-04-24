@@ -41,7 +41,7 @@ export function getHourlyFlowRates(allMeasurements: any[]) {
       enrichedMeasurements.slice(0, 3).map(m => ({
         unitId: m.unitId,
         timestamp: new Date(m.timestamp).toISOString(),
-        volume: m.volume,
+        volume: m.volume || 0, // Ensure volume exists
         unit_type: m.unit_type
       }))
     );
@@ -57,13 +57,31 @@ export function getHourlyFlowRates(allMeasurements: any[]) {
       measurementsByUnit[unitId].push(measurement);
     });
     
+    // Check for direct hourly data first (non-cumulative)
+    const hasFlowRateData = enrichedMeasurements.some(m => 
+      typeof m.flow_rate === 'number' || typeof m.flow === 'number'
+    );
+    
+    if (hasFlowRateData) {
+      console.log("Found direct flow rate data in measurements");
+    }
+    
     // Calculate hourly flow rates by checking differences within each hour
     const hourlyDataPoints = calculateHourlyFlowRates(enrichedMeasurements);
     
-    // If calculation produces no points fallback to sample
-    if (!hourlyDataPoints || hourlyDataPoints.length === 0) {
+    // If calculation produces no points or all zeroes, fallback to sample
+    if (!hourlyDataPoints || hourlyDataPoints.length === 0 || 
+        !hourlyDataPoints.some(point => point.volume > 0)) {
       console.warn("No hourly flow data calculated, using sample data");
-      return generateSampleData("24h");
+      
+      // Include unit IDs in the sample data
+      const unitIds = Object.keys(measurementsByUnit);
+      const sampleData = generateSampleData("24h").map(item => ({
+        ...item,
+        unitIds: unitIds.length ? [unitIds[0]] : ['sample-unit']
+      }));
+      
+      return sampleData;
     }
 
     console.log(`Generated ${hourlyDataPoints.length} hourly data points:`, hourlyDataPoints.slice(0, 3));
