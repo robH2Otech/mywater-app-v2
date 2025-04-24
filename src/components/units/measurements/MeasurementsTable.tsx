@@ -1,0 +1,117 @@
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { ProcessedMeasurement } from "@/utils/measurements/types";
+import { formatHumanReadableTimestamp } from "@/utils/measurements/formatUtils";
+import { useMemo } from "react";
+
+interface MeasurementsTableProps {
+  measurements: ProcessedMeasurement[];
+  isUVCUnit: boolean;
+}
+
+export function MeasurementsTable({ measurements, isUVCUnit }: MeasurementsTableProps) {
+  // Calculate hourly volume differences for each measurement
+  const measurementsWithHourlyVolume = useMemo(() => {
+    if (!measurements.length) return [];
+    
+    return measurements.map((measurement, index) => {
+      let hourlyVolume = 0;
+      
+      // If not the last measurement, calculate difference with the next one (measurements are in reverse order)
+      if (index < measurements.length - 1) {
+        const currentVolume = typeof measurement.volume === 'number' ? measurement.volume : 0;
+        const previousVolume = typeof measurements[index + 1].volume === 'number' ? measurements[index + 1].volume : 0;
+        
+        // Calculate the difference
+        const volumeDiff = Math.max(0, currentVolume - previousVolume);
+        hourlyVolume = volumeDiff;
+      }
+      
+      return {
+        ...measurement,
+        hourlyVolume
+      };
+    });
+  }, [measurements, isUVCUnit]);
+  
+  const renderMeasurementRow = (measurement: any) => {
+    try {
+      // Format timestamp to match Firestore's display format
+      const displayTimestamp = measurement.rawTimestamp 
+        ? formatHumanReadableTimestamp(measurement.rawTimestamp)
+        : formatHumanReadableTimestamp(measurement.timestamp);
+        
+      // Handle volume display based on unit type
+      let displayVolume;
+      let volumeUnit;
+      
+      if (isUVCUnit) {
+        // For UVC units, keep in cubic meters
+        const cubicMeters = typeof measurement.volume === 'number' ? measurement.volume : 0;
+        displayVolume = cubicMeters.toFixed(2);
+        volumeUnit = "m³";
+      } else {
+        // For DROP units, display in liters
+        displayVolume = typeof measurement.volume === 'number' 
+          ? Math.round(measurement.volume) 
+          : 0;
+        volumeUnit = "L";
+      }
+          
+      // Format temperature with 1 decimal place
+      const temperature = typeof measurement.temperature === 'number' 
+        ? `${measurement.temperature.toFixed(1)}°C` 
+        : "N/A";
+        
+      // For UVC units, show UVC hours
+      // For DROP units, show hourly volume in liters
+      const lastColumn = isUVCUnit
+        ? (measurement.uvc_hours !== undefined && typeof measurement.uvc_hours === 'number'
+            ? measurement.uvc_hours.toFixed(1)
+            : "N/A")
+        : `${Math.round(measurement.hourlyVolume)} L`;
+
+      return (
+        <TableRow key={measurement.id || measurement.timestamp} className="hover:bg-spotify-accent/20">
+          <TableCell className="text-white">{displayTimestamp}</TableCell>
+          <TableCell className="text-white text-right">{displayVolume} {volumeUnit}</TableCell>
+          <TableCell className="text-white text-right">{temperature}</TableCell>
+          <TableCell className="text-white text-right">{lastColumn}</TableCell>
+        </TableRow>
+      );
+    } catch (err) {
+      console.error("Error rendering measurement row:", err, measurement);
+      return (
+        <TableRow key={measurement.id || 'error-row'}>
+          <TableCell colSpan={4} className="text-red-400 text-center">Error displaying measurement data</TableCell>
+        </TableRow>
+      );
+    }
+  };
+
+  return (
+    <Table>
+      <TableHeader>
+        <TableRow className="border-b border-spotify-accent">
+          <TableHead className="text-left text-gray-400">Timestamp</TableHead>
+          <TableHead className="text-right text-gray-400">
+            Volume {isUVCUnit ? "(m³)" : "(L)"}
+          </TableHead>
+          <TableHead className="text-right text-gray-400">Temperature</TableHead>
+          <TableHead className="text-right text-gray-400">
+            {isUVCUnit ? "UVC Hours" : "Last hour volume (L)"}
+          </TableHead>
+        </TableRow>
+      </TableHeader>
+      <TableBody>
+        {measurementsWithHourlyVolume.map(renderMeasurementRow)}
+      </TableBody>
+    </Table>
+  );
+}
