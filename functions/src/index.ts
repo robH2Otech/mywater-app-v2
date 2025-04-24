@@ -2,6 +2,7 @@
 import * as admin from 'firebase-admin';
 import { updateAllLocations, manualLocationUpdate, cleanupLocationHistory } from './locations/updateLocations';
 import { onOrderCreated } from './orders/orderWebhook';
+import { onReferralUsed } from './referrals/handleReferralWebhook';
 
 // Initialize Firebase Admin
 admin.initializeApp();
@@ -42,5 +43,6 @@ export {
   updateAllLocations,
   manualLocationUpdate,
   cleanupLocationHistory,
-  onOrderCreated
+  onOrderCreated,
+  onReferralUsed
 };
