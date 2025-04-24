@@ -12,15 +12,18 @@ import {
 import { useQuery } from "@tanstack/react-query";
 import { doc, getDoc } from "firebase/firestore";
 import { db } from "@/integrations/firebase/client";
-import { useMemo } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { formatHumanReadableTimestamp } from "@/utils/measurements/formatUtils";
+import { Button } from "@/components/ui/button";
+import { RefreshCw } from "lucide-react";
 
 interface UnitMeasurementsProps {
   unitId: string;
 }
 
 export function UnitMeasurements({ unitId }: UnitMeasurementsProps) {
-  const { measurements, isLoading, error } = useRealtimeMeasurements(unitId);
+  const { measurements, isLoading, error, refetch } = useRealtimeMeasurements(unitId);
+  const [isRefreshing, setIsRefreshing] = useState(false);
   
   // Fetch unit details to determine unit type
   const { data: unit } = useQuery({
@@ -36,6 +39,24 @@ export function UnitMeasurements({ unitId }: UnitMeasurementsProps) {
   const unitType = unit?.unit_type || 'uvc';
   const isUVCUnit = unitType === 'uvc' || isSpecialUVC;
   const isFilterUnit = unitType === 'drop' || unitType === 'office';
+  
+  // Force a refresh every 30 seconds
+  useEffect(() => {
+    const interval = setInterval(() => {
+      refetch();
+    }, 30000);
+    
+    return () => clearInterval(interval);
+  }, [refetch]);
+  
+  const handleManualRefresh = async () => {
+    setIsRefreshing(true);
+    try {
+      await refetch();
+    } finally {
+      setTimeout(() => setIsRefreshing(false), 1000);
+    }
+  };
   
   // Calculate last hour volume differences for each measurement
   const measurementsWithHourlyVolume = useMemo(() => {
@@ -103,7 +124,7 @@ export function UnitMeasurements({ unitId }: UnitMeasurementsProps) {
           : `${Math.round(measurement.hourlyVolume)} L`;
 
         return (
-          <TableRow key={measurement.id} className="hover:bg-spotify-accent/20">
+          <TableRow key={measurement.id || measurement.timestamp} className="hover:bg-spotify-accent/20">
             <TableCell className="text-white">{displayTimestamp}</TableCell>
             <TableCell className="text-white text-right">{displayVolume} {volumeUnit}</TableCell>
             <TableCell className="text-white text-right">{temperature}</TableCell>
@@ -127,6 +148,16 @@ export function UnitMeasurements({ unitId }: UnitMeasurementsProps) {
       <Card className="bg-spotify-darker border-primary/20 p-6">
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-xl font-semibold text-white">Last 24 hours Water Data</h2>
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={handleManualRefresh}
+            disabled={isRefreshing}
+            className="border-spotify-accent text-white hover:bg-spotify-accent/20"
+          >
+            <RefreshCw className={`h-4 w-4 mr-2 ${isRefreshing ? 'animate-spin' : ''}`} />
+            Refresh
+          </Button>
         </div>
         <div className="h-60 flex items-center justify-center">
           <p className="text-red-400">Error loading measurements: {error.message}</p>
@@ -139,7 +170,19 @@ export function UnitMeasurements({ unitId }: UnitMeasurementsProps) {
     <Card className="bg-spotify-darker border-primary/20 p-6">
       <div className="flex justify-between items-center mb-4">
         <h2 className="text-xl font-semibold text-white">Last 24 hours Water Data</h2>
-        {isLoading && <span className="text-gray-400 text-sm">Syncing...</span>}
+        <div className="flex items-center">
+          {isLoading && <span className="text-gray-400 text-sm mr-3">Syncing...</span>}
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={handleManualRefresh}
+            disabled={isRefreshing}
+            className="border-spotify-accent text-white hover:bg-spotify-accent/20"
+          >
+            <RefreshCw className={`h-4 w-4 mr-2 ${isRefreshing ? 'animate-spin' : ''}`} />
+            Refresh
+          </Button>
+        </div>
       </div>
 
       {isLoading && measurements.length === 0 ? (

@@ -9,13 +9,18 @@ import { useState } from "react";
  * Gets the correct collection path for measurements based on unit ID
  */
 export function getMeasurementsCollectionPath(unitId: string): string {
-  // Special case for MYWATER 003 units
+  // Special case handling for different paths based on unit ID patterns
   if (unitId === "MYWATER_003") {
     return "units/MYWATER_003/measurements";
   }
   
-  // Default path structure
-  return `measurements/${unitId}/data`;
+  // Check if it's a MYWATER unit (excluding special cases)
+  if (unitId.startsWith("MYWATER_")) {
+    return `units/${unitId}/data`;
+  }
+  
+  // Try additional paths for different unit types
+  return `units/${unitId}/measurements`;
 }
 
 /**
@@ -89,9 +94,38 @@ export function useMeasurementCollection(unitId?: string | string[]) {
           
           const measurementsQuery = createMeasurementsQuery(id);
           const measurementsSnapshot = await getDocs(measurementsQuery);
-          const unitMeasurements = processMeasurementDocuments(measurementsSnapshot.docs);
           
-          allMeasurements.push(...unitMeasurements);
+          // If no measurements found in primary path, try alternative paths
+          if (measurementsSnapshot.empty) {
+            console.log(`No measurements found in primary path for unit ${id}, trying alternatives`);
+            
+            // Try additional collection paths
+            const alternativePaths = [
+              `measurements/${id}/data`,
+              `units/${id}/measurements`,
+              `units/${id}/data`
+            ];
+            
+            for (const path of alternativePaths) {
+              console.log(`Trying alternative path for ${id}: ${path}`);
+              const altQuery = query(
+                collection(db, path),
+                orderBy("timestamp", "desc"),
+                limit(24)
+              );
+              
+              const altSnapshot = await getDocs(altQuery);
+              if (!altSnapshot.empty) {
+                console.log(`Found ${altSnapshot.size} measurements in alternative path: ${path}`);
+                const unitMeasurements = processMeasurementDocuments(altSnapshot.docs);
+                allMeasurements.push(...unitMeasurements);
+                break; // Found measurements, stop trying alternatives
+              }
+            }
+          } else {
+            const unitMeasurements = processMeasurementDocuments(measurementsSnapshot.docs);
+            allMeasurements.push(...unitMeasurements);
+          }
         }
         
         // Sort all measurements by timestamp (most recent first)
@@ -108,6 +142,33 @@ export function useMeasurementCollection(unitId?: string | string[]) {
       console.log(`Fetching measurements for unit: ${unitId}`);
       const measurementsQuery = createMeasurementsQuery(unitId);
       const measurementsSnapshot = await getDocs(measurementsQuery);
+      
+      // If no measurements found in primary path, try alternative paths
+      if (measurementsSnapshot.empty) {
+        console.log(`No measurements found in primary path for unit ${unitId}, trying alternatives`);
+        
+        // Try additional collection paths
+        const alternativePaths = [
+          `measurements/${unitId}/data`,
+          `units/${unitId}/measurements`,
+          `units/${unitId}/data`
+        ];
+        
+        for (const path of alternativePaths) {
+          console.log(`Trying alternative path for ${unitId}: ${path}`);
+          const altQuery = query(
+            collection(db, path),
+            orderBy("timestamp", "desc"),
+            limit(24)
+          );
+          
+          const altSnapshot = await getDocs(altQuery);
+          if (!altSnapshot.empty) {
+            console.log(`Found ${altSnapshot.size} measurements in alternative path: ${path}`);
+            return processMeasurementDocuments(altSnapshot.docs);
+          }
+        }
+      }
       
       return processMeasurementDocuments(measurementsSnapshot.docs);
     },

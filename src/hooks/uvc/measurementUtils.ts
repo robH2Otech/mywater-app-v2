@@ -15,9 +15,6 @@ export async function fetchLatestMeasurement(unitId: string): Promise<{
   try {
     console.log(`Fetching latest measurement for unit ${unitId}`);
     
-    // Special case for MYWATER 003
-    const isSpecialUVC = unitId === "MYWATER_003";
-    
     // Use the correct measurements collection path based on unit ID
     const collectionPath = getMeasurementsCollectionPath(unitId);
     console.log(`Using collection path: ${collectionPath} for unit ${unitId}`);
@@ -75,13 +72,19 @@ export async function fetchLatestMeasurement(unitId: string): Promise<{
       };
     }
     
-    // For special unit, try an alternate collection path if the first attempt failed
-    if (isSpecialUVC) {
-      const alternateCollectionPath = "units/MYWATER_003/measurements";
-      console.log(`Trying alternate collection path for ${unitId}: ${alternateCollectionPath}`);
+    // If no measurements found in primary path, try alternative paths
+    const alternativePaths = [
+      `measurements/${unitId}/data`,
+      `units/${unitId}/measurements`,
+      `units/${unitId}/data`
+    ];
+    
+    // Try each alternative path
+    for (const path of alternativePaths) {
+      console.log(`Trying alternative path for ${unitId}: ${path}`);
       
       const alternateQuery = query(
-        collection(db, alternateCollectionPath),
+        collection(db, path),
         orderBy("timestamp", "desc"),
         limit(1)
       );
@@ -90,7 +93,7 @@ export async function fetchLatestMeasurement(unitId: string): Promise<{
       
       if (!alternateSnapshot.empty) {
         const latestMeasurement = alternateSnapshot.docs[0].data();
-        console.log(`Found measurement in alternate path:`, latestMeasurement);
+        console.log(`Found measurement in alternate path ${path}:`, latestMeasurement);
         
         let uvcHours = 0;
         if (latestMeasurement.uvc_hours !== undefined) {
@@ -126,7 +129,7 @@ export async function fetchLatestMeasurement(unitId: string): Promise<{
       }
     }
     
-    console.log(`No measurement data found for unit ${unitId} in collection: ${collectionPath}`);
+    console.log(`No measurement data found for unit ${unitId} after trying all paths`);
     return {
       latestMeasurementUvcHours: 0,
       hasMeasurementData: false
