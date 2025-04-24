@@ -1,7 +1,6 @@
-
 import { useState, useEffect } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { onSnapshot, getDocs } from "firebase/firestore";
+import { onSnapshot, getDocs, collection, query, orderBy, limit } from "firebase/firestore";
 import { ProcessedMeasurement } from "@/utils/measurements/types";
 import { 
   updateUnitTotalVolume
@@ -10,6 +9,14 @@ import {
   createMeasurementsQuery,
   processMeasurementDocuments
 } from "./useMeasurementCollection";
+import { db } from "@/integrations/firebase/client";
+
+const MEASUREMENT_PATHS = [
+  "units/{unitId}/measurements",
+  "units/{unitId}/data",
+  "measurements/{unitId}/data",
+  "device-data/{unitId}/measurements"
+];
 
 export function useRealtimeMeasurements(unitId: string, count: number = 24) {
   const [measurements, setMeasurements] = useState<ProcessedMeasurement[]>([]);
@@ -17,7 +24,6 @@ export function useRealtimeMeasurements(unitId: string, count: number = 24) {
   const [error, setError] = useState<Error | null>(null);
   const queryClient = useQueryClient();
 
-  // Function to manually refetch data
   const refetch = async () => {
     if (!unitId) return;
     
@@ -25,33 +31,63 @@ export function useRealtimeMeasurements(unitId: string, count: number = 24) {
     setError(null);
     
     try {
-      const measurementsQuery = createMeasurementsQuery(unitId, count);
-      const querySnapshot = await getDocs(measurementsQuery);
+      let foundData = false;
+      let measurementsData: ProcessedMeasurement[] = [];
       
-      if (querySnapshot) {
-        // Process docs and ensure we get the most recent measurements
-        const measurementsData = processMeasurementDocuments(
-          querySnapshot.docs
-        );
+      for (const pathTemplate of MEASUREMENT_PATHS) {
+        const collectionPath = pathTemplate.replace('{unitId}', unitId);
+        console.log(`Refetch: Trying collection path: ${collectionPath} for unit ${unitId}`);
         
-        setMeasurements(measurementsData);
-        
-        // Update the unit's total_volume with the latest cumulative volume measurement
-        if (measurementsData.length > 0) {
-          const latestMeasurement = measurementsData[0];
+        try {
+          const measurementsQuery = query(
+            collection(db, collectionPath),
+            orderBy("timestamp", "desc"),
+            limit(count)
+          );
           
-          const latestCumulativeVolume = typeof latestMeasurement.cumulative_volume === 'number'
-            ? latestMeasurement.cumulative_volume
-            : latestMeasurement.volume;
+          const querySnapshot = await getDocs(measurementsQuery);
           
-          await updateUnitTotalVolume(unitId, latestCumulativeVolume);
-          
-          // Invalidate queries to refresh UI across the entire app
-          queryClient.invalidateQueries({ queryKey: ['units'] });
-          queryClient.invalidateQueries({ queryKey: ['filter-units'] });
-          queryClient.invalidateQueries({ queryKey: ['unit', unitId] });
-          queryClient.invalidateQueries({ queryKey: ['uvc-units'] });
-          queryClient.invalidateQueries({ queryKey: ['reports'] });
+          if (!querySnapshot.empty) {
+            measurementsData = processMeasurementDocuments(querySnapshot.docs);
+            
+            console.log(`Refetch: Found ${measurementsData.length} measurements for unit ${unitId} in path ${collectionPath}`);
+            
+            if (measurementsData.length > 0) {
+              foundData = true;
+              
+              measurementsData = measurementsData.map(m => ({
+                ...m,
+                unitId: m.unitId || unitId
+              }));
+              
+              setMeasurements(measurementsData);
+              
+              const latestMeasurement = measurementsData[0];
+              
+              const latestCumulativeVolume = typeof latestMeasurement.cumulative_volume === 'number'
+                ? latestMeasurement.cumulative_volume
+                : latestMeasurement.volume;
+              
+              await updateUnitTotalVolume(unitId, latestCumulativeVolume);
+              
+              queryClient.invalidateQueries({ queryKey: ['units'] });
+              queryClient.invalidateQueries({ queryKey: ['filter-units'] });
+              queryClient.invalidateQueries({ queryKey: ['unit', unitId] });
+              queryClient.invalidateQueries({ queryKey: ['uvc-units'] });
+              queryClient.invalidateQueries({ queryKey: ['reports'] });
+              
+              break;
+            }
+          }
+        } catch (err) {
+          console.warn(`Refetch: Error trying path ${collectionPath} for unit ${unitId}:`, err);
+        }
+      }
+      
+      if (!foundData) {
+        console.log(`Refetch: No measurement data found for unit ${unitId} after trying all paths`);
+        if (measurements.length === 0) {
+          setMeasurements([]);
         }
       }
     } catch (err) {
@@ -75,65 +111,112 @@ export function useRealtimeMeasurements(unitId: string, count: number = 24) {
     setError(null);
 
     let unsubscribe: () => void;
+    let isSubscribed = true;
 
-    try {
-      const measurementsQuery = createMeasurementsQuery(unitId, count);
-      
-      unsubscribe = onSnapshot(
-        measurementsQuery,
-        async (querySnapshot) => {
+    const setupSubscription = async () => {
+      try {
+        for (const pathTemplate of MEASUREMENT_PATHS) {
+          const collectionPath = pathTemplate.replace('{unitId}', unitId);
+          console.log(`Setting up subscription for path: ${collectionPath} for unit ${unitId}`);
+          
           try {
-            // Process docs and ensure we get the most recent measurements (last 24 hours)
-            // The query already sorts by timestamp desc and limits to count (24)
-            const measurementsData = processMeasurementDocuments(
-              querySnapshot.docs
+            const measurementsQuery = query(
+              collection(db, collectionPath),
+              orderBy("timestamp", "desc"),
+              limit(count)
             );
             
-            setMeasurements(measurementsData);
-            setIsLoading(false);
+            unsubscribe = onSnapshot(
+              measurementsQuery,
+              async (querySnapshot) => {
+                if (!isSubscribed) return;
+                
+                try {
+                  const measurementsData = processMeasurementDocuments(
+                    querySnapshot.docs
+                  );
+                  
+                  console.log(`Received ${measurementsData.length} measurements for unit ${unitId} from path ${collectionPath}`);
+                  
+                  const enrichedMeasurements = measurementsData.map(m => ({
+                    ...m,
+                    unitId: m.unitId || unitId
+                  }));
+                  
+                  setMeasurements(enrichedMeasurements);
+                  setIsLoading(false);
+                  
+                  if (enrichedMeasurements.length > 0) {
+                    const latestMeasurement = enrichedMeasurements[0]; 
+                    
+                    const latestCumulativeVolume = typeof latestMeasurement.cumulative_volume === 'number'
+                      ? latestMeasurement.cumulative_volume
+                      : latestMeasurement.volume;
+                    
+                    console.log(`Latest measurement for unit ${unitId}: cumulative volume=${latestCumulativeVolume}, UVC hours=${latestMeasurement.uvc_hours}`);
+                    
+                    await updateUnitTotalVolume(unitId, latestCumulativeVolume);
+                    
+                    queryClient.invalidateQueries({ queryKey: ['units'] });
+                    queryClient.invalidateQueries({ queryKey: ['filter-units'] });
+                    queryClient.invalidateQueries({ queryKey: ['unit', unitId] });
+                    queryClient.invalidateQueries({ queryKey: ['uvc-units'] });
+                    queryClient.invalidateQueries({ queryKey: ['reports'] });
+                  }
+                } catch (err) {
+                  if (!isSubscribed) return;
+                  console.error("Error processing measurements data:", err);
+                  setError(err as Error);
+                  setIsLoading(false);
+                }
+              },
+              (err) => {
+                if (!isSubscribed) return;
+                console.error(`Error listening to measurements at ${collectionPath}:`, err);
+              }
+            );
             
-            // Update the unit's total_volume with the latest cumulative volume measurement
-            if (measurementsData.length > 0) {
-              // Get first item (most recent) to use for updates
-              const latestMeasurement = measurementsData[0]; 
-              
-              // Use cumulative_volume instead of volume for the update
-              // This ensures we maintain correct total after power loss/restart
-              const latestCumulativeVolume = typeof latestMeasurement.cumulative_volume === 'number'
-                ? latestMeasurement.cumulative_volume
-                : latestMeasurement.volume; // Fallback to volume if cumulative not available
-              
-              console.log(`Latest measurement for unit ${unitId}: cumulative volume=${latestCumulativeVolume}, UVC hours=${latestMeasurement.uvc_hours}`);
-              
-              // Update unit with latest cumulative volume
-              await updateUnitTotalVolume(unitId, latestCumulativeVolume);
-              
-              // Invalidate queries to refresh UI across the entire app
-              queryClient.invalidateQueries({ queryKey: ['units'] });
-              queryClient.invalidateQueries({ queryKey: ['filter-units'] });
-              queryClient.invalidateQueries({ queryKey: ['unit', unitId] });
-              queryClient.invalidateQueries({ queryKey: ['uvc-units'] });
-              queryClient.invalidateQueries({ queryKey: ['reports'] });
+            const testSnapshot = await getDocs(measurementsQuery);
+            
+            if (!testSnapshot.empty) {
+              console.log(`Subscription set up successfully for ${unitId} at ${collectionPath} with ${testSnapshot.size} measurements`);
+              return true;
+            } else {
+              console.log(`Path ${collectionPath} exists but has no data for ${unitId}`);
+              unsubscribe();
             }
           } catch (err) {
-            console.error("Error processing measurements data:", err);
-            setError(err as Error);
-            setIsLoading(false);
+            console.warn(`Failed to set up listener at ${collectionPath} for ${unitId}:`, err);
           }
-        },
-        (err) => {
-          console.error(`Error listening to measurements:`, err);
-          setError(err as Error);
-          setIsLoading(false);
         }
-      );
-    } catch (err) {
-      console.error(`Failed to set up measurements listener:`, err);
-      setError(err as Error);
-      setIsLoading(false);
-    }
+        
+        console.log(`Couldn't find a working data path for unit ${unitId}, will use manual fetching`);
+        
+        await refetch();
+        
+        const intervalId = setInterval(() => {
+          if (isSubscribed) {
+            refetch();
+          }
+        }, 30000);
+        
+        return () => {
+          clearInterval(intervalId);
+        };
+      } catch (err) {
+        if (!isSubscribed) return;
+        console.error(`Failed to set up any measurement listener for ${unitId}:`, err);
+        setError(err as Error);
+        setIsLoading(false);
+      }
+      
+      return false;
+    };
+    
+    setupSubscription();
 
     return () => {
+      isSubscribed = false;
       if (unsubscribe) {
         unsubscribe();
       }
