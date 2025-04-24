@@ -1,11 +1,10 @@
-
 import { useQuery } from "@tanstack/react-query";
 import { doc, getDoc, collection, getDocs, query, where, orderBy, limit } from "firebase/firestore";
 import { db } from "@/integrations/firebase/client";
 import { UnitData } from "@/types/analytics";
 import { determineUnitStatus } from "@/utils/unitStatusUtils";
 import { determineUVCStatus } from "@/utils/uvcStatusUtils";
-import { getMeasurementsCollectionPath } from "@/hooks/measurements/useMeasurementCollection";
+import { getMeasurementsCollectionPath } from "@/hooks/measurements/utils/collectionPaths";
 
 export function useUnitDetails(id: string | undefined) {
   return useQuery({

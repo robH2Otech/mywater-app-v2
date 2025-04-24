@@ -2,8 +2,11 @@
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { ProcessedMeasurement } from "./types/measurementTypes";
-import { MEASUREMENT_PATHS, tryCollectionPath } from "./utils/collectionPaths";
+import { MEASUREMENT_PATHS, tryCollectionPath, getMeasurementsCollectionPath } from "./utils/collectionPaths";
 import { processMeasurementDocuments } from "./utils/dataProcessing";
+
+// Re-export the getMeasurementsCollectionPath function so other modules can use it
+export { getMeasurementsCollectionPath } from "./utils/collectionPaths";
 
 export function useMeasurementCollection(unitId?: string | string[]) {
   const [measurements, setMeasurements] = useState<ProcessedMeasurement[]>([]);

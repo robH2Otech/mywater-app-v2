@@ -1,11 +1,10 @@
-
 import { useQuery } from "@tanstack/react-query";
 import { collection, getDocs, query, where, doc, getDoc } from "firebase/firestore";
 import { db } from "@/integrations/firebase/client";
 import { useToast } from "@/hooks/use-toast";
 import { processUnitUVCData } from "./uvcDataUtils";
 import { fetchLatestMeasurement } from "./measurementUtils";
-import { getMeasurementsCollectionPath } from "@/hooks/measurements/useMeasurementCollection";
+import { getMeasurementsCollectionPath } from "@/hooks/measurements/utils/collectionPaths";
 
 export interface UnitWithUVC {
   id: string;

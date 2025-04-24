@@ -1,7 +1,7 @@
 
 import { collection, query, where, orderBy, limit, getDocs } from "firebase/firestore";
 import { db } from "@/integrations/firebase/client";
-import { getMeasurementsCollectionPath } from "@/hooks/measurements/useMeasurementCollection";
+import { getMeasurementsCollectionPath } from "@/hooks/measurements/utils/collectionPaths";
 
 // Array of possible measurement collection paths to try for each unit
 const MEASUREMENT_PATHS = [

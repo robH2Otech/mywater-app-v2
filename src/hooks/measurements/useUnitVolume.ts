@@ -1,7 +1,7 @@
 
 import { doc, getDoc, updateDoc, collection, query, orderBy, limit, getDocs } from "firebase/firestore";
 import { db } from "@/integrations/firebase/client";
-import { getMeasurementsCollectionPath } from "./useMeasurementCollection";
+import { getMeasurementsCollectionPath } from "./utils/collectionPaths";
 
 /**
  * Fetches a unit's starting volume from Firestore

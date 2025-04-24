@@ -1,5 +1,6 @@
+
 import { UnitData } from "@/types/analytics";
-import { getMeasurementsCollectionPath } from "@/hooks/measurements/useMeasurementCollection";
+import { getMeasurementsCollectionPath } from "@/hooks/measurements/utils/collectionPaths";
 import { collection, query, where, orderBy, getDocs, Timestamp } from "firebase/firestore";
 import { db } from "@/integrations/firebase/client";
 import { subDays, format, parseISO } from "date-fns";
