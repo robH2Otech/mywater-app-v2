@@ -1,3 +1,4 @@
+
 import { DocumentData } from "firebase/firestore";
 
 export interface UnitData {
@@ -12,6 +13,7 @@ export interface UnitData {
   uvc_hours?: number;
   uvc_status?: string;
   uvc_installation_date?: string;
+  is_uvc_accumulated?: boolean;
   contact_name?: string;
   contact_email?: string;
   contact_phone?: string;
