@@ -179,6 +179,36 @@ export const WaterUsageBarChart = ({ data, isLoading, timeRange = "24h" }: Water
     return value.toString();
   };
 
+  const CustomTooltip = ({ active, payload, label }: any) => {
+    if (active && payload && payload.length) {
+      const dataPoint = payload[0].payload;
+      const volume = dataPoint.volume;
+      const units = dataPoint.unitIds || [];
+      
+      let volumeDisplay;
+      if (volume < 0.01) {
+        volumeDisplay = volume.toFixed(4);
+      } else if (volume < 0.1) {
+        volumeDisplay = volume.toFixed(3);
+      } else if (volume < 1) {
+        volumeDisplay = volume.toFixed(2);
+      } else {
+        volumeDisplay = volume.toFixed(1);
+      }
+      
+      return (
+        <div className="bg-gray-800 p-3 rounded shadow border border-gray-700 text-white text-sm">
+          <p className="font-medium">Hour: {label}</p>
+          <p className="text-blue-300">{units.length ? units.join(', ') : 'No unit data'}: {volumeDisplay} m³</p>
+          {units.length > 1 && (
+            <p className="text-xs text-gray-400 mt-1">Multiple units contributing to this value</p>
+          )}
+        </div>
+      );
+    }
+    return null;
+  };
+
   return (
     <ResponsiveContainer width="100%" height="100%">
       <BarChart data={processedData} margin={{ top: 20, right: 30, left: 20, bottom: 20 }}>
@@ -197,13 +227,7 @@ export const WaterUsageBarChart = ({ data, isLoading, timeRange = "24h" }: Water
           tickFormatter={formatYAxis}
           label={{ value: `${volumeUnit}/${timeRange === "24h" ? "h" : timeRange === "7d" || timeRange === "30d" ? "day" : "month"}`, angle: -90, position: 'insideLeft', fill: '#666' }}
         />
-        <Tooltip
-          formatter={formatTooltipValue}
-          contentStyle={{ backgroundColor: '#222', border: '1px solid #444', color: '#fff' }}
-          labelFormatter={(label) => `${getXAxisLabel(timeRange)}: ${label}`}
-          isAnimationActive={true}
-          animationDuration={300}
-        />
+        <Tooltip content={<CustomTooltip />} />
         <Legend
           verticalAlign="top"
           height={36}

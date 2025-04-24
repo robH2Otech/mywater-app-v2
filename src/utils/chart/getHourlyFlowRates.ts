@@ -31,6 +31,9 @@ export function getHourlyFlowRates(allMeasurements: any[]) {
         unitType = 'drop';
       } else if (unitId.toLowerCase().includes('office')) {
         unitType = 'office';
+      } else if (unitId.toLowerCase().includes('mywater')) {
+        // MYWATER devices typically measure in m³ directly
+        unitType = 'mywater';
       }
       
       return { ...measurement, unit_type: unitType };
@@ -56,15 +59,6 @@ export function getHourlyFlowRates(allMeasurements: any[]) {
       }
       measurementsByUnit[unitId].push(measurement);
     });
-    
-    // Check for direct hourly data first (non-cumulative)
-    const hasFlowRateData = enrichedMeasurements.some(m => 
-      typeof m.flow_rate === 'number' || typeof m.flow === 'number'
-    );
-    
-    if (hasFlowRateData) {
-      console.log("Found direct flow rate data in measurements");
-    }
     
     // Calculate hourly flow rates by checking differences within each hour
     const hourlyDataPoints = calculateHourlyFlowRates(enrichedMeasurements);

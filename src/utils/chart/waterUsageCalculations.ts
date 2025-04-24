@@ -78,57 +78,57 @@ export const calculateHourlyFlowRates = (measurements: any[]): FlowRate[] => {
     hourlyResults[hourKey] = { volume: 0, unitIds: new Set() };
   }
   
-  // Process each unit separately
+  // Process each unit separately to calculate hourly changes in cumulative volumes
   Object.entries(unitMeasurements).forEach(([unitId, unitData]) => {
     // Skip if less than 2 measurements for this unit
     if (unitData.length < 2) return;
     
-    // Sort by timestamp (should already be sorted, but making sure)
+    // Sort by timestamp (ensuring chronological order)
     unitData.sort((a, b) => a.normalizedTimestamp.getTime() - b.normalizedTimestamp.getTime());
     
-    // Process measurements by hour
-    const hourlyData: {[hour: string]: {first?: any, last?: any}} = {};
-    
-    // Group by hour and find first and last measurement for each hour
-    unitData.forEach(measurement => {
-      const hour = measurement.hour;
-      
-      if (!hourlyData[hour]) {
-        hourlyData[hour] = { first: measurement, last: measurement };
-      } else {
-        // Update first if this measurement is earlier
-        if (measurement.normalizedTimestamp < hourlyData[hour].first.normalizedTimestamp) {
-          hourlyData[hour].first = measurement;
-        }
-        
-        // Update last if this measurement is later
-        if (measurement.normalizedTimestamp > hourlyData[hour].last.normalizedTimestamp) {
-          hourlyData[hour].last = measurement;
-        }
+    // Check if data appears to be cumulative by looking at first few points
+    let isCumulative = true;
+    for (let i = 1; i < Math.min(unitData.length, 5); i++) {
+      if (unitData[i].normalizedVolume < unitData[i-1].normalizedVolume) {
+        isCumulative = false;
+        break;
       }
-    });
+    }
     
-    // Calculate delta for each hour that has both first and last measurements
-    Object.entries(hourlyData).forEach(([hour, data]) => {
-      if (data.first && data.last && data.first !== data.last) {
-        // Calculate volume difference within this hour
-        const volumeDelta = data.last.normalizedVolume - data.first.normalizedVolume;
+    console.log(`Unit ${unitId}: ${isCumulative ? 'cumulative' : 'direct'} measurements detected`);
+    
+    if (isCumulative) {
+      // Process consecutive measurements to calculate deltas by hour
+      for (let i = 1; i < unitData.length; i++) {
+        const prevMeasurement = unitData[i-1];
+        const currMeasurement = unitData[i];
         
-        // Only add positive deltas (ignore resets or errors)
+        const prevTimestamp = prevMeasurement.normalizedTimestamp;
+        const currTimestamp = currMeasurement.normalizedTimestamp;
+        
+        // Skip if measurements are more than 2 hours apart or if volume decreased (meter reset)
+        const hoursDiff = (currTimestamp.getTime() - prevTimestamp.getTime()) / (1000 * 60 * 60);
+        if (hoursDiff > 2 || currMeasurement.normalizedVolume < prevMeasurement.normalizedVolume) {
+          continue;
+        }
+        
+        const volumeDelta = currMeasurement.normalizedVolume - prevMeasurement.normalizedVolume;
+        
+        // If delta is significant (and not negative from resets), assign to the current hour
         if (volumeDelta > 0) {
-          // Cap unreasonable values (20 m³/hour seems like a reasonable maximum)
-          const cappedDelta = Math.min(volumeDelta, 20);
+          const hour = format(currTimestamp, 'HH:00');
           
-          hourlyResults[hour].volume += cappedDelta;
+          // Only add if the delta isn't unreasonably large (unlikely to use >50m³ in an hour)
+          const reasonableDelta = Math.min(volumeDelta, 50);
+          
+          hourlyResults[hour].volume += reasonableDelta;
           hourlyResults[hour].unitIds.add(unitId);
           
-          console.log(`Hour ${hour} - Unit ${unitId}: ${data.first.normalizedVolume.toFixed(4)} -> ${data.last.normalizedVolume.toFixed(4)} = ${cappedDelta.toFixed(4)} m³`);
+          console.log(`Hour ${hour} - Unit ${unitId}: Delta ${volumeDelta.toFixed(4)}m³ (${prevMeasurement.normalizedVolume.toFixed(4)} -> ${currMeasurement.normalizedVolume.toFixed(4)})`);
         }
       }
-    });
-
-    // Also add direct measurements if they're flow rates rather than cumulative values
-    if (unitData.some(m => m.flow_rate || m.flow)) {
+    } else {
+      // For direct flow measurements (non-cumulative)
       unitData.forEach(measurement => {
         const hour = measurement.hour;
         let flowRate = 0;
@@ -137,63 +137,18 @@ export const calculateHourlyFlowRates = (measurements: any[]): FlowRate[] => {
           flowRate = measurement.flow_rate;
         } else if (typeof measurement.flow === 'number') {
           flowRate = measurement.flow;
+        } else if (typeof measurement.normalizedVolume === 'number') {
+          // Use the direct volume reading for non-cumulative data
+          flowRate = measurement.normalizedVolume;
         }
         
         if (flowRate > 0) {
           hourlyResults[hour].volume += flowRate;
           hourlyResults[hour].unitIds.add(unitId);
-          console.log(`Direct flow rate for hour ${hour} - Unit ${unitId}: ${flowRate.toFixed(4)} m³/h`);
         }
       });
     }
   });
-
-  // If we don't have any non-zero values, try calculating differently
-  const hasNonZeroValues = Object.values(hourlyResults).some(result => result.volume > 0);
-  
-  if (!hasNonZeroValues && measurements.length > 0) {
-    console.log("No flow rate deltas found, trying simple approach with direct values");
-    
-    // Reset results
-    for (let i = 0; i < 24; i++) {
-      const hourDate = new Date(now);
-      hourDate.setHours(i, 0, 0, 0);
-      const hourKey = format(hourDate, 'HH:00');
-      hourlyResults[hourKey] = { volume: 0, unitIds: new Set() };
-    }
-    
-    // Simply use the most recent measurement for each hour
-    measurements.forEach(measurement => {
-      if (!measurement.timestamp) return;
-      
-      const timestamp = measurement.timestamp instanceof Date 
-        ? measurement.timestamp 
-        : new Date(measurement.timestamp);
-      
-      const hour = format(timestamp, 'HH:00');
-      const unitId = measurement.unitId || measurement.id || 'unknown';
-      
-      // Convert liters to cubic meters if needed
-      const isLiterUnit = measurement.unit_type === 'drop' || measurement.unit_type === 'office';
-      let volume = typeof measurement.volume === 'number' 
-        ? measurement.volume 
-        : parseFloat(measurement.volume || '0');
-        
-      if (isLiterUnit && !isNaN(volume)) {
-        volume = volume / 1000;
-      }
-      
-      // Use a small fraction of the total volume as hourly rate (just to show something)
-      // Cap at 2 m³/hour to be reasonable
-      const hourlyEstimate = Math.min(volume * 0.05, 2);
-      
-      if (hourlyEstimate > 0) {
-        hourlyResults[hour].volume = Math.max(hourlyResults[hour].volume, hourlyEstimate);
-        hourlyResults[hour].unitIds.add(unitId);
-        console.log(`Using estimated hourly rate for ${hour}: ${hourlyEstimate.toFixed(4)} m³ (from total ${volume.toFixed(4)})`);
-      }
-    });
-  }
 
   // Convert to array format for the chart
   const result: FlowRate[] = Object.entries(hourlyResults).map(([hour, data]) => ({
@@ -209,8 +164,10 @@ export const calculateHourlyFlowRates = (measurements: any[]): FlowRate[] => {
     return hourA - hourB;
   });
   
-  console.log(`Final hourly flow rates (${result.length} hours):`, 
-    result.filter(r => r.volume > 0).map(r => `${r.name}: ${r.volume.toFixed(4)}m³ (${r.unitIds?.length || 0} units)`));
+  // Log total flow rates
+  const totalFlow = result.reduce((sum, item) => sum + item.volume, 0);
+  console.log(`Total flow across all hours: ${totalFlow.toFixed(4)}m³`);
+  console.log(`Hours with data: ${result.filter(r => r.volume > 0).length}`);
   
   return result;
 };
