@@ -85,7 +85,14 @@ export const useWaterUsageData = (units: any[] = [], timeRange: TimeRange) => {
               timestamp = new Date(timestamp);
             }
             
-            return { ...data, id: doc.id, timestamp };
+            // Add unitId and unit_type to each measurement
+            return { 
+              ...data, 
+              id: doc.id, 
+              timestamp,
+              unitId: unit.id,
+              unit_type: unit.unit_type || 'uvc' // Default to uvc if not specified
+            };
           });
           
           allMeasurements.push(...measurements);
@@ -123,7 +130,7 @@ export const useWaterUsageData = (units: any[] = [], timeRange: TimeRange) => {
       // Add volume unit to each data point
       const chartWithUnits = chart.map(item => ({
         ...item,
-        volumeUnit: unitTypeIsFilter ? 'L' : 'm³'
+        volumeUnit: 'm³' // Always use m³ as we convert liters to m³
       }));
 
       setChartData(chartWithUnits);

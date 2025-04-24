@@ -80,6 +80,12 @@ export const WaterUsageBarChart = ({ data, isLoading, timeRange = "24h" }: Water
   const yAxisMax = getYAxisMax(data, timeRange);
   const volumeUnit = data[0]?.volumeUnit || 'm³';  // Use unit from data if available
 
+  const formatTooltipValue = (value: any, name: string, props: any) => {
+    const dataPoint = data[props.payload.index];
+    const units = dataPoint?.unitIds?.join(', ') || 'All units';
+    return [`${value} ${volumeUnit}`, `${units}`];
+  };
+
   return (
     <ResponsiveContainer width="100%" height="100%">
       <BarChart data={data} margin={{ top: 20, right: 30, left: 20, bottom: 20 }}>
@@ -100,7 +106,7 @@ export const WaterUsageBarChart = ({ data, isLoading, timeRange = "24h" }: Water
           label={{ value: volumeUnit + '/h', angle: -90, position: 'insideLeft', fill: '#666' }}
         />
         <Tooltip
-          formatter={(value: number) => [`${value} ${volumeUnit}/h`, legendByRange[timeRange] ]}
+          formatter={formatTooltipValue}
           contentStyle={{ backgroundColor: '#222', border: '1px solid #444', color: '#fff' }}
           labelFormatter={(label) => `${getXAxisLabel(timeRange)}: ${label}`}
         />
