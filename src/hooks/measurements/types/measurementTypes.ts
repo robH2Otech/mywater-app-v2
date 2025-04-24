@@ -10,6 +10,11 @@ export interface RawMeasurement {
   cumulative_volume?: number;
   unitId?: string;
   unit_type?: string;
+  // Adding properties that are being accessed in dataProcessing.ts
+  value?: number;
+  temp?: number;
+  uvc?: number;
+  total_volume?: number | string;
 }
 
 export interface ProcessedMeasurement {
