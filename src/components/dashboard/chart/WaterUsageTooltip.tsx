@@ -1,10 +1,10 @@
 
 import React from 'react';
 
-interface WaterUsageTooltipProps {
-  active: boolean;
-  payload: any[];
-  label: string;
+export interface WaterUsageTooltipProps {
+  active?: boolean;
+  payload?: any[];
+  label?: string;
 }
 
 export const WaterUsageTooltip = ({ active, payload, label }: WaterUsageTooltipProps) => {

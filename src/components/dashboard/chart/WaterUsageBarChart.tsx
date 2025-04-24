@@ -84,7 +84,7 @@ export const WaterUsageBarChart = ({
           }}
           label={{ value: "m³/h", angle: -90, position: 'insideLeft', fill: '#666' }}
         />
-        <Tooltip content={(props) => <WaterUsageTooltip {...props} />} />
+        <Tooltip content={<WaterUsageTooltip />} />
         <Legend
           verticalAlign="top"
           height={36}
