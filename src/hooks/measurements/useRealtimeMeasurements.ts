@@ -17,6 +17,53 @@ export function useRealtimeMeasurements(unitId: string, count: number = 24) {
   const [error, setError] = useState<Error | null>(null);
   const queryClient = useQueryClient();
 
+  // Function to manually refetch data
+  const refetch = async () => {
+    if (!unitId) return;
+    
+    setIsLoading(true);
+    setError(null);
+    
+    try {
+      const measurementsQuery = createMeasurementsQuery(unitId, count);
+      const querySnapshot = await measurementsQuery.get?.();
+      
+      if (querySnapshot) {
+        // Process docs and ensure we get the most recent measurements
+        const measurementsData = processMeasurementDocuments(
+          querySnapshot.docs
+        );
+        
+        setMeasurements(measurementsData);
+        
+        // Update the unit's total_volume with the latest cumulative volume measurement
+        if (measurementsData.length > 0) {
+          const latestMeasurement = measurementsData[0];
+          
+          const latestCumulativeVolume = typeof latestMeasurement.cumulative_volume === 'number'
+            ? latestMeasurement.cumulative_volume
+            : latestMeasurement.volume;
+          
+          await updateUnitTotalVolume(unitId, latestCumulativeVolume);
+          
+          // Invalidate queries to refresh UI across the entire app
+          queryClient.invalidateQueries({ queryKey: ['units'] });
+          queryClient.invalidateQueries({ queryKey: ['filter-units'] });
+          queryClient.invalidateQueries({ queryKey: ['unit', unitId] });
+          queryClient.invalidateQueries({ queryKey: ['uvc-units'] });
+          queryClient.invalidateQueries({ queryKey: ['reports'] });
+        }
+      }
+    } catch (err) {
+      console.error("Error refetching measurements data:", err);
+      setError(err as Error);
+    } finally {
+      setIsLoading(false);
+    }
+    
+    return measurements;
+  };
+
   useEffect(() => {
     if (!unitId) {
       setMeasurements([]);
@@ -93,5 +140,5 @@ export function useRealtimeMeasurements(unitId: string, count: number = 24) {
     };
   }, [unitId, count, queryClient]);
 
-  return { measurements, isLoading, error };
+  return { measurements, isLoading, error, refetch };
 }
