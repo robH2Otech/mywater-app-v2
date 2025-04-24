@@ -11,6 +11,7 @@ import { Card } from "@/components/ui/card";
 import { TabTriggerItem } from "./TabTriggerItem";
 import { TabContentItem } from "./TabContentItem";
 import { PrivateUser } from "@/types/privateUser";
+import { PrivateUserEditForm } from "@/components/users/private/PrivateUserEditForm";
 
 interface DashboardTabsProps {
   userData: DocumentData | null;
@@ -18,9 +19,23 @@ interface DashboardTabsProps {
 
 export function DashboardTabs({ userData }: DashboardTabsProps) {
   const [activeTab, setActiveTab] = useState("profile");
+  const [isEditing, setIsEditing] = useState(false);
   
   // Convert DocumentData to PrivateUser type or null
   const privateUserData = userData as PrivateUser | null;
+
+  const handleEdit = () => {
+    setIsEditing(true);
+  };
+  
+  const handleCancelEdit = () => {
+    setIsEditing(false);
+  };
+  
+  const handleSaveEdit = (updatedData: any) => {
+    // Logic to handle the updated user data will be added here if needed
+    setIsEditing(false);
+  };
   
   return (
     <div className="space-y-6">
@@ -50,7 +65,18 @@ export function DashboardTabs({ userData }: DashboardTabsProps) {
           </TabsList>
           
           <TabContentItem value="profile">
-            <PrivateUserProfile userData={privateUserData} />
+            {isEditing ? (
+              <PrivateUserEditForm 
+                userData={privateUserData} 
+                onCancel={handleCancelEdit}
+                onSave={handleSaveEdit}
+              />
+            ) : (
+              <PrivateUserProfile
+                userData={privateUserData}
+                onEdit={handleEdit}
+              />
+            )}
           </TabContentItem>
           
           <TabContentItem value="referrals">

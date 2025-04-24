@@ -1,10 +1,26 @@
 
+import { useState } from "react";
 import { PrivateUserProfile } from "@/components/users/private/PrivateUserProfile";
 import { usePrivateUserData } from "@/hooks/dashboard/usePrivateUserData";
 import { motion } from "framer-motion";
+import { PrivateUserEditForm } from "@/components/users/private/PrivateUserEditForm";
 
 export function ProfilePage() {
   const { userData, loading } = usePrivateUserData();
+  const [isEditing, setIsEditing] = useState(false);
+  
+  const handleEdit = () => {
+    setIsEditing(true);
+  };
+  
+  const handleCancelEdit = () => {
+    setIsEditing(false);
+  };
+  
+  const handleSaveEdit = (updatedData: any) => {
+    // Logic to handle the updated user data will be added here if needed
+    setIsEditing(false);
+  };
   
   if (loading) {
     return (
@@ -30,7 +46,19 @@ export function ProfilePage() {
         </h2>
         <p className="text-blue-300/80 mt-1">Manage your account and device information</p>
       </div>
-      <PrivateUserProfile userData={userData} />
+      
+      {isEditing ? (
+        <PrivateUserEditForm 
+          userData={userData} 
+          onCancel={handleCancelEdit}
+          onSave={handleSaveEdit}
+        />
+      ) : (
+        <PrivateUserProfile 
+          userData={userData} 
+          onEdit={handleEdit}
+        />
+      )}
     </motion.div>
   );
 }
