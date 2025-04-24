@@ -10,12 +10,14 @@ export const MEASUREMENT_PATHS = [
 ];
 
 export function getMeasurementsCollectionPath(unitId: string): string {
-  if (unitId === "MYWATER_003") {
-    return "units/MYWATER_003/measurements";
+  // For all MYWATER units, use the same collection path pattern
+  if (unitId.startsWith("MYWATER_")) {
+    return `units/${unitId}/measurements`;
   }
   
-  if (unitId.startsWith("MYWATER_")) {
-    return `units/${unitId}/data`;
+  // Logic for other unit types
+  if (unitId.includes("UVC")) {
+    return `units/${unitId}/measurements`;
   }
   
   return `units/${unitId}/measurements`;

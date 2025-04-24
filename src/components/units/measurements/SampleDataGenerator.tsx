@@ -10,20 +10,30 @@ interface SampleDataGeneratorProps {
 }
 
 export function SampleDataGenerator({ unitId }: SampleDataGeneratorProps) {
-  // Generate sample data specifically for MYWATER_003 or other demo units
-  if (unitId === "MYWATER_003") {
+  // Generate sample data for any MYWATER unit
+  if (unitId.startsWith("MYWATER_")) {
     const now = new Date();
     const sampleMeasurements = [];
     
     // Create sample measurements for the past 5 hours
     for (let i = 0; i < 5; i++) {
       const time = new Date(now.getTime() - i * 60 * 60 * 1000);
+      
+      // Customize data based on unit ID to make it look realistic
+      const baseVolume = unitId === "MYWATER_003" ? 1255 : 
+                         unitId === "MYWATER_002" ? 980 :
+                         unitId === "MYWATER_001" ? 1150 : 1500;
+      
+      const baseUvcHours = unitId === "MYWATER_003" ? 1957 :
+                          unitId === "MYWATER_002" ? 1620 :
+                          unitId === "MYWATER_001" ? 2150 : 1200;
+      
       sampleMeasurements.push({
         id: `sample-${i}`,
         timestamp: time.toISOString(),
-        volume: 1255 - (i * 5),
+        volume: baseVolume - (i * 5),
         temperature: 20 + (Math.random() * 2),
-        uvc_hours: i === 0 ? 1957 : (1957 - i),
+        uvc_hours: i === 0 ? baseUvcHours : (baseUvcHours - i),
         hourlyVolume: i === 0 ? 5 : Math.round(Math.random() * 10),
       });
     }

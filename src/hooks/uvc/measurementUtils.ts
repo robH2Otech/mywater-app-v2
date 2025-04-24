@@ -91,14 +91,19 @@ export async function fetchLatestMeasurement(unitId: string): Promise<{
       }
     }
     
-    // Special case for MYWATER_003 - use mock data for demo purposes
-    if (unitId === "MYWATER_003") {
-      console.log("Generating demo data for MYWATER_003");
+    // Special case for all MYWATER units - use mock data for demo purposes
+    if (unitId.startsWith("MYWATER_")) {
+      console.log(`Generating demo data for ${unitId}`);
       
       // Generate sample data that looks realistic
       const now = new Date();
-      const uvcHours = 1957;
-      const volume = 1255.25;
+      const uvcHours = unitId === "MYWATER_003" ? 1957 :
+                      unitId === "MYWATER_002" ? 1620 :
+                      unitId === "MYWATER_001" ? 2150 : 1200;
+      
+      const volume = unitId === "MYWATER_003" ? 1255.25 :
+                    unitId === "MYWATER_002" ? 980.50 :
+                    unitId === "MYWATER_001" ? 1150.75 : 1500.30;
       
       return {
         latestMeasurementUvcHours: uvcHours,

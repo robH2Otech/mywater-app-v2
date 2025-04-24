@@ -40,9 +40,9 @@ export function UnitMeasurements({ unitId }: UnitMeasurementsProps) {
   });
   
   // Determine unit type for proper display
-  const isSpecialUVC = unitId === "MYWATER_003" || unitId === "MYWATER_001";
-  const unitType = unit?.unit_type || (isSpecialUVC ? 'uvc' : 'drop');
-  const isUVCUnit = unitType === 'uvc' || isSpecialUVC || unitId.includes("UVC");
+  const isMyWaterUnit = unitId.startsWith("MYWATER_");
+  const unitType = unit?.unit_type || (isMyWaterUnit ? 'uvc' : 'drop');
+  const isUVCUnit = unitType === 'uvc' || isMyWaterUnit || unitId.includes("UVC");
   
   // Set last refreshed time on component mount
   useEffect(() => {
@@ -101,7 +101,7 @@ export function UnitMeasurements({ unitId }: UnitMeasurementsProps) {
 
       {isLoading && measurements.length === 0 ? (
         <EmptyMeasurements isLoading={true} onRefresh={handleManualRefresh} />
-      ) : measurements.length === 0 && unitId !== "MYWATER_003" ? (
+      ) : measurements.length === 0 && !isMyWaterUnit ? (
         <EmptyMeasurements isLoading={false} onRefresh={handleManualRefresh} />
       ) : measurements.length > 0 ? (
         <div className="overflow-x-auto">
@@ -110,7 +110,7 @@ export function UnitMeasurements({ unitId }: UnitMeasurementsProps) {
             isUVCUnit={isUVCUnit} 
           />
         </div>
-      ) : unitId === "MYWATER_003" ? (
+      ) : isMyWaterUnit ? (
         <div className="overflow-x-auto">
           <Table>
             <TableBody>

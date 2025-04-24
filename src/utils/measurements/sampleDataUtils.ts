@@ -18,15 +18,33 @@ export const initializeSampleMeasurements = async (unitId: string) => {
     }
     
     const unitData = unitDoc.data();
+    
+    // Set base values based on unit ID
+    const isMyWaterUnit = unitId.startsWith('MYWATER_');
+    
+    // Set initial values based on unit type
     let cumulativeVolume = parseFloat(unitData.total_volume || "0");
+    if (isMyWaterUnit && cumulativeVolume === 0) {
+      // Set default starting volumes for MYWATER units
+      cumulativeVolume = unitId === "MYWATER_003" ? 1255 :
+                         unitId === "MYWATER_002" ? 980 :
+                         unitId === "MYWATER_001" ? 1150 : 1500;
+    }
     
     // Determine the collection path based on unit ID
-    const isMyWaterUnit = unitId.startsWith('MYWATER_');
-    const collectionPath = isMyWaterUnit ? `units/${unitId}/data` : `units/${unitId}/measurements`;
+    const collectionPath = isMyWaterUnit ? 
+      `units/${unitId}/measurements` : `units/${unitId}/measurements`;
     
     // Create sample measurements for the past 24 hours (1 per hour)
     const now = new Date();
     let cumulativeUvcHours = parseFloat(unitData.uvc_hours || "0");
+    
+    // Set default UVC hours for MYWATER units if needed
+    if (isMyWaterUnit && cumulativeUvcHours === 0) {
+      cumulativeUvcHours = unitId === "MYWATER_003" ? 1957 :
+                          unitId === "MYWATER_002" ? 1620 :
+                          unitId === "MYWATER_001" ? 2150 : 1200;
+    }
     
     for (let i = 24; i >= 1; i--) {
       // Create timestamp for this measurement (i hours ago)
