@@ -20,19 +20,9 @@ export const calculateHourlyFlowRates = (measurements: any[]): FlowRate[] => {
     return [];
   }
 
-  // Initialize results object with all 24 hours
-  const hourlyResults: { [hour: string]: { volume: number, unitIds: Set<string> } } = {};
-  
-  // Create entries for all 24 hours to ensure complete chart
-  for (let i = 0; i < 24; i++) {
-    const hourKey = i.toString().padStart(2, '0') + ':00';
-    hourlyResults[hourKey] = { volume: 0, unitIds: new Set() };
-  }
-
   // Group measurements by unitId first
   const unitMeasurements: { [unitId: string]: any[] } = {};
-
-  // Parse and normalize measurement data
+  
   measurements.forEach(measurement => {
     if (!measurement.timestamp) return;
     
@@ -42,7 +32,7 @@ export const calculateHourlyFlowRates = (measurements: any[]): FlowRate[] => {
       unitMeasurements[unitId] = [];
     }
     
-    // Create a copy with normalized data
+    // Ensure timestamp is a Date object
     const timestamp = measurement.timestamp instanceof Date 
       ? measurement.timestamp 
       : new Date(measurement.timestamp);
@@ -66,53 +56,66 @@ export const calculateHourlyFlowRates = (measurements: any[]): FlowRate[] => {
     });
   });
 
+  // Initialize results object with all 24 hours
+  const hourlyResults: { [hour: string]: { volume: number, unitIds: Set<string> } } = {};
+  
+  // Create entries for all 24 hours to ensure complete chart
+  for (let i = 0; i < 24; i++) {
+    const hourKey = i.toString().padStart(2, '0') + ':00';
+    hourlyResults[hourKey] = { volume: 0, unitIds: new Set() };
+  }
+  
   // Process each unit separately
   Object.entries(unitMeasurements).forEach(([unitId, unitData]) => {
     // Skip if less than 2 measurements for this unit
     if (unitData.length < 2) return;
     
-    // Sort by timestamp
+    // Sort by timestamp (should already be sorted, but making sure)
     unitData.sort((a, b) => a.normalizedTimestamp.getTime() - b.normalizedTimestamp.getTime());
     
-    // Group measurements by hour
-    const measurementsByHour: { [hour: string]: any[] } = {};
+    // Process measurements by hour
+    const hourlyData: {[hour: string]: {first?: any, last?: any}} = {};
     
+    // Group by hour and find first and last measurement for each hour
     unitData.forEach(measurement => {
-      const hourKey = measurement.hour;
+      const hour = measurement.hour;
       
-      if (!measurementsByHour[hourKey]) {
-        measurementsByHour[hourKey] = [];
+      if (!hourlyData[hour]) {
+        hourlyData[hour] = { first: measurement, last: measurement };
+      } else {
+        // Update first if this measurement is earlier
+        if (measurement.normalizedTimestamp < hourlyData[hour].first.normalizedTimestamp) {
+          hourlyData[hour].first = measurement;
+        }
+        
+        // Update last if this measurement is later
+        if (measurement.normalizedTimestamp > hourlyData[hour].last.normalizedTimestamp) {
+          hourlyData[hour].last = measurement;
+        }
       }
-      
-      measurementsByHour[hourKey].push(measurement);
     });
     
-    // Calculate flow rate for each hour
-    Object.entries(measurementsByHour).forEach(([hour, hourMeasurements]) => {
-      if (hourMeasurements.length < 2) return;
-      
-      // Get first and last measurement in this hour
-      const firstMeasurement = hourMeasurements[0];
-      const lastMeasurement = hourMeasurements[hourMeasurements.length - 1];
-      
-      // Calculate usage as difference between last and first measurement in this hour
-      let hourlyUsage = lastMeasurement.normalizedVolume - firstMeasurement.normalizedVolume;
-      
-      // Only account for positive usage (negative could be meter reset or error)
-      if (hourlyUsage <= 0) return;
-      
-      // Cap unreasonable values (20 m³/hour seems like a reasonable maximum)
-      if (hourlyUsage > 20) hourlyUsage = 20;
-      
-      // Add this unit's usage to the hour's total
-      hourlyResults[hour].volume += hourlyUsage;
-      hourlyResults[hour].unitIds.add(unitId);
-      
-      console.log(`Hour ${hour} - Unit ${unitId}: ${firstMeasurement.normalizedVolume} -> ${lastMeasurement.normalizedVolume} = ${hourlyUsage} m³`);
+    // Calculate delta for each hour that has both first and last measurements
+    Object.entries(hourlyData).forEach(([hour, data]) => {
+      if (data.first && data.last && data.first !== data.last) {
+        // Calculate volume difference within this hour
+        const volumeDelta = data.last.normalizedVolume - data.first.normalizedVolume;
+        
+        // Only add positive deltas (ignore resets or errors)
+        if (volumeDelta > 0) {
+          // Cap unreasonable values (20 m³/hour seems like a reasonable maximum)
+          const cappedDelta = Math.min(volumeDelta, 20);
+          
+          hourlyResults[hour].volume += cappedDelta;
+          hourlyResults[hour].unitIds.add(unitId);
+          
+          console.log(`Hour ${hour} - Unit ${unitId}: ${data.first.normalizedVolume.toFixed(2)} -> ${data.last.normalizedVolume.toFixed(2)} = ${cappedDelta.toFixed(2)} m³`);
+        }
+      }
     });
   });
 
-  // Convert results to expected format
+  // Convert to array format for the chart
   const result: FlowRate[] = Object.entries(hourlyResults).map(([hour, data]) => ({
     name: hour,
     volume: Number(data.volume.toFixed(2)),

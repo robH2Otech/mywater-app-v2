@@ -1,3 +1,4 @@
+
 import {
   BarChart,
   Bar,
@@ -27,8 +28,11 @@ const legendByRange = {
 const getYAxisMax = (data: any[], timeRange: TimeRange = "24h") => {
   const maxVolume = Math.max(...data.map(item => item.volume || 0));
   
+  if (maxVolume <= 0) return 0.5; // Default for empty charts
+  
+  // For hourly data, set appropriate scale based on max value 
   if (timeRange === "24h") {
-    // For hourly data, set appropriate scale based on max value
+    if (maxVolume <= 0.1) return 0.1;
     if (maxVolume <= 0.2) return 0.2;
     if (maxVolume <= 0.5) return 0.5;
     if (maxVolume <= 1) return 1;
@@ -94,8 +98,10 @@ export const WaterUsageBarChart = ({ data, isLoading, timeRange = "24h" }: Water
     if (value <= 0) return ["No usage", ""];
     
     const dataPoint = data[props.payload.index];
-    const units = dataPoint?.unitIds?.join(', ') || 'All units';
-    return [`${value} ${volumeUnit}`, `Units: ${units}`];
+    const units = dataPoint?.unitIds?.length > 0 
+      ? `Units: ${dataPoint.unitIds.join(', ')}` 
+      : 'No unit data';
+    return [`${value} ${volumeUnit}`, units];
   };
   
   const formatXAxis = (label: string) => {

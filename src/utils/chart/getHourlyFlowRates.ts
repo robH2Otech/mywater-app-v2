@@ -11,8 +11,15 @@ export function getHourlyFlowRates(allMeasurements: any[]) {
 
     console.log(`Processing ${allMeasurements.length} measurements for hourly flow rates`);
 
+    // Sort all measurements by timestamp to ensure proper order
+    const sortedMeasurements = [...allMeasurements].sort((a, b) => {
+      const timeA = a.timestamp instanceof Date ? a.timestamp : new Date(a.timestamp);
+      const timeB = b.timestamp instanceof Date ? b.timestamp : new Date(b.timestamp);
+      return timeA.getTime() - timeB.getTime();
+    });
+
     // Add unit_type information to measurements if it doesn't exist
-    const enrichedMeasurements = allMeasurements.map(measurement => {
+    const enrichedMeasurements = sortedMeasurements.map(measurement => {
       // If measurement already has unit_type, use it
       if (measurement.unit_type) return measurement;
       
@@ -28,34 +35,39 @@ export function getHourlyFlowRates(allMeasurements: any[]) {
       
       return { ...measurement, unit_type: unitType };
     });
-
-    // Sort all measurements by timestamp to ensure proper order
-    enrichedMeasurements.sort((a, b) => {
-      const timeA = a.timestamp instanceof Date ? a.timestamp : new Date(a.timestamp);
-      const timeB = b.timestamp instanceof Date ? b.timestamp : new Date(b.timestamp);
-      return timeA.getTime() - timeB.getTime();
-    });
-
-    // Log the first few measurements to help debug
-    console.log("First few measurements:", 
+    
+    // Log the first few measurements for debugging
+    console.log("First few sorted measurements:", 
       enrichedMeasurements.slice(0, 3).map(m => ({
         unitId: m.unitId,
-        timestamp: m.timestamp,
+        timestamp: new Date(m.timestamp).toISOString(),
         volume: m.volume,
         unit_type: m.unit_type
       }))
     );
 
-    const chart = calculateHourlyFlowRates(enrichedMeasurements);
+    // Group measurements by unitId for more accurate flow rate calculation
+    const measurementsByUnit: {[unitId: string]: any[]} = {};
+    
+    enrichedMeasurements.forEach(measurement => {
+      const unitId = measurement.unitId || 'unknown';
+      if (!measurementsByUnit[unitId]) {
+        measurementsByUnit[unitId] = [];
+      }
+      measurementsByUnit[unitId].push(measurement);
+    });
+    
+    // Calculate hourly flow rates by checking differences within each hour
+    const hourlyDataPoints = calculateHourlyFlowRates(enrichedMeasurements);
     
     // If calculation produces no points fallback to sample
-    if (!chart || chart.length === 0) {
+    if (!hourlyDataPoints || hourlyDataPoints.length === 0) {
       console.warn("No hourly flow data calculated, using sample data");
       return generateSampleData("24h");
     }
 
-    console.log(`Generated ${chart.length} hourly data points:`, chart.slice(0, 3));
-    return chart;
+    console.log(`Generated ${hourlyDataPoints.length} hourly data points:`, hourlyDataPoints.slice(0, 3));
+    return hourlyDataPoints;
   } catch (err) {
     console.error("Error calculating hourly flow rates:", err);
     return generateSampleData("24h");
