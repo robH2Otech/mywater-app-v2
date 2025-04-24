@@ -1,7 +1,6 @@
 
 import { Card } from "@/components/ui/card";
 import { useState } from "react";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { WaterUsageBarChart } from "./chart/WaterUsageBarChart";
 import { useWaterUsageData, TimeRange } from "@/hooks/chart/useWaterUsageData";
@@ -13,18 +12,29 @@ interface WaterUsageChartProps {
 }
 
 export const WaterUsageChart = ({ units = [] }: WaterUsageChartProps) => {
-  const [timeRange, setTimeRange] = useState<TimeRange>("24h");
-  const { chartData, isLoading } = useWaterUsageData(units, timeRange);
+  const [selectedTimeRange, setSelectedTimeRange] = useState<TimeRange>("24h");
+  
+  // Extract unit IDs from the units array
+  const unitIds = units.map(unit => unit.id);
+  
+  // Use the hook with the unit IDs
+  const { data, isLoading, timeRange, setTimeRange } = useWaterUsageData(unitIds.length > 0 ? unitIds : undefined);
+
+  // Sync the local state with the hook's state
+  const handleTimeRangeChange = (newTimeRange: TimeRange) => {
+    setSelectedTimeRange(newTimeRange);
+    setTimeRange(newTimeRange);
+  };
 
   return (
     <Card className="p-6 glass lg:col-span-2">
       <div className="flex justify-between items-center mb-4">
         <h2 className="text-lg font-semibold">Water Usage</h2>
-        <TimeRangeSelector value={timeRange} onChange={setTimeRange} />
+        <TimeRangeSelector value={selectedTimeRange} onChange={handleTimeRangeChange} />
       </div>
       <ChartContainer>
         <WaterUsageBarChart 
-          data={chartData} 
+          data={data} 
           isLoading={isLoading} 
           timeRange={timeRange} 
         />

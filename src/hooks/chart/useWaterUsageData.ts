@@ -27,13 +27,13 @@ export const useWaterUsageData = (unitId?: string | string[]) => {
         processedData = getHourlyFlowRates(measurements);
         break;
       case "7d":
-        processedData = getDailyTotals(measurements, 7);
+        processedData = getDailyTotals(measurements);
         break;
       case "30d":
-        processedData = getDailyTotals(measurements, 30);
+        processedData = getDailyTotals(measurements);
         break;
       case "6m":
-        processedData = getMonthlyTotals(measurements, 6);
+        processedData = getMonthlyTotals(measurements);
         break;
     }
 
