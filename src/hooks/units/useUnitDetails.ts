@@ -32,7 +32,7 @@ export function useUnitDetails(id: string | undefined) {
         throw new Error("Unit not found");
       }
       
-      const unitData = unitSnapshot.data();
+      const unitData = unitSnapshot.data() as Record<string, any>;
       console.log(`Unit ${id} base data:`, unitData);
       
       // 2. Get the latest measurements data using the correct collection path
@@ -80,7 +80,7 @@ export function useUnitDetails(id: string | undefined) {
       let totalVolume = latestVolume;
       if (!hasMeasurementData) {
         // Fallback to the unit's stored total_volume if no measurements exist
-        totalVolume = unitData.total_volume;
+        totalVolume = unitData.total_volume || 0;
         if (typeof totalVolume === 'string') {
           totalVolume = parseFloat(totalVolume);
         } else if (totalVolume === undefined || totalVolume === null) {
@@ -89,7 +89,7 @@ export function useUnitDetails(id: string | undefined) {
       }
       
       // 4. Process the UVC hours from the unit document
-      let baseUvcHours = unitData.uvc_hours;
+      let baseUvcHours = unitData.uvc_hours || 0;
       if (typeof baseUvcHours === 'string') {
         baseUvcHours = parseFloat(baseUvcHours);
       } else if (baseUvcHours === undefined || baseUvcHours === null) {
@@ -116,18 +116,27 @@ export function useUnitDetails(id: string | undefined) {
       
       console.log(`useUnitDetails - Unit ${id}: Volume - ${totalVolume}, UVC Hours - Base: ${baseUvcHours}, Latest: ${latestMeasurementUvcHours}, Total: ${totalUvcHours}, Status: ${uvcStatus}`);
       
-      return {
+      const result: UnitData = {
         id: unitSnapshot.id,
-        ...unitData,
-        // Return numeric values for consistency
+        name: unitData.name || "",
+        location: unitData.location,
+        status: filterStatus,
         total_volume: totalVolume,
         uvc_hours: totalUvcHours,
-        // Ensure statuses are calculated based on current values
-        status: filterStatus,
         uvc_status: uvcStatus,
-        // Add flag to track whether UVC hours are already accumulated
-        is_uvc_accumulated: unitData.is_uvc_accumulated || false
-      } as UnitData;
+        is_uvc_accumulated: unitData.is_uvc_accumulated || false,
+        unit_type: unitData.unit_type,
+        contact_name: unitData.contact_name,
+        contact_email: unitData.contact_email,
+        contact_phone: unitData.contact_phone,
+        next_maintenance: unitData.next_maintenance,
+        setup_date: unitData.setup_date,
+        uvc_installation_date: unitData.uvc_installation_date,
+        eid: unitData.eid,
+        iccid: unitData.iccid
+      };
+      
+      return result;
     },
     enabled: !!id,
     retry: 1, // Only retry once to avoid excessive error messages
