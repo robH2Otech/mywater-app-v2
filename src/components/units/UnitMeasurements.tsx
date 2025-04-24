@@ -30,7 +30,19 @@ export function UnitMeasurements({ unitId }: UnitMeasurementsProps) {
       try {
         const unitDocRef = doc(db, "units", unitId);
         const unitDoc = await getDoc(unitDocRef);
-        return unitDoc.exists() ? unitDoc.data() : null;
+        if (!unitDoc.exists()) {
+          console.log(`Unit document not found for ${unitId}, trying alternative paths`);
+          // Try an alternative path for MYWATER units
+          if (unitId.startsWith("MYWATER_")) {
+            const altUnitDocRef = doc(db, "devices", unitId);
+            const altUnitDoc = await getDoc(altUnitDocRef);
+            if (altUnitDoc.exists()) {
+              return altUnitDoc.data();
+            }
+          }
+          return null;
+        }
+        return unitDoc.data();
       } catch (err) {
         console.error(`Error fetching unit details for ${unitId}:`, err);
         return null;
@@ -43,16 +55,15 @@ export function UnitMeasurements({ unitId }: UnitMeasurementsProps) {
   const unitType = unit?.unit_type || (isMyWaterUnit ? 'uvc' : 'drop');
   const isUVCUnit = unitType === 'uvc' || isMyWaterUnit || unitId.includes("UVC");
   
-  // Set last refreshed time on component mount
+  // Set last refreshed time on component mount and when measurements change
   useEffect(() => {
     setLastRefreshed(new Date());
-  }, []);
+  }, [measurements]);
   
   // Force a refresh every 60 seconds
   useEffect(() => {
     const interval = setInterval(() => {
       refetch();
-      setLastRefreshed(new Date());
     }, 60000);
     
     return () => clearInterval(interval);
@@ -71,6 +82,22 @@ export function UnitMeasurements({ unitId }: UnitMeasurementsProps) {
       setTimeout(() => setIsRefreshing(false), 1000);
     }
   };
+  
+  useEffect(() => {
+    if (isMyWaterUnit) {
+      console.log(`🌊 MYWATER unit detected: ${unitId}`);
+      console.log(`Data status: ${isLoading ? 'Loading' : 'Loaded'} | Error: ${error ? error.message : 'None'}`);
+      console.log(`Measurements count: ${measurements.length}`);
+      if (measurements.length > 0) {
+        console.log('First measurement:', {
+          timestamp: measurements[0].timestamp,
+          volume: measurements[0].volume,
+          temperature: measurements[0].temperature,
+          uvc_hours: measurements[0].uvc_hours
+        });
+      }
+    }
+  }, [isMyWaterUnit, measurements, isLoading, error, unitId]);
   
   // Show error message if there's an error
   if (error) {

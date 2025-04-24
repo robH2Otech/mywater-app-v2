@@ -1,3 +1,4 @@
+
 import {
   Table,
   TableBody,
@@ -6,7 +7,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { ProcessedMeasurement } from "@/utils/measurements/types";
+import { ProcessedMeasurement } from "@/hooks/measurements/types/measurementTypes";
 import { formatHumanReadableTimestamp } from "@/utils/measurements/formatUtils";
 import { useMemo } from "react";
 
@@ -25,8 +26,13 @@ export function MeasurementsTable({ measurements, isUVCUnit }: MeasurementsTable
       
       // If not the last measurement, calculate difference with the next one (measurements are in reverse order)
       if (index < measurements.length - 1) {
-        const currentVolume = typeof measurement.volume === 'number' ? measurement.volume : 0;
-        const previousVolume = typeof measurements[index + 1].volume === 'number' ? measurements[index + 1].volume : 0;
+        const currentVolume = typeof measurement.cumulative_volume === 'number' 
+          ? measurement.cumulative_volume 
+          : measurement.volume;
+          
+        const previousVolume = typeof measurements[index + 1].cumulative_volume === 'number'
+          ? measurements[index + 1].cumulative_volume
+          : measurements[index + 1].volume;
         
         // Calculate the difference
         const volumeDiff = Math.max(0, currentVolume - previousVolume);
@@ -38,15 +44,15 @@ export function MeasurementsTable({ measurements, isUVCUnit }: MeasurementsTable
         hourlyVolume
       };
     });
-  }, [measurements, isUVCUnit]);
+  }, [measurements]);
   
-  const renderMeasurementRow = (measurement: any) => {
+  const renderMeasurementRow = (measurement: any, index: number) => {
     try {
-      // Format timestamp to match Firestore's display format
-      const displayTimestamp = measurement.rawTimestamp 
-        ? formatHumanReadableTimestamp(measurement.rawTimestamp)
-        : formatHumanReadableTimestamp(measurement.timestamp);
-        
+      // Format timestamp to human-readable format
+      const displayTimestamp = formatHumanReadableTimestamp(
+        measurement.rawTimestamp || measurement.timestamp
+      );
+      
       // Handle volume display based on unit type
       let displayVolume;
       let volumeUnit;
@@ -78,7 +84,7 @@ export function MeasurementsTable({ measurements, isUVCUnit }: MeasurementsTable
         : `${Math.round(measurement.hourlyVolume)} L`;
 
       return (
-        <TableRow key={measurement.id || measurement.timestamp} className="hover:bg-spotify-accent/20">
+        <TableRow key={measurement.id || index} className="hover:bg-spotify-accent/20">
           <TableCell className="text-white">{displayTimestamp}</TableCell>
           <TableCell className="text-white text-right">{displayVolume} {volumeUnit}</TableCell>
           <TableCell className="text-white text-right">{temperature}</TableCell>
@@ -88,7 +94,7 @@ export function MeasurementsTable({ measurements, isUVCUnit }: MeasurementsTable
     } catch (err) {
       console.error("Error rendering measurement row:", err, measurement);
       return (
-        <TableRow key={measurement.id || 'error-row'}>
+        <TableRow key={measurement.id || `error-row-${index}`}>
           <TableCell colSpan={4} className="text-red-400 text-center">Error displaying measurement data</TableCell>
         </TableRow>
       );
@@ -110,7 +116,7 @@ export function MeasurementsTable({ measurements, isUVCUnit }: MeasurementsTable
         </TableRow>
       </TableHeader>
       <TableBody>
-        {measurementsWithHourlyVolume.map(renderMeasurementRow)}
+        {measurementsWithHourlyVolume.map((measurement, index) => renderMeasurementRow(measurement, index))}
       </TableBody>
     </Table>
   );

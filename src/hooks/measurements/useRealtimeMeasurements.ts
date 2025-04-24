@@ -24,7 +24,33 @@ export function useRealtimeMeasurements(unitId: string, count: number = 24) {
     const subscriptions: Array<() => void> = [];
     let foundData = false;
     
-    for (const pathTemplate of MEASUREMENT_PATHS) {
+    // For MYWATER units, try specific paths first
+    const isMyWaterUnit = unitId.startsWith("MYWATER_");
+    const prioritizedPaths = [...MEASUREMENT_PATHS];
+    
+    if (isMyWaterUnit) {
+      // Move these paths to the front for MYWATER units
+      const myWaterPreferredPaths = [
+        "units/{unitId}/data",
+        "devices/{unitId}/data",
+        "measurements/{unitId}/hourly"
+      ];
+      
+      // Remove these paths from the array and add them to the front
+      myWaterPreferredPaths.forEach(path => {
+        const index = prioritizedPaths.indexOf(path);
+        if (index !== -1) {
+          prioritizedPaths.splice(index, 1);
+        }
+      });
+      
+      // Add the preferred paths to the front
+      prioritizedPaths.unshift(...myWaterPreferredPaths);
+      
+      console.log(`🔍 MYWATER unit detected: ${unitId}. Prioritizing paths:`, myWaterPreferredPaths);
+    }
+    
+    for (const pathTemplate of prioritizedPaths) {
       const collectionPath = pathTemplate.replace('{unitId}', unitId);
       
       try {
@@ -41,7 +67,7 @@ export function useRealtimeMeasurements(unitId: string, count: number = 24) {
           measurementsQuery,
           (snapshot) => {
             if (!snapshot.empty) {
-              console.log(`Received data for ${unitId} from ${collectionPath}, count: ${snapshot.docs.length}`);
+              console.log(`✅ Received data for ${unitId} from ${collectionPath}, count: ${snapshot.docs.length}`);
               foundData = true;
               
               try {
@@ -70,8 +96,16 @@ export function useRealtimeMeasurements(unitId: string, count: number = 24) {
                 console.error(`Error processing measurement data from ${collectionPath}:`, err);
                 setError(err instanceof Error ? err : new Error(String(err)));
               }
+              
+              // If found data, cancel other listeners
+              subscriptions.forEach(unsub => {
+                if (unsub !== unsubscribe) {
+                  unsub();
+                }
+              });
+              
+              setIsLoading(false);
             }
-            setIsLoading(false);
           },
           (err) => {
             console.error(`Error in realtime listener at ${collectionPath}:`, err);

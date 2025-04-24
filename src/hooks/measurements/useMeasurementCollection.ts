@@ -23,10 +23,12 @@ export function useMeasurementCollection(unitId?: string | string[]) {
           if (!id) continue;
           
           try {
+            console.log(`Fetching measurements for unit array item: ${id}`);
             // Use improved path handling function
             const snapshot = await tryAllMeasurementPaths(id);
             if (snapshot && !snapshot.empty) {
               const data = processMeasurementDocuments(snapshot.docs);
+              console.log(`Found ${data.length} measurements for unit ${id}`);
               allMeasurements.push(...data);
             } else {
               console.log(`No measurements found for unit ${id} in any collection path`);
@@ -36,6 +38,9 @@ export function useMeasurementCollection(unitId?: string | string[]) {
           }
         }
         
+        console.log(`Total measurements found across all units: ${allMeasurements.length}`);
+        
+        // Sort all measurements by timestamp (newest first)
         return allMeasurements.sort((a, b) => 
           new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
         );
@@ -43,9 +48,12 @@ export function useMeasurementCollection(unitId?: string | string[]) {
 
       // For single unit ID
       try {
+        console.log(`Fetching measurements for single unit: ${unitId}`);
         const snapshot = await tryAllMeasurementPaths(unitId);
         if (snapshot && !snapshot.empty) {
-          return processMeasurementDocuments(snapshot.docs);
+          const processedData = processMeasurementDocuments(snapshot.docs);
+          console.log(`Found ${processedData.length} measurements for unit ${unitId}`);
+          return processedData;
         } else {
           console.log(`No measurements found for unit ${unitId} in any collection path`);
         }

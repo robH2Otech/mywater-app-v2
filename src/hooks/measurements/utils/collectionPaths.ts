@@ -7,13 +7,15 @@ export const MEASUREMENT_PATHS = [
   "units/{unitId}/measurements",
   "units/{unitId}/data",
   "measurements/{unitId}/data",
-  "device-data/{unitId}/measurements"
+  "device-data/{unitId}/measurements",
+  // Additional paths for MYWATER units
+  "measurements/{unitId}/hourly",
+  "devices/{unitId}/data"
 ];
 
 export function getMeasurementsCollectionPath(unitId: string): string {
-  // For MYWATER units, we need to check multiple possible paths
+  // For MYWATER units, we need specific paths
   if (unitId.startsWith("MYWATER_")) {
-    // Try both paths for MYWATER units to ensure we find data
     return `units/${unitId}/data`;
   }
   
@@ -38,27 +40,33 @@ export async function tryCollectionPath(path: string, count: number = 24) {
     return await getDocs(measurementsQuery);
   } catch (error) {
     console.warn(`Error fetching from path ${path}:`, error);
-    throw error;
+    return null; // Return null instead of throwing to continue with other paths
   }
 }
 
 // Function to try all possible measurement paths for a unit
 export async function tryAllMeasurementPaths(unitId: string, count: number = 24) {
+  const attemptedPaths = [];
+  
   for (const pathTemplate of MEASUREMENT_PATHS) {
     const path = pathTemplate.replace('{unitId}', unitId);
+    attemptedPaths.push(path);
+    
     try {
-      console.log(`Trying path: ${path}`);
-      const snapshot = await tryCollectionPath(path);
+      console.log(`Trying path: ${path} for unit ${unitId}`);
+      const snapshot = await tryCollectionPath(path, count);
       
-      if (!snapshot.empty) {
-        console.log(`Found data at path: ${path}, count: ${snapshot.docs.length}`);
+      if (snapshot && !snapshot.empty) {
+        console.log(`✅ Found data at path: ${path}, count: ${snapshot.docs.length}`);
         return snapshot;
+      } else {
+        console.log(`❌ No data at path: ${path}`);
       }
     } catch (err) {
-      console.warn(`No data found at path: ${path}`);
+      console.warn(`Error checking path: ${path}`, err);
     }
   }
   
-  console.warn(`No measurement data found for unit ${unitId} in any collection`);
+  console.warn(`⚠️ No measurement data found for unit ${unitId} after checking paths: ${attemptedPaths.join(', ')}`);
   return null;
 }

@@ -42,6 +42,10 @@ export async function fetchLatestMeasurement(unitId: string): Promise<{
         volume = typeof latestMeasurement.total_volume === 'string'
           ? parseFloat(latestMeasurement.total_volume)
           : latestMeasurement.total_volume;
+      } else if (latestMeasurement.cumulative_volume !== undefined) {
+        volume = typeof latestMeasurement.cumulative_volume === 'string'
+          ? parseFloat(latestMeasurement.cumulative_volume)
+          : latestMeasurement.cumulative_volume;
       }
       
       // Get the timestamp
