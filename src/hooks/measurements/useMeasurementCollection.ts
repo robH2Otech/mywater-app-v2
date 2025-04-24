@@ -2,7 +2,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { ProcessedMeasurement } from "./types/measurementTypes";
-import { MEASUREMENT_PATHS, tryCollectionPath, getMeasurementsCollectionPath } from "./utils/collectionPaths";
+import { MEASUREMENT_PATHS, getMeasurementsCollectionPath, tryCollectionPath, tryAllMeasurementPaths } from "./utils/collectionPaths";
 import { processMeasurementDocuments } from "./utils/dataProcessing";
 
 // Re-export the getMeasurementsCollectionPath function so other modules can use it
@@ -22,19 +22,17 @@ export function useMeasurementCollection(unitId?: string | string[]) {
         for (const id of unitId) {
           if (!id) continue;
           
-          for (const pathTemplate of MEASUREMENT_PATHS) {
-            try {
-              const path = pathTemplate.replace('{unitId}', id);
-              const snapshot = await tryCollectionPath(path);
-              
-              if (!snapshot.empty) {
-                const data = processMeasurementDocuments(snapshot.docs);
-                allMeasurements.push(...data);
-                break;
-              }
-            } catch (err) {
-              console.warn(`Error trying path for unit ${id}:`, err);
+          try {
+            // Use improved path handling function
+            const snapshot = await tryAllMeasurementPaths(id);
+            if (snapshot && !snapshot.empty) {
+              const data = processMeasurementDocuments(snapshot.docs);
+              allMeasurements.push(...data);
+            } else {
+              console.log(`No measurements found for unit ${id} in any collection path`);
             }
+          } catch (err) {
+            console.warn(`Error fetching measurements for unit ${id}:`, err);
           }
         }
         
@@ -43,17 +41,16 @@ export function useMeasurementCollection(unitId?: string | string[]) {
         );
       }
 
-      for (const pathTemplate of MEASUREMENT_PATHS) {
-        try {
-          const path = pathTemplate.replace('{unitId}', unitId);
-          const snapshot = await tryCollectionPath(path);
-          
-          if (!snapshot.empty) {
-            return processMeasurementDocuments(snapshot.docs);
-          }
-        } catch (err) {
-          console.warn(`Error trying path for unit ${unitId}:`, err);
+      // For single unit ID
+      try {
+        const snapshot = await tryAllMeasurementPaths(unitId);
+        if (snapshot && !snapshot.empty) {
+          return processMeasurementDocuments(snapshot.docs);
+        } else {
+          console.log(`No measurements found for unit ${unitId} in any collection path`);
         }
+      } catch (err) {
+        console.warn(`Error fetching measurements for unit ${unitId}:`, err);
       }
       
       return [];

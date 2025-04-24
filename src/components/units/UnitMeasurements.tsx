@@ -13,7 +13,6 @@ import { toast } from "sonner";
 import { MeasurementsHeader } from "./measurements/MeasurementsHeader";
 import { MeasurementsTable } from "./measurements/MeasurementsTable";
 import { EmptyMeasurements } from "./measurements/EmptyMeasurements";
-import { SampleDataGenerator } from "./measurements/SampleDataGenerator";
 
 interface UnitMeasurementsProps {
   unitId: string;
@@ -101,25 +100,15 @@ export function UnitMeasurements({ unitId }: UnitMeasurementsProps) {
 
       {isLoading && measurements.length === 0 ? (
         <EmptyMeasurements isLoading={true} onRefresh={handleManualRefresh} />
-      ) : measurements.length === 0 && !isMyWaterUnit ? (
+      ) : measurements.length === 0 ? (
         <EmptyMeasurements isLoading={false} onRefresh={handleManualRefresh} />
-      ) : measurements.length > 0 ? (
+      ) : (
         <div className="overflow-x-auto">
           <MeasurementsTable 
             measurements={measurements} 
             isUVCUnit={isUVCUnit} 
           />
         </div>
-      ) : isMyWaterUnit ? (
-        <div className="overflow-x-auto">
-          <Table>
-            <TableBody>
-              <SampleDataGenerator unitId={unitId} />
-            </TableBody>
-          </Table>
-        </div>
-      ) : (
-        <EmptyMeasurements isLoading={false} onRefresh={handleManualRefresh} />
       )}
     </Card>
   );

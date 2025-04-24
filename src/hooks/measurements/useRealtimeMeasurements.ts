@@ -1,12 +1,12 @@
 
 import { useState, useEffect } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { collection, query, orderBy, limit } from "firebase/firestore";
+import { collection, query, orderBy, limit, onSnapshot } from "firebase/firestore";
 import { db } from "@/integrations/firebase/client";
 import { ProcessedMeasurement } from "./types/measurementTypes";
 import { updateUnitTotalVolume } from "./useUnitVolume";
 import { MEASUREMENT_PATHS } from "./utils/collectionPaths";
-import { setupRealtimeListener } from "./useRealtimeUpdates";
+import { processMeasurementDocuments } from "./utils/dataProcessing";
 
 export function useRealtimeMeasurements(unitId: string, count: number = 24) {
   const [measurements, setMeasurements] = useState<ProcessedMeasurement[]>([]);
@@ -20,52 +20,85 @@ export function useRealtimeMeasurements(unitId: string, count: number = 24) {
     setIsLoading(true);
     setError(null);
     
+    // Store all active subscriptions to clean up later
+    const subscriptions: Array<() => void> = [];
+    let foundData = false;
+    
     for (const pathTemplate of MEASUREMENT_PATHS) {
       const collectionPath = pathTemplate.replace('{unitId}', unitId);
       
       try {
+        console.log(`Setting up listener for ${unitId} at path: ${collectionPath}`);
+        
         const measurementsQuery = query(
           collection(db, collectionPath),
           orderBy("timestamp", "desc"),
           limit(count)
         );
         
-        const unsubscribe = setupRealtimeListener(
+        // Set up realtime listener
+        const unsubscribe = onSnapshot(
           measurementsQuery,
-          async (measurementsData) => {
-            if (measurementsData.length > 0) {
-              setMeasurements(measurementsData);
+          (snapshot) => {
+            if (!snapshot.empty) {
+              console.log(`Received data for ${unitId} from ${collectionPath}, count: ${snapshot.docs.length}`);
+              foundData = true;
               
-              const latestMeasurement = measurementsData[0];
-              const latestVolume = typeof latestMeasurement.cumulative_volume === 'number'
-                ? latestMeasurement.cumulative_volume
-                : latestMeasurement.volume;
-              
-              await updateUnitTotalVolume(unitId, latestVolume);
-              
-              queryClient.invalidateQueries({ queryKey: ['units'] });
-              queryClient.invalidateQueries({ queryKey: ['filter-units'] });
-              queryClient.invalidateQueries({ queryKey: ['unit', unitId] });
-              queryClient.invalidateQueries({ queryKey: ['uvc-units'] });
-              queryClient.invalidateQueries({ queryKey: ['reports'] });
+              try {
+                const measurementsData = processMeasurementDocuments(snapshot.docs);
+                setMeasurements(measurementsData);
+                
+                // Get the latest measurement for updating unit total volume
+                if (measurementsData.length > 0) {
+                  const latestMeasurement = measurementsData[0];
+                  const latestVolume = typeof latestMeasurement.cumulative_volume === 'number'
+                    ? latestMeasurement.cumulative_volume
+                    : latestMeasurement.volume;
+                  
+                  updateUnitTotalVolume(unitId, latestVolume)
+                    .then(() => {
+                      // Invalidate relevant queries to refresh UI
+                      queryClient.invalidateQueries({ queryKey: ['units'] });
+                      queryClient.invalidateQueries({ queryKey: ['filter-units'] });
+                      queryClient.invalidateQueries({ queryKey: ['unit', unitId] });
+                      queryClient.invalidateQueries({ queryKey: ['uvc-units'] });
+                      queryClient.invalidateQueries({ queryKey: ['reports'] });
+                    })
+                    .catch(err => console.error("Error updating unit volume:", err));
+                }
+              } catch (err) {
+                console.error(`Error processing measurement data from ${collectionPath}:`, err);
+                setError(err instanceof Error ? err : new Error(String(err)));
+              }
             }
             setIsLoading(false);
           },
           (err) => {
             console.error(`Error in realtime listener at ${collectionPath}:`, err);
-            setError(err);
-            setIsLoading(false);
+            // Only set error if no other path has succeeded
+            if (!foundData) {
+              setError(err);
+              setIsLoading(false);
+            }
           }
         );
         
-        return unsubscribe;
+        subscriptions.push(unsubscribe);
       } catch (err) {
         console.warn(`Failed to set up listener at ${collectionPath}:`, err);
       }
     }
     
-    setIsLoading(false);
-    return () => {};
+    // If we couldn't set up any listeners
+    if (subscriptions.length === 0) {
+      setError(new Error(`Could not find valid measurements collection for unit ${unitId}`));
+      setIsLoading(false);
+    }
+    
+    // Return a function to unsubscribe from all listeners
+    return () => {
+      subscriptions.forEach(unsubscribe => unsubscribe());
+    };
   };
 
   useEffect(() => {
@@ -78,9 +111,12 @@ export function useRealtimeMeasurements(unitId: string, count: number = 24) {
     const cleanup = refetch();
     
     return () => {
-      cleanup.then(unsubscribe => unsubscribe());
+      // Execute the cleanup function when component unmounts
+      if (cleanup) {
+        cleanup.then(unsubscribe => unsubscribe());
+      }
     };
-  }, [unitId, count, queryClient]);
+  }, [unitId, count]);
 
   return { measurements, isLoading, error, refetch };
 }

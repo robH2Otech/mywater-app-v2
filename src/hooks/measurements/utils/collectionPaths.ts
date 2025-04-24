@@ -2,6 +2,7 @@
 import { collection, query, orderBy, limit, getDocs } from "firebase/firestore";
 import { db } from "@/integrations/firebase/client";
 
+// These are all the possible paths where measurements could be stored
 export const MEASUREMENT_PATHS = [
   "units/{unitId}/measurements",
   "units/{unitId}/data",
@@ -10,9 +11,10 @@ export const MEASUREMENT_PATHS = [
 ];
 
 export function getMeasurementsCollectionPath(unitId: string): string {
-  // For all MYWATER units, use the same collection path pattern
+  // For MYWATER units, we need to check multiple possible paths
   if (unitId.startsWith("MYWATER_")) {
-    return `units/${unitId}/measurements`;
+    // Try both paths for MYWATER units to ensure we find data
+    return `units/${unitId}/data`;
   }
   
   // Logic for other unit types
@@ -23,12 +25,40 @@ export function getMeasurementsCollectionPath(unitId: string): string {
   return `units/${unitId}/measurements`;
 }
 
+// Function to try fetching from a specific collection path
 export async function tryCollectionPath(path: string, count: number = 24) {
-  const measurementsQuery = query(
-    collection(db, path),
-    orderBy("timestamp", "desc"),
-    limit(count)
-  );
+  try {
+    console.log(`Trying to fetch measurements from: ${path}`);
+    const measurementsQuery = query(
+      collection(db, path),
+      orderBy("timestamp", "desc"),
+      limit(count)
+    );
+    
+    return await getDocs(measurementsQuery);
+  } catch (error) {
+    console.warn(`Error fetching from path ${path}:`, error);
+    throw error;
+  }
+}
+
+// Function to try all possible measurement paths for a unit
+export async function tryAllMeasurementPaths(unitId: string, count: number = 24) {
+  for (const pathTemplate of MEASUREMENT_PATHS) {
+    const path = pathTemplate.replace('{unitId}', unitId);
+    try {
+      console.log(`Trying path: ${path}`);
+      const snapshot = await tryCollectionPath(path);
+      
+      if (!snapshot.empty) {
+        console.log(`Found data at path: ${path}, count: ${snapshot.docs.length}`);
+        return snapshot;
+      }
+    } catch (err) {
+      console.warn(`No data found at path: ${path}`);
+    }
+  }
   
-  return await getDocs(measurementsQuery);
+  console.warn(`No measurement data found for unit ${unitId} in any collection`);
+  return null;
 }
