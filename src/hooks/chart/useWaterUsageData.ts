@@ -89,13 +89,14 @@ export const useWaterUsageData = (units: any[] = [], timeRange: TimeRange) => {
                 timestamp = new Date(timestamp);
               }
               
-              // Add unitId and unit_type to each measurement
+              // Add unitId and unit_type to each measurement and ensure volume exists
               return { 
                 ...data, 
                 id: doc.id, 
                 timestamp,
                 unitId: unit.id,
-                unit_type: unit.unit_type || 'uvc' // Default to uvc if not specified
+                unit_type: unit.unit_type || 'uvc', // Default to uvc if not specified
+                volume: typeof data.volume === 'number' ? data.volume : 0 // Ensure volume exists
               };
             });
             
