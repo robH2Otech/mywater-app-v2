@@ -1,4 +1,3 @@
-
 import {
   BarChart,
   Bar,
@@ -20,9 +19,9 @@ interface WaterUsageBarChartProps {
 
 const legendByRange = {
   "24h": "Hourly Flow Rate (m³/h)",
-  "7d": "Daily Flow Rate (m³/h)",
-  "30d": "Monthly Flow Rate (m³/h)",
-  "6m": "Last 6-months Flow Rate (m³/h)"
+  "7d": "Daily Flow Rate (m³/day)",
+  "30d": "Monthly Flow Rate (m³/month)",
+  "6m": "Last 6-months Flow Rate (m³/month)"
 };
 
 const getYAxisMax = (data: any[], timeRange: TimeRange = "24h") => {
@@ -30,7 +29,7 @@ const getYAxisMax = (data: any[], timeRange: TimeRange = "24h") => {
   
   if (timeRange === "24h") {
     // For hourly data, set appropriate scale based on max value
-    // Using more reasonable ranges for hourly flow rates
+    if (maxVolume <= 0.2) return 0.2;
     if (maxVolume <= 0.5) return 0.5;
     if (maxVolume <= 1) return 1;
     if (maxVolume <= 2) return 2;
@@ -42,15 +41,15 @@ const getYAxisMax = (data: any[], timeRange: TimeRange = "24h") => {
   }
   
   // Keep original scaling for other time ranges
-  if (timeRange === "7d") return Math.max(1000, Math.ceil(maxVolume * 1.1));
-  if (timeRange === "30d") return Math.max(1000, Math.ceil(maxVolume * 1.1));
-  if (timeRange === "6m") return Math.max(20000, Math.ceil(maxVolume * 1.1));
+  if (timeRange === "7d") return Math.max(10, Math.ceil(maxVolume * 1.1));
+  if (timeRange === "30d") return Math.max(10, Math.ceil(maxVolume * 1.1));
+  if (timeRange === "6m") return Math.max(100, Math.ceil(maxVolume * 1.1));
   
-  return Math.ceil(maxVolume * 1.1);
+  return Math.ceil(maxVolume * 1.1) || 0.5; // Ensure non-zero default
 }
 
 const getXAxisLabel = (range: TimeRange) => {
-  if (range === "24h") return "Time";
+  if (range === "24h") return "Hour";
   if (range === "7d") return "Day";
   if (range === "30d") return "Day";
   if (range === "6m") return "Month";
@@ -77,13 +76,33 @@ export const WaterUsageBarChart = ({ data, isLoading, timeRange = "24h" }: Water
     );
   }
 
+  const hasNonZeroData = data.some(item => item.volume > 0);
+  
+  if (!hasNonZeroData) {
+    return (
+      <div className="h-full flex items-center justify-center flex-col">
+        <p className="text-gray-400">No water usage recorded</p>
+        <p className="text-xs text-gray-500 mt-2">All flow rates are zero for this period</p>
+      </div>
+    );
+  }
+
   const yAxisMax = getYAxisMax(data, timeRange);
   const volumeUnit = data[0]?.volumeUnit || 'm³';  // Use unit from data if available
 
   const formatTooltipValue = (value: any, name: string, props: any) => {
+    if (value <= 0) return ["No usage", ""];
+    
     const dataPoint = data[props.payload.index];
     const units = dataPoint?.unitIds?.join(', ') || 'All units';
-    return [`${value} ${volumeUnit}`, `${units}`];
+    return [`${value} ${volumeUnit}`, `Units: ${units}`];
+  };
+  
+  const formatXAxis = (label: string) => {
+    if (timeRange === "24h") {
+      return label; // Keep as HH:00
+    }
+    return label;
   };
 
   return (
@@ -95,20 +114,21 @@ export const WaterUsageBarChart = ({ data, isLoading, timeRange = "24h" }: Water
           stroke="#666"
           tickMargin={10}
           label={{ value: getXAxisLabel(timeRange), position: "insideBottom", offset: -10, fill: "#666" }}
-          // For 30d, show only key ticks
-          interval={timeRange === "30d" ? 0 : undefined}
-          tickFormatter={label => label}
+          interval={timeRange === "30d" ? 4 : "preserveStartEnd"}
+          tickFormatter={formatXAxis}
         />
         <YAxis
           stroke="#666"
           domain={[0, yAxisMax]}
           tickFormatter={(value) => `${value}`}
-          label={{ value: volumeUnit + '/h', angle: -90, position: 'insideLeft', fill: '#666' }}
+          label={{ value: `${volumeUnit}/${timeRange === "24h" ? "h" : timeRange === "7d" || timeRange === "30d" ? "day" : "month"}`, angle: -90, position: 'insideLeft', fill: '#666' }}
         />
         <Tooltip
           formatter={formatTooltipValue}
           contentStyle={{ backgroundColor: '#222', border: '1px solid #444', color: '#fff' }}
           labelFormatter={(label) => `${getXAxisLabel(timeRange)}: ${label}`}
+          isAnimationActive={true}
+          animationDuration={300}
         />
         <Legend
           verticalAlign="top"
@@ -120,6 +140,7 @@ export const WaterUsageBarChart = ({ data, isLoading, timeRange = "24h" }: Water
           fill="#39afcd"
           name={legendByRange[timeRange]}
           radius={[4, 4, 0, 0]}
+          animationDuration={1000}
         />
       </BarChart>
     </ResponsiveContainer>

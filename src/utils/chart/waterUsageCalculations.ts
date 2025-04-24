@@ -20,11 +20,35 @@ export const calculateHourlyFlowRates = (measurements: any[]): FlowRate[] => {
     return [];
   }
 
-  // Convert liters to cubic meters for DROP or OFFICE units
-  const normalizedMeasurements = measurements.map(measurement => {
-    const isLiterUnit = measurement.unit_type === 'drop' || measurement.unit_type === 'office';
+  // Initialize results object with all 24 hours
+  const hourlyResults: { [hour: string]: { volume: number, unitIds: Set<string> } } = {};
+  
+  // Create entries for all 24 hours to ensure complete chart
+  for (let i = 0; i < 24; i++) {
+    const hourKey = i.toString().padStart(2, '0') + ':00';
+    hourlyResults[hourKey] = { volume: 0, unitIds: new Set() };
+  }
+
+  // Group measurements by unitId first
+  const unitMeasurements: { [unitId: string]: any[] } = {};
+
+  // Parse and normalize measurement data
+  measurements.forEach(measurement => {
+    if (!measurement.timestamp) return;
     
-    // Parse volume to ensure it's a number
+    const unitId = measurement.unitId || measurement.id || 'unknown';
+    
+    if (!unitMeasurements[unitId]) {
+      unitMeasurements[unitId] = [];
+    }
+    
+    // Create a copy with normalized data
+    const timestamp = measurement.timestamp instanceof Date 
+      ? measurement.timestamp 
+      : new Date(measurement.timestamp);
+    
+    // Convert liters to cubic meters for DROP or OFFICE units
+    const isLiterUnit = measurement.unit_type === 'drop' || measurement.unit_type === 'office';
     let volume = typeof measurement.volume === 'number' 
       ? measurement.volume 
       : parseFloat(measurement.volume || '0');
@@ -34,76 +58,65 @@ export const calculateHourlyFlowRates = (measurements: any[]): FlowRate[] => {
       volume = volume / 1000;
     }
     
-    return {
+    unitMeasurements[unitId].push({
       ...measurement,
+      normalizedTimestamp: timestamp,
       normalizedVolume: volume,
-      timestamp: measurement.timestamp instanceof Date 
-        ? measurement.timestamp 
-        : new Date(measurement.timestamp)
-    };
-  });
-
-  // Group measurements by unit ID and then by hour
-  // This allows us to calculate the flow rate for each unit separately
-  const unitHourlyData: { [key: string]: { [hour: string]: any[] } } = {};
-  
-  normalizedMeasurements.forEach(measurement => {
-    if (!measurement.timestamp) return;
-    
-    const unitId = measurement.unitId || measurement.id || 'unknown';
-    const hourKey = measurement.timestamp.getHours().toString().padStart(2, '0') + ':00';
-    
-    if (!unitHourlyData[unitId]) {
-      unitHourlyData[unitId] = {};
-    }
-    
-    if (!unitHourlyData[unitId][hourKey]) {
-      unitHourlyData[unitId][hourKey] = [];
-    }
-    
-    unitHourlyData[unitId][hourKey].push(measurement);
-  });
-
-  // Calculate flow rates for each unit and hour
-  const unitFlowRates: { [hour: string]: { volume: number, unitIds: string[] } } = {};
-  
-  // Initialize all hours with zero values
-  const hours = Array.from({ length: 24 }, (_, i) => i.toString().padStart(2, '0') + ':00');
-  hours.forEach(hour => {
-    unitFlowRates[hour] = { volume: 0, unitIds: [] };
-  });
-  
-  // Calculate flow rate for each unit
-  Object.entries(unitHourlyData).forEach(([unitId, hourlyData]) => {
-    Object.entries(hourlyData).forEach(([hourKey, measurements]) => {
-      // Sort measurements by timestamp
-      measurements.sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime());
-      
-      if (measurements.length < 2) return;
-      
-      // Calculate volume difference between first and last measurement in this hour
-      const firstMeasurement = measurements[0];
-      const lastMeasurement = measurements[measurements.length - 1];
-      
-      let hourlyUsage = lastMeasurement.normalizedVolume - firstMeasurement.normalizedVolume;
-      
-      // Only consider positive deltas as actual usage
-      if (hourlyUsage <= 0) return;
-      
-      // Cap unreasonable values at 10 m³ per hour per unit
-      if (hourlyUsage > 10) hourlyUsage = 10;
-      
-      // Add this unit's usage to the hourly total
-      unitFlowRates[hourKey].volume += hourlyUsage;
-      unitFlowRates[hourKey].unitIds.push(unitId);
+      hour: timestamp.getHours().toString().padStart(2, '0') + ':00'
     });
   });
 
-  // Convert to array and format values
-  const result: FlowRate[] = Object.entries(unitFlowRates).map(([hour, data]) => ({
+  // Process each unit separately
+  Object.entries(unitMeasurements).forEach(([unitId, unitData]) => {
+    // Skip if less than 2 measurements for this unit
+    if (unitData.length < 2) return;
+    
+    // Sort by timestamp
+    unitData.sort((a, b) => a.normalizedTimestamp.getTime() - b.normalizedTimestamp.getTime());
+    
+    // Group measurements by hour
+    const measurementsByHour: { [hour: string]: any[] } = {};
+    
+    unitData.forEach(measurement => {
+      const hourKey = measurement.hour;
+      
+      if (!measurementsByHour[hourKey]) {
+        measurementsByHour[hourKey] = [];
+      }
+      
+      measurementsByHour[hourKey].push(measurement);
+    });
+    
+    // Calculate flow rate for each hour
+    Object.entries(measurementsByHour).forEach(([hour, hourMeasurements]) => {
+      if (hourMeasurements.length < 2) return;
+      
+      // Get first and last measurement in this hour
+      const firstMeasurement = hourMeasurements[0];
+      const lastMeasurement = hourMeasurements[hourMeasurements.length - 1];
+      
+      // Calculate usage as difference between last and first measurement in this hour
+      let hourlyUsage = lastMeasurement.normalizedVolume - firstMeasurement.normalizedVolume;
+      
+      // Only account for positive usage (negative could be meter reset or error)
+      if (hourlyUsage <= 0) return;
+      
+      // Cap unreasonable values (20 m³/hour seems like a reasonable maximum)
+      if (hourlyUsage > 20) hourlyUsage = 20;
+      
+      // Add this unit's usage to the hour's total
+      hourlyResults[hour].volume += hourlyUsage;
+      hourlyResults[hour].unitIds.add(unitId);
+      
+      console.log(`Hour ${hour} - Unit ${unitId}: ${firstMeasurement.normalizedVolume} -> ${lastMeasurement.normalizedVolume} = ${hourlyUsage} m³`);
+    });
+  });
+
+  // Convert results to expected format
+  const result: FlowRate[] = Object.entries(hourlyResults).map(([hour, data]) => ({
     name: hour,
     volume: Number(data.volume.toFixed(2)),
-    unitIds: data.unitIds
+    unitIds: Array.from(data.unitIds)
   }));
   
   // Sort by hour
@@ -113,7 +126,8 @@ export const calculateHourlyFlowRates = (measurements: any[]): FlowRate[] => {
     return hourA - hourB;
   });
   
-  console.log("Calculated hourly flow rates:", result);
+  console.log(`Final hourly flow rates (${result.length} hours):`, 
+    result.filter(r => r.volume > 0).map(r => `${r.name}: ${r.volume}m³ (${r.unitIds?.length || 0} units)`));
   
   return result;
 };
