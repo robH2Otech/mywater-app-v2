@@ -15,8 +15,17 @@ export function useUnitDetails(id: string | undefined) {
       
       console.log(`Fetching unit details for ${id}`);
       
+      // Special case for MYWATER 003
+      const isSpecialUnit = id === "MYWATER_003";
+      
       // 1. Get the unit base data
-      const unitDocRef = doc(db, "units", id);
+      let unitDocRef;
+      if (isSpecialUnit) {
+        unitDocRef = doc(db, "units", id);
+      } else {
+        unitDocRef = doc(db, "units", id);
+      }
+      
       const unitSnapshot = await getDoc(unitDocRef);
       
       if (!unitSnapshot.exists()) {
@@ -88,25 +97,24 @@ export function useUnitDetails(id: string | undefined) {
       }
       
       console.log(`Unit ${id} - Base UVC hours: ${baseUvcHours}`);
-      console.log(`Unit ${id} - is_uvc_accumulated flag: ${unitData.is_uvc_accumulated}`);
       
-      // 5. Calculate the total UVC hours
+      // For MYWATER 003, if we have measurement data, use it directly instead of adding
       let totalUvcHours = baseUvcHours;
-      
-      // If we have measurement data, add it to the base UVC hours, but only if the
-      // unit is not already using accumulated values
-      if (hasMeasurementData && !unitData.is_uvc_accumulated) {
+      if (isSpecialUnit && latestMeasurementUvcHours > 0) {
+        totalUvcHours = latestMeasurementUvcHours;
+        console.log(`Special unit ${id} - Using measurement hours directly: ${totalUvcHours}`);
+      }
+      // For other units with UVC hours
+      else if (hasMeasurementData && latestMeasurementUvcHours > 0 && !unitData.is_uvc_accumulated) {
         totalUvcHours += latestMeasurementUvcHours;
         console.log(`Unit ${id} - Adding measurement hours: ${baseUvcHours} + ${latestMeasurementUvcHours} = ${totalUvcHours}`);
-      } else if (unitData.is_uvc_accumulated) {
-        console.log(`Unit ${id} - Using accumulated hours (${baseUvcHours}), not adding measurement hours`);
       }
       
       // 6. Recalculate statuses
       const filterStatus = determineUnitStatus(totalVolume);
       const uvcStatus = determineUVCStatus(totalUvcHours);
       
-      console.log(`useUnitDetails - Unit ${id}: Volume - ${totalVolume}, UVC Hours - Base: ${baseUvcHours}, Latest: ${latestMeasurementUvcHours}, Total: ${totalUvcHours}, Status: ${uvcStatus}, Accumulated: ${unitData.is_uvc_accumulated}`);
+      console.log(`useUnitDetails - Unit ${id}: Volume - ${totalVolume}, UVC Hours - Base: ${baseUvcHours}, Latest: ${latestMeasurementUvcHours}, Total: ${totalUvcHours}, Status: ${uvcStatus}`);
       
       return {
         id: unitSnapshot.id,

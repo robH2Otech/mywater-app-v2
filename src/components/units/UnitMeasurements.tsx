@@ -26,13 +26,15 @@ export function UnitMeasurements({ unitId }: UnitMeasurementsProps) {
   const { data: unit } = useQuery({
     queryKey: ["unit-type", unitId],
     queryFn: async () => {
-      const unitDoc = await getDoc(doc(db, "units", unitId));
+      const unitDocRef = doc(db, "units", unitId);
+      const unitDoc = await getDoc(unitDocRef);
       return unitDoc.exists() ? unitDoc.data() : null;
     }
   });
   
+  const isSpecialUVC = unitId === "MYWATER_003";
   const unitType = unit?.unit_type || 'uvc';
-  const isUVCUnit = unitType === 'uvc';
+  const isUVCUnit = unitType === 'uvc' || isSpecialUVC;
   const isFilterUnit = unitType === 'drop' || unitType === 'office';
   
   // Calculate last hour volume differences for each measurement

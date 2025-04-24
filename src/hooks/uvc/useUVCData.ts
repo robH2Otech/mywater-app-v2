@@ -37,8 +37,11 @@ export function useUVCData() {
         const unitsCollection = collection(db, "units");
         const unitsSnapshot = await getDocs(unitsCollection);
         
+        // Check if MYWATER_003 unit exists, if not we'll add it specifically 
+        const mywater003Doc = await getDoc(doc(db, "units", "MYWATER_003"));
+        
         // Process each unit and directly fetch latest measurements
-        const unitsPromises = unitsSnapshot.docs.map(async (unitDoc) => {
+        let unitsPromises = unitsSnapshot.docs.map(async (unitDoc) => {
           const unitData = unitDoc.data();
           const unitId = unitDoc.id;
           
@@ -53,12 +56,38 @@ export function useUVCData() {
           return processUnitUVCData(unitDoc, measurementData);
         });
         
+        // If MYWATER_003 doesn't exist in the collection but we want to include it
+        if (!mywater003Doc.exists()) {
+          console.log("Adding special MYWATER_003 unit to the results");
+          
+          // Create a document-like object for the special unit
+          const specialUnitDoc = {
+            id: "MYWATER_003",
+            data: () => ({
+              id: "MYWATER_003",
+              name: "MYWATER 003",
+              unit_type: "uvc",
+              status: "active",
+              location: "Main Office",
+              // Add other default fields as needed
+            }),
+            exists: () => true
+          };
+          
+          // Fetch special unit's measurements directly
+          const specialMeasurementData = await fetchLatestMeasurement("MYWATER_003");
+          
+          // Add special unit to promises array
+          unitsPromises.push(processUnitUVCData(specialUnitDoc, specialMeasurementData));
+        }
+        
         // Wait for all units to be processed
         const allUnitsData = await Promise.all(unitsPromises) as UnitWithUVC[];
         
         // Filter only units that have UVC related data
         const unitsData = allUnitsData.filter(unit => 
           unit.unit_type === 'uvc' || 
+          unit.id === "MYWATER_003" ||
           (unit.uvc_hours !== undefined && unit.uvc_hours > 0)
         );
         

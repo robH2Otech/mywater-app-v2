@@ -15,6 +15,9 @@ export async function fetchLatestMeasurement(unitId: string): Promise<{
   try {
     console.log(`Fetching latest measurement for unit ${unitId}`);
     
+    // Special case for MYWATER 003
+    const isSpecialUVC = unitId === "MYWATER_003";
+    
     // Use the correct measurements collection path based on unit ID
     const collectionPath = getMeasurementsCollectionPath(unitId);
     console.log(`Using collection path: ${collectionPath} for unit ${unitId}`);
@@ -70,6 +73,57 @@ export async function fetchLatestMeasurement(unitId: string): Promise<{
         timestamp: timestamp,
         volume
       };
+    }
+    
+    // For special unit, try an alternate collection path if the first attempt failed
+    if (isSpecialUVC) {
+      const alternateCollectionPath = "units/MYWATER_003/measurements";
+      console.log(`Trying alternate collection path for ${unitId}: ${alternateCollectionPath}`);
+      
+      const alternateQuery = query(
+        collection(db, alternateCollectionPath),
+        orderBy("timestamp", "desc"),
+        limit(1)
+      );
+      
+      const alternateSnapshot = await getDocs(alternateQuery);
+      
+      if (!alternateSnapshot.empty) {
+        const latestMeasurement = alternateSnapshot.docs[0].data();
+        console.log(`Found measurement in alternate path:`, latestMeasurement);
+        
+        let uvcHours = 0;
+        if (latestMeasurement.uvc_hours !== undefined) {
+          uvcHours = typeof latestMeasurement.uvc_hours === 'string' 
+            ? parseFloat(latestMeasurement.uvc_hours) 
+            : (latestMeasurement.uvc_hours || 0);
+        }
+        
+        let volume = undefined;
+        if (latestMeasurement.volume !== undefined) {
+          volume = typeof latestMeasurement.volume === 'string'
+            ? parseFloat(latestMeasurement.volume)
+            : latestMeasurement.volume;
+        }
+        
+        let timestamp = null;
+        if (latestMeasurement.timestamp) {
+          if (typeof latestMeasurement.timestamp === 'object' && latestMeasurement.timestamp.toDate) {
+            timestamp = latestMeasurement.timestamp.toDate().toISOString();
+          } else if (latestMeasurement.timestamp instanceof Date) {
+            timestamp = latestMeasurement.timestamp.toISOString();
+          } else {
+            timestamp = latestMeasurement.timestamp;
+          }
+        }
+        
+        return {
+          latestMeasurementUvcHours: uvcHours,
+          hasMeasurementData: true,
+          timestamp: timestamp,
+          volume
+        };
+      }
     }
     
     console.log(`No measurement data found for unit ${unitId} in collection: ${collectionPath}`);
