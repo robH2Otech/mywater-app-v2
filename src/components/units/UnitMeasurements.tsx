@@ -53,7 +53,9 @@ export function UnitMeasurements({ unitId }: UnitMeasurementsProps) {
   // Determine unit type for proper display
   const isMyWaterUnit = unitId.startsWith("MYWATER_");
   const unitType = unit?.unit_type || (isMyWaterUnit ? 'uvc' : 'drop');
-  const isUVCUnit = unitType === 'uvc' || isMyWaterUnit || unitId.includes("UVC");
+  
+  // Check if it's a UVC unit type (for correct display format)
+  const isUVCUnit = unitType === 'uvc' && !unitType.includes('drop') && !unitType.includes('office');
   
   // Set last refreshed time on component mount and when measurements change
   useEffect(() => {
@@ -84,20 +86,21 @@ export function UnitMeasurements({ unitId }: UnitMeasurementsProps) {
   };
   
   useEffect(() => {
-    if (isMyWaterUnit) {
-      console.log(`🌊 MYWATER unit detected: ${unitId}`);
-      console.log(`Data status: ${isLoading ? 'Loading' : 'Loaded'} | Error: ${error ? error.message : 'None'}`);
-      console.log(`Measurements count: ${measurements.length}`);
-      if (measurements.length > 0) {
-        console.log('First measurement:', {
-          timestamp: measurements[0].timestamp,
-          volume: measurements[0].volume,
-          temperature: measurements[0].temperature,
-          uvc_hours: measurements[0].uvc_hours
-        });
-      }
+    console.log(`Unit ${unitId} details:`, {
+      unitType,
+      isUVCUnit,
+      isMyWaterUnit
+    });
+    
+    if (measurements.length > 0) {
+      console.log('First measurement:', {
+        timestamp: measurements[0].timestamp,
+        volume: measurements[0].volume,
+        temperature: measurements[0].temperature,
+        uvc_hours: measurements[0].uvc_hours
+      });
     }
-  }, [isMyWaterUnit, measurements, isLoading, error, unitId]);
+  }, [measurements, isLoading, error, unitId, unitType, isUVCUnit, isMyWaterUnit]);
   
   // Show error message if there's an error
   if (error) {
