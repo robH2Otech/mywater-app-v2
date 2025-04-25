@@ -1,4 +1,3 @@
-
 import {
   Table,
   TableBody,
@@ -26,17 +25,17 @@ export function MeasurementsTable({ measurements, isUVCUnit }: MeasurementsTable
       
       // If not the last measurement, calculate difference with the next one (measurements are in reverse order)
       if (index < measurements.length - 1) {
-        const currentVolume = typeof measurement.cumulative_volume === 'number' 
-          ? measurement.cumulative_volume 
-          : measurement.volume;
-          
-        const previousVolume = typeof measurements[index + 1].cumulative_volume === 'number'
-          ? measurements[index + 1].cumulative_volume
-          : measurements[index + 1].volume;
+        const currentVolume = typeof measurement.volume === 'number' ? measurement.volume : 0;
+        const previousVolume = typeof measurements[index + 1].volume === 'number' ? measurements[index + 1].volume : 0;
         
-        // Calculate the difference
-        const volumeDiff = Math.max(0, currentVolume - previousVolume);
-        hourlyVolume = volumeDiff;
+        console.log('Calculating hourly difference:', {
+          current: currentVolume,
+          previous: previousVolume,
+          difference: currentVolume - previousVolume
+        });
+        
+        // Calculate the difference - no need for conversion since values are already in the correct unit
+        hourlyVolume = Math.max(0, currentVolume - previousVolume);
       }
       
       return {
@@ -63,20 +62,9 @@ export function MeasurementsTable({ measurements, isUVCUnit }: MeasurementsTable
         displayVolume = cubicMeters.toFixed(2);
         volumeUnit = "m³";
       } else {
-        // For DROP/OFFICE units, check if volume is already in liters
+        // For DROP/OFFICE units, volume is already in liters
         const rawVolume = typeof measurement.volume === 'number' ? measurement.volume : 0;
-        console.log(`Raw volume for measurement ${index}:`, rawVolume);
-        
-        // If volume is already in liters (large number), just format it
-        if (rawVolume > 100) {
-          displayVolume = rawVolume.toFixed(2);
-          console.log(`Volume appears to be in liters already:`, displayVolume);
-        } else {
-          // Convert from m³ to liters
-          const liters = rawVolume * 1000;
-          displayVolume = liters.toFixed(2);
-          console.log(`Converted ${rawVolume}m³ to liters:`, displayVolume);
-        }
+        displayVolume = rawVolume.toFixed(2);
         volumeUnit = "L";
       }
           
@@ -93,14 +81,8 @@ export function MeasurementsTable({ measurements, isUVCUnit }: MeasurementsTable
           ? measurement.uvc_hours.toFixed(1)
           : "N/A";
       } else {
-        // Handle hourly volume similar to main volume
-        const rawHourlyVolume = measurement.hourlyVolume;
-        if (rawHourlyVolume > 100) {
-          lastColumn = `${rawHourlyVolume.toFixed(2)} L`;
-        } else {
-          const hourlyLiters = rawHourlyVolume * 1000;
-          lastColumn = `${hourlyLiters.toFixed(2)} L`;
-        }
+        // Display hourly volume with 2 decimal places, already in liters
+        lastColumn = `${measurement.hourlyVolume.toFixed(2)} L`;
       }
 
       return (
