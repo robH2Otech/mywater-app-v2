@@ -76,7 +76,7 @@ export function MeasurementsTable({ measurements, isUVCUnit }: MeasurementsTable
         : "N/A";
         
       // For UVC units, show UVC hours
-      // For DROP units, show hourly volume in liters
+      // For DROP/Office units, show hourly volume in liters
       const lastColumn = isUVCUnit
         ? (measurement.uvc_hours !== undefined && typeof measurement.uvc_hours === 'number'
             ? measurement.uvc_hours.toFixed(1)
