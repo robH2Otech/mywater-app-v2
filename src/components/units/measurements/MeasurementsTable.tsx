@@ -63,10 +63,20 @@ export function MeasurementsTable({ measurements, isUVCUnit }: MeasurementsTable
         displayVolume = cubicMeters.toFixed(2);
         volumeUnit = "m³";
       } else {
-        // For DROP/OFFICE units, convert m³ to liters with 2 decimal places
-        const volumeInM3 = typeof measurement.volume === 'number' ? Number(measurement.volume.toFixed(4)) : 0;
-        const liters = (volumeInM3 * 1000).toFixed(2);
-        displayVolume = liters;
+        // For DROP/OFFICE units, check if volume is already in liters
+        const rawVolume = typeof measurement.volume === 'number' ? measurement.volume : 0;
+        console.log(`Raw volume for measurement ${index}:`, rawVolume);
+        
+        // If volume is already in liters (large number), just format it
+        if (rawVolume > 100) {
+          displayVolume = rawVolume.toFixed(2);
+          console.log(`Volume appears to be in liters already:`, displayVolume);
+        } else {
+          // Convert from m³ to liters
+          const liters = rawVolume * 1000;
+          displayVolume = liters.toFixed(2);
+          console.log(`Converted ${rawVolume}m³ to liters:`, displayVolume);
+        }
         volumeUnit = "L";
       }
           
@@ -83,9 +93,14 @@ export function MeasurementsTable({ measurements, isUVCUnit }: MeasurementsTable
           ? measurement.uvc_hours.toFixed(1)
           : "N/A";
       } else {
-        // Convert hourly volume from m³ to liters for DROP/OFFICE units
-        const hourlyVolumeInM3 = Number(measurement.hourlyVolume.toFixed(4));
-        lastColumn = `${(hourlyVolumeInM3 * 1000).toFixed(2)} L`;
+        // Handle hourly volume similar to main volume
+        const rawHourlyVolume = measurement.hourlyVolume;
+        if (rawHourlyVolume > 100) {
+          lastColumn = `${rawHourlyVolume.toFixed(2)} L`;
+        } else {
+          const hourlyLiters = rawHourlyVolume * 1000;
+          lastColumn = `${hourlyLiters.toFixed(2)} L`;
+        }
       }
 
       return (
