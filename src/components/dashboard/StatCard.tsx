@@ -39,14 +39,15 @@ export const StatCard = ({
     
     // If it's already a string with "m³" notation, just ensure it's properly formatted
     if (typeof value === 'string' && value.includes('m')) {
-      // Clean up the string and format it properly
+      // Clean up the string and remove duplicate m³
       const numericPart = value.replace(/[^0-9.]/g, '');
       const numericValue = parseFloat(numericPart);
       
       if (!isNaN(numericValue) && isFinite(numericValue)) {
         return `${formatTotalVolume(numericValue)}m³`;
       }
-      return value.replace(' m', 'm³');
+      // Remove any duplicate "m³" and return with single unit
+      return value.replace(/m³{2,}/g, 'm³');
     }
     
     // If it's a number (volume), format it properly with thousands separators
@@ -83,3 +84,4 @@ export const StatCard = ({
     </Link>
   );
 };
+
