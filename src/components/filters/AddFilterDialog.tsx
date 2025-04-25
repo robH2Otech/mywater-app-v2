@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -14,6 +13,7 @@ import { ScrollableDialogContent } from "@/components/shared/ScrollableDialogCon
 export function AddFilterDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (open: boolean) => void }) {
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [selectedUnitType, setSelectedUnitType] = useState<string>('uvc');
   const [formData, setFormData] = useState({
     unit_id: "",
     installation_date: null as Date | null,
@@ -35,10 +35,17 @@ export function AddFilterDialog({ open, onOpenChange }: { open: boolean; onOpenC
       
       return unitsSnapshot.docs.map(doc => ({
         id: doc.id,
-        name: doc.data().name
+        name: doc.data().name,
+        unit_type: doc.data().unit_type || 'uvc'
       }));
     },
   });
+
+  const handleUnitChange = (unitId: string) => {
+    const selectedUnit = units.find(unit => unit.id === unitId);
+    setSelectedUnitType(selectedUnit?.unit_type || 'uvc');
+    setFormData({ ...formData, unit_id: unitId });
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -91,7 +98,7 @@ export function AddFilterDialog({ open, onOpenChange }: { open: boolean; onOpenC
                 <label className="text-sm text-gray-400">Water Unit</label>
                 <Select
                   value={formData.unit_id}
-                  onValueChange={(value) => setFormData({ ...formData, unit_id: value })}
+                  onValueChange={handleUnitChange}
                 >
                   <SelectTrigger className="bg-spotify-accent border-spotify-accent-hover text-white h-10">
                     <SelectValue placeholder="Select a unit" />
@@ -125,7 +132,7 @@ export function AddFilterDialog({ open, onOpenChange }: { open: boolean; onOpenC
               />
 
               <FormInput
-                label="Volume Processed (m³)"
+                label={`Volume Processed (${selectedUnitType === 'drop' || selectedUnitType === 'office' ? 'L' : 'm³'})`}
                 type="number"
                 value={formData.volume_processed}
                 onChange={(value) => setFormData({ ...formData, volume_processed: value })}

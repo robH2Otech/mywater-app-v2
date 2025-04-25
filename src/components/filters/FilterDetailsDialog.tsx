@@ -6,6 +6,9 @@ import { FormInput } from "@/components/shared/FormInput";
 import { FormDatePicker } from "@/components/shared/FormDatePicker";
 import { useState, useEffect } from "react";
 import { ScrollableDialogContent } from "@/components/shared/ScrollableDialogContent";
+import { useQuery } from "@tanstack/react-query";
+import { doc, getDoc } from "firebase/firestore";
+import { db } from "@/integrations/firebase/client";
 
 interface FilterDetailsDialogProps {
   filter: any;
@@ -16,6 +19,21 @@ interface FilterDetailsDialogProps {
 
 export function FilterDetailsDialog({ filter, open, onOpenChange, onSave }: FilterDetailsDialogProps) {
   const [formData, setFormData] = useState<any>(null);
+  const [unitType, setUnitType] = useState<string>('uvc');
+
+  // Fetch unit type when filter changes
+  useEffect(() => {
+    const fetchUnitType = async () => {
+      if (filter?.unit_id) {
+        const unitDoc = await getDoc(doc(db, "units", filter.unit_id));
+        if (unitDoc.exists()) {
+          const unit = unitDoc.data();
+          setUnitType(unit.unit_type || 'uvc');
+        }
+      }
+    };
+    fetchUnitType();
+  }, [filter]);
 
   useEffect(() => {
     if (filter) {
@@ -70,7 +88,7 @@ export function FilterDetailsDialog({ filter, open, onOpenChange, onSave }: Filt
             />
 
             <FormInput
-              label="Total Volume (m³)"
+              label={`Total Volume (${unitType === 'drop' || unitType === 'office' ? 'L' : 'm³'})`}
               type="number"
               value={formData.total_volume}
               onChange={(value) => setFormData({ ...formData, total_volume: value })}
