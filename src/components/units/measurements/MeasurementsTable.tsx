@@ -65,7 +65,7 @@ export function MeasurementsTable({ measurements, isUVCUnit }: MeasurementsTable
       } else {
         // For DROP units, display in liters
         displayVolume = typeof measurement.volume === 'number' 
-          ? Math.round(measurement.volume) 
+          ? Math.round(measurement.volume * 1000) // Convert m³ to liters (multiply by 1000)
           : 0;
         volumeUnit = "L";
       }
@@ -81,7 +81,7 @@ export function MeasurementsTable({ measurements, isUVCUnit }: MeasurementsTable
         ? (measurement.uvc_hours !== undefined && typeof measurement.uvc_hours === 'number'
             ? measurement.uvc_hours.toFixed(1)
             : "N/A")
-        : `${Math.round(measurement.hourlyVolume)} L`;
+        : `${Math.round(measurement.hourlyVolume * 1000)} L`; // Convert m³ to liters for hourly volume
 
       return (
         <TableRow key={measurement.id || index} className="hover:bg-spotify-accent/20">
