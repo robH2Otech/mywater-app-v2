@@ -1,3 +1,4 @@
+
 import { useQuery } from "@tanstack/react-query";
 import { Bell, Droplets, Filter, Lightbulb, TrendingUp } from "lucide-react";
 import { useUnits } from "@/hooks/useUnits";
@@ -13,7 +14,6 @@ import { fetchUnitTotalVolumes } from "@/utils/measurements/unitVolumeUtils";
 
 const Index = () => {
   const [totalVolume, setTotalVolume] = useState(0);
-  const [percentageIncrease, setPercentageIncrease] = useState(13.2);
   const [isVolumeLoading, setIsVolumeLoading] = useState(true);
   
   const { data: units = [], isLoading: unitsLoading } = useUnits();
@@ -42,60 +42,38 @@ const Index = () => {
   const { data: activeAlerts = [], isLoading: alertsLoading } = useQuery({
     queryKey: ["active-alerts-count"],
     queryFn: async () => {
-      console.log("Fetching active alerts count...");
-      const sevenDaysAgo = new Date();
-      sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+      const alertsQuery = query(
+        collection(db, "alerts"),
+        where("status", "in", ["warning", "urgent"])
+      );
       
-      try {
-        const alertsQuery = query(
-          collection(db, "alerts"),
-          where("status", "in", ["warning", "urgent"])
-        );
-        
-        const alertsSnapshot = await getDocs(alertsQuery);
-        return alertsSnapshot.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data()
-        }));
-      } catch (error) {
-        console.error("Error fetching alert count:", error);
-        return [];
-      }
+      const alertsSnapshot = await getDocs(alertsQuery);
+      return alertsSnapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      }));
     },
   });
   
   const { data: filtersNeedingChange = [], isLoading: filtersLoading } = useQuery({
     queryKey: ["filters-needing-change"],
     queryFn: async () => {
-      try {
-        const filtersQuery = query(
-          collection(db, "filters"),
-          where("status", "in", ["warning", "critical"])
-        );
-        
-        const filtersSnapshot = await getDocs(filtersQuery);
-        return filtersSnapshot.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data()
-        }));
-      } catch (error) {
-        console.error("Error fetching filters needing change:", error);
-        return [];
-      }
+      const filtersQuery = query(
+        collection(db, "filters"),
+        where("status", "in", ["warning", "critical"])
+      );
+      
+      const filtersSnapshot = await getDocs(filtersQuery);
+      return filtersSnapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      }));
     },
   });
   
   const isLoading = unitsLoading || alertsLoading || filtersLoading || isVolumeLoading;
   
   const formattedVolume = totalVolume ? `${formatThousands(totalVolume)}m³` : "0m³";
-    
-  const formattedPercentage = percentageIncrease
-    ? `${percentageIncrease > 0 ? '+' : ''}${percentageIncrease.toFixed(1)}%`
-    : "0%";
-  
-  const percentageColor = percentageIncrease && percentageIncrease > 0
-    ? "text-mywater-blue"
-    : "text-red-500";
 
   return (
     <div className="space-y-6">
@@ -130,8 +108,7 @@ const Index = () => {
           icon={TrendingUp}
           link="/analytics"
           iconColor="text-mywater-blue"
-          subValue={formattedPercentage}
-          subValueColor={percentageColor}
+          // Removed subValue prop to remove "+13.2%" text
         />
       </div>
       
