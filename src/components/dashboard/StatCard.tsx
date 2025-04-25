@@ -1,3 +1,4 @@
+
 import { Link } from "react-router-dom";
 import { Card } from "@/components/ui/card";
 import { LucideIcon } from "lucide-react";
@@ -23,6 +24,7 @@ export const StatCard = ({
   subValueColor = "text-mywater-blue",
 }: StatCardProps) => {
   const formattedValue = () => {
+    // Handle string values with 'L' units (liters)
     if (typeof value === 'string' && value.toLowerCase().includes('l') && !value.toLowerCase().includes('m')) {
       const numericPart = value.replace(/[^0-9.]/g, '');
       const numericValue = parseFloat(numericPart);
@@ -33,23 +35,35 @@ export const StatCard = ({
       return value;
     }
     
+    // Handle string values that already contain 'm³'
     if (typeof value === 'string' && value.includes('m')) {
-      const cleanValue = value.replace(/m³{2,}/g, 'm³');
+      // First remove any duplicate m³ units
+      const cleanValue = value.replace(/m³m³/g, 'm³');
+      
+      // Check if the value still needs formatting
+      if (cleanValue !== value) {
+        return cleanValue;
+      }
+      
+      // Extract just the numeric part for formatting
       const numericPart = cleanValue.replace(/[^0-9.]/g, '');
       const numericValue = parseFloat(numericPart);
       
       if (!isNaN(numericValue) && isFinite(numericValue)) {
-        return `${formatTotalVolume(numericValue)}m³`;
+        // Ensure we don't add another m³ if it already has one
+        return `${formatTotalVolume(numericValue)}`;
       }
+      
       return cleanValue;
     }
     
+    // Handle numeric values
     if (typeof value === 'number') {
       if (isNaN(value) || !isFinite(value) || value > 1000000) {
         console.warn(`Unreasonably large volume detected: ${value}, capping display value`);
-        return `${formatTotalVolume(Math.min(value, 1000000))}m³`;
+        return `${formatTotalVolume(Math.min(value, 1000000))}`;
       }
-      return `${formatTotalVolume(value)}m³`;
+      return `${formatTotalVolume(value)}`;
     }
     
     return value;
