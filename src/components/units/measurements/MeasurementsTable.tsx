@@ -1,3 +1,4 @@
+
 import {
   Table,
   TableBody,
@@ -62,10 +63,9 @@ export function MeasurementsTable({ measurements, isUVCUnit }: MeasurementsTable
         displayVolume = cubicMeters.toFixed(2);
         volumeUnit = "m³";
       } else {
-        // For DROP/OFFICE units, display in liters with 2 decimal places
-        const liters = typeof measurement.volume === 'number' 
-          ? (measurement.volume * 1000).toFixed(2) // Convert m³ to liters and format
-          : '0.00';
+        // For DROP/OFFICE units, convert m³ to liters with 2 decimal places
+        const volumeInM3 = typeof measurement.volume === 'number' ? Number(measurement.volume.toFixed(4)) : 0;
+        const liters = (volumeInM3 * 1000).toFixed(2);
         displayVolume = liters;
         volumeUnit = "L";
       }
@@ -83,8 +83,9 @@ export function MeasurementsTable({ measurements, isUVCUnit }: MeasurementsTable
           ? measurement.uvc_hours.toFixed(1)
           : "N/A";
       } else {
-        // Convert hourly volume from m³ to liters for DROP/OFFICE units with 2 decimal places
-        lastColumn = `${(measurement.hourlyVolume * 1000).toFixed(2)} L`;
+        // Convert hourly volume from m³ to liters for DROP/OFFICE units
+        const hourlyVolumeInM3 = Number(measurement.hourlyVolume.toFixed(4));
+        lastColumn = `${(hourlyVolumeInM3 * 1000).toFixed(2)} L`;
       }
 
       return (
