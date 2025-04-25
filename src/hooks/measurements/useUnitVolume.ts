@@ -29,7 +29,8 @@ export async function fetchUnitStartingVolume(unitId: string): Promise<number> {
  */
 export async function updateUnitTotalVolume(
   unitId: string, 
-  latestVolume: number
+  latestVolume: number,
+  unitType: string = 'uvc'
 ): Promise<void> {
   try {
     if (!unitId || typeof latestVolume !== 'number') {
@@ -37,11 +38,29 @@ export async function updateUnitTotalVolume(
       return;
     }
     
+    // Skip updates with unreasonable values based on unit type
+    const isFilterUnit = unitType === 'drop' || unitType === 'office';
+    
+    // Validate volume based on unit type
+    if (isFilterUnit && (latestVolume > 10000 || latestVolume < 0)) {
+      console.warn(`Skipping update for filter unit ${unitId}: Unreasonable volume value ${latestVolume}L`);
+      return;
+    }
+    
+    if (!isFilterUnit && (latestVolume > 1000000 || latestVolume < 0)) {
+      console.warn(`Skipping update for UVC unit ${unitId}: Unreasonable volume value ${latestVolume}m³`);
+      return;
+    }
+    
+    console.log(`Updating unit ${unitId} total_volume to ${latestVolume} (${isFilterUnit ? 'L' : 'm³'})`);
+    
     const unitDocRef = doc(db, "units", unitId);
     await updateDoc(unitDocRef, {
       total_volume: latestVolume,
       updated_at: new Date().toISOString()
     });
+    
+    console.log(`Successfully updated unit ${unitId} total_volume`);
   } catch (err) {
     console.error("Error updating unit total volume:", err);
     throw err;
@@ -71,7 +90,25 @@ export async function fetchLatestVolume(unitId: string): Promise<number> {
     }
     
     const latestMeasurement = querySnapshot.docs[0].data();
-    return typeof latestMeasurement.volume === 'number' ? latestMeasurement.volume : 0;
+    
+    // Get the unit type to determine how to process volume
+    const unitDocRef = doc(db, "units", unitId);
+    const unitDoc = await getDoc(unitDocRef);
+    const unitData = unitDoc.exists() ? unitDoc.data() : null;
+    const unitType = unitData?.unit_type || 'uvc';
+    const isFilterUnit = unitType === 'drop' || unitType === 'office';
+    
+    // For filter units, use the direct volume value
+    // For UVC units, use cumulative_volume if available
+    if (isFilterUnit) {
+      // For filter units, just use the direct volume value
+      return typeof latestMeasurement.volume === 'number' ? latestMeasurement.volume : 0;
+    } else {
+      // For UVC units, use cumulative_volume if available, otherwise use volume
+      return typeof latestMeasurement.cumulative_volume === 'number' 
+        ? latestMeasurement.cumulative_volume 
+        : typeof latestMeasurement.volume === 'number' ? latestMeasurement.volume : 0;
+    }
   } catch (err) {
     console.error("Error fetching latest volume:", err);
     return 0;

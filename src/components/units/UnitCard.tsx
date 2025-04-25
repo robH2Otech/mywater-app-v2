@@ -1,3 +1,4 @@
+
 import { Check, AlertTriangle, AlertOctagon, MapPin, Edit } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Card } from "@/components/ui/card";
@@ -90,6 +91,13 @@ export const UnitCard = ({
       
       // UVC units are in m³, DROP and Office units are in L
       const volumeUnit = isFilterUnit ? 'L' : 'm³';
+      
+      // For filter units, show 2 decimal places for small values
+      if (isFilterUnit && numVolume < 1000) {
+        return `${numVolume.toFixed(2)} ${volumeUnit}`;
+      }
+      
+      // For large values, or UVC units, show without decimals
       return `${Math.round(numVolume).toLocaleString()} ${volumeUnit}`;
     } catch (err) {
       console.error("Error formatting volume:", volume, err);

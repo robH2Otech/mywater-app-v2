@@ -1,3 +1,4 @@
+
 import { Card } from "@/components/ui/card";
 import { UnitData } from "@/types/analytics";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -9,7 +10,7 @@ interface UnitStatusCardProps {
 export function UnitStatusCard({ unit }: UnitStatusCardProps) {
   const isMobile = useIsMobile();
   
-  // Format volume with whole numbers and correct units
+  // Format volume with consistent units and decimal places based on unit type
   const formatVolume = (volume: number | string | undefined | null) => {
     if (volume === undefined || volume === null) return "0";
     const numericVolume = typeof volume === 'string' ? parseFloat(volume) : volume;
@@ -19,6 +20,12 @@ export function UnitStatusCard({ unit }: UnitStatusCardProps) {
     const isFilterUnit = unit.unit_type === 'drop' || unit.unit_type === 'office';
     const volumeUnit = isFilterUnit ? 'L' : 'm³';
     
+    // For filter units with small values, show decimal places
+    if (isFilterUnit && numericVolume < 1000) {
+      return `${numericVolume.toFixed(2)} ${volumeUnit}`;
+    }
+    
+    // For large values or UVC units, show without decimals
     return `${Math.round(numericVolume)} ${volumeUnit}`;
   };
   

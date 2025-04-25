@@ -1,3 +1,4 @@
+
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Check, AlertTriangle, AlertOctagon, MapPin, Edit, Calendar } from "lucide-react";
@@ -43,6 +44,11 @@ export function FilterCard({ unit, onEditClick, onClick }: FilterCardProps) {
       // Choose the unit based on unit_type
       const unit_type = unit.unit_type || 'uvc';
       const volumeUnit = (unit_type === 'drop' || unit_type === 'office') ? 'L' : 'm³';
+      
+      // For DROP/OFFICE units, show decimal places for small values
+      if ((unit_type === 'drop' || unit_type === 'office') && numVolume < 1000) {
+        return `${numVolume.toFixed(2)} ${volumeUnit}`;
+      }
       
       return `${Math.round(numVolume).toLocaleString()} ${volumeUnit}`;
     } catch (err) {
