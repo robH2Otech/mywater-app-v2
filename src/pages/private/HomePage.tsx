@@ -4,6 +4,8 @@ import { HomeStats } from "@/components/dashboard/private/HomeStats";
 import { CartridgeVisualization } from "@/components/users/private/CartridgeVisualization";
 import { CartridgeAlert } from "@/components/dashboard/private/CartridgeAlert";
 import { useIsMobile, useIsTablet } from "@/hooks/use-mobile";
+import { GlassCard } from "@/components/ui/glass-card";
+import { motion } from "framer-motion";
 
 export function HomePage() {
   const {
@@ -20,7 +22,6 @@ export function HomePage() {
   const isTablet = useIsTablet();
   const isSmallScreen = isMobile || isTablet;
   
-  // Ensure cartridgeUsagePercent is a number
   const safeCartridgeUsagePercent = typeof cartridgeUsagePercent === 'number' 
     ? cartridgeUsagePercent 
     : 0;
@@ -28,16 +29,25 @@ export function HomePage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
-        <div className="flex flex-col items-center">
-          <div className="w-10 h-10 border-t-2 border-b-2 border-blue-500 rounded-full animate-spin"></div>
-          <p className="text-blue-200 mt-4">Loading your dashboard...</p>
-        </div>
+        <motion.div 
+          initial={{ opacity: 0 }} 
+          animate={{ opacity: 1 }} 
+          className="flex flex-col items-center"
+        >
+          <div className="w-10 h-10 border-t-2 border-b-2 border-mywater-accent rounded-full animate-spin"></div>
+          <p className="text-mywater-accent/80 mt-4">Loading your dashboard...</p>
+        </motion.div>
       </div>
     );
   }
 
   return (
-    <div className="space-y-6">
+    <motion.div 
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5 }}
+      className="space-y-6"
+    >
       <CartridgeAlert 
         isReplacementDueSoon={isReplacementDueSoon}
         isReplacementOverdue={isReplacementOverdue}
@@ -46,23 +56,25 @@ export function HomePage() {
       
       <div className={`grid ${isSmallScreen ? 'grid-cols-1 gap-4' : 'grid-cols-3 gap-6'}`}>
         <div className={isSmallScreen ? '' : 'col-span-1'}>
-          <HomeStats 
-            userData={userData}
-            daysUntilReplacement={daysUntilReplacement}
-            isReplacementOverdue={isReplacementOverdue}
-            isReplacementDueSoon={isReplacementDueSoon}
-          />
+          <GlassCard className="p-4">
+            <HomeStats 
+              userData={userData}
+              daysUntilReplacement={daysUntilReplacement}
+              isReplacementOverdue={isReplacementOverdue}
+              isReplacementDueSoon={isReplacementDueSoon}
+            />
+          </GlassCard>
         </div>
         
         <div className={`${isSmallScreen ? 'mt-6' : 'col-span-2'}`}>
-          <div className="bg-spotify-darker rounded-lg border border-white/10 p-6 flex items-center justify-center" style={{ height: isSmallScreen ? 'auto' : '408px' }}>
+          <GlassCard className="p-6" gradient>
             <CartridgeVisualization 
               percentage={safeCartridgeUsagePercent} 
               height={isSmallScreen ? 300 : 350} 
             />
-          </div>
+          </GlassCard>
         </div>
       </div>
-    </div>
+    </motion.div>
   );
 }
