@@ -1,8 +1,10 @@
+
 import { useState, useEffect } from "react";
 import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
-import { SavePreferencesButton } from "../impact/SavePreferencesButton";
+import { Button } from "@/components/ui/button";
+import { Save } from "lucide-react";
 import { motion } from "framer-motion";
 
 interface ConsumptionConfig {
@@ -103,11 +105,19 @@ export function WaterConsumptionSettings({ config, onConfigChange }: WaterConsum
           </div>
         </div>
 
-        <SavePreferencesButton 
-          config={localConfig} 
-          onSave={handleSave}
-          className={hasChanges ? "bg-blue-600" : "bg-gray-600"}
-        />
+        <motion.div 
+          whileHover={{ scale: hasChanges ? 1.02 : 1 }}
+          whileTap={{ scale: hasChanges ? 0.98 : 1 }}
+        >
+          <Button 
+            onClick={handleSave}
+            className={`w-full ${hasChanges ? "bg-blue-600 hover:bg-blue-700" : "bg-gray-600 hover:bg-gray-700"} mt-4`}
+            disabled={!hasChanges}
+          >
+            <Save className="w-4 h-4 mr-2" />
+            Save Preferences
+          </Button>
+        </motion.div>
         
         <div className="grid grid-cols-2 gap-4">
           <div className="space-y-1">

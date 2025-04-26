@@ -1,7 +1,7 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { ImpactSummary } from "./ImpactSummary";
 import { FinancialImpact } from "./FinancialImpact";
 import { CO2Impact } from "./CO2Impact";
@@ -10,6 +10,7 @@ import { PeriodToggle } from "./PeriodToggle";
 import { motion } from "framer-motion";
 import { useCalculatorPreferences } from "@/hooks/dashboard/useCalculatorPreferences";
 import { LoadingSkeleton } from "@/components/shared/LoadingSkeleton";
+import { toast } from "sonner";
 
 interface ImpactCalculatorProps {
   userName?: string;
@@ -17,8 +18,14 @@ interface ImpactCalculatorProps {
 
 export function ImpactCalculator({ userName }: ImpactCalculatorProps) {
   const [period, setPeriod] = useState<"day" | "month" | "year" | "all-time">("year");
-  const [activeTab, setActiveTab] = useState("environmental");
+  const [activeTab, setActiveTab] = useState("environment");
   const { preferences, isLoading, savePreferences } = useCalculatorPreferences();
+
+  // Handle save preferences with toast feedback
+  const handleSavePreferences = (newPreferences: any) => {
+    savePreferences(newPreferences);
+    toast.success("Your preferences have been saved!");
+  };
 
   if (isLoading) {
     return (
@@ -54,32 +61,34 @@ export function ImpactCalculator({ userName }: ImpactCalculatorProps) {
             <TabsList className="grid grid-cols-4 mb-6">
               <TabsTrigger value="environment">Environment</TabsTrigger>
               <TabsTrigger value="financial">Money</TabsTrigger>
-              <TabsTrigger value="co2">CO₂ Reduction</TabsTrigger>
-              <TabsTrigger value="settings">My Settings</TabsTrigger>
+              <TabsTrigger value="co2">CO₂</TabsTrigger>
+              <TabsTrigger value="settings">Settings</TabsTrigger>
             </TabsList>
             
             <div className="mb-4">
-              <PeriodToggle period={period} setPeriod={setPeriod} />
+              {activeTab !== "settings" && (
+                <PeriodToggle period={period} setPeriod={setPeriod} />
+              )}
             </div>
             
-            {activeTab === "environment" && (
+            <TabsContent value="environment">
               <ImpactSummary period={period} config={preferences} />
-            )}
+            </TabsContent>
             
-            {activeTab === "financial" && (
+            <TabsContent value="financial">
               <FinancialImpact period={period} config={preferences} />
-            )}
+            </TabsContent>
             
-            {activeTab === "co2" && (
+            <TabsContent value="co2">
               <CO2Impact period={period} config={preferences} />
-            )}
+            </TabsContent>
             
-            {activeTab === "settings" && (
+            <TabsContent value="settings">
               <WaterConsumptionSettings 
                 config={preferences}
-                onConfigChange={savePreferences}
+                onConfigChange={handleSavePreferences}
               />
-            )}
+            </TabsContent>
           </Tabs>
         </CardContent>
       </Card>

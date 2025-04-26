@@ -18,23 +18,36 @@ export function useCalculatorPreferences() {
   const [preferences, setPreferences] = useState<CalculatorPreferences>(DEFAULT_PREFERENCES);
   const [isLoading, setIsLoading] = useState(true);
 
+  // Load preferences from localStorage on mount
   useEffect(() => {
-    const storedPreferences = localStorage.getItem('waterConsumptionPreferences');
-    if (storedPreferences) {
+    const loadPreferences = () => {
+      setIsLoading(true);
       try {
-        setPreferences(JSON.parse(storedPreferences));
+        const storedPreferences = localStorage.getItem('waterConsumptionPreferences');
+        if (storedPreferences) {
+          const parsedPreferences = JSON.parse(storedPreferences);
+          setPreferences(parsedPreferences);
+        }
       } catch (error) {
-        console.error('Error parsing stored preferences:', error);
+        console.error('Error loading preferences:', error);
+      } finally {
+        setIsLoading(false);
       }
-    }
-    setIsLoading(false);
+    };
+    
+    loadPreferences();
   }, []);
 
+  // Save preferences to localStorage
   const savePreferences = (newPreferences: Partial<CalculatorPreferences>) => {
-    const updatedPreferences = { ...preferences, ...newPreferences };
-    localStorage.setItem('waterConsumptionPreferences', JSON.stringify(updatedPreferences));
-    setPreferences(updatedPreferences);
-    toast.success('Preferences saved successfully!');
+    try {
+      const updatedPreferences = { ...preferences, ...newPreferences };
+      localStorage.setItem('waterConsumptionPreferences', JSON.stringify(updatedPreferences));
+      setPreferences(updatedPreferences);
+    } catch (error) {
+      console.error('Error saving preferences:', error);
+      toast.error('Failed to save preferences');
+    }
   };
 
   return {
