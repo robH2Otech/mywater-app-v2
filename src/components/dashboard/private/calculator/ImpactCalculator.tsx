@@ -27,8 +27,8 @@ export function ImpactCalculator({ userName }: ImpactCalculatorProps) {
         animate={{ opacity: 1 }}
         className="space-y-4"
       >
-        <LoadingSkeleton className="h-8 w-3/4 mx-auto" />
-        <LoadingSkeleton className="h-48" />
+        <LoadingSkeleton />
+        <LoadingSkeleton />
       </motion.div>
     );
   }
