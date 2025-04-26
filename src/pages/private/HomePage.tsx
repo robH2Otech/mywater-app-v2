@@ -21,7 +21,7 @@ export function HomePage() {
   const isMobile = useIsMobile();
   const isTablet = useIsTablet();
   const isSmallScreen = isMobile || isTablet;
-  
+
   const safeCartridgeUsagePercent = typeof cartridgeUsagePercent === 'number' 
     ? cartridgeUsagePercent 
     : 0;
@@ -56,7 +56,7 @@ export function HomePage() {
       
       <div className={`grid ${isSmallScreen ? 'grid-cols-1 gap-4' : 'grid-cols-3 gap-6'}`}>
         <div className={isSmallScreen ? '' : 'col-span-1'}>
-          <GlassCard className="p-4">
+          <GlassCard className="h-full p-4">
             <HomeStats 
               userData={userData}
               daysUntilReplacement={daysUntilReplacement}
@@ -67,10 +67,10 @@ export function HomePage() {
         </div>
         
         <div className={`${isSmallScreen ? 'mt-6' : 'col-span-2'}`}>
-          <GlassCard className="p-6" gradient>
+          <GlassCard className="h-full p-6" gradient>
             <CartridgeVisualization 
               percentage={safeCartridgeUsagePercent} 
-              height={isSmallScreen ? 300 : 350} 
+              height={240}
             />
           </GlassCard>
         </div>
