@@ -1,4 +1,3 @@
-
 import type { Config } from "tailwindcss";
 
 export default {
@@ -33,6 +32,11 @@ export default {
         mywater: {
           blue: "#39afcd",
           "med-blue": "#2c53A0",
+          'accent': '#0EA5E9',    // Ocean Blue
+          'secondary': '#8B5CF6', // Vivid Purple
+          'highlight': '#F97316', // Bright Orange
+          'dark': '#1a1f2c',      // Dark Background
+          'card': 'rgba(255, 255, 255, 0.05)', // Glass effect base
         },
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
@@ -67,6 +71,11 @@ export default {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
         },
+      },
+      backgroundImage: {
+        'gradient-glass': 'linear-gradient(180deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.02) 100%)',
+        'gradient-card': 'linear-gradient(to right, rgba(14, 165, 233, 0.15), rgba(139, 92, 246, 0.15))',
+        'gradient-highlight': 'linear-gradient(135deg, #0EA5E9 0%, #8B5CF6 100%)',
       },
       borderRadius: {
         lg: "var(--radius)",
