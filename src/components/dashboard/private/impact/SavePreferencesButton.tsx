@@ -1,29 +1,34 @@
 
 import { Button } from "@/components/ui/button";
-import { toast } from "sonner";
+import { Save } from "lucide-react";
 import { ImpactConfig } from "@/hooks/dashboard/useImpactCalculations";
+import { motion } from "framer-motion";
 
 interface SavePreferencesButtonProps {
   config: Partial<ImpactConfig>;
+  onSave: (config: Partial<ImpactConfig>) => void;
+  className?: string;
 }
 
-export function SavePreferencesButton({ config }: SavePreferencesButtonProps) {
+export function SavePreferencesButton({ config, onSave, className }: SavePreferencesButtonProps) {
   const handleSavePreferences = () => {
-    // Ensure we have required properties before saving
     if (config.bottleSize !== undefined && config.bottleCost !== undefined) {
-      localStorage.setItem('waterConsumptionPreferences', JSON.stringify(config));
-      toast.success('Preferences saved successfully!');
-    } else {
-      toast.error('Unable to save preferences: missing required values');
+      onSave(config);
     }
   };
 
   return (
-    <Button 
-      onClick={handleSavePreferences}
-      className="w-full bg-blue-600 hover:bg-blue-700 mt-4"
+    <motion.div 
+      whileHover={{ scale: 1.02 }}
+      whileTap={{ scale: 0.98 }}
     >
-      Save Preferences
-    </Button>
+      <Button 
+        onClick={handleSavePreferences}
+        className={`w-full bg-blue-600 hover:bg-blue-700 mt-4 ${className || ""}`}
+      >
+        <Save className="w-4 h-4 mr-2" />
+        Save Preferences
+      </Button>
+    </motion.div>
   );
 }

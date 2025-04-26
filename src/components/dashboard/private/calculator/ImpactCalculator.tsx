@@ -8,6 +8,8 @@ import { CO2Impact } from "./CO2Impact";
 import { WaterConsumptionSettings } from "./WaterConsumptionSettings";
 import { PeriodToggle } from "./PeriodToggle";
 import { motion } from "framer-motion";
+import { useCalculatorPreferences } from "@/hooks/dashboard/useCalculatorPreferences";
+import { LoadingSkeleton } from "@/components/shared/LoadingSkeleton";
 
 interface ImpactCalculatorProps {
   userName?: string;
@@ -15,16 +17,21 @@ interface ImpactCalculatorProps {
 
 export function ImpactCalculator({ userName }: ImpactCalculatorProps) {
   const [period, setPeriod] = useState<"day" | "month" | "year" | "all-time">("year");
-  const [activeTab, setActiveTab] = useState("environment");
-  const [config, setConfig] = useState({
-    bottleSize: 0.5, // Default to 0.5L bottles
-    bottleCost: 1.10, // Default to €1.10 per bottle
-    dailyIntake: 2.0, // Default to 2L per day
-  });
+  const [activeTab, setActiveTab] = useState("environmental");
+  const { preferences, isLoading, savePreferences } = useCalculatorPreferences();
 
-  const handleConfigChange = (newConfig: Partial<typeof config>) => {
-    setConfig(prev => ({...prev, ...newConfig}));
-  };
+  if (isLoading) {
+    return (
+      <motion.div 
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        className="space-y-4"
+      >
+        <LoadingSkeleton className="h-8 w-3/4 mx-auto" />
+        <LoadingSkeleton className="h-48" />
+      </motion.div>
+    );
+  }
 
   return (
     <motion.div 
@@ -56,19 +63,22 @@ export function ImpactCalculator({ userName }: ImpactCalculatorProps) {
             </div>
             
             {activeTab === "environment" && (
-              <ImpactSummary period={period} config={config} />
+              <ImpactSummary period={period} config={preferences} />
             )}
             
             {activeTab === "financial" && (
-              <FinancialImpact period={period} config={config} />
+              <FinancialImpact period={period} config={preferences} />
             )}
             
             {activeTab === "co2" && (
-              <CO2Impact period={period} config={config} />
+              <CO2Impact period={period} config={preferences} />
             )}
             
             {activeTab === "settings" && (
-              <WaterConsumptionSettings config={config} onConfigChange={handleConfigChange} />
+              <WaterConsumptionSettings 
+                config={preferences}
+                onConfigChange={savePreferences}
+              />
             )}
           </Tabs>
         </CardContent>

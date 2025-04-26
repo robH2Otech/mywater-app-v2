@@ -1,8 +1,9 @@
-
 import { useState, useEffect } from "react";
 import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
+import { SavePreferencesButton } from "../impact/SavePreferencesButton";
+import { motion } from "framer-motion";
 
 interface ConsumptionConfig {
   bottleSize: number;
@@ -16,15 +17,30 @@ interface WaterConsumptionSettingsProps {
 }
 
 export function WaterConsumptionSettings({ config, onConfigChange }: WaterConsumptionSettingsProps) {
-  const [dailyIntake, setDailyIntake] = useState(config.dailyIntake);
+  const [localConfig, setLocalConfig] = useState(config);
+  const [hasChanges, setHasChanges] = useState(false);
 
-  // Update dailyIntake when config changes from parent
   useEffect(() => {
-    setDailyIntake(config.dailyIntake);
-  }, [config.dailyIntake]);
+    setLocalConfig(config);
+  }, [config]);
+
+  const handleChange = (changes: Partial<ConsumptionConfig>) => {
+    const newConfig = { ...localConfig, ...changes };
+    setLocalConfig(newConfig);
+    setHasChanges(true);
+  };
+
+  const handleSave = () => {
+    onConfigChange(localConfig);
+    setHasChanges(false);
+  };
 
   return (
-    <div className="space-y-6 p-4 bg-spotify-dark/50 rounded-lg">
+    <motion.div 
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="space-y-6 p-4 bg-spotify-dark/50 rounded-lg"
+    >
       <div className="text-center mb-4">
         <h3 className="text-lg font-semibold">My Water Consumption</h3>
         <p className="text-sm text-gray-400">Customize your settings to get accurate impact calculations</p>
@@ -34,18 +50,15 @@ export function WaterConsumptionSettings({ config, onConfigChange }: WaterConsum
         <div className="space-y-2">
           <div className="flex justify-between">
             <Label htmlFor="daily-water">Daily Water Consumption</Label>
-            <span className="text-sm font-medium">{dailyIntake} L</span>
+            <span className="text-sm font-medium">{localConfig.dailyIntake} L</span>
           </div>
           <Slider
             id="daily-water"
             min={0.5}
             max={5}
             step={0.1}
-            value={[dailyIntake]}
-            onValueChange={value => {
-              setDailyIntake(value[0]);
-              onConfigChange({ dailyIntake: value[0] });
-            }}
+            value={[localConfig.dailyIntake]}
+            onValueChange={value => handleChange({ dailyIntake: value[0] })}
             className="cursor-pointer"
           />
           <p className="text-xs text-gray-400">Recommended daily intake: 2-3 liters</p>
@@ -55,8 +68,8 @@ export function WaterConsumptionSettings({ config, onConfigChange }: WaterConsum
           <div className="space-y-2">
             <Label htmlFor="bottle-size">Bottle Size</Label>
             <Select 
-              value={config.bottleSize?.toString()} 
-              onValueChange={value => onConfigChange({ bottleSize: parseFloat(value) })}
+              value={localConfig.bottleSize?.toString()} 
+              onValueChange={value => handleChange({ bottleSize: parseFloat(value) })}
             >
               <SelectTrigger id="bottle-size" className="w-full">
                 <SelectValue placeholder="Select bottle size" />
@@ -73,8 +86,8 @@ export function WaterConsumptionSettings({ config, onConfigChange }: WaterConsum
           <div className="space-y-2">
             <Label htmlFor="bottle-cost">Bottle Cost (€)</Label>
             <Select 
-              value={config.bottleCost?.toString()} 
-              onValueChange={value => onConfigChange({ bottleCost: parseFloat(value) })}
+              value={localConfig.bottleCost?.toString()} 
+              onValueChange={value => handleChange({ bottleCost: parseFloat(value) })}
             >
               <SelectTrigger id="bottle-cost" className="w-full">
                 <SelectValue placeholder="Select bottle cost" />
@@ -89,31 +102,19 @@ export function WaterConsumptionSettings({ config, onConfigChange }: WaterConsum
             </Select>
           </div>
         </div>
-        
-        <div className="p-3 bg-blue-900/20 border border-blue-500/20 rounded-md">
-          <h4 className="text-sm font-medium mb-1">MYWATER System Pricing</h4>
-          <div className="grid grid-cols-1 gap-1 text-sm">
-            <div className="flex justify-between">
-              <span>MYWATER Home Basic:</span>
-              <span className="font-medium">€199</span>
-            </div>
-            <div className="flex justify-between">
-              <span>MYWATER Home PLUS:</span>
-              <span className="font-medium">€299</span>
-            </div>
-            <div className="flex justify-between">
-              <span>MYWATER PRO:</span>
-              <span className="font-medium">€2,499</span>
-            </div>
-          </div>
-        </div>
+
+        <SavePreferencesButton 
+          config={localConfig} 
+          onSave={handleSave}
+          className={hasChanges ? "bg-blue-600" : "bg-gray-600"}
+        />
         
         <div className="grid grid-cols-2 gap-4">
           <div className="space-y-1">
             <Label htmlFor="co2-value">CO₂ per Bottle (g)</Label>
             <div className="bg-gray-700/50 p-2 rounded-md text-center">
               <span className="text-sm font-medium">
-                {(config.bottleSize * 321).toFixed(1)}g
+                {(localConfig.bottleSize * 321).toFixed(1)}g
               </span>
             </div>
             <p className="text-xs text-gray-400">Based on 321g CO₂ per liter</p>
@@ -123,13 +124,13 @@ export function WaterConsumptionSettings({ config, onConfigChange }: WaterConsum
             <Label htmlFor="plastic-value">Plastic per Bottle (g)</Label>
             <div className="bg-gray-700/50 p-2 rounded-md text-center">
               <span className="text-sm font-medium">
-                {(config.bottleSize * 40).toFixed(1)}g
+                {(localConfig.bottleSize * 40).toFixed(1)}g
               </span>
             </div>
             <p className="text-xs text-gray-400">Based on 40g plastic per liter</p>
           </div>
         </div>
       </div>
-    </div>
+    </motion.div>
   );
 }
