@@ -1,3 +1,4 @@
+
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { ImpactPeriodToggle } from "./ImpactPeriodToggle";
 import { ImpactDetails } from "./ImpactDetails";
@@ -77,7 +78,10 @@ export function ImpactTabs({
             baseBottleSize={config.bottleSize || 0.5}
           />
           
-          <SavePreferencesButton config={config} />
+          <SavePreferencesButton 
+            config={config} 
+            onSave={onConfigChange}
+          />
         </div>
       </TabsContent>
       
