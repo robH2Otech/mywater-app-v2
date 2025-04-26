@@ -5,13 +5,11 @@ import { useIsMobile } from "@/hooks/use-mobile";
 interface CartridgeVisualizationProps {
   percentage: number;
   height?: number;
-  compactMode?: boolean;
 }
 
 export const CartridgeVisualization: React.FC<CartridgeVisualizationProps> = ({ 
   percentage,
-  height = 240,
-  compactMode = false
+  height = 240
 }) => {
   const [animatedPercentage, setAnimatedPercentage] = useState(0);
   const isMobile = useIsMobile();
@@ -27,7 +25,7 @@ export const CartridgeVisualization: React.FC<CartridgeVisualizationProps> = ({
   }, [percentage]);
 
   return (
-    <div className={`relative flex flex-col ${compactMode ? 'h-full justify-center' : ''}`}>
+    <div className="relative flex flex-col h-full w-full">
       <div className="text-center mb-2">
         <h3 className="text-lg font-medium">Cartridge Lifespan</h3>
         <p className="text-sm text-gray-400">Remaining capacity</p>
@@ -35,10 +33,7 @@ export const CartridgeVisualization: React.FC<CartridgeVisualizationProps> = ({
       
       <div className="flex-1 flex items-center justify-center">
         <div 
-          style={{ 
-            height: isMobile ? '200px' : `${compactMode ? '180px' : height}px`, 
-            maxHeight: '240px' 
-          }} 
+          style={{ height: isMobile ? '200px' : `${height}px`, maxHeight: '240px' }} 
           className="relative w-32 mx-auto"
         >
           {/* Container */}
@@ -88,25 +83,25 @@ export const CartridgeVisualization: React.FC<CartridgeVisualizationProps> = ({
               <p className="text-xs text-center text-gray-300">remaining</p>
             </div>
           </div>
-          
-          {/* Animation keyframes */}
-          <style dangerouslySetInnerHTML={{ __html: `
-            @keyframes bubble {
-              0%, 100% {
-                transform: translateY(0) scale(1);
-                opacity: 0.5;
-              }
-              50% {
-                transform: translateY(-${Math.random() * 15 + 5}px) scale(${Math.random() * 0.3 + 0.8});
-                opacity: 0.8;
-              }
-            }
-            .animate-bubble {
-              animation: bubble 3s infinite ease-in-out;
-            }
-          `}} />
         </div>
       </div>
+      
+      {/* Animation keyframes */}
+      <style dangerouslySetInnerHTML={{ __html: `
+        @keyframes bubble {
+          0%, 100% {
+            transform: translateY(0) scale(1);
+            opacity: 0.5;
+          }
+          50% {
+            transform: translateY(-${Math.random() * 15 + 5}px) scale(${Math.random() * 0.3 + 0.8});
+            opacity: 0.8;
+          }
+        }
+        .animate-bubble {
+          animation: bubble 3s infinite ease-in-out;
+        }
+      `}} />
     </div>
   );
 };

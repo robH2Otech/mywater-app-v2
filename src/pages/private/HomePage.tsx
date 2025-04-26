@@ -71,7 +71,6 @@ export function HomePage() {
             <CartridgeVisualization 
               percentage={safeCartridgeUsagePercent} 
               height={240}
-              compactMode={!isSmallScreen}
             />
           </GlassCard>
         </div>
