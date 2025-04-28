@@ -11,6 +11,56 @@ interface TooltipProps {
   className?: string;
 }
 
+// Components that match shadcn/ui tooltip structure 
+const TooltipProvider = ({ children }: { children: React.ReactNode }) => {
+  return <>{children}</>;
+};
+
+const TooltipTrigger = ({ 
+  children, 
+  asChild = false,
+  ...props 
+}: { 
+  children: React.ReactNode;
+  asChild?: boolean;
+} & React.HTMLAttributes<HTMLElement>) => {
+  const Comp = asChild ? React.Fragment : "span";
+  return <Comp {...props}>{children}</Comp>;
+};
+
+const TooltipContent = ({ 
+  children, 
+  side = "top", 
+  align = "center",
+  hidden = false,
+  className,
+  ...props 
+}: { 
+  children: React.ReactNode;
+  side?: "top" | "right" | "bottom" | "left";
+  align?: "start" | "center" | "end";
+  hidden?: boolean;
+  className?: string;
+} & React.HTMLAttributes<HTMLDivElement>) => {
+  if (hidden) return null;
+  
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: -10 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -10 }}
+      transition={{ duration: 0.15 }}
+      className={cn(
+        "z-50 rounded bg-slate-900/90 px-3 py-1.5 text-xs text-white shadow-lg backdrop-blur-sm",
+        className
+      )}
+      {...props}
+    >
+      {children}
+    </motion.div>
+  );
+};
+
 export function Tooltip({
   children,
   content,
@@ -82,3 +132,6 @@ export function Tooltip({
     </div>
   );
 }
+
+// Export the shadcn-compatible tooltip components
+export { TooltipProvider, TooltipTrigger, TooltipContent };

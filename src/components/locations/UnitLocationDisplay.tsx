@@ -6,7 +6,7 @@ import { RefreshCw, Info } from "lucide-react";
 import { LocationData } from "@/utils/locations/locationData";
 import { UnitLocationMap } from "@/components/units/UnitLocationMap";
 import { format, formatDistanceToNow, isValid } from "date-fns";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Tooltip } from "@/components/ui/tooltip";
 
 interface UnitLocationDisplayProps {
   locationData: LocationData;
@@ -77,19 +77,18 @@ export function UnitLocationDisplay({
                   Location data is updated twice daily at 6 AM and 6 PM UTC
                 </p>
               </div>
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <div className="cursor-help">
-                      <Info className="h-4 w-4 text-spotify-accent" />
-                    </div>
-                  </TooltipTrigger>
-                  <TooltipContent className="bg-spotify-darker text-white border-spotify-accent/30 p-3 max-w-xs">
+              <Tooltip 
+                content={
+                  <div>
                     <p>Location data is updated automatically twice daily.</p>
                     <p className="mt-1">Manual updates can be triggered using the Refresh button.</p>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
+                  </div>
+                }
+              >
+                <div className="cursor-help">
+                  <Info className="h-4 w-4 text-spotify-accent" />
+                </div>
+              </Tooltip>
             </div>
           </div>
           
