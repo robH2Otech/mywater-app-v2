@@ -11,8 +11,29 @@ interface TooltipProps {
   className?: string;
 }
 
+interface TooltipProviderProps {
+  children: React.ReactNode;
+  delayDuration?: number; // Added this prop to match usage in sidebar.tsx
+}
+
+interface TooltipTriggerProps extends React.HTMLAttributes<HTMLElement> {
+  children: React.ReactNode;
+  asChild?: boolean;
+}
+
+interface TooltipContentProps extends React.HTMLAttributes<HTMLDivElement> {
+  children: React.ReactNode;
+  side?: "top" | "right" | "bottom" | "left";
+  align?: "start" | "center" | "end";
+  hidden?: boolean;
+  className?: string;
+}
+
 // Components that match shadcn/ui tooltip structure 
-const TooltipProvider = ({ children }: { children: React.ReactNode }) => {
+const TooltipProvider = ({ 
+  children,
+  delayDuration, // Accept delayDuration but we don't use it in our implementation
+}: TooltipProviderProps) => {
   return <>{children}</>;
 };
 
@@ -20,10 +41,7 @@ const TooltipTrigger = ({
   children, 
   asChild = false,
   ...props 
-}: { 
-  children: React.ReactNode;
-  asChild?: boolean;
-} & React.HTMLAttributes<HTMLElement>) => {
+}: TooltipTriggerProps) => {
   const Comp = asChild ? React.Fragment : "span";
   return <Comp {...props}>{children}</Comp>;
 };
@@ -35,15 +53,10 @@ const TooltipContent = ({
   hidden = false,
   className,
   ...props 
-}: { 
-  children: React.ReactNode;
-  side?: "top" | "right" | "bottom" | "left";
-  align?: "start" | "center" | "end";
-  hidden?: boolean;
-  className?: string;
-} & React.HTMLAttributes<HTMLDivElement>) => {
+}: TooltipContentProps) => {
   if (hidden) return null;
   
+  // Use the motion.div with proper type casting to avoid TypeScript errors
   return (
     <motion.div
       initial={{ opacity: 0, y: -10 }}
@@ -54,7 +67,7 @@ const TooltipContent = ({
         "z-50 rounded bg-slate-900/90 px-3 py-1.5 text-xs text-white shadow-lg backdrop-blur-sm",
         className
       )}
-      {...props}
+      {...props as any} // Using 'any' casting to avoid TypeScript errors with events
     >
       {children}
     </motion.div>
