@@ -1,34 +1,60 @@
 
-import { Button } from "@/components/ui/button";
 import { X } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { motion } from "framer-motion";
 
 interface SidebarHeaderProps {
-  isMobile?: boolean;
   closeSidebar?: () => void;
+  isMobile?: boolean;
+  collapsed?: boolean;
 }
 
-export function SidebarHeader({ isMobile, closeSidebar }: SidebarHeaderProps) {
+export function SidebarHeader({ closeSidebar, isMobile, collapsed = false }: SidebarHeaderProps) {
   return (
-    <div className="flex items-center justify-between p-4">
-      <div className="flex items-center gap-2">
-        <img src="/lovable-uploads/f2f80940-5fa8-45b6-a3dd-78b6282cf10e.png" alt="Water Filter" className="h-8 w-8 object-contain" />
-        <div className="flex flex-col">
-          <h1 className="text-xl font-bold text-white leading-tight">MYWATER</h1>
-          <span className="text-sm text-white/80">Private User</span>
+    <div className="border-b border-white/10 py-4">
+      <div className={`flex ${collapsed ? 'justify-center' : 'justify-between'} px-4 items-center`}>
+        <div className="flex items-center">
+          <div className="flex-shrink-0">
+            {collapsed ? (
+              <img 
+                src="/logo-icon.svg" 
+                alt="Logo" 
+                width={30} 
+                height={30} 
+                className="h-8 w-8" 
+                onError={(e) => {
+                  e.currentTarget.src = 'https://placehold.co/30x30?text=M';
+                }}
+              />
+            ) : (
+              <motion.div
+                initial={{ opacity: 0, x: -10 }}
+                animate={{ opacity: 1, x: 0 }}
+                className="flex items-center"
+              >
+                <img 
+                  src="/logo.svg" 
+                  alt="MYWATER" 
+                  width={120} 
+                  height={30} 
+                  className="h-8" 
+                  onError={(e) => {
+                    e.currentTarget.src = 'https://placehold.co/120x30?text=MYWATER';
+                  }}
+                />
+              </motion.div>
+            )}
+          </div>
         </div>
+        
+        {/* Close button only for mobile */}
+        {isMobile && !collapsed && (
+          <Button variant="ghost" size="icon" onClick={closeSidebar}>
+            <X className="h-5 w-5 text-gray-400" />
+            <span className="sr-only">Close sidebar</span>
+          </Button>
+        )}
       </div>
-      
-      {isMobile && (
-        <Button 
-          variant="ghost" 
-          size="icon" 
-          onClick={closeSidebar}
-          className="text-gray-400 hover:text-white"
-        >
-          <X className="h-5 w-5" />
-          <span className="sr-only">Close menu</span>
-        </Button>
-      )}
     </div>
   );
 }

@@ -1,28 +1,84 @@
-import * as React from "react"
-import * as TooltipPrimitive from "@radix-ui/react-tooltip"
 
-import { cn } from "@/lib/utils"
+import * as React from "react";
+import { AnimatePresence, motion } from "framer-motion";
+import { cn } from "@/lib/utils";
 
-const TooltipProvider = TooltipPrimitive.Provider
+interface TooltipProps {
+  children: React.ReactNode;
+  content: React.ReactNode;
+  delay?: number;
+  side?: "top" | "right" | "bottom" | "left";
+  className?: string;
+}
 
-const Tooltip = TooltipPrimitive.Root
-
-const TooltipTrigger = TooltipPrimitive.Trigger
-
-const TooltipContent = React.forwardRef<
-  React.ElementRef<typeof TooltipPrimitive.Content>,
-  React.ComponentPropsWithoutRef<typeof TooltipPrimitive.Content>
->(({ className, sideOffset = 4, ...props }, ref) => (
-  <TooltipPrimitive.Content
-    ref={ref}
-    sideOffset={sideOffset}
-    className={cn(
-      "z-50 overflow-hidden rounded-md border bg-popover px-3 py-1.5 text-sm text-popover-foreground shadow-md animate-in fade-in-0 zoom-in-95 data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2",
-      className
-    )}
-    {...props}
-  />
-))
-TooltipContent.displayName = TooltipPrimitive.Content.displayName
-
-export { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider }
+export function Tooltip({
+  children,
+  content,
+  delay = 0.3,
+  side = "top",
+  className
+}: TooltipProps) {
+  const [isVisible, setIsVisible] = React.useState(false);
+  const [isMounted, setIsMounted] = React.useState(false);
+  const timeoutRef = React.useRef<NodeJS.Timeout>();
+  
+  const positions = {
+    top: { x: 0, y: -10 },
+    right: { x: 10, y: 0 },
+    bottom: { x: 0, y: 10 },
+    left: { x: -10, y: 0 }
+  };
+  
+  const showTooltip = () => {
+    clearTimeout(timeoutRef.current);
+    setIsMounted(true);
+    
+    timeoutRef.current = setTimeout(() => {
+      setIsVisible(true);
+    }, delay * 1000);
+  };
+  
+  const hideTooltip = () => {
+    clearTimeout(timeoutRef.current);
+    setIsVisible(false);
+    
+    timeoutRef.current = setTimeout(() => {
+      setIsMounted(false);
+    }, 150);
+  };
+  
+  React.useEffect(() => {
+    return () => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+    };
+  }, []);
+  
+  return (
+    <div className="relative inline-block" onMouseEnter={showTooltip} onMouseLeave={hideTooltip}>
+      {children}
+      
+      <AnimatePresence>
+        {isMounted && (
+          <motion.div 
+            className={cn(
+              "absolute z-50 whitespace-nowrap rounded bg-slate-900/90 px-3 py-1.5 text-xs text-white shadow-lg backdrop-blur-sm",
+              side === "top" && "bottom-full left-1/2 -translate-x-1/2 mb-2",
+              side === "right" && "left-full top-1/2 -translate-y-1/2 ml-2",
+              side === "bottom" && "top-full left-1/2 -translate-x-1/2 mt-2",
+              side === "left" && "right-full top-1/2 -translate-y-1/2 mr-2",
+              className
+            )}
+            initial={{ opacity: 0, ...positions[side] }}
+            animate={{ opacity: isVisible ? 1 : 0, x: 0, y: 0 }}
+            exit={{ opacity: 0, ...positions[side] }}
+            transition={{ duration: 0.15 }}
+          >
+            {content}
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}
