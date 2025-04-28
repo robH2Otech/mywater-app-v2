@@ -1,8 +1,7 @@
-
 import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Edit } from "lucide-react";
+import { Edit, User, Mail, Phone, MapPin } from "lucide-react";
 import { PrivateUser } from "@/types/privateUser";
 import { format } from "date-fns";
 import { useOrderHistory } from "@/hooks/dashboard/useOrderHistory";
@@ -28,7 +27,7 @@ export function PrivateUserProfile({ userData, onEdit }: PrivateUserProfileProps
         </TabsList>
         
         <TabsContent value="profile">
-          <Card className="p-6 bg-gradient-to-b from-slate-900/50 to-slate-800/30 border-slate-700/50">
+          <Card className="p-6 bg-gradient-to-b from-slate-900/50 to-slate-800/30 border-slate-700/50 transition-all duration-300 hover:bg-slate-800/40">
             <div className="flex justify-between items-start">
               <div>
                 <h3 className="text-lg font-medium text-white">Personal Information</h3>
@@ -47,20 +46,32 @@ export function PrivateUserProfile({ userData, onEdit }: PrivateUserProfileProps
             
             <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4">
               <div className="space-y-1">
-                <p className="text-sm font-medium text-blue-300/80">Name</p>
-                <p className="text-white">{userData.first_name} {userData.last_name}</p>
+                <div className="flex items-center space-x-2">
+                  <User className="h-4 w-4 text-blue-400" />
+                  <p className="text-sm font-medium text-blue-300/80">Name</p>
+                </div>
+                <p className="text-white pl-6">{userData.first_name} {userData.last_name}</p>
               </div>
               <div className="space-y-1">
-                <p className="text-sm font-medium text-blue-300/80">Email</p>
-                <p className="text-white">{userData.email}</p>
+                <div className="flex items-center space-x-2">
+                  <Mail className="h-4 w-4 text-blue-400" />
+                  <p className="text-sm font-medium text-blue-300/80">Email</p>
+                </div>
+                <p className="text-white pl-6">{userData.email}</p>
               </div>
               <div className="space-y-1">
-                <p className="text-sm font-medium text-blue-300/80">Phone</p>
-                <p className="text-white">{userData.phone || "Not provided"}</p>
+                <div className="flex items-center space-x-2">
+                  <Phone className="h-4 w-4 text-blue-400" />
+                  <p className="text-sm font-medium text-blue-300/80">Phone</p>
+                </div>
+                <p className="text-white pl-6">{userData.phone || "Not provided"}</p>
               </div>
               <div className="space-y-1">
-                <p className="text-sm font-medium text-blue-300/80">Address</p>
-                <p className="text-white">{userData.address || "Not provided"}</p>
+                <div className="flex items-center space-x-2">
+                  <MapPin className="h-4 w-4 text-blue-400" />
+                  <p className="text-sm font-medium text-blue-300/80">Address</p>
+                </div>
+                <p className="text-white pl-6">{userData.address || "Not provided"}</p>
               </div>
             </div>
           </Card>

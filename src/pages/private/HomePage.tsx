@@ -1,4 +1,3 @@
-
 import { usePrivateUserData } from "@/hooks/dashboard/usePrivateUserData";
 import { HomeStats } from "@/components/dashboard/private/HomeStats";
 import { CartridgeVisualization } from "@/components/users/private/CartridgeVisualization";
@@ -46,7 +45,7 @@ export function HomePage() {
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5 }}
-      className="space-y-6"
+      className="space-y-4"
     >
       <CartridgeAlert 
         isReplacementDueSoon={isReplacementDueSoon}
@@ -54,26 +53,23 @@ export function HomePage() {
         formattedReplacementDate={formattedReplacementDate}
       />
       
-      <div className={`grid ${isSmallScreen ? 'grid-cols-1 gap-4' : 'grid-cols-3 gap-6'}`}>
-        <div className={isSmallScreen ? '' : 'col-span-1'}>
-          <GlassCard className="h-full p-4">
-            <HomeStats 
-              userData={userData}
-              daysUntilReplacement={daysUntilReplacement}
-              isReplacementOverdue={isReplacementOverdue}
-              isReplacementDueSoon={isReplacementDueSoon}
-            />
-          </GlassCard>
-        </div>
+      <div className={`grid ${isSmallScreen ? 'grid-cols-1 gap-4' : 'grid-cols-2 gap-6'}`}>
+        <GlassCard className="h-full p-4">
+          <HomeStats 
+            userData={userData}
+            daysUntilReplacement={daysUntilReplacement}
+            isReplacementOverdue={isReplacementOverdue}
+            isReplacementDueSoon={isReplacementDueSoon}
+          />
+        </GlassCard>
         
-        <div className={`${isSmallScreen ? 'mt-6' : 'col-span-2'}`}>
-          <GlassCard className="h-full p-6" gradient>
-            <CartridgeVisualization 
-              percentage={safeCartridgeUsagePercent} 
-              height={240}
-            />
-          </GlassCard>
-        </div>
+        <GlassCard className="h-full p-4" gradient>
+          <CartridgeVisualization 
+            percentage={safeCartridgeUsagePercent} 
+            height={200}
+            compact
+          />
+        </GlassCard>
       </div>
     </motion.div>
   );

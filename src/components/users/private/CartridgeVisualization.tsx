@@ -5,11 +5,13 @@ import { useIsMobile } from "@/hooks/use-mobile";
 interface CartridgeVisualizationProps {
   percentage: number;
   height?: number;
+  compact?: boolean;
 }
 
 export const CartridgeVisualization: React.FC<CartridgeVisualizationProps> = ({ 
   percentage,
-  height = 240
+  height = 240,
+  compact = false
 }) => {
   const [animatedPercentage, setAnimatedPercentage] = useState(0);
   const isMobile = useIsMobile();
@@ -33,8 +35,11 @@ export const CartridgeVisualization: React.FC<CartridgeVisualizationProps> = ({
       
       <div className="flex-1 flex items-center justify-center">
         <div 
-          style={{ height: isMobile ? '200px' : `${height}px`, maxHeight: '240px' }} 
-          className="relative w-32 mx-auto"
+          style={{ 
+            height: compact ? '160px' : isMobile ? '200px' : `${height}px`, 
+            maxHeight: compact ? '160px' : '240px'
+          }} 
+          className="relative w-24 mx-auto"
         >
           {/* Container */}
           <div className="absolute inset-0 border-2 border-blue-500/30 rounded-2xl opacity-25"></div>
@@ -61,16 +66,16 @@ export const CartridgeVisualization: React.FC<CartridgeVisualizationProps> = ({
           />
           
           {/* Bubbles */}
-          {remainingPercentage > 10 && Array.from({ length: 6 }).map((_, i) => (
+          {remainingPercentage > 10 && Array.from({ length: 4 }).map((_, i) => (
             <div 
               key={i}
               className="absolute rounded-full bg-blue-300/60 animate-bubble"
               style={{
-                width: `${Math.random() * 6 + 3}px`,
-                height: `${Math.random() * 6 + 3}px`,
+                width: `${Math.random() * 4 + 2}px`,
+                height: `${Math.random() * 4 + 2}px`,
                 left: `${Math.random() * 30 + 35}%`,
                 bottom: `${Math.random() * remainingPercentage + animatedPercentage}%`,
-                animation: `bubble ${Math.random() * 4 + 2}s infinite ease-in-out ${Math.random() * 2}s`,
+                animation: `bubble ${Math.random() * 3 + 2}s infinite ease-in-out ${Math.random() * 2}s`,
                 opacity: Math.random() * 0.5 + 0.2,
               }}
             />
@@ -78,9 +83,9 @@ export const CartridgeVisualization: React.FC<CartridgeVisualizationProps> = ({
           
           {/* Percentage indicator */}
           <div className="absolute inset-0 flex items-center justify-center">
-            <div className="bg-black/70 px-3 py-1.5 rounded-full">
-              <p className="text-xl font-bold text-white">{remainingPercentage.toFixed(0)}%</p>
-              <p className="text-xs text-center text-gray-300">remaining</p>
+            <div className="bg-black/70 px-2.5 py-1 rounded-full">
+              <p className="text-lg font-bold text-white">{remainingPercentage.toFixed(0)}%</p>
+              <p className="text-2xs text-center text-gray-300">remaining</p>
             </div>
           </div>
         </div>
@@ -94,7 +99,7 @@ export const CartridgeVisualization: React.FC<CartridgeVisualizationProps> = ({
             opacity: 0.5;
           }
           50% {
-            transform: translateY(-${Math.random() * 15 + 5}px) scale(${Math.random() * 0.3 + 0.8});
+            transform: translateY(-${Math.random() * 10 + 5}px) scale(${Math.random() * 0.3 + 0.8});
             opacity: 0.8;
           }
         }
