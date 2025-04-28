@@ -37,9 +37,11 @@ export const CartridgeVisualization: React.FC<CartridgeVisualizationProps> = ({
         <div 
           style={{ 
             height: compact ? '160px' : isMobile ? '200px' : `${height}px`, 
-            maxHeight: compact ? '160px' : '240px'
+            maxHeight: compact ? '160px' : '240px',
+            width: '100%', // Changed from fixed width to full width
+            maxWidth: '280px' // Added maxWidth to prevent too wide cartridge
           }} 
-          className="relative w-24 mx-auto"
+          className="relative mx-auto"
         >
           {/* Container */}
           <div className="absolute inset-0 border-2 border-blue-500/30 rounded-2xl opacity-25"></div>
@@ -49,8 +51,8 @@ export const CartridgeVisualization: React.FC<CartridgeVisualizationProps> = ({
             className="absolute bottom-0 left-0 right-0 bg-red-500/60 transition-all duration-1000 ease-out rounded-b-xl"
             style={{ 
               height: `${animatedPercentage}%`,
-              width: '80%',
-              marginLeft: '10%'
+              width: '90%', // Increased from 80% to 90%
+              marginLeft: '5%' // Adjusted margin to center (was 10%)
             }}
           />
           
@@ -60,8 +62,8 @@ export const CartridgeVisualization: React.FC<CartridgeVisualizationProps> = ({
             style={{ 
               height: `${remainingPercentage}%`,
               bottom: `${animatedPercentage}%`,
-              width: '80%',
-              marginLeft: '10%'
+              width: '90%', // Increased from 80% to 90%
+              marginLeft: '5%' // Adjusted margin to center (was 10%)
             }}
           />
           
@@ -110,3 +112,4 @@ export const CartridgeVisualization: React.FC<CartridgeVisualizationProps> = ({
     </div>
   );
 };
+
