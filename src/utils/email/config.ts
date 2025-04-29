@@ -1,11 +1,11 @@
 import emailjs from 'emailjs-com';
 
-// EmailJS configuration - Fixed to ensure proper initialization for both v2 and v3
+// EmailJS configuration - Updated for X-WATER
 export const EMAILJS_CONFIG = {
-  SERVICE_ID: 'service_mywater',
-  TEMPLATE_ID: 'template_referral',
-  USER_ID: '20lKGYgYsf1DIICqM',  // This should be the actual user ID - using public key as backup
-  PUBLIC_KEY: '20lKGYgYsf1DIICqM'  // This should be the actual public key
+  SERVICE_ID: 'service_xwater', // Update this with your new service ID
+  TEMPLATE_ID: 'template_referral', // Keep the same template or create a new one
+  USER_ID: '20lKGYgYsf1DIICqM',  // Keep this or update with your new user ID
+  PUBLIC_KEY: '20lKGYgYsf1DIICqM'  // Keep this or update with your new public key
 };
 
 // Keep track of initialization status
@@ -71,7 +71,7 @@ export const sendEmailWithEmailJS = async (
       from_name: fromName,
       subject: subject,
       message: message.slice(0, 500), // Limit message size for better deliverability
-      reply_to: "noreply@mywatertechnologies.com",
+      reply_to: "noreply@x-watertechnologies.com", // Updated for X-WATER
       ...additionalParams
     };
     

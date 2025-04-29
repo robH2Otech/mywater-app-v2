@@ -6,13 +6,13 @@ import { getStorage, connectStorageEmulator } from "firebase/storage";
 
 // Firebase configuration
 const firebaseConfig = {
-  apiKey: "AIzaSyAh3g_3Xp9zewW-xyvOIEDnJGRaoMhJgqw",
-  authDomain: "mywater-app-533f8.firebaseapp.com",
-  databaseURL: "https://mywater-app-533f8-default-rtdb.europe-west1.firebasedatabase.app",
-  projectId: "mywater-app-533f8",
-  storageBucket: "mywater-app-533f8.appspot.com",
-  messagingSenderId: "1017703121603",
-  appId: "1:1017703121603:web:77f5259b84a019a4429876"
+  apiKey: "AIzaSyCCDSU2wD3hNl54z-HRuFXnWdsVbg1C6Ps",
+  authDomain: "x-water-3b4eb.firebaseapp.com",
+  projectId: "x-water-3b4eb",
+  storageBucket: "x-water-3b4eb.appspot.com",
+  messagingSenderId: "827472992283",
+  appId: "1:827472992283:web:725af5703575d52aa0c0be",
+  measurementId: "G-J3WN5VE34X"
 };
 
 // Initialize Firebase

@@ -26,7 +26,7 @@ export const sendEmailDirect = async (
       from_name: fromName,
       subject: subject,
       message: message.replace(/<br>/g, '\n').replace(/<[^>]*>/g, ''),
-      reply_to: "noreply@mywatertechnologies.com"
+      reply_to: "noreply@x-watertechnologies.com" // Updated for X-WATER
     };
     
     console.log("Sending direct email with parameters:", simpleParams);
@@ -50,9 +50,9 @@ export const sendEmailDirect = async (
         to_email: toEmail,
         to_name: toName,
         from_name: fromName,
-        subject: `${fromName} invited you to try MYWATER with a discount!`,
-        message: `${fromName} has invited you to try MYWATER with a 20% discount! Visit https://mywater.com/products and use code MYWATER20`,
-        reply_to: "noreply@mywatertechnologies.com"
+        subject: `${fromName} invited you to try X-WATER with a discount!`, // Updated for X-WATER
+        message: `${fromName} has invited you to try X-WATER with a 20% discount! Visit https://x-water.com/products and use code XWATER20`, // Updated for X-WATER
+        reply_to: "noreply@x-watertechnologies.com" // Updated for X-WATER
       };
       
       console.log("Trying ultra-simple email parameters:", ultraSimpleParams);

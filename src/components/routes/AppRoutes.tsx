@@ -1,179 +1,80 @@
-
+import React from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
-import { Layout } from "@/components/layout/Layout";
-import { PrivateDashboard } from "@/pages/PrivateDashboard";
-import { PrivateAuth } from "@/pages/PrivateAuth";
-import { LandingPage } from "@/pages/LandingPage";
-import { Auth } from "@/pages/Auth";
-import Index from "@/pages/Index";
-import { ProtectedRoute, PrivateProtectedRoute } from "./ProtectedRoutes";
-import ClientRequests from "@/pages/ClientRequests";
-import { Units } from "@/pages/Units";
-import { UnitDetails } from "@/pages/UnitDetails";
-import { UnitLocationPage } from "@/pages/UnitLocationPage";
-import { LocationsPage } from "@/pages/LocationsPage";
-import { Filters } from "@/pages/Filters";
-import { UVC } from "@/pages/UVC";
-// Change to import the default export
-import Alerts from "@/pages/Alerts";
-import { Analytics } from "@/pages/Analytics";
-import { Users } from "@/pages/Users";
-import { Settings } from "@/pages/Settings";
+import { ProtectedRoutes } from "./ProtectedRoutes";
+
+// Lazy-loaded components
+const Dashboard = React.lazy(() => import("@/pages/Dashboard"));
+const Units = React.lazy(() => import("@/pages/Units"));
+const UnitDetails = React.lazy(() => import("@/pages/UnitDetails"));
+const LocationsPage = React.lazy(() => import("@/pages/LocationsPage"));
+const UnitLocationPage = React.lazy(() => import("@/pages/UnitLocationPage"));
+const UVC = React.lazy(() => import("@/pages/UVC"));
+const Analytics = React.lazy(() => import("@/pages/Analytics"));
+const Alerts = React.lazy(() => import("@/pages/Alerts"));
+const Filters = React.lazy(() => import("@/pages/Filters"));
+const Users = React.lazy(() => import("@/pages/Users"));
+const ClientRequests = React.lazy(() => import("@/pages/ClientRequests"));
+const Settings = React.lazy(() => import("@/pages/Settings"));
+const Auth = React.lazy(() => import("@/pages/Auth"));
+const PrivateAuth = React.lazy(() => import("@/pages/PrivateAuth"));
+const PrivateDashboard = React.lazy(() => import("@/pages/PrivateDashboard"));
+const LandingPage = React.lazy(() => import("@/pages/LandingPage"));
+const NotFound = React.lazy(() => import("@/pages/NotFound"));
 
 export function AppRoutes() {
   return (
     <Routes>
-      <Route path="/" element={<LandingPage />} />
+      {/* Default route */}
+      <Route path="/" element={<Navigate to="/dashboard" />} />
+      
+      {/* Add the migration page */}
+      <Route path="/migration" element={<React.lazy(() => import("@/pages/MigrationPage"))()} />
+      
+      {/* Protected business routes */}
+      <Route element={<ProtectedRoutes />}>
+        {/* Dashboard */}
+        <Route path="/dashboard" element={<Dashboard />} />
+        
+        {/* Units */}
+        <Route path="/units" element={<Units />} />
+        <Route path="/units/:unitId" element={<UnitDetails />} />
+        
+        {/* Locations */}
+        <Route path="/locations" element={<LocationsPage />} />
+        <Route path="/units/:unitId/location" element={<UnitLocationPage />} />
+        
+        {/* UVC */}
+        <Route path="/uvc" element={<UVC />} />
+        
+        {/* Analytics */}
+        <Route path="/analytics" element={<Analytics />} />
+        
+        {/* Alerts */}
+        <Route path="/alerts" element={<Alerts />} />
+        
+        {/* Filters */}
+        <Route path="/filters" element={<Filters />} />
+        
+        {/* Users */}
+        <Route path="/users" element={<Users />} />
+        
+        {/* Client requests */}
+        <Route path="/requests" element={<ClientRequests />} />
+        
+        {/* Settings */}
+        <Route path="/settings" element={<Settings />} />
+      </Route>
+      
+      {/* Authentication */}
       <Route path="/auth" element={<Auth />} />
+      
+      {/* Private */}
       <Route path="/private-auth" element={<PrivateAuth />} />
+      <Route path="/private-dashboard" element={<PrivateDashboard />} />
       
-      {/* Private User Routes - ensure correct routing */}
-      <Route
-        path="/private-dashboard/*"
-        element={
-          <PrivateProtectedRoute>
-            <PrivateDashboard />
-          </PrivateProtectedRoute>
-        }
-      />
-      
-      {/* Admin Routes */}
-      <Route
-        path="/dashboard"
-        element={
-          <ProtectedRoute>
-            <Layout>
-              <Index />
-            </Layout>
-          </ProtectedRoute>
-        }
-      />
-      
-      {/* Include all admin routes directly */}
-      <Route
-        path="/units"
-        element={
-          <ProtectedRoute>
-            <Layout>
-              <Units />
-            </Layout>
-          </ProtectedRoute>
-        }
-      />
-      
-      <Route
-        path="/units/:id"
-        element={
-          <ProtectedRoute>
-            <Layout>
-              <UnitDetails />
-            </Layout>
-          </ProtectedRoute>
-        }
-      />
-
-      {/* Locations main page */}
-      <Route
-        path="/locations"
-        element={
-          <ProtectedRoute>
-            <Layout>
-              <LocationsPage />
-            </Layout>
-          </ProtectedRoute>
-        }
-      />
-
-      {/* Unit location view route */}
-      <Route
-        path="/locations/:iccid"
-        element={
-          <ProtectedRoute>
-            <Layout>
-              <UnitLocationPage />
-            </Layout>
-          </ProtectedRoute>
-        }
-      />
-      
-      <Route
-        path="/filters"
-        element={
-          <ProtectedRoute>
-            <Layout>
-              <Filters />
-            </Layout>
-          </ProtectedRoute>
-        }
-      />
-      
-      <Route
-        path="/uvc"
-        element={
-          <ProtectedRoute>
-            <Layout>
-              <UVC />
-            </Layout>
-          </ProtectedRoute>
-        }
-      />
-      
-      <Route
-        path="/alerts"
-        element={
-          <ProtectedRoute>
-            <Layout>
-              <Alerts />
-            </Layout>
-          </ProtectedRoute>
-        }
-      />
-      
-      <Route
-        path="/analytics"
-        element={
-          <ProtectedRoute>
-            <Layout>
-              <Analytics />
-            </Layout>
-          </ProtectedRoute>
-        }
-      />
-      
-      <Route
-        path="/users"
-        element={
-          <ProtectedRoute>
-            <Layout>
-              <Users />
-            </Layout>
-          </ProtectedRoute>
-        }
-      />
-      
-      <Route
-        path="/settings"
-        element={
-          <ProtectedRoute>
-            <Layout>
-              <Settings />
-            </Layout>
-          </ProtectedRoute>
-        }
-      />
-      
-      {/* Client Requests Route */}
-      <Route 
-        path="/client-requests" 
-        element={
-          <ProtectedRoute>
-            <ClientRequests />
-          </ProtectedRoute>
-        } 
-      />
-      
-      {/* Catch-all route for any undefined routes */}
-      <Route path="*" element={<Navigate to="/" replace />} />
+      {/* Other */}
+      <Route path="/landing" element={<LandingPage />} />
+      <Route path="*" element={<NotFound />} />
     </Routes>
   );
 }
