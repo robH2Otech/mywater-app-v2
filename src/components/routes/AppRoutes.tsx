@@ -1,3 +1,4 @@
+
 import React from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
 import { ProtectedRoutes } from "./ProtectedRoutes";
@@ -20,6 +21,7 @@ const PrivateAuth = React.lazy(() => import("@/pages/PrivateAuth"));
 const PrivateDashboard = React.lazy(() => import("@/pages/PrivateDashboard"));
 const LandingPage = React.lazy(() => import("@/pages/LandingPage"));
 const NotFound = React.lazy(() => import("@/pages/NotFound"));
+const MigrationPage = React.lazy(() => import("@/pages/MigrationPage"));
 
 export function AppRoutes() {
   return (
@@ -28,7 +30,7 @@ export function AppRoutes() {
       <Route path="/" element={<Navigate to="/dashboard" />} />
       
       {/* Add the migration page */}
-      <Route path="/migration" element={<React.lazy(() => import("@/pages/MigrationPage"))()} />
+      <Route path="/migration" element={<MigrationPage />} />
       
       {/* Protected business routes */}
       <Route element={<ProtectedRoutes />}>
