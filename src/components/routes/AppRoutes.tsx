@@ -1,4 +1,4 @@
-import React from "react";
+import React, { Suspense } from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
 import { ProtectedRoute } from "./ProtectedRoutes";
 
@@ -22,18 +22,25 @@ const LandingPage = React.lazy(() => import("@/pages/LandingPage"));
 const NotFound = React.lazy(() => import("@/pages/NotFound"));
 const MigrationPage = React.lazy(() => import("@/pages/MigrationPage"));
 
+// Loader component for suspense fallback
+const LoadingFallback = () => (
+  <div className="flex items-center justify-center min-h-screen">
+    <div className="w-10 h-10 border-t-2 border-b-2 border-blue-500 rounded-full animate-spin"></div>
+  </div>
+);
+
 export function AppRoutes() {
   return (
-    <Routes>
-      {/* Default route */}
-      <Route path="/" element={<Navigate to="/dashboard" />} />
-      
-      {/* Add the migration page */}
-      <Route path="/migration" element={<MigrationPage />} />
-      
-      {/* Protected business routes */}
-      <Route element={<ProtectedRoute>
-        <Routes>
+    <Suspense fallback={<LoadingFallback />}>
+      <Routes>
+        {/* Default route */}
+        <Route path="/" element={<Navigate to="/dashboard" />} />
+        
+        {/* Migration page - publicly accessible */}
+        <Route path="/migration" element={<MigrationPage />} />
+        
+        {/* Protected business routes */}
+        <Route element={<ProtectedRoute children={null} />}>
           {/* Dashboard */}
           <Route path="/dashboard" element={<Dashboard />} />
           
@@ -65,20 +72,19 @@ export function AppRoutes() {
           
           {/* Settings */}
           <Route path="/settings" element={<Settings />} />
-        </Routes>
-      </ProtectedRoute>}>
-      </Route>
-      
-      {/* Authentication */}
-      <Route path="/auth" element={<Auth />} />
-      
-      {/* Private */}
-      <Route path="/private-auth" element={<PrivateAuth />} />
-      <Route path="/private-dashboard" element={<PrivateDashboard />} />
-      
-      {/* Other */}
-      <Route path="/landing" element={<LandingPage />} />
-      <Route path="*" element={<NotFound />} />
-    </Routes>
+        </Route>
+        
+        {/* Authentication */}
+        <Route path="/auth" element={<Auth />} />
+        
+        {/* Private */}
+        <Route path="/private-auth" element={<PrivateAuth />} />
+        <Route path="/private-dashboard" element={<PrivateDashboard />} />
+        
+        {/* Other */}
+        <Route path="/landing" element={<LandingPage />} />
+        <Route path="*" element={<NotFound />} />
+      </Routes>
+    </Suspense>
   );
 }
