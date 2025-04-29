@@ -13,7 +13,7 @@ function App() {
   return (
     <LanguageProvider>
       <QueryClientProvider client={queryClient}>
-        <Tooltip>
+        <Tooltip content="Application content">
           <Toaster />
           <Sonner />
           <BrowserRouter>
