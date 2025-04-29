@@ -11,7 +11,7 @@ import { determineUnitStatus } from "@/utils/unitStatusUtils";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { formatThousands } from "@/utils/measurements/formatUtils";
 
-export const Dashboard = () => {
+const Dashboard = () => {
   const { t } = useLanguage();
 
   // Fetch all units data
@@ -134,3 +134,5 @@ function calculateTotalVolume(units: UnitData[]): number {
   
   return total;
 }
+
+export default Dashboard;

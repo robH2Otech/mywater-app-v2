@@ -7,7 +7,7 @@ import { deleteDoc, doc } from "firebase/firestore";
 import { db } from "@/integrations/firebase/client";
 import { toast } from "@/components/ui/use-toast";
 
-export function Analytics() {
+const Analytics = () => {
   const [selectedUnit, setSelectedUnit] = useState("");
   const { data: reports = [], refetch: refetchReports } = useReports(selectedUnit);
 
@@ -55,4 +55,6 @@ export function Analytics() {
       />
     </div>
   );
-}
+};
+
+export default Analytics;

@@ -12,7 +12,7 @@ import { UnitLoading } from "@/components/units/details/UnitLoading";
 import { useUnitDetails } from "@/hooks/units/useUnitDetails";
 import { toast } from "sonner";
 
-export const UnitDetails = () => {
+const UnitDetails = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const [isSyncing, setIsSyncing] = useState(false);
@@ -57,3 +57,5 @@ export const UnitDetails = () => {
     </div>
   );
 };
+
+export default UnitDetails;

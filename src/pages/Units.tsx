@@ -10,7 +10,7 @@ import { collection, getDocs, orderBy, query } from "firebase/firestore";
 import { db } from "@/integrations/firebase/client";
 import { UnitData } from "@/types/analytics";
 
-export const Units = () => {
+const Units = () => {
   const { toast } = useToast();
   const [isAddUnitOpen, setIsAddUnitOpen] = useState(false);
   
@@ -84,3 +84,5 @@ export const Units = () => {
     </div>
   );
 }
+
+export default Units;

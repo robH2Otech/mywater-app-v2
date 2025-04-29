@@ -8,7 +8,7 @@ import { ArrowRight, Droplet, Shield, Users, Globe } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import MatrixRain from "@/components/ui/matrix-rain";
 
-export function LandingPage() {
+const LandingPage = () => {
   const navigate = useNavigate();
   const [selectedOption, setSelectedOption] = useState<string>("private");
   const { language, setLanguage, t } = useLanguage();
@@ -155,4 +155,6 @@ export function LandingPage() {
       </div>
     </div>
   );
-}
+};
+
+export default LandingPage;

@@ -9,7 +9,7 @@ import { useFirebaseAuth } from "@/hooks/useFirebaseAuth";
 import { Droplets, Home } from "lucide-react";
 import MatrixRain from "@/components/ui/matrix-rain";
 
-export function PrivateAuth() {
+const PrivateAuth = () => {
   const navigate = useNavigate();
   const {
     isLoading,
@@ -135,4 +135,6 @@ export function PrivateAuth() {
       </div>
     </div>
   );
-}
+};
+
+export default PrivateAuth;

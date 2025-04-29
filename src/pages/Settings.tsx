@@ -20,7 +20,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Separator } from "@/components/ui/separator";
 import { useLanguage } from "@/contexts/LanguageContext";
 
-export const Settings = () => {
+const Settings = () => {
   const { toast } = useToast();
   const { language, setLanguage, t } = useLanguage();
   const [theme, setTheme] = useState("system");
@@ -154,3 +154,5 @@ export const Settings = () => {
     </div>
   );
 };
+
+export default Settings;

@@ -13,7 +13,7 @@ import { Card } from "@/components/ui/card";
 import { Users as UsersIcon } from "lucide-react";
 import { User } from "@/types/users";
 
-export const Users = () => {
+const Users = () => {
   const { toast } = useToast();
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [isAddUserOpen, setIsAddUserOpen] = useState(false);
@@ -120,4 +120,6 @@ export const Users = () => {
       />
     </div>
   );
-}
+};
+
+export default Users;

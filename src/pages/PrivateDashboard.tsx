@@ -10,7 +10,7 @@ import { ShopPage } from "./private/ShopPage";
 import { SettingsPage } from "./private/SettingsPage";
 import { DataCalculatorPage } from "./private/DataCalculatorPage";
 
-export function PrivateDashboard() {
+const PrivateDashboard = () => {
   return (
     <PrivateLayout>
       <div className="relative">
@@ -35,4 +35,6 @@ export function PrivateDashboard() {
       </div>
     </PrivateLayout>
   );
-}
+};
+
+export default PrivateDashboard;

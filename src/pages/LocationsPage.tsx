@@ -8,7 +8,7 @@ import { LocationsGrid } from "@/components/locations/LocationsGrid";
 import { EmptyLocations } from "@/components/locations/EmptyLocations";
 import { useLocationsData } from "@/hooks/locations/useLocationsData";
 
-export function LocationsPage() {
+const LocationsPage = () => {
   const {
     units,
     filteredUnits,
@@ -63,4 +63,6 @@ export function LocationsPage() {
       )}
     </div>
   );
-}
+};
+
+export default LocationsPage;

@@ -13,8 +13,7 @@ import { ClientRequestsContent } from "@/components/requests/ClientRequestsConte
 import { fetchRecentRequests } from "@/services/requestService";
 import { SupportRequest } from "@/types/supportRequests";
 
-// Change from default export to named export to match the import in AppRoutes.tsx
-export function Alerts() {
+const Alerts = () => {
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [selectedAlertId, setSelectedAlertId] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<string>("alerts");
@@ -131,7 +130,6 @@ export function Alerts() {
       />
     </div>
   );
-}
+};
 
-// Also add a default export that references the named export
 export default Alerts;

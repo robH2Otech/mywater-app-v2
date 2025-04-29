@@ -11,7 +11,7 @@ import { RefreshCw, Lightbulb } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useSyncUVCData } from "@/hooks/uvc/useSyncUVCData";
 
-export const UVC = () => {
+const UVC = () => {
   const [selectedUnit, setSelectedUnit] = useState<UnitWithUVC | null>(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const { data: units = [], isLoading, error, refetch } = useUVCData();
@@ -103,3 +103,5 @@ export const UVC = () => {
     </div>
   );
 };
+
+export default UVC;

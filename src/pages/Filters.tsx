@@ -16,7 +16,7 @@ interface UnitWithFilters extends UnitData {
   filters: FilterData[];
 }
 
-export const Filters = () => {
+const Filters = () => {
   const { toast } = useToast();
   const [isAddFilterOpen, setIsAddFilterOpen] = useState(false);
   const [selectedFilter, setSelectedFilter] = useState<any>(null);
@@ -125,3 +125,5 @@ export const Filters = () => {
     </div>
   );
 };
+
+export default Filters;

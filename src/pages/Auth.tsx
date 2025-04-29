@@ -8,7 +8,7 @@ import MatrixRain from "@/components/ui/matrix-rain";
 import { useNavigate } from "react-router-dom";
 import { Home } from "lucide-react";
 
-export function Auth() {
+const Auth = () => {
   const [isLogin, setIsLogin] = useState(true);
   const navigate = useNavigate();
 
@@ -70,4 +70,6 @@ export function Auth() {
       </div>
     </UserMigrationHandler>
   );
-}
+};
+
+export default Auth;

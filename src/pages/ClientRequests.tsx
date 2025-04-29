@@ -2,10 +2,12 @@
 import { Layout } from "@/components/layout/Layout";
 import { ClientRequestsContent } from "@/components/requests/ClientRequestsContent";
 
-export default function ClientRequests() {
+const ClientRequests = () => {
   return (
     <Layout>
       <ClientRequestsContent />
     </Layout>
   );
-}
+};
+
+export default ClientRequests;

@@ -11,7 +11,7 @@ import { Button } from '@/components/ui/button';
 import { RefreshCcw } from 'lucide-react';
 import { UnitData } from '@/types/analytics';
 
-export function UnitLocationPage() {
+const UnitLocationPage = () => {
   const { iccid } = useParams<{ iccid: string }>();
   
   // Fetch unit details based on ICCID
@@ -103,4 +103,6 @@ export function UnitLocationPage() {
       )}
     </div>
   );
-}
+};
+
+export default UnitLocationPage;
