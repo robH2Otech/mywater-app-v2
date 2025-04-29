@@ -1,7 +1,6 @@
-
 import React from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
-import { ProtectedRoutes } from "./ProtectedRoutes";
+import { ProtectedRoute } from "./ProtectedRoutes";
 
 // Lazy-loaded components
 const Dashboard = React.lazy(() => import("@/pages/Dashboard"));
@@ -33,38 +32,41 @@ export function AppRoutes() {
       <Route path="/migration" element={<MigrationPage />} />
       
       {/* Protected business routes */}
-      <Route element={<ProtectedRoutes />}>
-        {/* Dashboard */}
-        <Route path="/dashboard" element={<Dashboard />} />
-        
-        {/* Units */}
-        <Route path="/units" element={<Units />} />
-        <Route path="/units/:unitId" element={<UnitDetails />} />
-        
-        {/* Locations */}
-        <Route path="/locations" element={<LocationsPage />} />
-        <Route path="/units/:unitId/location" element={<UnitLocationPage />} />
-        
-        {/* UVC */}
-        <Route path="/uvc" element={<UVC />} />
-        
-        {/* Analytics */}
-        <Route path="/analytics" element={<Analytics />} />
-        
-        {/* Alerts */}
-        <Route path="/alerts" element={<Alerts />} />
-        
-        {/* Filters */}
-        <Route path="/filters" element={<Filters />} />
-        
-        {/* Users */}
-        <Route path="/users" element={<Users />} />
-        
-        {/* Client requests */}
-        <Route path="/requests" element={<ClientRequests />} />
-        
-        {/* Settings */}
-        <Route path="/settings" element={<Settings />} />
+      <Route element={<ProtectedRoute>
+        <Routes>
+          {/* Dashboard */}
+          <Route path="/dashboard" element={<Dashboard />} />
+          
+          {/* Units */}
+          <Route path="/units" element={<Units />} />
+          <Route path="/units/:unitId" element={<UnitDetails />} />
+          
+          {/* Locations */}
+          <Route path="/locations" element={<LocationsPage />} />
+          <Route path="/units/:unitId/location" element={<UnitLocationPage />} />
+          
+          {/* UVC */}
+          <Route path="/uvc" element={<UVC />} />
+          
+          {/* Analytics */}
+          <Route path="/analytics" element={<Analytics />} />
+          
+          {/* Alerts */}
+          <Route path="/alerts" element={<Alerts />} />
+          
+          {/* Filters */}
+          <Route path="/filters" element={<Filters />} />
+          
+          {/* Users */}
+          <Route path="/users" element={<Users />} />
+          
+          {/* Client requests */}
+          <Route path="/requests" element={<ClientRequests />} />
+          
+          {/* Settings */}
+          <Route path="/settings" element={<Settings />} />
+        </Routes>
+      </ProtectedRoute>}>
       </Route>
       
       {/* Authentication */}
