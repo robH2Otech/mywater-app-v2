@@ -46,12 +46,6 @@ if (isDevelopment) {
   console.log("Development environment detected:", currentDomain);
 }
 
-// Handle Lovable domains
-const isLovableDomain = currentDomain.includes('lovable.app') || currentDomain.includes('lovableproject.com');
-if (isLovableDomain) {
-  console.log("Lovable environment detected:", currentDomain);
-}
-
 // Enable local emulator if in development environment and explicitly enabled
 if (import.meta.env.DEV) {
   const useEmulator = false; // Set to true to use Firebase emulators

@@ -7,6 +7,7 @@ import { Tooltip } from "@/components/ui/tooltip";
 import { LanguageProvider } from "./contexts/LanguageContext";
 import { AppRoutes } from "./components/routes/AppRoutes";
 
+// Create a new QueryClient
 const queryClient = new QueryClient();
 
 function App() {

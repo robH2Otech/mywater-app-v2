@@ -1,6 +1,6 @@
 import React, { Suspense } from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
-import { ProtectedRoute } from "./ProtectedRoutes";
+import { ProtectedRoute, PrivateProtectedRoute } from "./ProtectedRoutes";
 
 // Lazy-loaded components
 const Dashboard = React.lazy(() => import("@/pages/Dashboard"));
@@ -33,56 +33,37 @@ export function AppRoutes() {
   return (
     <Suspense fallback={<LoadingFallback />}>
       <Routes>
-        {/* Default route */}
-        <Route path="/" element={<Navigate to="/dashboard" />} />
+        {/* Default route - Changed to landing page */}
+        <Route path="/" element={<Navigate to="/landing" />} />
+        
+        {/* Landing page - publicly accessible */}
+        <Route path="/landing" element={<LandingPage />} />
         
         {/* Migration page - publicly accessible */}
         <Route path="/migration" element={<MigrationPage />} />
         
-        {/* Protected business routes */}
-        <Route element={<ProtectedRoute children={null} />}>
-          {/* Dashboard */}
-          <Route path="/dashboard" element={<Dashboard />} />
-          
-          {/* Units */}
-          <Route path="/units" element={<Units />} />
-          <Route path="/units/:unitId" element={<UnitDetails />} />
-          
-          {/* Locations */}
-          <Route path="/locations" element={<LocationsPage />} />
-          <Route path="/units/:unitId/location" element={<UnitLocationPage />} />
-          
-          {/* UVC */}
-          <Route path="/uvc" element={<UVC />} />
-          
-          {/* Analytics */}
-          <Route path="/analytics" element={<Analytics />} />
-          
-          {/* Alerts */}
-          <Route path="/alerts" element={<Alerts />} />
-          
-          {/* Filters */}
-          <Route path="/filters" element={<Filters />} />
-          
-          {/* Users */}
-          <Route path="/users" element={<Users />} />
-          
-          {/* Client requests */}
-          <Route path="/requests" element={<ClientRequests />} />
-          
-          {/* Settings */}
-          <Route path="/settings" element={<Settings />} />
-        </Route>
-        
         {/* Authentication */}
         <Route path="/auth" element={<Auth />} />
-        
-        {/* Private */}
         <Route path="/private-auth" element={<PrivateAuth />} />
-        <Route path="/private-dashboard" element={<PrivateDashboard />} />
+        
+        {/* Protected business routes */}
+        <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+        <Route path="/units" element={<ProtectedRoute><Units /></ProtectedRoute>} />
+        <Route path="/units/:unitId" element={<ProtectedRoute><UnitDetails /></ProtectedRoute>} />
+        <Route path="/locations" element={<ProtectedRoute><LocationsPage /></ProtectedRoute>} />
+        <Route path="/units/:unitId/location" element={<ProtectedRoute><UnitLocationPage /></ProtectedRoute>} />
+        <Route path="/uvc" element={<ProtectedRoute><UVC /></ProtectedRoute>} />
+        <Route path="/analytics" element={<ProtectedRoute><Analytics /></ProtectedRoute>} />
+        <Route path="/alerts" element={<ProtectedRoute><Alerts /></ProtectedRoute>} />
+        <Route path="/filters" element={<ProtectedRoute><Filters /></ProtectedRoute>} />
+        <Route path="/users" element={<ProtectedRoute><Users /></ProtectedRoute>} />
+        <Route path="/requests" element={<ProtectedRoute><ClientRequests /></ProtectedRoute>} />
+        <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
+        
+        {/* Private routes */}
+        <Route path="/private-dashboard" element={<PrivateProtectedRoute><PrivateDashboard /></PrivateProtectedRoute>} />
         
         {/* Other */}
-        <Route path="/landing" element={<LandingPage />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
     </Suspense>

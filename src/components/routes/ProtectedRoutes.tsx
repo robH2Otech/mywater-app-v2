@@ -1,8 +1,8 @@
 
 import { ReactNode, useEffect, useState } from "react";
 import { Navigate } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
 import { auth } from "@/integrations/firebase/client";
+import { onAuthStateChanged } from "firebase/auth";
 
 export const ProtectedRoute = ({ children }: { children: ReactNode }) => {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
@@ -12,17 +12,12 @@ export const ProtectedRoute = ({ children }: { children: ReactNode }) => {
     const tempAccess = localStorage.getItem('tempAccess') === 'true';
     setIsTempAccess(tempAccess);
 
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setIsAuthenticated(!!session);
+    // Use Firebase authentication directly
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      setIsAuthenticated(!!user);
     });
 
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      setIsAuthenticated(!!session);
-    });
-
-    return () => subscription.unsubscribe();
+    return () => unsubscribe();
   }, []);
 
   if (isAuthenticated === null && !isTempAccess) {
@@ -47,23 +42,11 @@ export const PrivateProtectedRoute = ({ children }: { children: ReactNode }) => 
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
 
   useEffect(() => {
-    const checkAuth = async () => {
-      try {
-        const user = await new Promise((resolve) => {
-          const unsubscribe = auth.onAuthStateChanged((user) => {
-            resolve(user);
-            unsubscribe();
-          });
-        });
-        
-        setIsAuthenticated(!!user);
-      } catch (error) {
-        console.error("Error checking auth state:", error);
-        setIsAuthenticated(false);
-      }
-    };
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      setIsAuthenticated(!!user);
+    });
     
-    checkAuth();
+    return () => unsubscribe();
   }, []);
 
   if (isAuthenticated === null) {
