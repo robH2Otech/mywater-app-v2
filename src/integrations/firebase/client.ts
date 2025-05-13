@@ -4,15 +4,15 @@ import { getAuth, connectAuthEmulator, setPersistence, browserSessionPersistence
 import { getFirestore, connectFirestoreEmulator } from "firebase/firestore";
 import { getStorage, connectStorageEmulator } from "firebase/storage";
 
-// Firebase configuration
+// Firebase configuration for your project
 const firebaseConfig = {
-  apiKey: "AIzaSyCCDSU2wD3hNl54z-HRuFXnWdsVbg1C6Ps",
-  authDomain: "x-water-3b4eb.firebaseapp.com",
-  projectId: "x-water-3b4eb",
-  storageBucket: "x-water-3b4eb.appspot.com",
-  messagingSenderId: "827472992283",
-  appId: "1:827472992283:web:725af5703575d52aa0c0be",
-  measurementId: "G-J3WN5VE34X"
+  apiKey: "AIzaSyBvmqGobxLtrxMwiHkW9PYTIwdV9hm5MXY",
+  authDomain: "mywater-app-533f8.firebaseapp.com",
+  projectId: "mywater-app-533f8",
+  storageBucket: "mywater-app-533f8.appspot.com",
+  messagingSenderId: "1054147575428",
+  appId: "1:1054147575428:web:5e2b29b2a1fdc3ac476ef4",
+  measurementId: "G-7KJHV47PJ5"
 };
 
 // Initialize Firebase
@@ -40,13 +40,19 @@ console.log("Current domain:", currentDomain);
   }
 })();
 
+// Handle development domains
+const isDevelopment = currentDomain === 'localhost' || currentDomain === '127.0.0.1';
+if (isDevelopment) {
+  console.log("Development environment detected:", currentDomain);
+}
+
 // Handle Lovable domains
 const isLovableDomain = currentDomain.includes('lovable.app') || currentDomain.includes('lovableproject.com');
 if (isLovableDomain) {
   console.log("Lovable environment detected:", currentDomain);
 }
 
-// Enable local emulator if in development environment
+// Enable local emulator if in development environment and explicitly enabled
 if (import.meta.env.DEV) {
   const useEmulator = false; // Set to true to use Firebase emulators
 

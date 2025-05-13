@@ -30,7 +30,7 @@ const Auth = () => {
         <div className="w-full max-w-md space-y-8 relative z-10">
           <div className="text-center">
             <h2 className="text-3xl font-bold text-white">
-              Welcome back to <span className="text-mywater-blue">MYWATER app</span>
+              Welcome to <span className="text-mywater-blue">MYWATER app</span>
             </h2>
             <p className="mt-2 text-gray-400">
               {isLogin
