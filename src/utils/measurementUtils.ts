@@ -1,4 +1,3 @@
 
-// Re-export everything from the new module structure
-// This maintains backward compatibility
+// Simplified export from module structure to avoid unnecessary re-exports
 export * from './measurements';
