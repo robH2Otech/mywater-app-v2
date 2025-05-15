@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { auth } from "@/integrations/firebase/client";
 import { collection, query, where, getDocs } from "firebase/firestore";
@@ -79,10 +80,10 @@ export function WelcomeMessage({ firstName }: WelcomeMessageProps) {
   }, [firstName]);
   
   if (!userName) {
-    return <h1 className="text-2xl font-bold mb-6">Welcome to MYWATER!</h1>;
+    return <h1 className="text-2xl font-bold mb-6">Welcome to X-WATER!</h1>;
   }
   
   return (
-    <h1 className="text-2xl font-bold mb-6">Hey {userName}, welcome back to MYWATER app!</h1>
+    <h1 className="text-2xl font-bold mb-6">Hey {userName}, welcome back to X-WATER app!</h1>
   );
 }

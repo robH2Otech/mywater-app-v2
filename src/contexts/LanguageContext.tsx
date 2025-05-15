@@ -1,7 +1,8 @@
+
 import React, { createContext, useContext, useState, useEffect, ReactNode } from "react";
 
 // Available languages
-export type Language = "en" | "fr";
+export type Language = "en" | "sl";
 
 // Define params type for translation function
 type TranslationParams = Record<string, string>;
@@ -23,7 +24,7 @@ const LanguageContext = createContext<LanguageContextType>({
 // Translation object type
 type Translations = Record<string, Record<string, string>>;
 
-// Translations for English and French
+// Translations for English and Slovenian
 const translations: Translations = {
   en: {
     // Dashboard
@@ -142,7 +143,7 @@ const translations: Translations = {
     "toast.export.started": "Your data export has been initiated.",
     
     "english": "English",
-    "french": "French",
+    "slovenian": "Slovenian",
     
     "system": "System",
     "light": "Light",
@@ -169,7 +170,7 @@ const translations: Translations = {
     "private_user": "Private User",
     "business_client": "Business Client",
     "home_water_purification": "Home Water Purification",
-    "home_user_description": "For home users with MYWATER purification products",
+    "home_user_description": "For home users with X-WATER purification products",
     "business_water_management": "Business Water Management",
     "business_description": "For commercial clients managing multiple water purification units",
     "track_maintenance": "Track your purifier's maintenance schedule so you never miss a filter change",
@@ -180,160 +181,160 @@ const translations: Translations = {
     "technical_support": "Technical support and service management",
     "continue": "Continue",
   },
-  fr: {
+  sl: {
     // Dashboard
-    "dashboard.title": "Tableau de bord",
-    "dashboard.welcome": "Bienvenue sur le tableau de bord !",
-    "dashboard.welcome.user": "Bonjour {name}, bon retour !",
-    "dashboard.usage.title": "Consommation d'eau",
-    "dashboard.alerts.title": "Alertes récentes",
-    "dashboard.no.alerts": "Aucune alerte récente",
+    "dashboard.title": "Nadzorna plošča",
+    "dashboard.welcome": "Dobrodošli na nadzorni plošči!",
+    "dashboard.welcome.user": "Živjo {name}, dobrodošli nazaj!",
+    "dashboard.usage.title": "Poraba vode",
+    "dashboard.alerts.title": "Nedavna opozorila",
+    "dashboard.no.alerts": "Ni nedavnih opozoril",
     
     // Navigation
-    "nav.dashboard": "Tableau de bord",
-    "nav.water.units": "Unités d'eau",
-    "nav.filters": "Filtres",
+    "nav.dashboard": "Nadzorna plošča",
+    "nav.water.units": "Vodne enote",
+    "nav.filters": "Filtri",
     "nav.uvc": "UVC",
-    "nav.alerts": "Alertes",
-    "nav.analytics": "Analytique",
-    "nav.users": "Utilisateurs",
-    "nav.settings": "Paramètres",
-    "nav.client.requests": "Demandes clients",
+    "nav.alerts": "Opozorila",
+    "nav.analytics": "Analitika",
+    "nav.users": "Uporabniki",
+    "nav.settings": "Nastavitve",
+    "nav.client.requests": "Zahteve strank",
     
     // Units
-    "units.title": "Unités d'eau",
-    "units.add": "Ajouter une unité",
-    "units.edit": "Modifier l'unité",
-    "units.details": "Détails de l'unité",
-    "units.name": "Nom de l'unité",
-    "units.location": "Emplacement",
-    "units.volume": "Volume total (m³)",
-    "units.status": "Statut",
-    "units.contact": "Contact de maintenance",
-    "units.email": "Email",
-    "units.phone": "Téléphone",
-    "units.next.maintenance": "Prochaine maintenance",
-    "units.last.maintenance": "Dernière maintenance",
-    "units.setup.date": "Date d'installation",
-    "units.measurements": "Données d'eau des dernières 24 heures",
-    "units.no.measurements": "Aucune mesure enregistrée",
-    "units.loading.measurements": "Chargement des mesures...",
+    "units.title": "Vodne enote",
+    "units.add": "Dodaj enoto",
+    "units.edit": "Uredi enoto",
+    "units.details": "Podrobnosti enote",
+    "units.name": "Ime enote",
+    "units.location": "Lokacija",
+    "units.volume": "Skupni volumen (m³)",
+    "units.status": "Status",
+    "units.contact": "Kontakt za vzdrževanje",
+    "units.email": "E-pošta",
+    "units.phone": "Telefon",
+    "units.next.maintenance": "Naslednje vzdrževanje",
+    "units.last.maintenance": "Zadnje vzdrževanje",
+    "units.setup.date": "Datum namestitve",
+    "units.measurements": "Podatki o vodi za zadnjih 24 ur",
+    "units.no.measurements": "Še ni zabeleženih meritev",
+    "units.loading.measurements": "Nalaganje meritev...",
     
     // Filters
-    "filters.title": "Filtres",
-    "filters.add": "Ajouter un filtre",
-    "filters.edit": "Modifier le filtre",
-    "filters.details": "Détails du filtre",
+    "filters.title": "Filtri",
+    "filters.add": "Dodaj filter",
+    "filters.edit": "Uredi filter",
+    "filters.details": "Podrobnosti filtra",
     
     // UVC
-    "uvc.title": "Unités UVC",
-    "uvc.hours": "Heures UVC",
-    "uvc.installation.date": "Date d'installation",
+    "uvc.title": "UVC enote",
+    "uvc.hours": "UVC ure",
+    "uvc.installation.date": "Datum namestitve",
     
     // Alerts
-    "alerts.title": "Alertes",
-    "alerts.create": "Créer une alerte",
-    "alerts.details": "Détails de l'alerte",
-    "alerts.unit": "ID de l'unité",
-    "alerts.message": "Message",
-    "alerts.status": "Statut",
-    "alerts.assign": "Assigner à",
-    "alerts.comments": "Commentaires",
+    "alerts.title": "Opozorila",
+    "alerts.create": "Ustvari opozorilo",
+    "alerts.details": "Podrobnosti opozorila",
+    "alerts.unit": "ID enote",
+    "alerts.message": "Sporočilo",
+    "alerts.status": "Status",
+    "alerts.assign": "Dodeli",
+    "alerts.comments": "Komentarji",
     
     // Analytics
-    "analytics.title": "Analytique",
-    "analytics.reports": "Rapports",
-    "analytics.generate": "Générer un rapport",
-    "analytics.select.unit": "Sélectionner une unité",
-    "analytics.report.type": "Type de rapport",
-    "analytics.generating": "Génération en cours...",
+    "analytics.title": "Analitika",
+    "analytics.reports": "Poročila",
+    "analytics.generate": "Ustvari poročilo",
+    "analytics.select.unit": "Izberi enoto",
+    "analytics.report.type": "Vrsta poročila",
+    "analytics.generating": "Ustvarjanje...",
     
     // Users
-    "users.title": "Utilisateurs",
-    "users.add": "Ajouter un utilisateur",
-    "users.name": "Nom",
-    "users.email": "Email",
-    "users.role": "Rôle",
-    "users.status": "Statut",
+    "users.title": "Uporabniki",
+    "users.add": "Dodaj uporabnika",
+    "users.name": "Ime",
+    "users.email": "E-pošta",
+    "users.role": "Vloga",
+    "users.status": "Status",
     
     // Settings
-    "settings.title": "Paramètres",
-    "settings.theme": "Thème",
-    "settings.language": "Langue",
-    "settings.notifications": "Notifications",
-    "settings.data": "Gestion des données",
-    "settings.about": "À propos",
-    "settings.disclaimer": "Avertissement",
+    "settings.title": "Nastavitve",
+    "settings.theme": "Tema",
+    "settings.language": "Jezik",
+    "settings.notifications": "Obvestila",
+    "settings.data": "Upravljanje podatkov",
+    "settings.about": "O aplikaciji",
+    "settings.disclaimer": "Izjava o omejitvi odgovornosti",
     
     // General
-    "status.active": "Actif",
-    "status.warning": "Avertissement",
-    "status.urgent": "Changement urgent",
-    "status.attention": "Attention",
-    "status.maintenance": "Maintenance",
-    "status.inactive": "Inactif",
+    "status.active": "Aktivno",
+    "status.warning": "Opozorilo",
+    "status.urgent": "Nujna sprememba",
+    "status.attention": "Pozor",
+    "status.maintenance": "Vzdrževanje",
+    "status.inactive": "Neaktivno",
     
-    "button.save": "Enregistrer les modifications",
-    "button.cancel": "Annuler",
-    "button.create": "Créer",
-    "button.edit": "Modifier",
-    "button.delete": "Supprimer",
-    "button.back": "Retour",
-    "button.sync": "Synchroniser les mesures",
-    "button.syncing": "Synchronisation...",
-    "button.clear.cache": "Vider le cache",
-    "button.export.data": "Exporter les données",
-    "button.download": "Télécharger PDF",
+    "button.save": "Shrani spremembe",
+    "button.cancel": "Prekliči",
+    "button.create": "Ustvari",
+    "button.edit": "Uredi",
+    "button.delete": "Izbriši",
+    "button.back": "Nazaj",
+    "button.sync": "Sinhroniziraj meritve",
+    "button.syncing": "Sinhroniziranje...",
+    "button.clear.cache": "Počisti predpomnilnik",
+    "button.export.data": "Izvozi podatke",
+    "button.download": "Prenesi PDF",
     
-    "form.required": "Obligatoire",
-    "form.scroll": "Défiler",
+    "form.required": "Obvezno",
+    "form.scroll": "Pomik",
     
-    "toast.success": "Succès",
-    "toast.error": "Erreur",
-    "toast.update.success": "Mis à jour avec succès",
-    "toast.create.success": "Créé avec succès",
-    "toast.delete.success": "Supprimé avec succès",
-    "toast.cache.cleared": "Le cache de l'application a été vidé avec succès.",
-    "toast.export.started": "L'exportation de vos données a été initiée.",
+    "toast.success": "Uspeh",
+    "toast.error": "Napaka",
+    "toast.update.success": "Uspešno posodobljeno",
+    "toast.create.success": "Uspešno ustvarjeno",
+    "toast.delete.success": "Uspešno izbrisano",
+    "toast.cache.cleared": "Predpomnilnik aplikacije je bil uspešno izbrisan.",
+    "toast.export.started": "Izvoz podatkov je začet.",
     
-    "english": "Anglais",
-    "french": "Français",
+    "english": "Angleščina",
+    "slovenian": "Slovenščina",
     
-    "system": "Système",
-    "light": "Clair",
-    "dark": "Sombre",
-    
+    "system": "Sistemska",
+    "light": "Svetla",
+    "dark": "Temna",
+
     // Chart related translations
-    "chart.select.timerange": "Sélectionner la période",
-    "chart.24hours": "Dernières 24 heures",
-    "chart.7days": "7 derniers jours",
-    "chart.30days": "30 derniers jours",
-    "chart.6months": "6 derniers mois",
-    "chart.loading": "Chargement des données...",
-    "chart.no.data": "Aucune donnée disponible",
-    "chart.volume": "Volume (m³)",
-    "dashboard.loading": "Chargement des données du tableau de bord...",
-    "dashboard.total.units": "Unités totales",
-    "dashboard.filter.changes": "Changements de filtre requis",
-    "dashboard.active.alerts": "Alertes actives",
-    "dashboard.volume.today": "Volume total aujourd'hui",
+    "chart.select.timerange": "Izberi časovni razpon",
+    "chart.24hours": "Zadnjih 24 ur",
+    "chart.7days": "Zadnjih 7 dni",
+    "chart.30days": "Zadnjih 30 dni",
+    "chart.6months": "Zadnjih 6 mesecev",
+    "chart.loading": "Nalaganje podatkov...",
+    "chart.no.data": "Ni podatkov",
+    "chart.volume": "Volumen (m³)",
+    "dashboard.loading": "Nalaganje podatkov...",
+    "dashboard.total.units": "Skupne enote",
+    "dashboard.filter.changes": "Potrebne menjave filtrov",
+    "dashboard.active.alerts": "Aktivna opozorila",
+    "dashboard.volume.today": "Skupni volumen danes",
     
     // Landing page
-    "welcome_to": "Bienvenue à",
-    "app_subtitle": "Buvez de l'eau plus propre, économisez de l'argent et restez informé.",
-    "private_user": "Utilisateur Privé",
-    "business_client": "Client Professionnel",
-    "home_water_purification": "Purification d'Eau Domestique",
-    "home_user_description": "Pour les utilisateurs particuliers avec des produits de purification MYWATER",
-    "business_water_management": "Gestion de l'Eau Professionnelle",
-    "business_description": "Pour les clients commerciaux gérant plusieurs unités de purification d'eau",
-    "track_maintenance": "Suivez le calendrier d'entretien de votre purificateur pour ne jamais manquer un changement de filtre",
-    "refer_friends": "Gagnez des cartouches de remplacement gratuites en parrainant des amis qui se soucient de l'eau propre",
-    "environmental_impact": "Mesurez votre impact environnemental et célébrez chaque étape durable",
-    "monitor_units": "Surveillez et gérez plusieurs unités de purification d'eau",
-    "advanced_analytics": "Outils d'analyse et de rapports avancés",
-    "technical_support": "Support technique et gestion des services",
-    "continue": "Continuer",
+    "welcome_to": "Dobrodošli v",
+    "app_subtitle": "Pijte čistejšo vodo, prihranite denar in bodite obveščeni.",
+    "private_user": "Zasebni uporabnik",
+    "business_client": "Poslovni uporabnik",
+    "home_water_purification": "Domače čiščenje vode",
+    "home_user_description": "Za domače uporabnike izdelkov X-WATER za čiščenje vode",
+    "business_water_management": "Poslovno upravljanje vode",
+    "business_description": "Za poslovne stranke, ki upravljajo več enot za čiščenje vode",
+    "track_maintenance": "Spremljajte urnik vzdrževanja vašega čistilca, da ne boste nikoli zamudili menjave filtra",
+    "refer_friends": "Zaslužite brezplačne nadomestne kartuše s priporočanjem prijateljev, ki jim je mar za čisto vodo",
+    "environmental_impact": "Izmerite svoj okoljski vpliv in praznujte vsak trajnostni mejnik",
+    "monitor_units": "Spremljajte in upravljajte več enot za čiščenje vode",
+    "advanced_analytics": "Napredna orodja za analizo in poročanje",
+    "technical_support": "Tehnična podpora in upravljanje storitev",
+    "continue": "Nadaljuj",
   }
 };
 
@@ -342,7 +343,7 @@ export const LanguageProvider = ({ children }: { children: ReactNode }) => {
   // Get initial language from localStorage or default to English
   const [language, setLanguageState] = useState<Language>(() => {
     const savedLang = localStorage.getItem("language") as Language;
-    return savedLang && (savedLang === "en" || savedLang === "fr") ? savedLang : "en";
+    return savedLang && (savedLang === "en" || savedLang === "sl") ? savedLang : "en";
   });
 
   // Update localStorage when language changes

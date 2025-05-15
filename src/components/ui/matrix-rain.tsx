@@ -12,7 +12,7 @@ interface MatrixRainProps {
 const MatrixRain: React.FC<MatrixRainProps> = ({
   fontSize = 20,
   color = '#39afcd',
-  characters = '01',
+  characters = '100X-WATER',
   fadeOpacity = 0.1,
   speed = 1 // Default speed multiplier
 }) => {

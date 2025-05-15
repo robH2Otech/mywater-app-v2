@@ -13,9 +13,9 @@ const LandingPage = () => {
   const [selectedOption, setSelectedOption] = useState<string>("private");
   const { language, setLanguage, t } = useLanguage();
   
-  // Set default language to French when the component mounts
+  // Set default language to English when the component mounts
   useEffect(() => {
-    setLanguage('fr');
+    setLanguage('en');
   }, []);
 
   const handleContinue = () => {
@@ -32,7 +32,7 @@ const LandingPage = () => {
       <MatrixRain 
         fontSize={16}
         color="#39afcd"
-        characters="10MYWATER"
+        characters="100X-WATER"
         fadeOpacity={0.05}
         speed={0.8}
       />
@@ -52,10 +52,10 @@ const LandingPage = () => {
               EN
             </button>
             <button 
-              className={`px-2 py-1 rounded text-sm ${language === 'fr' ? 'bg-mywater-blue text-white' : 'text-gray-400 hover:text-white'}`}
-              onClick={() => setLanguage('fr')}
+              className={`px-2 py-1 rounded text-sm ${language === 'sl' ? 'bg-mywater-blue text-white' : 'text-gray-400 hover:text-white'}`}
+              onClick={() => setLanguage('sl')}
             >
-              FR
+              SL
             </button>
           </div>
         </div>
@@ -65,7 +65,7 @@ const LandingPage = () => {
         {/* Hero Section */}
         <div className="text-center space-y-4">
           <h1 className="text-4xl md:text-5xl font-bold text-white">
-            {t("welcome_to")} <span className="text-mywater-blue">MYWATER app</span>
+            {t("welcome_to")} <span className="text-mywater-blue">X-WATER app</span>
           </h1>
           <p className="text-lg text-gray-400 max-w-2xl mx-auto">
             {t("app_subtitle")}
@@ -150,7 +150,7 @@ const LandingPage = () => {
         </Button>
 
         <div className="pt-8 text-center text-sm text-gray-500">
-          <p>© 2025 MYWATER. All rights reserved.</p>
+          <p>© 2025 X-WATER. All rights reserved.</p>
         </div>
       </div>
     </div>

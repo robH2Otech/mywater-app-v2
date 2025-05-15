@@ -71,7 +71,7 @@ export const Settings = () => {
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="en">{t("english")}</SelectItem>
-            <SelectItem value="fr">{t("french")}</SelectItem>
+            <SelectItem value="sl">{t("slovenian")}</SelectItem>
           </SelectContent>
         </Select>
       </section>
@@ -138,7 +138,7 @@ export const Settings = () => {
         <div className="space-y-3">
           <p className="text-sm text-gray-400">Version: 3.0.25</p>
           <p className="text-sm text-gray-300 leading-relaxed">
-            MYWATER app
+            X-WATER app
           </p>
           <div className="space-y-2">
             <h3 className="text-sm font-medium text-white">{t("settings.disclaimer")}</h3>
@@ -147,7 +147,7 @@ export const Settings = () => {
             </p>
           </div>
           <p className="text-sm text-gray-400">
-            © 2025 MYWATER Technologies app. All rights reserved.
+            © 2025 X-WATER Technologies app. All rights reserved.
           </p>
         </div>
       </section>

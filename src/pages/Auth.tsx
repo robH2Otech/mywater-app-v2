@@ -19,7 +19,7 @@ const Auth = () => {
         <MatrixRain 
           fontSize={16}
           color="#39afcd"
-          characters="10MYWATER"
+          characters="100X-WATER"
           fadeOpacity={0.05}
           speed={0.8}
         />
@@ -30,7 +30,7 @@ const Auth = () => {
         <div className="w-full max-w-md space-y-8 relative z-10">
           <div className="text-center">
             <h2 className="text-3xl font-bold text-white">
-              Welcome to <span className="text-mywater-blue">MYWATER app</span>
+              Welcome to <span className="text-mywater-blue">X-WATER app</span>
             </h2>
             <p className="mt-2 text-gray-400">
               {isLogin
