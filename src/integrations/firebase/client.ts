@@ -6,7 +6,7 @@ import { getStorage, connectStorageEmulator } from "firebase/storage";
 
 // Firebase configuration for your project
 const firebaseConfig = {
-  apiKey: "AIzaSyBvmqGobxLtrxMwiHkW9PYTIwdV9hm5MXY",
+  apiKey: "AIzaSyAh3g_3Xp9zewW-xyvOIEDnJGRaoMhJgqw",
   authDomain: "mywater-app-533f8.firebaseapp.com",
   projectId: "mywater-app-533f8",
   storageBucket: "mywater-app-533f8.appspot.com",
