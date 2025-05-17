@@ -47,7 +47,7 @@ const Auth = () => {
 
             <div className="text-center space-y-4 mt-6">
               <p className="text-mywater-blue">
-                Contact us for account: contact@mywatertechnologies.com
+                Contact us for account: contact@x-water.eu
               </p>
               
               <div className="pt-2 border-t border-gray-700">

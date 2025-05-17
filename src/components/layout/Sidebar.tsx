@@ -45,8 +45,7 @@ export const Sidebar = ({ isMobile, closeSidebar }: SidebarProps) => {
         <div className="flex items-center gap-2">
           <Droplets className="h-8 w-8 text-primary" />
           <div className="flex flex-col">
-            <h1 className="text-xl font-bold text-white leading-tight">MYWATER</h1>
-            <span className="text-sm text-white/80">Technologies</span>
+            <h1 className="text-xl font-bold text-white leading-tight">X-WATER</h1>
           </div>
         </div>
         
