@@ -31,7 +31,7 @@ const PrivateDashboard = () => {
           <Route path="/support" element={<SupportPage />} />
           <Route path="/shop" element={<ShopPage />} />
           <Route path="/settings" element={<SettingsPage />} />
-          <Route path="*" element={<Navigate to="/private-dashboard" replace />} />
+          <Route path="*" element={<NotFound />} />
         </Routes>
       </div>
     </PrivateLayout>
