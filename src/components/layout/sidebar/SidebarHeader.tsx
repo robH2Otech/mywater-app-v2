@@ -14,37 +14,21 @@ export function SidebarHeader({ closeSidebar, isMobile, collapsed = false }: Sid
     <div className="border-b border-white/10 py-4">
       <div className={`flex ${collapsed ? 'justify-center' : 'justify-between'} px-4 items-center`}>
         <div className="flex items-center">
-          <div className="flex-shrink-0">
-            {collapsed ? (
-              <img 
-                src="/logo-icon.svg" 
-                alt="X-WATER Logo" 
-                width={30} 
-                height={30} 
-                className="h-8 w-8" 
-                onError={(e) => {
-                  e.currentTarget.src = 'https://placehold.co/30x30?text=X';
-                }}
-              />
-            ) : (
-              <motion.div
-                initial={{ opacity: 0, x: -10 }}
-                animate={{ opacity: 1, x: 0 }}
-                className="flex items-center"
-              >
-                <img 
-                  src="/logo.svg" 
-                  alt="X-WATER" 
-                  width={120} 
-                  height={30} 
-                  className="h-8" 
-                  onError={(e) => {
-                    e.currentTarget.src = 'https://placehold.co/120x30?text=X-WATER';
-                  }}
-                />
-              </motion.div>
-            )}
-          </div>
+          {collapsed ? (
+            <div className="flex-shrink-0 h-8 w-8 rounded-md bg-gradient-to-r from-mywater-accent to-blue-600 flex items-center justify-center">
+              <span className="text-white font-bold text-lg">X</span>
+            </div>
+          ) : (
+            <motion.div
+              initial={{ opacity: 0, x: -10 }}
+              animate={{ opacity: 1, x: 0 }}
+              className="flex items-center"
+            >
+              <div className="flex-shrink-0 h-8 rounded-md bg-gradient-to-r from-mywater-accent to-blue-600 flex items-center justify-center px-3">
+                <span className="text-white font-bold text-lg">X-WATER</span>
+              </div>
+            </motion.div>
+          )}
         </div>
         
         {/* Close button only for mobile */}

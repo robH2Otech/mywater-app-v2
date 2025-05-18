@@ -64,7 +64,7 @@ export const PrivateSidebar = ({
         collapsed={collapsed}
       />
 
-      <div className="py-4">
+      <div className="py-4 flex flex-col flex-grow overflow-hidden">
         {!collapsed && !isMobile && (
           <div className="px-4 mb-4">
             <div className="relative">

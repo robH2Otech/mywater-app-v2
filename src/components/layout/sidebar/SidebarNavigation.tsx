@@ -60,10 +60,10 @@ export function SidebarNavigation({
             );
           })}
           
-          <Tooltip content="Log out" side="right">
+          <Tooltip content="Log Out" side="right">
             <button
               onClick={handleLogout}
-              className="flex items-center justify-center w-12 h-12 mt-6 rounded-lg text-gray-400 hover:text-white hover:bg-red-600/20 transition-all duration-200"
+              className="flex items-center justify-center w-12 h-12 mt-4 rounded-lg text-red-500 hover:text-white hover:bg-red-600/20 transition-all duration-200 bg-white/5"
             >
               <LogOut className="h-5 w-5" />
             </button>
