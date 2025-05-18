@@ -18,7 +18,7 @@ export function SidebarHeader({ closeSidebar, isMobile, collapsed = false }: Sid
             {collapsed ? (
               <img 
                 src="/logo-icon.svg" 
-                alt="Logo" 
+                alt="X-WATER Logo" 
                 width={30} 
                 height={30} 
                 className="h-8 w-8" 
