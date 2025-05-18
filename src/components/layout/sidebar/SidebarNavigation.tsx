@@ -37,8 +37,8 @@ export function SidebarNavigation({
           {navigation.map((item) => {
             const isActive = 
               location.pathname === item.path || 
-              (item.path === "/private-dashboard" && location.pathname === "/private-dashboard/") ||
-              (item.path !== "/private-dashboard" && location.pathname.startsWith(item.path));
+              (location.pathname.includes(item.path) && item.path !== "/private-dashboard") ||
+              (item.path === "/private-dashboard" && location.pathname === "/private-dashboard/");
             
             return (
               <Tooltip
@@ -80,8 +80,8 @@ export function SidebarNavigation({
           {navigation.map((item) => {
             const isActive = 
               location.pathname === item.path || 
-              (item.path === "/private-dashboard" && location.pathname === "/private-dashboard/") ||
-              (item.path !== "/private-dashboard" && location.pathname.startsWith(item.path));
+              (location.pathname.includes(item.path) && item.path !== "/private-dashboard") ||
+              (item.path === "/private-dashboard" && location.pathname === "/private-dashboard/");
             
             return (
               <SidebarNavItem 

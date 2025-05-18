@@ -57,11 +57,11 @@ export function AppRoutes() {
         <Route path="/alerts" element={<ProtectedRoute><Alerts /></ProtectedRoute>} />
         <Route path="/filters" element={<ProtectedRoute><Filters /></ProtectedRoute>} />
         <Route path="/users" element={<ProtectedRoute><Users /></ProtectedRoute>} />
-        <Route path="/requests" element={<ProtectedRoute><ClientRequests /></ProtectedRoute>} />
+        <Route path="/client-requests" element={<ProtectedRoute><ClientRequests /></ProtectedRoute>} />
         <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
         
         {/* Private routes */}
-        <Route path="/private-dashboard" element={<PrivateProtectedRoute><PrivateDashboard /></PrivateProtectedRoute>} />
+        <Route path="/private-dashboard/*" element={<PrivateProtectedRoute><PrivateDashboard /></PrivateProtectedRoute>} />
         
         {/* Other */}
         <Route path="*" element={<NotFound />} />

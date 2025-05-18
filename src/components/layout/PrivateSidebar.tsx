@@ -114,4 +114,4 @@ export const PrivateSidebar = ({
       </div>
     </div>
   );
-};
+}

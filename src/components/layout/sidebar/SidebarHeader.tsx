@@ -23,7 +23,7 @@ export function SidebarHeader({ closeSidebar, isMobile, collapsed = false }: Sid
                 height={30} 
                 className="h-8 w-8" 
                 onError={(e) => {
-                  e.currentTarget.src = 'https://placehold.co/30x30?text=M';
+                  e.currentTarget.src = 'https://placehold.co/30x30?text=X';
                 }}
               />
             ) : (
@@ -34,12 +34,12 @@ export function SidebarHeader({ closeSidebar, isMobile, collapsed = false }: Sid
               >
                 <img 
                   src="/logo.svg" 
-                  alt="MYWATER" 
+                  alt="X-WATER" 
                   width={120} 
                   height={30} 
                   className="h-8" 
                   onError={(e) => {
-                    e.currentTarget.src = 'https://placehold.co/120x30?text=MYWATER';
+                    e.currentTarget.src = 'https://placehold.co/120x30?text=X-WATER';
                   }}
                 />
               </motion.div>
