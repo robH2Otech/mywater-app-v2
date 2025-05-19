@@ -1,5 +1,5 @@
 
-import { X } from "lucide-react";
+import { X, Droplets } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
 
@@ -16,7 +16,7 @@ export function SidebarHeader({ closeSidebar, isMobile, collapsed = false }: Sid
         <div className="flex items-center">
           {collapsed ? (
             <div className="flex-shrink-0 h-8 w-8 rounded-md bg-gradient-to-r from-mywater-accent to-blue-600 flex items-center justify-center">
-              <span className="text-white font-bold text-lg">X</span>
+              <Droplets className="h-5 w-5 text-white" />
             </div>
           ) : (
             <motion.div
@@ -25,6 +25,7 @@ export function SidebarHeader({ closeSidebar, isMobile, collapsed = false }: Sid
               className="flex items-center"
             >
               <div className="flex-shrink-0 h-8 rounded-md bg-gradient-to-r from-mywater-accent to-blue-600 flex items-center justify-center px-3">
+                <Droplets className="h-5 w-5 text-white mr-1" />
                 <span className="text-white font-bold text-lg">X-WATER</span>
               </div>
             </motion.div>
