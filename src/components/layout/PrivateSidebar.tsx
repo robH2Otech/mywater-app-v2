@@ -19,6 +19,7 @@ import { useNavigate } from "react-router-dom";
 import { SidebarHeader } from "./sidebar/SidebarHeader";
 import { SidebarNavigation } from "./sidebar/SidebarNavigation";
 import { motion } from "framer-motion";
+import { useState, useEffect } from "react";
 
 interface PrivateSidebarProps {
   isMobile?: boolean;
@@ -35,6 +36,17 @@ export const PrivateSidebar = ({
 }: PrivateSidebarProps) => {
   const location = useLocation();
   const navigate = useNavigate();
+  const [userEmail, setUserEmail] = useState<string | null>(null);
+  const [userDisplayName, setUserDisplayName] = useState<string>("User");
+  
+  useEffect(() => {
+    const currentUser = auth.currentUser;
+    if (currentUser) {
+      setUserEmail(currentUser.email);
+      // Set display name to first part of email or use "User" if no email available
+      setUserDisplayName(currentUser.email ? currentUser.email.split('@')[0] : "User");
+    }
+  }, []);
   
   const handleLogout = async () => {
     try {
@@ -97,17 +109,17 @@ export const PrivateSidebar = ({
             <>
               <div className="flex-shrink-0 mr-3">
                 <div className="h-9 w-9 rounded-full bg-gradient-to-br from-mywater-accent to-blue-600 flex items-center justify-center text-white font-medium">
-                  U
+                  {userDisplayName ? userDisplayName.charAt(0).toUpperCase() : 'U'}
                 </div>
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-white truncate">User Name</p>
-                <p className="text-xs text-gray-400 truncate">user@example.com</p>
+                <p className="text-sm font-medium text-white truncate">{userDisplayName || "User"}</p>
+                <p className="text-xs text-gray-400 truncate">{userEmail || "No email available"}</p>
               </div>
             </>
           ) : (
             <div className="h-9 w-9 rounded-full bg-gradient-to-br from-mywater-accent to-blue-600 flex items-center justify-center text-white font-medium">
-              U
+              {userDisplayName ? userDisplayName.charAt(0).toUpperCase() : 'U'}
             </div>
           )}
         </div>
