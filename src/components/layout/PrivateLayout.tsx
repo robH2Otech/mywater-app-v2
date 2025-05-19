@@ -63,9 +63,9 @@ export const PrivateLayout = ({ children }: PrivateLayoutProps) => {
       </AnimatePresence>
       
       {/* Enhanced sidebar animation */}
-      <AnimatePresence>
+      <div className="flex w-full">
         <motion.div 
-          className={`${isMobile ? "fixed top-0 left-0 z-50 h-screen" : "h-screen relative"}`}
+          className={`${isMobile ? "fixed top-0 left-0 z-50 h-screen" : "h-screen"}`}
           animate={{ 
             width: isMobile 
               ? showMobileSidebar ? "250px" : "0px"
@@ -86,53 +86,43 @@ export const PrivateLayout = ({ children }: PrivateLayoutProps) => {
             />
           </div>
         </motion.div>
-      </AnimatePresence>
 
-      {/* Main content */}
-      <motion.div 
-        className="flex-1 overflow-x-hidden"
-        animate={{ 
-          marginLeft: !isMobile && !sidebarCollapsed ? "260px" : "0px"
-        }}
-        transition={{ 
-          type: "spring", 
-          stiffness: 300, 
-          damping: 30 
-        }}
-      >
-        <Header>
-          <div className="flex items-center gap-2">
-            {isMobile ? (
-              <Button 
-                variant="ghost" 
-                size="icon" 
-                onClick={toggleMobileSidebar}
-                className="mr-2 text-white hover:bg-white/10 transition-colors"
-              >
-                <Menu className="h-5 w-5" />
-                <span className="sr-only">Toggle menu</span>
-              </Button>
-            ) : (
-              <Button 
-                variant="ghost" 
-                size="icon" 
-                onClick={toggleSidebar}
-                className="mr-2 text-white hover:bg-white/10 transition-colors"
-              >
-                {sidebarCollapsed ? (
+        {/* Main content - no margin-left to eliminate the gap */}
+        <div className="flex-1 flex flex-col">
+          <Header>
+            <div className="flex items-center gap-2">
+              {isMobile ? (
+                <Button 
+                  variant="ghost" 
+                  size="icon" 
+                  onClick={toggleMobileSidebar}
+                  className="mr-2 text-white hover:bg-white/10 transition-colors"
+                >
                   <Menu className="h-5 w-5" />
-                ) : (
-                  <X className="h-5 w-5" />
-                )}
-                <span className="sr-only">Toggle sidebar</span>
-              </Button>
-            )}
-          </div>
-        </Header>
-        <main className="p-3 md:p-4 lg:p-6 max-w-[2000px] mx-auto relative z-10">
-          {children}
-        </main>
-      </motion.div>
+                  <span className="sr-only">Toggle menu</span>
+                </Button>
+              ) : (
+                <Button 
+                  variant="ghost" 
+                  size="icon" 
+                  onClick={toggleSidebar}
+                  className="mr-2 text-white hover:bg-white/10 transition-colors"
+                >
+                  {sidebarCollapsed ? (
+                    <Menu className="h-5 w-5" />
+                  ) : (
+                    <X className="h-5 w-5" />
+                  )}
+                  <span className="sr-only">Toggle sidebar</span>
+                </Button>
+              )}
+            </div>
+          </Header>
+          <main className="p-3 md:p-4 lg:p-6 flex-1 max-w-[2000px] w-full mx-auto relative z-10">
+            {children}
+          </main>
+        </div>
+      </div>
     </div>
   );
 };
