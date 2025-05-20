@@ -5,7 +5,7 @@ import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { LoginForm } from "@/components/users/private/LoginForm";
 import { PrivateUserRegisterForm } from "@/components/users/private/PrivateUserRegisterForm";
-import { usePrivateAuth } from "@/hooks/usePrivateAuth";
+import { useFirebaseAuth } from "@/hooks/useFirebaseAuth";
 import { Droplets, Home } from "lucide-react";
 import MatrixRain from "@/components/ui/matrix-rain";
 
@@ -22,7 +22,7 @@ const PrivateAuth = () => {
     setPassword,
     handleEmailAuth,
     handleSocialAuth
-  } = usePrivateAuth();
+  } = useFirebaseAuth();
 
   const handleLoginTab = () => {
     setAuthMode("login");

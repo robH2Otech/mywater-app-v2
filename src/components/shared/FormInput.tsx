@@ -11,7 +11,6 @@ interface FormInputProps {
   required?: boolean;
   minLength?: number;
   disabled?: boolean;
-  readOnly?: boolean; // Added readOnly prop
   className?: string;
   labelClassName?: string;
   inputClassName?: string;
@@ -29,7 +28,6 @@ export function FormInput({
   required = false,
   minLength,
   disabled = false,
-  readOnly = false, // Added readOnly prop with default value
   className,
   labelClassName,
   inputClassName,
@@ -53,7 +51,6 @@ export function FormInput({
         required={required}
         minLength={minLength}
         disabled={disabled}
-        readOnly={readOnly} // Added readOnly prop
         min={min}
         max={max}
         step={step}

@@ -24,6 +24,3 @@ export function DataCalculatorPage() {
     </div>
   );
 }
-
-// Export as a named export primarily, but also add a default export for compatibility
-export default DataCalculatorPage;

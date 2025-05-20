@@ -9,9 +9,6 @@ import { ScrollableDialogContent } from "@/components/shared/ScrollableDialogCon
 import { useQuery } from "@tanstack/react-query";
 import { doc, getDoc } from "firebase/firestore";
 import { db } from "@/integrations/firebase/client";
-import { FieldCommentsList } from "@/components/comments/FieldCommentsList";
-import { FieldCommentDialog } from "@/components/comments/FieldCommentDialog";
-import { useFirebaseAuth } from "@/hooks/useFirebaseAuth";
 
 interface FilterDetailsDialogProps {
   filter: any;
@@ -23,14 +20,6 @@ interface FilterDetailsDialogProps {
 export function FilterDetailsDialog({ filter, open, onOpenChange, onSave }: FilterDetailsDialogProps) {
   const [formData, setFormData] = useState<any>(null);
   const [unitType, setUnitType] = useState<string>('uvc');
-  const [isCommentDialogOpen, setIsCommentDialogOpen] = useState(false);
-  const { userRole } = useFirebaseAuth();
-  
-  // Check if user can edit filters (admin or superadmin)
-  const canEdit = userRole === "superadmin" || userRole === "admin";
-  
-  // Check if user can add comments (admin, superadmin, or technician)
-  const canAddComments = canEdit || userRole === "technician";
 
   // Fetch unit type when filter changes
   useEffect(() => {
@@ -90,14 +79,12 @@ export function FilterDetailsDialog({ filter, open, onOpenChange, onSave }: Filt
               label="Name"
               value={formData.name}
               onChange={(value) => setFormData({ ...formData, name: value })}
-              readOnly={!canEdit}
             />
 
             <FormInput
               label="Location"
               value={formData.location}
               onChange={(value) => setFormData({ ...formData, location: value })}
-              readOnly={!canEdit}
             />
 
             <FormInput
@@ -105,21 +92,18 @@ export function FilterDetailsDialog({ filter, open, onOpenChange, onSave }: Filt
               type="number"
               value={formData.total_volume}
               onChange={(value) => setFormData({ ...formData, total_volume: value })}
-              readOnly={!canEdit}
             />
 
             <FormDatePicker
               label="Next Maintenance"
               value={formData.next_maintenance}
               onChange={(date) => setFormData({ ...formData, next_maintenance: date })}
-              disabled={!canEdit}
             />
 
             <FormInput
               label="Contact Name"
               value={formData.contact_name}
               onChange={(value) => setFormData({ ...formData, contact_name: value })}
-              readOnly={!canEdit}
             />
 
             <FormInput
@@ -127,23 +111,12 @@ export function FilterDetailsDialog({ filter, open, onOpenChange, onSave }: Filt
               type="email"
               value={formData.contact_email}
               onChange={(value) => setFormData({ ...formData, contact_email: value })}
-              readOnly={!canEdit}
             />
 
             <FormInput
               label="Phone"
               value={formData.contact_phone}
               onChange={(value) => setFormData({ ...formData, contact_phone: value })}
-              readOnly={!canEdit}
-            />
-          </div>
-
-          {/* Field Comments Section */}
-          <div className="mt-6 border-t border-spotify-accent/30 pt-4">
-            <FieldCommentsList 
-              entityId={filter.id} 
-              entityType="filter" 
-              onAddComment={() => setIsCommentDialogOpen(true)}
             />
           </div>
 
@@ -153,27 +126,17 @@ export function FilterDetailsDialog({ filter, open, onOpenChange, onSave }: Filt
               variant="outline"
               className="bg-spotify-accent hover:bg-spotify-accent-hover text-white"
             >
-              {canEdit ? "Cancel" : "Close"}
+              Cancel
             </Button>
-            {canEdit && (
-              <Button
-                onClick={handleSave}
-                className="bg-mywater-blue hover:bg-mywater-blue/90 text-white"
-              >
-                Save
-              </Button>
-            )}
+            <Button
+              onClick={handleSave}
+              className="bg-mywater-blue hover:bg-mywater-blue/90 text-white"
+            >
+              Save
+            </Button>
           </div>
         </ScrollableDialogContent>
       </DialogContent>
-
-      {/* Field Comment Dialog */}
-      <FieldCommentDialog
-        open={isCommentDialogOpen}
-        onOpenChange={setIsCommentDialogOpen}
-        entityId={filter.id}
-        entityType="filter"
-      />
     </Dialog>
   );
 }

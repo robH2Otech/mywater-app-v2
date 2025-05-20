@@ -1,75 +1,145 @@
 
-import React, { useState, useEffect } from 'react';
-import { MeasurementsTable } from './measurements/MeasurementsTable';
-import { MeasurementsHeader } from './measurements/MeasurementsHeader';
-import { EmptyMeasurements } from './measurements/EmptyMeasurements';
-import { useRealtimeMeasurements } from '@/hooks/measurements/useRealtimeMeasurements';
-import { SampleDataGenerator } from './measurements/SampleDataGenerator';
+import { Card } from "@/components/ui/card";
+import { useRealtimeMeasurements } from "@/hooks/measurements/useRealtimeMeasurements";
+import {
+  Table,
+  TableBody,
+} from "@/components/ui/table";
+import { useQuery } from "@tanstack/react-query";
+import { doc, getDoc } from "firebase/firestore";
+import { db } from "@/integrations/firebase/client";
+import { useState, useEffect } from "react";
+import { toast } from "sonner";
+import { MeasurementsHeader } from "./measurements/MeasurementsHeader";
+import { MeasurementsTable } from "./measurements/MeasurementsTable";
+import { EmptyMeasurements } from "./measurements/EmptyMeasurements";
 
 interface UnitMeasurementsProps {
   unitId: string;
-  onMeasurementsLoaded?: (measurements: any[]) => void;
 }
 
-export function UnitMeasurements({ unitId, onMeasurementsLoaded }: UnitMeasurementsProps) {
+export function UnitMeasurements({ unitId }: UnitMeasurementsProps) {
   const { measurements, isLoading, error, refetch } = useRealtimeMeasurements(unitId);
-  const [timeRange, setTimeRange] = useState('24h');
-  const [lastRefreshed, setLastRefreshed] = useState<Date | null>(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [lastRefreshed, setLastRefreshed] = useState<Date | null>(null);
   
-  // Determine if this is a UVC unit based on the unit ID or other properties
-  // This is a simplified check, adjust according to your actual logic
-  const isUVCUnit = !unitId.includes('DROP_') && !unitId.includes('OFFICE_');
-
-  useEffect(() => {
-    // When measurements are loaded, pass them to the parent component if the callback exists
-    if (measurements && measurements.length > 0 && onMeasurementsLoaded) {
-      onMeasurementsLoaded(measurements);
+  // Fetch unit details to determine unit type
+  const { data: unit } = useQuery({
+    queryKey: ["unit-type", unitId],
+    queryFn: async () => {
+      try {
+        const unitDocRef = doc(db, "units", unitId);
+        const unitDoc = await getDoc(unitDocRef);
+        if (!unitDoc.exists()) {
+          console.log(`Unit document not found for ${unitId}, trying alternative paths`);
+          // Try an alternative path for MYWATER units
+          if (unitId.startsWith("MYWATER_")) {
+            const altUnitDocRef = doc(db, "devices", unitId);
+            const altUnitDoc = await getDoc(altUnitDocRef);
+            if (altUnitDoc.exists()) {
+              return altUnitDoc.data();
+            }
+          }
+          return null;
+        }
+        return unitDoc.data();
+      } catch (err) {
+        console.error(`Error fetching unit details for ${unitId}:`, err);
+        return null;
+      }
     }
-  }, [measurements, onMeasurementsLoaded]);
-
-  const filteredMeasurements = measurements || [];
-
-  const handleRefresh = () => {
+  });
+  
+  // Determine unit type for proper display
+  const isMyWaterUnit = unitId.startsWith("MYWATER_");
+  const unitType = unit?.unit_type || (isMyWaterUnit ? 'uvc' : 'drop');
+  
+  // Check if it's a UVC unit type (for correct display format)
+  const isUVCUnit = unitType === 'uvc' && !unitType.includes('drop') && !unitType.includes('office');
+  
+  // Set last refreshed time on component mount and when measurements change
+  useEffect(() => {
+    setLastRefreshed(new Date());
+  }, [measurements]);
+  
+  // Force a refresh every 60 seconds
+  useEffect(() => {
+    const interval = setInterval(() => {
+      refetch();
+    }, 60000);
+    
+    return () => clearInterval(interval);
+  }, [refetch]);
+  
+  const handleManualRefresh = async () => {
     setIsRefreshing(true);
-    refetch().finally(() => {
-      setIsRefreshing(false);
+    try {
+      await refetch();
       setLastRefreshed(new Date());
-    });
+      toast.success("Measurements data refreshed");
+    } catch (err) {
+      toast.error("Error refreshing measurements");
+      console.error("Error refreshing:", err);
+    } finally {
+      setTimeout(() => setIsRefreshing(false), 1000);
+    }
   };
-
+  
+  useEffect(() => {
+    console.log(`Unit ${unitId} details:`, {
+      unitType,
+      isUVCUnit,
+      isMyWaterUnit
+    });
+    
+    if (measurements.length > 0) {
+      console.log('First measurement:', {
+        timestamp: measurements[0].timestamp,
+        volume: measurements[0].volume,
+        temperature: measurements[0].temperature,
+        uvc_hours: measurements[0].uvc_hours
+      });
+    }
+  }, [measurements, isLoading, error, unitId, unitType, isUVCUnit, isMyWaterUnit]);
+  
+  // Show error message if there's an error
   if (error) {
-    return <div className="text-red-500 p-4">Error loading measurements: {error.message}</div>;
+    return (
+      <Card className="bg-spotify-darker border-primary/20 p-6">
+        <MeasurementsHeader
+          isLoading={isLoading}
+          isRefreshing={isRefreshing}
+          onRefresh={handleManualRefresh}
+          lastRefreshed={lastRefreshed}
+        />
+        <div className="h-60 flex items-center justify-center">
+          <p className="text-red-400">Error loading measurements: {error.message}</p>
+        </div>
+      </Card>
+    );
   }
 
   return (
-    <div className="flex flex-col">
-      <MeasurementsHeader 
-        isLoading={isLoading} 
+    <Card className="bg-spotify-darker border-primary/20 p-6">
+      <MeasurementsHeader
+        isLoading={isLoading}
         isRefreshing={isRefreshing}
-        onRefresh={handleRefresh}
+        onRefresh={handleManualRefresh}
         lastRefreshed={lastRefreshed}
       />
-      
-      {isLoading ? (
-        <div className="p-8 text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500 mx-auto"></div>
-          <p className="mt-2 text-gray-400">Loading measurements...</p>
-        </div>
-      ) : filteredMeasurements.length > 0 ? (
-        <MeasurementsTable 
-          measurements={filteredMeasurements} 
-          isUVCUnit={isUVCUnit} 
-        />
+
+      {isLoading && measurements.length === 0 ? (
+        <EmptyMeasurements isLoading={true} onRefresh={handleManualRefresh} />
+      ) : measurements.length === 0 ? (
+        <EmptyMeasurements isLoading={false} onRefresh={handleManualRefresh} />
       ) : (
-        <EmptyMeasurements 
-          isLoading={isLoading} 
-          onRefresh={handleRefresh} 
-        />
+        <div className="overflow-x-auto">
+          <MeasurementsTable 
+            measurements={measurements} 
+            isUVCUnit={isUVCUnit} 
+          />
+        </div>
       )}
-      
-      {/* Hidden component that can generate sample data if needed */}
-      <SampleDataGenerator />
-    </div>
+    </Card>
   );
 }

@@ -7,10 +7,9 @@ import { useIsMobile } from "@/hooks/use-mobile";
 
 interface UnitDetailsCardProps {
   unit: UnitData;
-  className?: string;
 }
 
-export const UnitDetailsCard = ({ unit, className = "" }: UnitDetailsCardProps) => {
+export const UnitDetailsCard = ({ unit }: UnitDetailsCardProps) => {
   const isMobile = useIsMobile();
   
   const formatDate = (date: string | null) => {
@@ -35,7 +34,7 @@ export const UnitDetailsCard = ({ unit, className = "" }: UnitDetailsCardProps) 
   };
 
   return (
-    <Card className={`bg-spotify-darker border-spotify-accent p-3 md:p-6 ${className}`}>
+    <Card className="bg-spotify-darker border-spotify-accent p-3 md:p-6">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-6">
         <div className="space-y-1 md:space-y-2">
           <label className="text-sm text-gray-400">Unit Name</label>

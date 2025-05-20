@@ -15,14 +15,9 @@ export function useEmailAuth() {
   const [password, setPassword] = useState("");
   const [userDisplayName, setUserDisplayName] = useState("");
   
-  // Modified to handle authMode within the function
-  const handleEmailAuth = async (e: React.FormEvent) => {
+  const handleEmailAuth = async (e: React.FormEvent, authMode: "login" | "register") => {
     e.preventDefault();
     setIsLoading(true);
-    
-    // Determine auth mode from the current state in usePrivateAuth
-    // This will be provided by the parent component that uses this hook
-    const authMode = "login"; // Default to login, will be overridden by usePrivateAuth
     
     try {
       if (authMode === "login") {

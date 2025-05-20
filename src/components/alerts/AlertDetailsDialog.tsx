@@ -7,9 +7,6 @@ import { FormInput } from "@/components/shared/FormInput";
 import { FormDatePicker } from "@/components/shared/FormDatePicker";
 import { useState, useEffect } from "react";
 import { ScrollableDialogContent } from "@/components/shared/ScrollableDialogContent";
-import { FieldCommentsList } from "@/components/comments/FieldCommentsList";
-import { FieldCommentDialog } from "@/components/comments/FieldCommentDialog";
-import { useFirebaseAuth } from "@/hooks/useFirebaseAuth";
 
 interface AlertDetailsDialogProps {
   alert: any;
@@ -20,14 +17,6 @@ interface AlertDetailsDialogProps {
 
 export function AlertDetailsDialog({ alert, open, onOpenChange, onSave }: AlertDetailsDialogProps) {
   const [formData, setFormData] = useState<any>(null);
-  const [isCommentDialogOpen, setIsCommentDialogOpen] = useState(false);
-  const { userRole } = useFirebaseAuth();
-  
-  // Check if user can edit alerts (admin or superadmin)
-  const canEdit = userRole === "superadmin" || userRole === "admin";
-  
-  // Check if user can add comments (admin, superadmin, or technician)
-  const canAddComments = canEdit || userRole === "technician";
 
   useEffect(() => {
     if (alert) {
@@ -73,14 +62,12 @@ export function AlertDetailsDialog({ alert, open, onOpenChange, onSave }: AlertD
               label="Name"
               value={formData.name}
               onChange={(value) => setFormData({ ...formData, name: value })}
-              readOnly={!canEdit}
             />
 
             <FormInput
               label="Location"
               value={formData.location}
               onChange={(value) => setFormData({ ...formData, location: value })}
-              readOnly={!canEdit}
             />
 
             <FormInput
@@ -88,21 +75,18 @@ export function AlertDetailsDialog({ alert, open, onOpenChange, onSave }: AlertD
               type="number"
               value={formData.total_volume}
               onChange={(value) => setFormData({ ...formData, total_volume: value })}
-              readOnly={!canEdit}
             />
 
             <FormDatePicker
               label="Next Maintenance"
               value={formData.next_maintenance}
               onChange={(date) => setFormData({ ...formData, next_maintenance: date })}
-              disabled={!canEdit}
             />
 
             <FormInput
               label="Contact Name"
               value={formData.contact_name}
               onChange={(value) => setFormData({ ...formData, contact_name: value })}
-              readOnly={!canEdit}
             />
 
             <FormInput
@@ -110,23 +94,12 @@ export function AlertDetailsDialog({ alert, open, onOpenChange, onSave }: AlertD
               type="email"
               value={formData.contact_email}
               onChange={(value) => setFormData({ ...formData, contact_email: value })}
-              readOnly={!canEdit}
             />
 
             <FormInput
               label="Phone"
               value={formData.contact_phone}
               onChange={(value) => setFormData({ ...formData, contact_phone: value })}
-              readOnly={!canEdit}
-            />
-          </div>
-
-          {/* Field Comments Section */}
-          <div className="mt-6 border-t border-spotify-accent/30 pt-4">
-            <FieldCommentsList 
-              entityId={alert.id} 
-              entityType="alert" 
-              onAddComment={() => setIsCommentDialogOpen(true)}
             />
           </div>
 
@@ -136,27 +109,17 @@ export function AlertDetailsDialog({ alert, open, onOpenChange, onSave }: AlertD
               variant="outline"
               className="bg-spotify-accent hover:bg-spotify-accent-hover text-white"
             >
-              {canEdit ? "Cancel" : "Close"}
+              Cancel
             </Button>
-            {canEdit && (
-              <Button
-                onClick={handleSave}
-                className="bg-mywater-blue hover:bg-mywater-blue/90 text-white"
-              >
-                Save Changes
-              </Button>
-            )}
+            <Button
+              onClick={handleSave}
+              className="bg-mywater-blue hover:bg-mywater-blue/90 text-white"
+            >
+              Save Changes
+            </Button>
           </div>
         </ScrollableDialogContent>
       </DialogContent>
-
-      {/* Field Comment Dialog */}
-      <FieldCommentDialog 
-        open={isCommentDialogOpen}
-        onOpenChange={setIsCommentDialogOpen}
-        entityId={alert.id}
-        entityType="alert"
-      />
     </Dialog>
   );
 }

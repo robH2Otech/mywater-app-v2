@@ -10,8 +10,7 @@ const NotFound = () => {
 
   // Determine if user is in private or business section based on URL
   const isPrivateDashboard = location.pathname.startsWith("/private-dashboard");
-  const dashboardPath = isPrivateDashboard ? "/private-dashboard" : "/auth";
-  const buttonLabel = isPrivateDashboard ? "Return to Dashboard" : "Return to Login";
+  const dashboardPath = isPrivateDashboard ? "/private-dashboard" : "/dashboard";
 
   useEffect(() => {
     console.error(
@@ -31,7 +30,7 @@ const NotFound = () => {
           className="text-blue-400 hover:text-blue-300 hover:bg-blue-900/20"
         >
           <Home size={16} className="mr-2" />
-          {buttonLabel}
+          Return to Dashboard
         </Button>
       </div>
     </div>

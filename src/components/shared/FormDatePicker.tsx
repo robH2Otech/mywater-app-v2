@@ -10,10 +10,9 @@ interface FormDatePickerProps {
   value: Date | null;
   onChange: (date: Date | null) => void;
   label: string;
-  disabled?: boolean; // Added disabled prop
 }
 
-export function FormDatePicker({ value, onChange, label, disabled = false }: FormDatePickerProps) {
+export function FormDatePicker({ value, onChange, label }: FormDatePickerProps) {
   return (
     <div className="space-y-2">
       <label className="text-sm text-gray-400">{label}</label>
@@ -22,11 +21,9 @@ export function FormDatePicker({ value, onChange, label, disabled = false }: For
           <Button
             type="button"
             variant="outline"
-            disabled={disabled} // Added disabled prop
             className={cn(
               "w-full justify-start text-left font-normal bg-spotify-darker border-spotify-accent hover:bg-spotify-darker hover:border-spotify-accent-hover text-white",
-              !value && "text-gray-400",
-              disabled && "opacity-50 cursor-not-allowed"
+              !value && "text-gray-400"
             )}
           >
             <CalendarIcon className="mr-2 h-4 w-4" />

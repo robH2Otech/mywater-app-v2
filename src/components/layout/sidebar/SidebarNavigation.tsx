@@ -1,25 +1,10 @@
 
-import { 
-  LogOut, 
-  Home, 
-  LayoutGrid, 
-  MapPin, 
-  Lightbulb, 
-  BarChart, 
-  Activity, 
-  Bell, 
-  Filter, 
-  MessageSquare, 
-  Users, 
-  Settings 
-} from "lucide-react";
+import { LogOut } from "lucide-react";
 import { Link, Location } from "react-router-dom";
 import { SidebarNavItem } from "./SidebarNavItem";
 import { SidebarLogoutButton } from "./SidebarLogoutButton";
 import { Tooltip } from "@/components/ui/tooltip";
 import { motion } from "framer-motion";
-import { useLanguage } from "@/contexts/LanguageContext";
-import { useFirebaseAuth } from "@/contexts/FirebaseAuthContext";
 
 interface NavigationItem {
   name: string;
@@ -44,23 +29,6 @@ export function SidebarNavigation({
   handleLogout,
   collapsed = false
 }: SidebarNavigationProps) {
-  const { t } = useLanguage();
-  const { userType, userRole } = useFirebaseAuth();
-  
-  const businessItems = [
-    { name: t("sidebar.dashboard"), path: "/dashboard", icon: Home },
-    { name: t("sidebar.units"), path: "/units", icon: LayoutGrid },
-    { name: t("sidebar.locations"), path: "/locations", icon: MapPin },
-    { name: t("sidebar.uvc"), path: "/uvc", icon: Lightbulb },
-    { name: t("sidebar.analytics"), path: "/analytics", icon: BarChart },
-    { name: t("sidebar.ml_analytics"), path: "/ml-dashboard", icon: Activity },
-    { name: t("sidebar.alerts"), path: "/alerts", icon: Bell },
-    { name: t("sidebar.filters"), path: "/filters", icon: Filter },
-    { name: t("sidebar.requests"), path: "/requests", icon: MessageSquare },
-    { name: t("sidebar.users"), path: "/users", icon: Users },
-    { name: t("sidebar.settings"), path: "/settings", icon: Settings }
-  ];
-  
   return (
     <nav className="space-y-1 flex-grow overflow-y-auto px-2">
       {collapsed ? (

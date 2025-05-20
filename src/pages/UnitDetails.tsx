@@ -1,111 +1,59 @@
 
-import { useParams } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
-import { doc, getDoc } from "firebase/firestore";
-import { db } from "@/integrations/firebase/client";
-import { UnitLoading } from "@/components/units/details/UnitLoading";
-import { UnitError } from "@/components/units/details/UnitError";
-import { UnitDetailsHeader } from "@/components/units/UnitDetailsHeader";
-import { UnitDetailsCard } from "@/components/units/UnitDetailsCard";
-import { UnitLocationSection } from "@/components/units/details/UnitLocationSection";
-import { ReportCard } from "@/components/analytics/ReportCard";
-import { useReports } from "@/hooks/useReports";
-import { UnitData } from "@/types/analytics";
-import { UnitMlDetails } from "@/components/units/UnitMlDetails";
+import { useParams, useNavigate } from "react-router-dom";
+import { Card } from "@/components/ui/card";
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useFilterStatus } from "@/components/filters/FilterStatusUtils";
+import { UnitMeasurements } from "@/components/units/UnitMeasurements";
+import { UnitDetailsCard } from "@/components/units/UnitDetailsCard";
+import { UnitDetailsHeader } from "@/components/units/UnitDetailsHeader";
+import { UnitLocationSection } from "@/components/units/details/UnitLocationSection";
+import { UnitError } from "@/components/units/details/UnitError";
+import { UnitLoading } from "@/components/units/details/UnitLoading";
+import { useUnitDetails } from "@/hooks/units/useUnitDetails";
 import { toast } from "sonner";
-import { useUnitMLData } from "@/hooks/ml/useUnitMLData";
 
 const UnitDetails = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const [isSyncing, setIsSyncing] = useState(false);
-  
-  // Fetch unit data
-  const { data: unit, isLoading, error, refetch } = useQuery({
-    queryKey: ["unit", id],
-    queryFn: async () => {
-      if (!id) throw new Error("Unit ID is required");
+  const { syncUnitMeasurements } = useFilterStatus();
+  const { data: unit, isLoading, error } = useUnitDetails(id);
 
-      const unitDocRef = doc(db, "units", id);
-      const unitSnapshot = await getDoc(unitDocRef);
-
-      if (!unitSnapshot.exists()) {
-        throw new Error("Unit not found");
-      }
-
-      return {
-        id: unitSnapshot.id,
-        ...unitSnapshot.data(),
-      } as UnitData;
-    },
-  });
-  
-  // Fetch reports for this unit
-  const { data: reports = [] } = useReports(id || "");
-  
-  // Handle sync button click
   const handleSync = async () => {
+    if (!id) return;
+    
     setIsSyncing(true);
     try {
-      await refetch();
-      toast.success("Unit data refreshed successfully");
-    } catch (error) {
-      toast.error("Failed to refresh unit data");
-      console.error("Sync error:", error);
+      await syncUnitMeasurements(id);
+      toast.success("Measurements synced successfully");
+    } catch (err) {
+      console.error("Error syncing measurements:", err);
+      toast.error("Failed to sync measurements");
     } finally {
-      setTimeout(() => setIsSyncing(false), 800);
+      setIsSyncing(false);
     }
   };
-  
-  // Handle back button click
-  const handleBack = () => {
-    navigate("/units");
-  };
-  
-  // Show loading state
-  if (isLoading) {
-    return <UnitLoading />;
-  }
 
-  // Show error state
-  if (error || !unit) {
-    return <UnitError error={error as Error} />;
-  }
+  if (error) return <UnitError error={error} />;
+  if (isLoading) return <UnitLoading />;
+  if (!unit) return <UnitError error={new Error("Unit not found")} />;
 
   return (
-    <div className="space-y-6 pb-6">
-      <UnitDetailsHeader 
-        title={unit.name || "Unit Details"} 
-        isSyncing={isSyncing} 
-        onSync={handleSync} 
-        onBack={handleBack}
-        unitId={id}
-        unitIccid={unit.iccid}
-      />
-
-      <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+    <div className="container mx-auto p-3 md:p-6 max-w-4xl animate-fadeIn space-y-4 md:space-y-6">
+      <Card className="bg-spotify-darker border-spotify-accent p-4 md:p-6">
+        <UnitDetailsHeader 
+          title="Water Unit Details"
+          isSyncing={isSyncing}
+          onSync={handleSync}
+          onBack={() => navigate("/units")}
+          unitId={id}
+          unitIccid={unit.iccid || ''}
+        />
+        <UnitLocationSection unit={unit} unitId={id || ''} />
         <UnitDetailsCard unit={unit} />
-        <div className="xl:col-span-2">
-          <UnitMlDetails unit={unit} />
-        </div>
-      </div>
-      
-      {/* Display reports if available */}
-      {reports.length > 0 && (
-        <div className="mt-8">
-          <h2 className="text-xl font-semibold mb-4">Reports</h2>
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-            {reports.map(report => (
-              <ReportCard key={report.id} report={report} />
-            ))}
-          </div>
-        </div>
-      )}
-      
-      {/* Unit location section */}
-      <UnitLocationSection unit={unit} unitId={id || ""} />
+      </Card>
+
+      {id && <UnitMeasurements unitId={id} />}
     </div>
   );
 };
