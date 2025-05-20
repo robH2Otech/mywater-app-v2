@@ -1,10 +1,10 @@
 
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { format } from "date-fns";
-import { Measurement } from "@/hooks/measurements/types/measurementTypes";
+import { RawMeasurement } from "@/hooks/measurements/types/measurementTypes";
 
 interface MeasurementsTableProps {
-  measurements: Measurement[];
+  measurements: RawMeasurement[];
   isUVCUnit: boolean;
 }
 
