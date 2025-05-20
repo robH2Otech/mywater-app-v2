@@ -28,21 +28,29 @@ export function UnitMeasurements({ unitId }: UnitMeasurementsProps) {
     queryKey: ["unit-type", unitId],
     queryFn: async () => {
       try {
+        // Try units collection first (where regular units are)
         const unitDocRef = doc(db, "units", unitId);
         const unitDoc = await getDoc(unitDocRef);
-        if (!unitDoc.exists()) {
-          console.log(`Unit document not found for ${unitId}, trying alternative paths`);
-          // Try an alternative path for MYWATER units
-          if (unitId.startsWith("MYWATER_")) {
-            const altUnitDocRef = doc(db, "devices", unitId);
-            const altUnitDoc = await getDoc(altUnitDocRef);
-            if (altUnitDoc.exists()) {
-              return altUnitDoc.data();
-            }
-          }
-          return null;
+        
+        if (unitDoc.exists()) {
+          console.log(`Found unit ${unitId} in units collection`);
+          return unitDoc.data();
         }
-        return unitDoc.data();
+        
+        // If not found and it's a MYWATER unit, try the devices collection
+        if (unitId.startsWith("MYWATER_")) {
+          console.log(`Unit ${unitId} not found in units collection, trying devices collection`);
+          const deviceDocRef = doc(db, "devices", unitId);
+          const deviceDoc = await getDoc(deviceDocRef);
+          
+          if (deviceDoc.exists()) {
+            console.log(`Found unit ${unitId} in devices collection`);
+            return deviceDoc.data();
+          }
+        }
+        
+        console.log(`Unit document not found for ${unitId} in any collection`);
+        return null;
       } catch (err) {
         console.error(`Error fetching unit details for ${unitId}:`, err);
         return null;
@@ -85,11 +93,13 @@ export function UnitMeasurements({ unitId }: UnitMeasurementsProps) {
     }
   };
   
+  // Logging for debugging
   useEffect(() => {
     console.log(`Unit ${unitId} details:`, {
       unitType,
       isUVCUnit,
-      isMyWaterUnit
+      isMyWaterUnit,
+      unitData: unit
     });
     
     if (measurements.length > 0) {
@@ -100,7 +110,7 @@ export function UnitMeasurements({ unitId }: UnitMeasurementsProps) {
         uvc_hours: measurements[0].uvc_hours
       });
     }
-  }, [measurements, isLoading, error, unitId, unitType, isUVCUnit, isMyWaterUnit]);
+  }, [measurements, isLoading, error, unitId, unitType, isUVCUnit, isMyWaterUnit, unit]);
   
   // Show error message if there's an error
   if (error) {

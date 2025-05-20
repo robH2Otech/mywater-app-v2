@@ -17,7 +17,7 @@ export const MEASUREMENT_PATHS = [
 export function getMeasurementsCollectionPath(unitId: string): string {
   // For MYWATER units, we need specific paths
   if (unitId.startsWith("MYWATER_")) {
-    // For MYWATER units, try the devices collection first
+    // Try both paths - first devices, then regular units path
     return `devices/${unitId}/data`;
   }
   

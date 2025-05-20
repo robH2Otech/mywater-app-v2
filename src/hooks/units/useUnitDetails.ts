@@ -1,3 +1,4 @@
+
 import { useQuery } from "@tanstack/react-query";
 import { doc, getDoc, collection, getDocs, query, where, orderBy, limit } from "firebase/firestore";
 import { db } from "@/integrations/firebase/client";
@@ -17,11 +18,11 @@ export function useUnitDetails(id: string | undefined) {
       // Check if the ID is prefixed with MYWATER
       const isMyWaterUnit = id.startsWith("MYWATER_");
       
-      // 1. Get the unit base data
+      // Try the units collection first, which is where most units are stored
       const unitDocRef = doc(db, "units", id);
       const unitSnapshot = await getDoc(unitDocRef);
       
-      // If unit not found in main location, try alternative collection for MYWATER units
+      // If not found and it's a MYWATER unit, try the devices collection as fallback
       if (!unitSnapshot.exists() && isMyWaterUnit) {
         console.log(`Unit ${id} not found in units collection, trying devices collection`);
         const deviceDocRef = doc(db, "devices", id);
