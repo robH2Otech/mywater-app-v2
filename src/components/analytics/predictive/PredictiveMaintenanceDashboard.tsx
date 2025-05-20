@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useQuery } from "@tanstack/react-query";
 import { collection, getDocs } from "firebase/firestore";
@@ -8,9 +8,11 @@ import { AnomaliesCard } from "./AnomaliesCard";
 import { MaintenancePredictionCard } from "./MaintenancePredictionCard";
 import { RiskAssessmentCard } from "./RiskAssessmentCard";
 import { usePredictiveAnalytics } from "@/hooks/analytics/usePredictiveAnalytics";
+import { useLocation } from "react-router-dom";
 
 export function PredictiveMaintenanceDashboard() {
   const [selectedUnitId, setSelectedUnitId] = useState<string>("");
+  const location = useLocation();
   
   // Fetch available units
   const { data: units = [], isLoading: isUnitsLoading } = useQuery({
@@ -25,6 +27,13 @@ export function PredictiveMaintenanceDashboard() {
       }));
     },
   });
+  
+  // Auto-select first unit if there's no selected unit and units are loaded
+  useEffect(() => {
+    if (!selectedUnitId && units.length > 0) {
+      setSelectedUnitId(units[0].id);
+    }
+  }, [units, selectedUnitId]);
   
   // Use the predictive analytics hook
   const { 

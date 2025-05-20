@@ -1,93 +1,103 @@
+import { LayoutDashboard, Droplet, MapPin, Filter, Zap, Bell, BarChart2, Users, MessageSquare, Settings, Activity } from "lucide-react";
+import { SidebarNavItem } from "./SidebarNavItem";
+import { SidebarHeader } from "./SidebarHeader";
+import { SidebarLogoutButton } from "./SidebarLogoutButton";
+import { useLocation } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 
-import { Home, Droplets, Filter, Bell, BarChart2, Users, Settings, Lightbulb, X, MessageSquare, MapPin, LogOut } from "lucide-react";
-import { Link, useLocation } from "react-router-dom";
-import { Button } from "@/components/ui/button";
-import { useLanguage } from "@/contexts/LanguageContext";
-import { SidebarLogoutButton } from "./sidebar/SidebarLogoutButton";
-import { auth } from "@/integrations/firebase/client";
-import { useNavigate } from "react-router-dom";
-
-interface SidebarProps {
-  isMobile?: boolean;
-  closeSidebar?: () => void;
-}
-
-export const Sidebar = ({ isMobile, closeSidebar }: SidebarProps) => {
+export function Sidebar() {
   const location = useLocation();
-  const { t } = useLanguage();
-  const navigate = useNavigate();
-  
-  const handleLogout = async () => {
-    try {
-      await auth.signOut();
-      navigate("/");
-    } catch (error) {
-      console.error("Error signing out:", error);
-    }
-  };
-
-  const navigation = [
-    { name: t("nav.dashboard"), icon: Home, path: "/dashboard" },
-    { name: t("nav.water.units"), icon: Droplets, path: "/units" },
-    { name: "Units Location", icon: MapPin, path: "/locations" },
-    { name: t("nav.filters"), icon: Filter, path: "/filters" },
-    { name: t("nav.uvc"), icon: Lightbulb, path: "/uvc" },
-    { name: t("nav.alerts"), icon: Bell, path: "/alerts" },
-    { name: t("nav.analytics"), icon: BarChart2, path: "/analytics" },
-    { name: t("nav.users"), icon: Users, path: "/users" },
-    { name: t("nav.client.requests"), icon: MessageSquare, path: "/client-requests" },
-    { name: t("nav.settings"), icon: Settings, path: "/settings" },
-  ];
+  const { t } = useTranslation();
 
   return (
-    <div className={`h-screen ${isMobile ? "w-[250px]" : "w-64"} bg-spotify-darker border-r border-white/10 flex flex-col`}>
-      <div className="flex items-center justify-between p-4">
-        <div className="flex items-center gap-2">
-          <Droplets className="h-8 w-8 text-primary" />
-          <div className="flex flex-col">
-            <h1 className="text-xl font-bold text-white leading-tight">X-WATER</h1>
-          </div>
-        </div>
-        
-        {isMobile && (
-          <Button 
-            variant="ghost" 
-            size="icon" 
-            onClick={closeSidebar}
-            className="text-gray-400 hover:text-white"
-          >
-            <X className="h-5 w-5" />
-            <span className="sr-only">Close menu</span>
-          </Button>
-        )}
-      </div>
+    <aside className="w-60 bg-spotify-darker text-white border-r border-gray-800 hidden md:block fixed h-full overflow-y-auto z-20">
+      <SidebarHeader />
       
-      <nav className="space-y-1 flex-grow overflow-y-auto p-2">
-        {navigation.map((item) => {
-          const isActive = location.pathname === item.path || 
-                          (item.path === "/units" && location.pathname.startsWith("/units")) ||
-                          (item.path === "/locations" && location.pathname.startsWith("/locations"));
-          
-          return (
-            <Link
-              key={item.name}
-              to={item.path}
-              className={`flex items-center gap-3 px-4 py-3 rounded-md transition-colors ${
-                isActive
-                  ? "bg-primary text-white"
-                  : "text-gray-400 hover:text-white hover:bg-spotify-accent"
-              }`}
-              onClick={isMobile ? closeSidebar : undefined}
-            >
-              <item.icon className="h-5 w-5 flex-shrink-0" />
-              <span className="truncate">{item.name}</span>
-            </Link>
-          );
-        })}
+      <div className="flex flex-col p-3 h-[calc(100%-60px)]">
+        <nav className="space-y-1 flex-1">
+          <SidebarNavItem 
+            to="/dashboard" 
+            icon={<LayoutDashboard size={16} />} 
+            isActive={location.pathname === "/dashboard"}
+          >
+            {t("Dashboard")}
+          </SidebarNavItem>
+          <SidebarNavItem 
+            to="/units" 
+            icon={<Droplet size={16} />} 
+            isActive={location.pathname.startsWith("/units")}
+          >
+            {t("Water Units")}
+          </SidebarNavItem>
+          <SidebarNavItem 
+            to="/locations" 
+            icon={<MapPin size={16} />} 
+            isActive={location.pathname.startsWith("/locations")}
+          >
+            {t("Units Location")}
+          </SidebarNavItem>
+          <SidebarNavItem 
+            to="/filters" 
+            icon={<Filter size={16} />} 
+            isActive={location.pathname === "/filters"}
+          >
+            {t("Filters")}
+          </SidebarNavItem>
+          <SidebarNavItem 
+            to="/uvc" 
+            icon={<Zap size={16} />} 
+            isActive={location.pathname === "/uvc"}
+          >
+            {t("UVC")}
+          </SidebarNavItem>
+          <SidebarNavItem 
+            to="/alerts" 
+            icon={<Bell size={16} />} 
+            isActive={location.pathname === "/alerts"}
+          >
+            {t("Alerts")}
+          </SidebarNavItem>
+          <SidebarNavItem 
+            to="/analytics" 
+            icon={<BarChart2 size={16} />} 
+            isActive={location.pathname === "/analytics"}
+          >
+            {t("Analytics")}
+          </SidebarNavItem>
+          <SidebarNavItem 
+            to="/analytics?tab=predictive" 
+            icon={<Activity size={16} />} 
+            isActive={location.pathname === "/analytics" && location.search.includes("tab=predictive")}
+          >
+            {t("Predictive Maintenance")}
+          </SidebarNavItem>
+          <SidebarNavItem 
+            to="/users" 
+            icon={<Users size={16} />} 
+            isActive={location.pathname === "/users"}
+          >
+            {t("Users")}
+          </SidebarNavItem>
+          <SidebarNavItem 
+            to="/client-requests" 
+            icon={<MessageSquare size={16} />} 
+            isActive={location.pathname === "/client-requests"}
+          >
+            {t("Client Requests")}
+          </SidebarNavItem>
+        </nav>
         
-        {/* Add Logout Button */}
-        <SidebarLogoutButton handleLogout={handleLogout} />
-      </nav>
-    </div>
+        <div className="mt-auto">
+          <SidebarNavItem 
+            to="/settings" 
+            icon={<Settings size={16} />} 
+            isActive={location.pathname === "/settings"}
+          >
+            {t("Settings")}
+          </SidebarNavItem>
+          <SidebarLogoutButton />
+        </div>
+      </div>
+    </aside>
   );
 };
