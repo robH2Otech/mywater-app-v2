@@ -1,39 +1,68 @@
 
-import { useState } from "react";
-import { useAuthState } from "./firebase/useAuthState";
-import { useEmailAuth } from "./firebase/useEmailAuth";
-import { useSocialAuth } from "./firebase/useSocialAuth";
+import { useState, useEffect } from 'react';
+import { auth, db } from '@/integrations/firebase/client';
+import { collection, query, where, getDocs } from 'firebase/firestore';
+import { User as FirebaseUser } from 'firebase/auth';
+import { UserRole } from '@/types/users';
 
-export function useFirebaseAuth() {
-  const [authMode, setAuthMode] = useState<"login" | "register">("login");
-  const { user, authChecked } = useAuthState();
-  const { 
-    isLoading, 
-    email, 
-    password, 
-    setEmail, 
-    setPassword, 
-    handleEmailAuth 
-  } = useEmailAuth();
-  const { socialLoading, handleSocialAuth } = useSocialAuth();
-  
-  const handleEmailSubmit = async (e: React.FormEvent) => {
-    await handleEmailAuth(e, authMode);
-  };
-  
-  return {
-    isLoading,
-    socialLoading,
-    authMode,
-    email,
-    password,
-    setAuthMode,
-    setEmail,
-    setPassword,
-    handleEmailAuth: handleEmailSubmit,
-    handleSocialAuth,
-    user,
-    authChecked,
-    isAuthenticated: !!user
-  };
+interface FirebaseAuthState {
+  user: FirebaseUser | null;
+  userRole: UserRole | null;
+  isLoading: boolean;
+  error: Error | null;
+}
+
+export function useFirebaseAuth(): FirebaseAuthState {
+  const [authState, setAuthState] = useState<FirebaseAuthState>({
+    user: null,
+    userRole: null,
+    isLoading: true,
+    error: null
+  });
+
+  useEffect(() => {
+    const unsubscribe = auth.onAuthStateChanged(async (user) => {
+      if (!user) {
+        setAuthState({
+          user: null,
+          userRole: null,
+          isLoading: false,
+          error: null
+        });
+        return;
+      }
+
+      try {
+        // Get the user's role from Firestore
+        const usersRef = collection(db, 'users');
+        const q = query(usersRef, where('id', '==', user.uid));
+        const querySnapshot = await getDocs(q);
+        
+        let role: UserRole = "user"; // Default role
+        
+        if (!querySnapshot.empty) {
+          const userData = querySnapshot.docs[0].data();
+          role = userData.role as UserRole || "user";
+        }
+
+        setAuthState({
+          user,
+          userRole: role,
+          isLoading: false,
+          error: null
+        });
+      } catch (error) {
+        setAuthState({
+          user,
+          userRole: null,
+          isLoading: false,
+          error: error instanceof Error ? error : new Error('Unknown error')
+        });
+      }
+    });
+
+    return () => unsubscribe();
+  }, []);
+
+  return authState;
 }
