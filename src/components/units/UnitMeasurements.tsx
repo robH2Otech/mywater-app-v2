@@ -12,8 +12,14 @@ interface UnitMeasurementsProps {
 }
 
 export function UnitMeasurements({ unitId, onMeasurementsLoaded }: UnitMeasurementsProps) {
-  const { measurements, isLoading, error } = useRealtimeMeasurements(unitId);
+  const { measurements, isLoading, error, refetch } = useRealtimeMeasurements(unitId);
   const [timeRange, setTimeRange] = useState('24h');
+  const [lastRefreshed, setLastRefreshed] = useState<Date | null>(null);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  
+  // Determine if this is a UVC unit based on the unit ID or other properties
+  // This is a simplified check, adjust according to your actual logic
+  const isUVCUnit = !unitId.includes('DROP_') && !unitId.includes('OFFICE_');
 
   useEffect(() => {
     // When measurements are loaded, pass them to the parent component if the callback exists
@@ -24,6 +30,14 @@ export function UnitMeasurements({ unitId, onMeasurementsLoaded }: UnitMeasureme
 
   const filteredMeasurements = measurements || [];
 
+  const handleRefresh = () => {
+    setIsRefreshing(true);
+    refetch().finally(() => {
+      setIsRefreshing(false);
+      setLastRefreshed(new Date());
+    });
+  };
+
   if (error) {
     return <div className="text-red-500 p-4">Error loading measurements: {error.message}</div>;
   }
@@ -32,9 +46,9 @@ export function UnitMeasurements({ unitId, onMeasurementsLoaded }: UnitMeasureme
     <div className="flex flex-col">
       <MeasurementsHeader 
         isLoading={isLoading} 
-        measurementCount={filteredMeasurements.length} 
-        timeRange={timeRange} 
-        setTimeRange={setTimeRange}
+        isRefreshing={isRefreshing}
+        onRefresh={handleRefresh}
+        lastRefreshed={lastRefreshed}
       />
       
       {isLoading ? (
@@ -43,9 +57,15 @@ export function UnitMeasurements({ unitId, onMeasurementsLoaded }: UnitMeasureme
           <p className="mt-2 text-gray-400">Loading measurements...</p>
         </div>
       ) : filteredMeasurements.length > 0 ? (
-        <MeasurementsTable measurements={filteredMeasurements} />
+        <MeasurementsTable 
+          measurements={filteredMeasurements} 
+          isUVCUnit={isUVCUnit} 
+        />
       ) : (
-        <EmptyMeasurements unitId={unitId} />
+        <EmptyMeasurements 
+          isLoading={isLoading} 
+          onRefresh={handleRefresh} 
+        />
       )}
       
       {/* Hidden component that can generate sample data if needed */}

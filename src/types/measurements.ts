@@ -10,17 +10,19 @@ export interface Measurement {
 
 export interface MeasurementsHeaderProps {
   isLoading: boolean;
-  measurementCount: number;
-  timeRange: string;
-  setTimeRange: (range: string) => void;
+  isRefreshing: boolean;
+  onRefresh: () => void;
+  lastRefreshed: Date | null;
 }
 
 export interface MeasurementsTableProps {
   measurements: Measurement[];
+  isUVCUnit: boolean;
 }
 
 export interface EmptyMeasurementsProps {
-  unitId: string;
+  isLoading: boolean;
+  onRefresh: () => void;
 }
 
 export interface UnitMeasurementsProps {
