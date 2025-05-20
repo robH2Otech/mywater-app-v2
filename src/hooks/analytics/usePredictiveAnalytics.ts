@@ -58,8 +58,8 @@ export function usePredictiveAnalytics(unitId: string | undefined) {
     return Math.round(normalizedScore);
   }, [anomalies]);
   
-  // Generate risk assessment
-  const riskAssessment = useMemo(() => {
+  // Generate risk assessment with proper typing
+  const riskAssessment: 'low' | 'medium' | 'high' = useMemo(() => {
     if (anomalyScore >= 70) return "high";
     if (anomalyScore >= 30) return "medium";
     return "low";
