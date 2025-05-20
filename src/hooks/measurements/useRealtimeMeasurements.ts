@@ -60,6 +60,15 @@ export function useRealtimeMeasurements(unitId: string, count: number = 24) {
         const unitData = unitDoc.data();
         unitType = unitData.unit_type || 'uvc';
         console.log(`Unit ${unitId} type: ${unitType}`);
+      } else if (isMyWaterUnit) {
+        // For MYWATER units, try the devices collection if not found in units
+        const deviceDocRef = doc(db, "devices", unitId);
+        const deviceDoc = await getDoc(deviceDocRef);
+        if (deviceDoc.exists()) {
+          const deviceData = deviceDoc.data();
+          unitType = deviceData.unit_type || 'uvc';
+          console.log(`MYWATER unit ${unitId} found in devices collection, type: ${unitType}`);
+        }
       }
     } catch (err) {
       console.warn(`Could not determine unit type for ${unitId}:`, err);
