@@ -15,10 +15,11 @@ export function MeasurementsTable({ measurements, isUVCUnit }: MeasurementsTable
     try {
       // Handle Firebase Timestamp objects by converting to Date
       if (typeof timestamp === 'object' && 'toDate' in timestamp && typeof timestamp.toDate === 'function') {
-        return format(timestamp.toDate(), "MMM d, yyyy HH:mm");
+        const date = timestamp.toDate();
+        return format(date, "MMM d, yyyy HH:mm");
       }
       // Handle regular Date objects or strings
-      return format(new Date(timestamp), "MMM d, yyyy HH:mm");
+      return format(new Date(timestamp as string | Date), "MMM d, yyyy HH:mm");
     } catch (err) {
       console.error("Invalid timestamp format:", timestamp);
       return "Invalid date";
