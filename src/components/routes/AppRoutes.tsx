@@ -24,11 +24,15 @@ import { SupportPage } from "@/pages/private/SupportPage";
 import { ShopPage } from "@/pages/private/ShopPage";
 import { SettingsPage } from "@/pages/private/SettingsPage";
 import MigrationPage from "@/pages/MigrationPage";
+import Auth from "@/pages/Auth";
 import NotFound from "@/pages/NotFound";
 
 const AppRoutes = () => {
   return (
     <Routes>
+      {/* Auth route */}
+      <Route path="/auth" element={<Auth />} />
+      
       {/* Business routes */}
       <Route path="/dashboard" element={<ProtectedRoute userType="business"><Dashboard /></ProtectedRoute>} />
       <Route path="/units" element={<ProtectedRoute userType="business"><Units /></ProtectedRoute>} />
@@ -58,6 +62,9 @@ const AppRoutes = () => {
       
       {/* Migration page */}
       <Route path="/migration" element={<MigrationPage />} />
+      
+      {/* Home route redirects to auth */}
+      <Route path="/" element={<Auth />} />
       
       {/* 404 route */}
       <Route path="*" element={<NotFound />} />
