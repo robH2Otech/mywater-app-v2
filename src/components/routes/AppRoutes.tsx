@@ -1,71 +1,64 @@
-import React, { Suspense } from "react";
-import { Routes, Route, Navigate } from "react-router-dom";
-import { ProtectedRoute, PrivateProtectedRoute } from "./ProtectedRoutes";
+import { Routes, Route } from "react-router-dom";
+import { ProtectedRoutes } from "./ProtectedRoutes";
+import LandingPage from "@/pages/LandingPage";
+import Dashboard from "@/pages/Dashboard";
+import Index from "@/pages/Index";
+import Units from "@/pages/Units";
+import UnitDetails from "@/pages/UnitDetails";
+import LocationsPage from "@/pages/LocationsPage";
+import UnitLocationPage from "@/pages/UnitLocationPage";
+import UVC from "@/pages/UVC";
+import Analytics from "@/pages/Analytics";
+import Alerts from "@/pages/Alerts";
+import Filters from "@/pages/Filters";
+import ClientRequests from "@/pages/ClientRequests";
+import Users from "@/pages/Users";
+import Settings from "@/pages/Settings";
+import Auth from "@/pages/Auth";
+import PrivateAuth from "@/pages/PrivateAuth";
+import PrivateDashboard from "@/pages/PrivateDashboard";
+import NotFound from "@/pages/NotFound";
+import MigrationPage from "@/pages/MigrationPage";
+import MLDashboard from "@/pages/MLDashboard";
 
-// Lazy-loaded components
-const Dashboard = React.lazy(() => import("@/pages/Dashboard"));
-const Units = React.lazy(() => import("@/pages/Units"));
-const UnitDetails = React.lazy(() => import("@/pages/UnitDetails"));
-const LocationsPage = React.lazy(() => import("@/pages/LocationsPage"));
-const UnitLocationPage = React.lazy(() => import("@/pages/UnitLocationPage"));
-const UVC = React.lazy(() => import("@/pages/UVC"));
-const Analytics = React.lazy(() => import("@/pages/Analytics"));
-const Alerts = React.lazy(() => import("@/pages/Alerts"));
-const Filters = React.lazy(() => import("@/pages/Filters"));
-const Users = React.lazy(() => import("@/pages/Users"));
-const ClientRequests = React.lazy(() => import("@/pages/ClientRequests"));
-const Settings = React.lazy(() => import("@/pages/Settings"));
-const Auth = React.lazy(() => import("@/pages/Auth"));
-const PrivateAuth = React.lazy(() => import("@/pages/PrivateAuth"));
-const PrivateDashboard = React.lazy(() => import("@/pages/PrivateDashboard"));
-const LandingPage = React.lazy(() => import("@/pages/LandingPage"));
-const NotFound = React.lazy(() => import("@/pages/NotFound"));
-const MigrationPage = React.lazy(() => import("@/pages/MigrationPage"));
-
-// Loader component for suspense fallback
-const LoadingFallback = () => (
-  <div className="flex items-center justify-center min-h-screen">
-    <div className="w-10 h-10 border-t-2 border-b-2 border-blue-500 rounded-full animate-spin"></div>
-  </div>
-);
-
-export function AppRoutes() {
+const AppRoutes = () => {
+  
   return (
-    <Suspense fallback={<LoadingFallback />}>
-      <Routes>
-        {/* Default route - Changed to landing page */}
-        <Route path="/" element={<Navigate to="/landing" />} />
-        
-        {/* Landing page - publicly accessible */}
-        <Route path="/landing" element={<LandingPage />} />
-        
-        {/* Migration page - publicly accessible */}
+    <Routes>
+      {/* Public routes */}
+      <Route path="/" element={<LandingPage />} />
+      <Route path="*" element={<NotFound />} />
+      
+      {/* Protected routes */}
+      <Route element={<ProtectedRoutes />}>
+        <Route path="/dashboard" element={<Dashboard />} />
+        <Route path="/index" element={<Index />} />
+        <Route path="/units" element={<Units />} />
+        <Route path="/units/:id" element={<UnitDetails />} />
+        <Route path="/locations" element={<LocationsPage />} />
+        <Route path="/locations/:id" element={<UnitLocationPage />} />
+        <Route path="/uvc" element={<UVC />} />
+        <Route path="/analytics" element={<Analytics />} />
+        <Route path="/ml-dashboard" element={<MLDashboard />} />
+        <Route path="/alerts" element={<Alerts />} />
+        <Route path="/filters" element={<Filters />} />
+        <Route path="/requests" element={<ClientRequests />} />
+        <Route path="/users" element={<Users />} />
+        <Route path="/settings" element={<Settings />} />
         <Route path="/migration" element={<MigrationPage />} />
-        
-        {/* Authentication */}
-        <Route path="/auth" element={<Auth />} />
-        <Route path="/private-auth" element={<PrivateAuth />} />
-        
-        {/* Protected business routes */}
-        <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
-        <Route path="/units" element={<ProtectedRoute><Units /></ProtectedRoute>} />
-        <Route path="/units/:unitId" element={<ProtectedRoute><UnitDetails /></ProtectedRoute>} />
-        <Route path="/locations" element={<ProtectedRoute><LocationsPage /></ProtectedRoute>} />
-        <Route path="/units/:unitId/location" element={<ProtectedRoute><UnitLocationPage /></ProtectedRoute>} />
-        <Route path="/uvc" element={<ProtectedRoute><UVC /></ProtectedRoute>} />
-        <Route path="/analytics" element={<ProtectedRoute><Analytics /></ProtectedRoute>} />
-        <Route path="/alerts" element={<ProtectedRoute><Alerts /></ProtectedRoute>} />
-        <Route path="/filters" element={<ProtectedRoute><Filters /></ProtectedRoute>} />
-        <Route path="/users" element={<ProtectedRoute><Users /></ProtectedRoute>} />
-        <Route path="/client-requests" element={<ProtectedRoute><ClientRequests /></ProtectedRoute>} />
-        <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
-        
-        {/* Private routes */}
-        <Route path="/private-dashboard/*" element={<PrivateProtectedRoute><PrivateDashboard /></PrivateProtectedRoute>} />
-        
-        {/* Other */}
-        <Route path="*" element={<NotFound />} />
-      </Routes>
-    </Suspense>
+      </Route>
+      
+      {/* Auth routes */}
+      <Route path="/auth" element={<Auth />} />
+      <Route path="/private-auth" element={<PrivateAuth />} />
+      
+      {/* Private user routes */}
+      <Route element={<ProtectedRoutes userTypes={["private"]} />}>
+        <Route path="/private-dashboard" element={<PrivateDashboard />} />
+      </Route>
+      
+    </Routes>
   );
-}
+};
+
+export default AppRoutes;

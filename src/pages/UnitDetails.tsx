@@ -1,59 +1,71 @@
-
-import { useParams, useNavigate } from "react-router-dom";
-import { Card } from "@/components/ui/card";
-import { useState } from "react";
-import { useFilterStatus } from "@/components/filters/FilterStatusUtils";
-import { UnitMeasurements } from "@/components/units/UnitMeasurements";
-import { UnitDetailsCard } from "@/components/units/UnitDetailsCard";
+import { useParams } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
+import { doc, getDoc } from "firebase/firestore";
+import { db } from "@/integrations/firebase/client";
+import { UnitLoading } from "@/components/units/UnitLoading";
+import { UnitError } from "@/components/units/UnitError";
 import { UnitDetailsHeader } from "@/components/units/UnitDetailsHeader";
-import { UnitLocationSection } from "@/components/units/details/UnitLocationSection";
-import { UnitError } from "@/components/units/details/UnitError";
-import { UnitLoading } from "@/components/units/details/UnitLoading";
-import { useUnitDetails } from "@/hooks/units/useUnitDetails";
-import { toast } from "sonner";
+import { UnitDetailsCard } from "@/components/units/UnitDetailsCard";
+import { UnitLocationSection } from "@/components/units/UnitLocationSection";
+import { ReportCard } from "@/components/analytics/ReportCard";
+import { useReports } from "@/hooks/useReports";
+import { UnitData } from "@/types/analytics";
+import { UnitMlDetails } from "@/components/units/UnitMlDetails";
 
 const UnitDetails = () => {
   const { id } = useParams();
-  const navigate = useNavigate();
-  const [isSyncing, setIsSyncing] = useState(false);
-  const { syncUnitMeasurements } = useFilterStatus();
-  const { data: unit, isLoading, error } = useUnitDetails(id);
+  const { data: unit, isLoading, error } = useQuery({
+    queryKey: ["unit", id],
+    queryFn: async () => {
+      if (!id) throw new Error("Unit ID is required");
 
-  const handleSync = async () => {
-    if (!id) return;
-    
-    setIsSyncing(true);
-    try {
-      await syncUnitMeasurements(id);
-      toast.success("Measurements synced successfully");
-    } catch (err) {
-      console.error("Error syncing measurements:", err);
-      toast.error("Failed to sync measurements");
-    } finally {
-      setIsSyncing(false);
-    }
-  };
+      const unitDocRef = doc(db, "units", id);
+      const unitSnapshot = await getDoc(unitDocRef);
 
-  if (error) return <UnitError error={error} />;
-  if (isLoading) return <UnitLoading />;
-  if (!unit) return <UnitError error={new Error("Unit not found")} />;
+      if (!unitSnapshot.exists()) {
+        throw new Error("Unit not found");
+      }
+
+      return {
+        id: unitSnapshot.id,
+        ...unitSnapshot.data(),
+      } as UnitData;
+    },
+  });
+  
+  const { data: reports = [] } = useReports(id || "");
+
+  if (isLoading) {
+    return <UnitLoading />;
+  }
+
+  if (error || !unit) {
+    return <UnitError id={id} error={error} />;
+  }
 
   return (
-    <div className="container mx-auto p-3 md:p-6 max-w-4xl animate-fadeIn space-y-4 md:space-y-6">
-      <Card className="bg-spotify-darker border-spotify-accent p-4 md:p-6">
-        <UnitDetailsHeader 
-          title="Water Unit Details"
-          isSyncing={isSyncing}
-          onSync={handleSync}
-          onBack={() => navigate("/units")}
-          unitId={id}
-          unitIccid={unit.iccid || ''}
-        />
-        <UnitLocationSection unit={unit} unitId={id || ''} />
-        <UnitDetailsCard unit={unit} />
-      </Card>
+    <div className="space-y-6 pb-6">
+      <UnitDetailsHeader unit={unit} />
 
-      {id && <UnitMeasurements unitId={id} />}
+      <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+        <UnitDetailsCard unit={unit} className="xl:col-span-1" />
+        <UnitMlDetails unit={unit} className="xl:col-span-2" />
+      </div>
+      
+      {/* Display reports if available */}
+      {reports.length > 0 && (
+        <div className="mt-8">
+          <h2 className="text-xl font-semibold mb-4">Reports</h2>
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+            {reports.map(report => (
+              <ReportCard key={report.id} report={report} />
+            ))}
+          </div>
+        </div>
+      )}
+      
+      {/* Unit location section */}
+      <UnitLocationSection unitId={id} />
     </div>
   );
 };
