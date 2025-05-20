@@ -3,7 +3,7 @@ import React from 'react';
 import { MaintenancePrediction } from '@/types/ml';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Calendar, Tool, AlertCircle } from 'lucide-react';
+import { Calendar, Wrench, AlertCircle } from 'lucide-react';
 import { format, isBefore } from 'date-fns';
 
 interface PredictionsListProps {
@@ -64,25 +64,25 @@ export function PredictionsList({ predictions }: PredictionsListProps) {
       {predictions.map((prediction, index) => (
         <Card 
           key={prediction.id || index} 
-          className={`overflow-hidden border-l-4 ${getUrgencyColor(prediction.predicted_date)}`}
+          className={`overflow-hidden border-l-4 ${getUrgencyColor(prediction.predictedDate)}`}
         >
           <CardContent className="p-4">
             <div className="flex justify-between items-center">
               <div>
                 <h4 className="font-medium flex items-center">
-                  <Tool className="mr-2 h-4 w-4" />
-                  {prediction.maintenance_type || 'Maintenance'} Required
+                  <Wrench className="mr-2 h-4 w-4" />
+                  {prediction.maintenanceType || 'Maintenance'} Required
                 </h4>
                 
                 <div className="mt-1 flex items-center space-x-3">
-                  {prediction.predicted_date && (
+                  {prediction.predictedDate && (
                     <span className="text-sm">
                       <Calendar className="inline h-3 w-3 mr-1 opacity-70" />
-                      {format(new Date(prediction.predicted_date), 'MMM d, yyyy')}
+                      {format(new Date(prediction.predictedDate), 'MMM d, yyyy')}
                     </span>
                   )}
                   
-                  {getUrgencyBadge(prediction.predicted_date)}
+                  {getUrgencyBadge(prediction.predictedDate)}
                 </div>
                 
                 {prediction.confidence && (
@@ -93,9 +93,9 @@ export function PredictionsList({ predictions }: PredictionsListProps) {
               </div>
               
               <div>
-                {prediction.recommendation && (
+                {prediction.notes && (
                   <p className="text-sm text-muted-foreground max-w-xs text-right">
-                    {prediction.recommendation}
+                    {prediction.notes}
                   </p>
                 )}
               </div>

@@ -6,6 +6,7 @@ import { MLDashboardStats } from '@/components/ml/MLDashboardStats';
 import { PredictionsList } from '@/components/ml/PredictionsList';
 import { AnomaliesList } from '@/components/ml/AnomaliesList';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Button } from '@/components/ui/button';
 
 const MLDashboard = () => {
   const { 
@@ -26,19 +27,18 @@ const MLDashboard = () => {
 
   return (
     <div className="container mx-auto p-4 space-y-6">
-      <PageHeader 
-        title="ML Analytics Dashboard" 
-        description="Machine learning insights for your water units"
-        actions={
-          <button 
-            className="btn btn-primary" 
-            onClick={handleProcessData}
-            disabled={isProcessing}
-          >
-            {isProcessing ? 'Processing...' : 'Process Data'}
-          </button>
-        }
-      />
+      <div className="flex justify-between items-center mb-6">
+        <PageHeader 
+          title="ML Analytics Dashboard" 
+          description="Machine learning insights for your water units"
+        />
+        <Button 
+          onClick={handleProcessData}
+          disabled={isProcessing}
+        >
+          {isProcessing ? 'Processing...' : 'Process Data'}
+        </Button>
+      </div>
 
       <MLDashboardStats />
 

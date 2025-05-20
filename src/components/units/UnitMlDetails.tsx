@@ -14,6 +14,7 @@ interface UnitMlDetailsProps {
 
 export function UnitMlDetails({ unit, className = "" }: UnitMlDetailsProps) {
   const [activeTab, setActiveTab] = useState("measurements");
+  const [measurements, setMeasurements] = useState<any[]>([]);
   
   // Simple check to decide if we have enough data for ML
   // Convert total_volume to number to ensure proper comparison
@@ -22,6 +23,11 @@ export function UnitMlDetails({ unit, className = "" }: UnitMlDetailsProps) {
     : (unit.total_volume || 0);
   
   const hasEnoughData = totalVolume > 100;
+  
+  // Function to receive measurements from UnitMeasurements component
+  const handleMeasurementsLoaded = (loadedMeasurements: any[]) => {
+    setMeasurements(loadedMeasurements);
+  };
   
   return (
     <Card className={`border-spotify-accent bg-spotify-darker overflow-hidden ${className}`}>
@@ -46,12 +52,12 @@ export function UnitMlDetails({ unit, className = "" }: UnitMlDetailsProps) {
         </TabsList>
         
         <TabsContent value="measurements" className="p-0 m-0">
-          <UnitMeasurements unitId={unit.id} />
+          <UnitMeasurements unitId={unit.id} onMeasurementsLoaded={handleMeasurementsLoaded} />
         </TabsContent>
         
         <TabsContent value="ml-analytics" className="p-4 m-0">
           {hasEnoughData ? (
-            <MLUnitAnalytics unit={unit} />
+            <MLUnitAnalytics unit={unit} measurements={measurements} />
           ) : (
             <div className="p-8 text-center">
               <AlertTriangle className="h-10 w-10 text-yellow-500 mx-auto mb-4" />
