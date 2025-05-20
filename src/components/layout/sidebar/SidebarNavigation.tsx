@@ -1,11 +1,25 @@
-import { LogOut } from "lucide-react";
+
+import { 
+  LogOut, 
+  Home, 
+  LayoutGrid, 
+  MapPin, 
+  Lightbulb, 
+  BarChart, 
+  Activity, 
+  Bell, 
+  Filter, 
+  MessageSquare, 
+  Users, 
+  Settings 
+} from "lucide-react";
 import { Link, Location } from "react-router-dom";
 import { SidebarNavItem } from "./SidebarNavItem";
 import { SidebarLogoutButton } from "./SidebarLogoutButton";
 import { Tooltip } from "@/components/ui/tooltip";
 import { motion } from "framer-motion";
-import { useLanguage } from "@/context/LanguageContext";
-import { useFirebaseAuth } from "@/context/FirebaseAuthContext";
+import { useLanguage } from "@/contexts/LanguageContext";
+import { useFirebaseAuth } from "@/contexts/FirebaseAuthContext";
 
 interface NavigationItem {
   name: string;

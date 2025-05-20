@@ -3,7 +3,7 @@ import React from "react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { FileText, Download, Calendar } from "lucide-react";
+import { FileText, Download } from "lucide-react";
 import { ReportData } from "@/types/analytics";
 import { format } from "date-fns";
 
@@ -31,6 +31,21 @@ export function ReportCard({ report }: ReportCardProps) {
     }
   };
 
+  // Get unit name from report content safely
+  const unitName = report.content && typeof report.content === 'object' ? 
+    (report.content as any).unit_name || "Unit" : 
+    "Unit";
+
+  // Extract metrics if they exist and are in the expected format
+  const metrics = report.content && typeof report.content === 'object' ? 
+    (report.content as any).metrics : null;
+
+  const totalVolume = metrics?.totalVolume !== undefined ? 
+    metrics.totalVolume.toFixed(0) : "N/A";
+    
+  const avgTemperature = metrics?.avgTemperature !== undefined ? 
+    metrics.avgTemperature.toFixed(1) : "N/A";
+
   return (
     <Card className="p-4 bg-spotify-darker border-spotify-accent hover:border-mywater-blue transition-colors">
       <div className="flex flex-col h-full">
@@ -45,11 +60,11 @@ export function ReportCard({ report }: ReportCardProps) {
         </div>
         
         <div className="mt-2 text-sm text-gray-300 flex-grow">
-          <p>Generated report for {report.content?.unit_name || "Unit"}</p>
-          {report.content?.metrics && (
+          <p>Generated report for {unitName}</p>
+          {metrics && (
             <div className="mt-2 space-y-1">
-              <p>Total Volume: {report.content.metrics.totalVolume?.toFixed(0) || "N/A"} m³</p>
-              <p>Average Temperature: {report.content.metrics.avgTemperature?.toFixed(1) || "N/A"}°C</p>
+              <p>Total Volume: {totalVolume} m³</p>
+              <p>Average Temperature: {avgTemperature}°C</p>
             </div>
           )}
         </div>
