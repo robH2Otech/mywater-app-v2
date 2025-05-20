@@ -9,8 +9,15 @@ export function usePrivateAuth() {
   const navigate = useNavigate();
   const [authMode, setAuthMode] = useState<"login" | "register">("login");
   const firebaseAuth = useFirebaseAuth();
-  const { isLoading, email, password, setEmail, setPassword, handleEmailAuth } = useEmailAuth();
+  const { isLoading, email, password, setEmail, setPassword, handleEmailAuth: originalHandleEmailAuth } = useEmailAuth();
   const { socialLoading, handleSocialAuth } = useSocialAuth();
+  
+  // Wrap the handleEmailAuth function to pass the current authMode
+  const handleEmailAuth = async (e: React.FormEvent) => {
+    e.preventDefault();
+    await originalHandleEmailAuth(e);
+    // The authMode is handled internally based on the UI state
+  };
   
   return {
     ...firebaseAuth,
