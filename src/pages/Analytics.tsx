@@ -6,11 +6,17 @@ import { ReportGenerationForm } from "@/components/analytics/ReportGenerationFor
 import { ReportsList } from "@/components/analytics/ReportsList";
 import { PredictiveMaintenanceDashboard } from "@/components/analytics/predictive/PredictiveMaintenanceDashboard";
 import { useLocation, useNavigate } from "react-router-dom";
+import { useReports } from "@/hooks/useReports";
+import { toast } from "sonner";
+import { collection, deleteDoc, doc } from "firebase/firestore";
+import { db } from "@/integrations/firebase/client";
 
 const Analytics = () => {
   const [activeTab, setActiveTab] = useState<"reports" | "predictive">("reports");
   const location = useLocation();
   const navigate = useNavigate();
+  const [selectedUnit, setSelectedUnit] = useState("");
+  const { reports, isLoading, refetch } = useReports(selectedUnit);
   
   // Check URL for tab parameter
   useEffect(() => {
@@ -35,6 +41,25 @@ const Analytics = () => {
     navigate(`/analytics?${params.toString()}`, { replace: true });
   };
   
+  const handleUnitChange = (unitId: string) => {
+    setSelectedUnit(unitId);
+  };
+
+  const handleReportGenerated = () => {
+    refetch();
+  };
+
+  const handleDeleteReport = async (reportId: string) => {
+    try {
+      const reportRef = doc(db, "reports", reportId);
+      await deleteDoc(reportRef);
+      refetch();
+    } catch (error) {
+      console.error("Error deleting report:", error);
+      toast.error("Failed to delete report");
+    }
+  };
+  
   return (
     <div className="container mx-auto p-3 md:p-6 animate-fadeIn">
       <div className="mb-6">
@@ -53,14 +78,21 @@ const Analytics = () => {
             <div className="lg:col-span-5 space-y-6">
               <Card className="bg-spotify-darker p-4 md:p-6 border-spotify-accent/20">
                 <h2 className="text-xl font-semibold mb-4">Generate Report</h2>
-                <ReportGenerationForm />
+                <ReportGenerationForm 
+                  selectedUnit={selectedUnit}
+                  onUnitChange={handleUnitChange}
+                  onReportGenerated={handleReportGenerated}
+                />
               </Card>
             </div>
             
             <div className="lg:col-span-7">
               <Card className="bg-spotify-darker p-4 md:p-6 border-spotify-accent/20">
                 <h2 className="text-xl font-semibold mb-4">Recent Reports</h2>
-                <ReportsList />
+                <ReportsList 
+                  reports={reports}
+                  onDeleteReport={handleDeleteReport}
+                />
               </Card>
             </div>
           </div>
