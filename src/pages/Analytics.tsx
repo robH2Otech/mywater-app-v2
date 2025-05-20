@@ -16,7 +16,7 @@ const Analytics = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const [selectedUnit, setSelectedUnit] = useState("");
-  const { reports, isLoading, refetch } = useReports(selectedUnit);
+  const { data: reports = [], isLoading, refetch } = useReports(selectedUnit);
   
   // Check URL for tab parameter
   useEffect(() => {

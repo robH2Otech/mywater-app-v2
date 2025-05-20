@@ -1,6 +1,6 @@
 
 import { useQuery } from "@tanstack/react-query";
-import { collection, query, where, getDocs, orderBy } from "firebase/firestore";
+import { collection, query, where, orderBy, getDocs } from "firebase/firestore";
 import { db } from "@/integrations/firebase/client";
 import { ReportData } from "@/types/analytics";
 
