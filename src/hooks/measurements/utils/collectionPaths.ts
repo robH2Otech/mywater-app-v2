@@ -10,13 +10,15 @@ export const MEASUREMENT_PATHS = [
   "device-data/{unitId}/measurements",
   // Additional paths for MYWATER units
   "measurements/{unitId}/hourly",
-  "devices/{unitId}/data"
+  "devices/{unitId}/data",
+  "devices/{unitId}/measurements"
 ];
 
 export function getMeasurementsCollectionPath(unitId: string): string {
   // For MYWATER units, we need specific paths
   if (unitId.startsWith("MYWATER_")) {
-    return `units/${unitId}/data`;
+    // For MYWATER units, try the devices collection first
+    return `devices/${unitId}/data`;
   }
   
   // Logic for other unit types

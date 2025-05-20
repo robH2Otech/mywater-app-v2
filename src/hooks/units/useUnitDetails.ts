@@ -14,23 +14,62 @@ export function useUnitDetails(id: string | undefined) {
       
       console.log(`Fetching unit details for ${id}`);
       
-      // Special case for MYWATER 003
-      const isSpecialUnit = id === "MYWATER_003";
+      // Check if the ID is prefixed with MYWATER
+      const isMyWaterUnit = id.startsWith("MYWATER_");
       
       // 1. Get the unit base data
-      let unitDocRef;
-      if (isSpecialUnit) {
-        unitDocRef = doc(db, "units", id);
-      } else {
-        unitDocRef = doc(db, "units", id);
-      }
-      
+      const unitDocRef = doc(db, "units", id);
       const unitSnapshot = await getDoc(unitDocRef);
+      
+      // If unit not found in main location, try alternative collection for MYWATER units
+      if (!unitSnapshot.exists() && isMyWaterUnit) {
+        console.log(`Unit ${id} not found in units collection, trying devices collection`);
+        const deviceDocRef = doc(db, "devices", id);
+        const deviceSnapshot = await getDoc(deviceDocRef);
+        
+        if (deviceSnapshot.exists()) {
+          const deviceData = deviceSnapshot.data() as Record<string, any>;
+          console.log(`Found ${id} in devices collection:`, deviceData);
+          
+          // Process device data similar to unit data
+          const latestVolume = deviceData.total_volume || 0;
+          const totalUvcHours = deviceData.uvc_hours || 0;
+          
+          // Calculate statuses
+          const filterStatus = determineUnitStatus(latestVolume);
+          const uvcStatus = determineUVCStatus(totalUvcHours);
+          
+          // Return processed device data as unit data
+          return {
+            id: deviceSnapshot.id,
+            name: deviceData.name || id,
+            location: deviceData.location || "",
+            status: filterStatus,
+            total_volume: latestVolume,
+            uvc_hours: totalUvcHours,
+            uvc_status: uvcStatus,
+            is_uvc_accumulated: deviceData.is_uvc_accumulated || false,
+            unit_type: deviceData.unit_type || "uvc",
+            contact_name: deviceData.contact_name || "",
+            contact_email: deviceData.contact_email || "",
+            contact_phone: deviceData.contact_phone || "",
+            next_maintenance: deviceData.next_maintenance || null,
+            setup_date: deviceData.setup_date || null,
+            uvc_installation_date: deviceData.uvc_installation_date || null,
+            eid: deviceData.eid || "",
+            iccid: deviceData.iccid || ""
+          } as UnitData;
+        }
+        
+        // If still not found, throw error
+        throw new Error("Unit not found");
+      }
       
       if (!unitSnapshot.exists()) {
         throw new Error("Unit not found");
       }
       
+      // Continue with existing code for processing unit data
       const unitData = unitSnapshot.data() as Record<string, any>;
       console.log(`Unit ${id} base data:`, unitData);
       
@@ -97,9 +136,9 @@ export function useUnitDetails(id: string | undefined) {
       
       console.log(`Unit ${id} - Base UVC hours: ${baseUvcHours}`);
       
-      // For MYWATER 003, if we have measurement data, use it directly instead of adding
+      // For MYWATER units, if we have measurement data, use it directly instead of adding
       let totalUvcHours = baseUvcHours;
-      if (isSpecialUnit && latestMeasurementUvcHours > 0) {
+      if (isMyWaterUnit && latestMeasurementUvcHours > 0) {
         totalUvcHours = latestMeasurementUvcHours;
         console.log(`Special unit ${id} - Using measurement hours directly: ${totalUvcHours}`);
       }
