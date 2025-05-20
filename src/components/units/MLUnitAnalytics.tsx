@@ -1,92 +1,107 @@
 
-import { Card } from "@/components/ui/card";
-import { AnomaliesList } from "@/components/ml/AnomaliesList";
-import { PredictionsList } from "@/components/ml/PredictionsList";
+import React, { useState } from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { useMLOperations } from "@/hooks/ml/useMLOperations";
 import { UnitData } from "@/types/analytics";
-import { Button } from "@/components/ui/button";
-import { AlertTriangle, Calendar, RefreshCw } from "lucide-react";
-import { useRealtimeMeasurements } from "@/hooks/measurements/useRealtimeMeasurements";
-import { useState } from "react";
 import { toast } from "sonner";
+import { PredictionsList } from "@/components/ml/PredictionsList";
+import { AnomaliesList } from "@/components/ml/AnomaliesList";
 
 interface MLUnitAnalyticsProps {
   unit: UnitData;
+  measurements: any[]; // Will be replaced with proper type once available
 }
 
-export function MLUnitAnalytics({ unit }: MLUnitAnalyticsProps) {
-  const [isAnalyzing, setIsAnalyzing] = useState(false);
-  const { measurements } = useRealtimeMeasurements(unit.id);
-  const { processUnitMeasurements, generatePredictions } = useMLOperations();
+export function MLUnitAnalytics({ unit, measurements }: MLUnitAnalyticsProps) {
+  const [activeTab, setActiveTab] = useState<'predictions' | 'anomalies'>('predictions');
+  const { 
+    processData, 
+    predictions, 
+    anomalies, 
+    isProcessing,
+    updateAnomalyStatus
+  } = useMLOperations();
   
-  const handleAnalyze = async () => {
-    if (measurements.length < 10) {
-      toast.error("Not enough measurement data for ML analysis");
-      return;
-    }
-    
-    setIsAnalyzing(true);
+  const handleGenerateAnalysis = async () => {
     try {
-      // Process for anomalies
-      const anomalies = await processUnitMeasurements(unit.id, unit.name, measurements);
+      toast.info(`Analyzing data for ${unit.name || 'unit'}...`);
+      const result = await processData(unit, measurements);
       
-      // Generate maintenance predictions
-      const predictions = await generatePredictions(unit, measurements);
-      
-      // Show toast with results
-      if (anomalies.length > 0 || predictions.length > 0) {
-        toast.success(`Analysis complete: ${anomalies.length} anomalies and ${predictions.length} predictions generated`);
+      if (result.predictions.length > 0 || result.anomalies.length > 0) {
+        toast.success(`Analysis complete. Found ${result.predictions.length} predictions and ${result.anomalies.length} anomalies.`);
       } else {
-        toast.info("Analysis complete: No anomalies or maintenance predictions detected");
+        toast.info("Analysis complete. No significant patterns detected.");
       }
     } catch (error) {
-      console.error("Error analyzing unit data:", error);
-      toast.error("Failed to analyze unit data");
-    } finally {
-      setIsAnalyzing(false);
+      console.error("Error generating ML analysis:", error);
+      toast.error("Failed to generate analysis. Please try again.");
     }
   };
-  
+
+  const handleUpdateAnomalyStatus = async (id: string, status: string) => {
+    try {
+      await updateAnomalyStatus(id, status);
+      toast.success(`Anomaly status updated to ${status}`);
+    } catch (error) {
+      toast.error("Failed to update anomaly status");
+    }
+  };
+
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <h2 className="text-lg font-semibold">ML Analytics</h2>
-        <Button 
-          onClick={handleAnalyze} 
-          disabled={isAnalyzing || measurements.length < 10}
-          className="bg-mywater-blue hover:bg-blue-600"
-        >
-          {isAnalyzing ? (
-            <>
-              <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
-              Analyzing...
-            </>
-          ) : (
-            <>
-              <RefreshCw className="h-4 w-4 mr-2" />
-              Run ML Analysis
-            </>
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center justify-between">
+          <span>ML Analytics</span>
+          <Button 
+            onClick={handleGenerateAnalysis} 
+            disabled={isProcessing || measurements.length === 0} 
+            size="sm"
+          >
+            {isProcessing ? "Processing..." : "Generate Analysis"}
+          </Button>
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        <div className="flex space-x-2 mb-4">
+          <Button 
+            variant={activeTab === 'predictions' ? 'default' : 'outline'} 
+            size="sm"
+            onClick={() => setActiveTab('predictions')}
+          >
+            Predictions
+          </Button>
+          <Button 
+            variant={activeTab === 'anomalies' ? 'default' : 'outline'} 
+            size="sm"
+            onClick={() => setActiveTab('anomalies')}
+          >
+            Anomalies
+          </Button>
+        </div>
+
+        <div className="mt-4">
+          {activeTab === 'predictions' && (
+            <div className="space-y-4">
+              {predictions && predictions.length > 0 ? (
+                <PredictionsList predictions={predictions} />
+              ) : (
+                <p className="text-muted-foreground text-center py-4">No predictions available. Generate analysis to see predictions.</p>
+              )}
+            </div>
           )}
-        </Button>
-      </div>
-      
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card className="p-4 bg-spotify-darker border-spotify-accent">
-          <div className="flex items-center mb-4">
-            <AlertTriangle className="h-5 w-5 text-yellow-500 mr-2" />
-            <h3 className="text-base font-medium">Detected Anomalies</h3>
-          </div>
-          <AnomaliesList unitId={unit.id} limit={5} />
-        </Card>
-        
-        <Card className="p-4 bg-spotify-darker border-spotify-accent">
-          <div className="flex items-center mb-4">
-            <Calendar className="h-5 w-5 text-mywater-blue mr-2" />
-            <h3 className="text-base font-medium">Maintenance Predictions</h3>
-          </div>
-          <PredictionsList unitId={unit.id} limit={5} />
-        </Card>
-      </div>
-    </div>
+
+          {activeTab === 'anomalies' && (
+            <div className="space-y-4">
+              {anomalies && anomalies.length > 0 ? (
+                <AnomaliesList anomalies={anomalies} onUpdateStatus={handleUpdateAnomalyStatus} />
+              ) : (
+                <p className="text-muted-foreground text-center py-4">No anomalies detected. Generate analysis to detect anomalies.</p>
+              )}
+            </div>
+          )}
+        </div>
+      </CardContent>
+    </Card>
   );
 }

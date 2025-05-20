@@ -15,18 +15,18 @@ import LocationsPage from "@/pages/LocationsPage";
 import UnitLocationPage from "@/pages/UnitLocationPage";
 import MLDashboard from "@/pages/MLDashboard";
 import PrivateDashboard from "@/pages/PrivateDashboard";
-import HomePage from "@/pages/private/HomePage";
-import ProfilePage from "@/pages/private/ProfilePage";
-import ReferPage from "@/pages/private/ReferPage";
-import DataCalculatorPage from "@/pages/private/DataCalculatorPage";
-import InstallationPage from "@/pages/private/InstallationPage";
-import SupportPage from "@/pages/private/SupportPage";
-import ShopPage from "@/pages/private/ShopPage";
-import SettingsPage from "@/pages/private/SettingsPage";
+import { HomePage } from "@/pages/private/HomePage";
+import { ProfilePage } from "@/pages/private/ProfilePage";
+import { ReferPage } from "@/pages/private/ReferPage";
+import { DataCalculatorPage } from "@/pages/private/DataCalculatorPage";
+import { InstallationPage } from "@/pages/private/InstallationPage";
+import { SupportPage } from "@/pages/private/SupportPage";
+import { ShopPage } from "@/pages/private/ShopPage";
+import { SettingsPage } from "@/pages/private/SettingsPage";
 import MigrationPage from "@/pages/MigrationPage";
 import NotFound from "@/pages/NotFound";
 
-export default function AppRoutes() {
+const AppRoutes = () => {
   return (
     <Routes>
       {/* Business routes */}
@@ -64,3 +64,5 @@ export default function AppRoutes() {
     </Routes>
   );
 }
+
+export default AppRoutes;

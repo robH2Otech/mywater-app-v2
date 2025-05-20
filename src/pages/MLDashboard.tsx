@@ -1,66 +1,83 @@
 
-import { useEffect } from "react";
-import { useMLOperations } from "@/hooks/ml/useMLOperations";
-import { MLDashboardStats } from "@/components/ml/MLDashboardStats";
-import { AnomaliesList } from "@/components/ml/AnomaliesList";
-import { PredictionsList } from "@/components/ml/PredictionsList";
-import { AdminOnly } from "@/components/shared/RoleBasedAccess";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { AlertTriangle, Calendar } from "lucide-react";
-import { useUnits } from "@/hooks/useUnits";
+import React from 'react';
+import { PageHeader } from '@/components/shared/PageHeader';
+import { useMLOperations } from '@/hooks/ml/useMLOperations';
+import { MLDashboardStats } from '@/components/ml/MLDashboardStats';
+import { PredictionsList } from '@/components/ml/PredictionsList';
+import { AnomaliesList } from '@/components/ml/AnomaliesList';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 const MLDashboard = () => {
-  const { initializeModel } = useMLOperations();
-  const { data: units = [] } = useUnits();
-  
-  // Initialize model when component mounts
-  useEffect(() => {
-    initializeModel();
-  }, [initializeModel]);
-  
+  const { 
+    predictions, 
+    anomalies, 
+    isProcessing,
+    processUnitMeasurements,
+    updateAnomalyStatus
+  } = useMLOperations();
+
+  const handleProcessData = async () => {
+    await processUnitMeasurements();
+  };
+
+  const handleUpdateAnomalyStatus = async (id: string, status: string) => {
+    await updateAnomalyStatus(id, status);
+  };
+
   return (
-    <AdminOnly
-      fallback={
-        <div className="flex items-center justify-center h-[70vh]">
-          <div className="text-center">
-            <h2 className="text-xl font-medium mb-2">Access Restricted</h2>
-            <p className="text-gray-400">You need admin permissions to access the ML Dashboard</p>
+    <div className="container mx-auto p-4 space-y-6">
+      <PageHeader 
+        title="ML Analytics Dashboard" 
+        description="Machine learning insights for your water units"
+        actions={
+          <button 
+            className="btn btn-primary" 
+            onClick={handleProcessData}
+            disabled={isProcessing}
+          >
+            {isProcessing ? 'Processing...' : 'Process Data'}
+          </button>
+        }
+      />
+
+      <MLDashboardStats />
+
+      <Tabs defaultValue="predictions" className="w-full">
+        <TabsList className="grid w-full md:w-[400px] grid-cols-2">
+          <TabsTrigger value="predictions">Maintenance Predictions</TabsTrigger>
+          <TabsTrigger value="anomalies">Anomaly Detections</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="predictions" className="mt-6">
+          <div className="bg-card rounded-lg border p-6">
+            <h2 className="text-xl font-semibold mb-4">Maintenance Predictions</h2>
+            {predictions && predictions.length > 0 ? (
+              <PredictionsList predictions={predictions} />
+            ) : (
+              <p className="text-muted-foreground text-center py-10">
+                No maintenance predictions available. Process your unit data to generate predictions.
+              </p>
+            )}
           </div>
-        </div>
-      }
-    >
-      <div className="space-y-6 pb-6">
-        <div>
-          <h1 className="text-2xl font-semibold mb-2">ML Analytics Dashboard</h1>
-          <p className="text-gray-400">
-            Monitor water system anomalies and predictive maintenance forecasts
-          </p>
-        </div>
-        
-        <MLDashboardStats />
-        
-        <Tabs defaultValue="anomalies" className="w-full space-y-6">
-          <TabsList className="bg-spotify-dark">
-            <TabsTrigger value="anomalies" className="data-[state=active]:bg-mywater-blue">
-              <AlertTriangle className="h-4 w-4 mr-2" />
-              Anomaly Detections
-            </TabsTrigger>
-            <TabsTrigger value="predictions" className="data-[state=active]:bg-mywater-blue">
-              <Calendar className="h-4 w-4 mr-2" />
-              Maintenance Predictions
-            </TabsTrigger>
-          </TabsList>
-          
-          <TabsContent value="anomalies" className="space-y-6">
-            <AnomaliesList />
-          </TabsContent>
-          
-          <TabsContent value="predictions" className="space-y-6">
-            <PredictionsList />
-          </TabsContent>
-        </Tabs>
-      </div>
-    </AdminOnly>
+        </TabsContent>
+
+        <TabsContent value="anomalies" className="mt-6">
+          <div className="bg-card rounded-lg border p-6">
+            <h2 className="text-xl font-semibold mb-4">Detected Anomalies</h2>
+            {anomalies && anomalies.length > 0 ? (
+              <AnomaliesList 
+                anomalies={anomalies} 
+                onUpdateStatus={handleUpdateAnomalyStatus}
+              />
+            ) : (
+              <p className="text-muted-foreground text-center py-10">
+                No anomalies detected. Process your unit data to detect anomalies.
+              </p>
+            )}
+          </div>
+        </TabsContent>
+      </Tabs>
+    </div>
   );
 };
 

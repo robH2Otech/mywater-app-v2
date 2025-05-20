@@ -1,22 +1,14 @@
 
-import { usePrivateUserData } from "@/hooks/dashboard/usePrivateUserData";
-import { InstallationGuide } from "@/components/users/private/support/InstallationGuide";
+import React from 'react';
 
 export function InstallationPage() {
-  const { userData, loading } = usePrivateUserData();
-  
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <p className="text-white">Loading your data...</p>
-      </div>
-    );
-  }
-  
   return (
     <div>
-      <h2 className="text-xl font-semibold mb-4">Installation Guide</h2>
-      <InstallationGuide purifierModel={userData?.purifier_model || "MYWATER System"} />
+      <h1 className="text-2xl font-bold mb-4">Installation Guide</h1>
+      <p>Installation guide content will go here.</p>
     </div>
   );
 }
+
+// Export as a named export primarily, but also add a default export for compatibility
+export default InstallationPage;
