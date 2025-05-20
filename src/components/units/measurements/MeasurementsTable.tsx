@@ -2,6 +2,7 @@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { format } from "date-fns";
 import { RawMeasurement } from "@/hooks/measurements/types/measurementTypes";
+import { Timestamp } from "firebase/firestore";
 
 interface MeasurementsTableProps {
   measurements: RawMeasurement[];
@@ -9,9 +10,14 @@ interface MeasurementsTableProps {
 }
 
 export function MeasurementsTable({ measurements, isUVCUnit }: MeasurementsTableProps) {
-  const formatTimestamp = (timestamp: string | Date | null) => {
+  const formatTimestamp = (timestamp: string | Date | Timestamp | null) => {
     if (!timestamp) return "N/A";
     try {
+      // Handle Firebase Timestamp objects by converting to Date
+      if (typeof timestamp === 'object' && 'toDate' in timestamp && typeof timestamp.toDate === 'function') {
+        return format(timestamp.toDate(), "MMM d, yyyy HH:mm");
+      }
+      // Handle regular Date objects or strings
       return format(new Date(timestamp), "MMM d, yyyy HH:mm");
     } catch (err) {
       console.error("Invalid timestamp format:", timestamp);
@@ -61,15 +67,15 @@ export function MeasurementsTable({ measurements, isUVCUnit }: MeasurementsTable
             {isUVCUnit ? (
               <>
                 <TableCell>{formatValue(measurement.uvc_hours)}</TableCell>
-                <TableCell>{formatValue(measurement.flow_rate)}</TableCell>
-                <TableCell>{formatValue(measurement.temperature)}</TableCell>
+                <TableCell>{formatValue(measurement.value || measurement.flow_rate)}</TableCell>
+                <TableCell>{formatValue(measurement.temp || measurement.temperature)}</TableCell>
                 <TableCell>{formatValue(measurement.humidity)}</TableCell>
               </>
             ) : (
               <>
                 <TableCell>{formatValue(measurement.volume)}</TableCell>
-                <TableCell>{formatValue(measurement.flow_rate)}</TableCell>
-                <TableCell>{formatValue(measurement.temperature)}</TableCell>
+                <TableCell>{formatValue(measurement.value || measurement.flow_rate)}</TableCell>
+                <TableCell>{formatValue(measurement.temp || measurement.temperature)}</TableCell>
               </>
             )}
           </TableRow>

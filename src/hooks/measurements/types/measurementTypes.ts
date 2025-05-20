@@ -15,6 +15,9 @@ export interface RawMeasurement {
   temp?: number;
   uvc?: number;
   total_volume?: number | string;
+  // Add missing properties
+  flow_rate?: number;
+  humidity?: number;
 }
 
 export interface ProcessedMeasurement {
