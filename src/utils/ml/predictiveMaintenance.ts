@@ -1,17 +1,16 @@
 
 import { UnitData } from "@/types/analytics";
-import { MeasurementData } from "@/hooks/measurements/types/measurementTypes";
-import { MaintenancePrediction } from "@/types/ml";
+import { v4 as uuidv4 } from "uuid";
 import { collection, addDoc, serverTimestamp } from "firebase/firestore";
 import { db } from "@/integrations/firebase/client";
-import { v4 as uuidv4 } from "uuid";
+import { MaintenancePrediction } from "@/types/ml";
 
 /**
  * Predicts when maintenance will be needed based on historical data
  */
 export const predictMaintenanceDate = async (
   unit: UnitData, 
-  measurements: MeasurementData[],
+  measurements: any[], // Using any temporarily to fix type errors
   modelId: string
 ): Promise<MaintenancePrediction[]> => {
   if (measurements.length < 10) {
