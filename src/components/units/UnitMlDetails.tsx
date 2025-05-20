@@ -1,24 +1,30 @@
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { UnitData } from "@/types/analytics";
 import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Activity, AlertTriangle, Calendar, Database } from "lucide-react";
+import { Activity, AlertTriangle, Database } from "lucide-react";
 import { UnitMeasurements } from "@/components/units/UnitMeasurements";
 import { MLUnitAnalytics } from "@/components/units/MLUnitAnalytics";
 
 interface UnitMlDetailsProps {
   unit: UnitData;
+  className?: string;
 }
 
-export function UnitMlDetails({ unit }: UnitMlDetailsProps) {
+export function UnitMlDetails({ unit, className = "" }: UnitMlDetailsProps) {
   const [activeTab, setActiveTab] = useState("measurements");
   
   // Simple check to decide if we have enough data for ML
-  const hasEnoughData = unit.total_volume > 100;
+  // Convert total_volume to number to ensure proper comparison
+  const totalVolume = typeof unit.total_volume === 'string' 
+    ? parseFloat(unit.total_volume) 
+    : (unit.total_volume || 0);
+  
+  const hasEnoughData = totalVolume > 100;
   
   return (
-    <Card className="border-spotify-accent bg-spotify-darker overflow-hidden">
+    <Card className={`border-spotify-accent bg-spotify-darker overflow-hidden ${className}`}>
       <Tabs 
         value={activeTab}
         onValueChange={setActiveTab}

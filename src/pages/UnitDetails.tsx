@@ -1,20 +1,29 @@
+
 import { useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { doc, getDoc } from "firebase/firestore";
 import { db } from "@/integrations/firebase/client";
-import { UnitLoading } from "@/components/units/UnitLoading";
-import { UnitError } from "@/components/units/UnitError";
+import { UnitLoading } from "@/components/units/details/UnitLoading";
+import { UnitError } from "@/components/units/details/UnitError";
 import { UnitDetailsHeader } from "@/components/units/UnitDetailsHeader";
 import { UnitDetailsCard } from "@/components/units/UnitDetailsCard";
-import { UnitLocationSection } from "@/components/units/UnitLocationSection";
+import { UnitLocationSection } from "@/components/units/details/UnitLocationSection";
 import { ReportCard } from "@/components/analytics/ReportCard";
 import { useReports } from "@/hooks/useReports";
 import { UnitData } from "@/types/analytics";
 import { UnitMlDetails } from "@/components/units/UnitMlDetails";
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { toast } from "sonner";
+import { useUnitMLData } from "@/hooks/ml/useUnitMLData";
 
 const UnitDetails = () => {
   const { id } = useParams();
-  const { data: unit, isLoading, error } = useQuery({
+  const navigate = useNavigate();
+  const [isSyncing, setIsSyncing] = useState(false);
+  
+  // Fetch unit data
+  const { data: unit, isLoading, error, refetch } = useQuery({
     queryKey: ["unit", id],
     queryFn: async () => {
       if (!id) throw new Error("Unit ID is required");
@@ -33,23 +42,54 @@ const UnitDetails = () => {
     },
   });
   
+  // Fetch reports for this unit
   const { data: reports = [] } = useReports(id || "");
-
+  
+  // Handle sync button click
+  const handleSync = async () => {
+    setIsSyncing(true);
+    try {
+      await refetch();
+      toast.success("Unit data refreshed successfully");
+    } catch (error) {
+      toast.error("Failed to refresh unit data");
+      console.error("Sync error:", error);
+    } finally {
+      setTimeout(() => setIsSyncing(false), 800);
+    }
+  };
+  
+  // Handle back button click
+  const handleBack = () => {
+    navigate("/units");
+  };
+  
+  // Show loading state
   if (isLoading) {
     return <UnitLoading />;
   }
 
+  // Show error state
   if (error || !unit) {
-    return <UnitError id={id} error={error} />;
+    return <UnitError error={error as Error} />;
   }
 
   return (
     <div className="space-y-6 pb-6">
-      <UnitDetailsHeader unit={unit} />
+      <UnitDetailsHeader 
+        title={unit.name || "Unit Details"} 
+        isSyncing={isSyncing} 
+        onSync={handleSync} 
+        onBack={handleBack}
+        unitId={id}
+        unitIccid={unit.iccid}
+      />
 
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
-        <UnitDetailsCard unit={unit} className="xl:col-span-1" />
-        <UnitMlDetails unit={unit} className="xl:col-span-2" />
+        <UnitDetailsCard unit={unit} />
+        <div className="xl:col-span-2">
+          <UnitMlDetails unit={unit} />
+        </div>
       </div>
       
       {/* Display reports if available */}
@@ -65,7 +105,7 @@ const UnitDetails = () => {
       )}
       
       {/* Unit location section */}
-      <UnitLocationSection unitId={id} />
+      <UnitLocationSection unit={unit} unitId={id || ""} />
     </div>
   );
 };
