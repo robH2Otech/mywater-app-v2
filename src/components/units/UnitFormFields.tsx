@@ -5,6 +5,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { ScrollableDialogContent } from "@/components/shared/ScrollableDialogContent";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
+import { useState } from "react";
 
 interface UnitFormFieldsProps {
   formData: {
@@ -28,17 +30,87 @@ interface UnitFormFieldsProps {
 export function UnitFormFields({ formData, setFormData }: UnitFormFieldsProps) {
   // Show/hide UVC hours based on unit type
   const showUVCFields = formData.unit_type === 'uvc';
+  const [useCustomName, setUseCustomName] = useState(false);
+  const [namePrefix, setNamePrefix] = useState("MYWATER");
+  
+  // Handle name prefix change
+  const handlePrefixChange = (value: string) => {
+    setNamePrefix(value);
+    if (!useCustomName) {
+      // Only update the name if we're not using a custom name
+      const currentNumber = formData.name.split(' ')[1] || '';
+      setFormData({ ...formData, name: `${value} ${currentNumber}` });
+    }
+  };
+  
+  // Toggle between custom and auto name
+  const handleCustomNameToggle = (checked: boolean) => {
+    setUseCustomName(checked);
+    if (!checked) {
+      // If switching back to auto-name, restore the formatted name
+      const currentNumber = formData.name.split(' ')[1] || '';
+      setFormData({ ...formData, name: `${namePrefix} ${currentNumber}` });
+    }
+  };
   
   return (
     <ScrollableDialogContent maxHeight="65vh">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-5 p-1">
-        <FormInput
-          label="Unit Name"
-          value={formData.name}
-          onChange={(value) => setFormData({ ...formData, name: value })}
-          placeholder="MYWATER XXX"
-          required
-        />
+        {/* Name Selection Mode */}
+        <div className="col-span-1 md:col-span-2 flex items-center justify-between bg-spotify-accent/20 p-3 rounded-md">
+          <div className="space-y-1">
+            <h4 className="text-sm font-medium text-white">Custom Name</h4>
+            <p className="text-xs text-gray-400">
+              {useCustomName ? "Enter any name for this unit" : "Use standard naming format"}
+            </p>
+          </div>
+          <Switch 
+            checked={useCustomName}
+            onCheckedChange={handleCustomNameToggle}
+            className="data-[state=checked]:bg-mywater-blue"
+          />
+        </div>
+        
+        {!useCustomName ? (
+          <>
+            {/* Predefined naming format */}
+            <div className="space-y-2">
+              <label className="text-xs font-medium text-gray-400">Name Prefix</label>
+              <Select
+                value={namePrefix}
+                onValueChange={handlePrefixChange}
+              >
+                <SelectTrigger className="bg-spotify-accent border-spotify-accent-hover text-white h-9">
+                  <SelectValue placeholder="Select prefix" />
+                </SelectTrigger>
+                <SelectContent className="bg-spotify-darker border-spotify-accent">
+                  <SelectItem value="MYWATER">MYWATER</SelectItem>
+                  <SelectItem value="X-WATER">X-WATER</SelectItem>
+                  <SelectItem value="AQUA">AQUA</SelectItem>
+                  <SelectItem value="PUREFLOW">PUREFLOW</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            
+            <FormInput
+              label="Unit Number"
+              value={formData.name.split(' ')[1] || ''}
+              onChange={(value) => setFormData({ ...formData, name: `${namePrefix} ${value}` })}
+              placeholder="e.g. 001"
+              required
+            />
+          </>
+        ) : (
+          <FormInput
+            label="Unit Name"
+            value={formData.name}
+            onChange={(value) => setFormData({ ...formData, name: value })}
+            placeholder="Enter unit name"
+            required
+            className="col-span-1 md:col-span-2"
+          />
+        )}
+        
         <FormInput
           label="Maintenance Contact"
           value={formData.contact_name}

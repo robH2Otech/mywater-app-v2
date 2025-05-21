@@ -1,6 +1,7 @@
+
 import { useParams, useNavigate } from "react-router-dom";
 import { Card } from "@/components/ui/card";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useFilterStatus } from "@/components/filters/FilterStatusUtils";
 import { UnitMeasurements } from "@/components/units/UnitMeasurements";
 import { UnitDetailsCard } from "@/components/units/UnitDetailsCard";
@@ -17,6 +18,20 @@ const UnitDetails = () => {
   const [isSyncing, setIsSyncing] = useState(false);
   const { syncUnitMeasurements } = useFilterStatus();
   const { data: unit, isLoading, error, refetch } = useUnitDetails(id);
+  const [retryCount, setRetryCount] = useState(0);
+
+  // Automatic retry for certain errors
+  useEffect(() => {
+    if (error && retryCount < 2) {
+      const timer = setTimeout(() => {
+        console.log(`Auto-retrying unit details fetch (${retryCount + 1}/2)...`);
+        setRetryCount(prev => prev + 1);
+        refetch();
+      }, 1500);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [error, retryCount, refetch]);
 
   const handleSync = async () => {
     if (!id) return;

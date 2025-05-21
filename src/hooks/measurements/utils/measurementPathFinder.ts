@@ -22,19 +22,15 @@ export async function findMeasurementPath(unitId: string): Promise<string | null
   let pathsToTry = [...MEASUREMENT_PATHS];
   
   if (isMyWaterUnit) {
-    // For MYWATER units, prioritize these specific paths
-    // Removed devices paths, only using units collection and measurements collection
-    const myWaterPriorityPaths = [
-      "units/{unitId}/data",
-      "measurements/{unitId}/hourly"
-    ];
+    // For MYWATER units, prioritize the correct path
+    const myWaterPriorityPath = "units/{unitId}/data";
     
-    // Remove these paths from the original array to avoid duplicates
-    pathsToTry = pathsToTry.filter(path => !myWaterPriorityPaths.includes(path));
+    // Remove this path from the original array to avoid duplicates
+    pathsToTry = pathsToTry.filter(path => path !== myWaterPriorityPath);
     
-    // Add priority paths at the beginning
-    pathsToTry = [...myWaterPriorityPaths, ...pathsToTry];
-    console.log(`MYWATER unit detected (${unitId}). Prioritizing paths:`, myWaterPriorityPaths);
+    // Add priority path at the beginning
+    pathsToTry = [myWaterPriorityPath, ...pathsToTry];
+    console.log(`MYWATER unit detected (${unitId}). Prioritizing path: ${myWaterPriorityPath}`);
   }
 
   // Try each path sequentially with a small delay between attempts

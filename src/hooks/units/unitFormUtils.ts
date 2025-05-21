@@ -1,4 +1,3 @@
-
 import { collection, getDocs } from "firebase/firestore";
 import { db } from "@/integrations/firebase/client";
 import { determineUnitStatus } from "@/utils/unitStatusUtils";
@@ -37,9 +36,24 @@ export const prepareUnitData = (formData: UnitFormData, nextUnitNumber: number) 
   // Determine the status based on the volume
   const status = determineUnitStatus(numericVolume);
   
-  // Create a custom ID in the format MYWATER_XXX
-  const formattedNumber = String(nextUnitNumber).padStart(3, '0');
-  const customId = `MYWATER_${formattedNumber}`;
+  // Create a custom ID based on name pattern
+  let customId: string;
+  
+  // Check if it's already a custom format or a standard format
+  if (formData.name.startsWith("MYWATER ") || 
+      formData.name.startsWith("X-WATER ") ||
+      formData.name.startsWith("AQUA ") ||
+      formData.name.startsWith("PUREFLOW ")) {
+    // Standard format - use as is for ID with underscore
+    const nameParts = formData.name.split(' ');
+    const prefix = nameParts[0];
+    const number = nameParts[1] || String(nextUnitNumber).padStart(3, '0');
+    customId = `${prefix}_${number}`;
+  } else {
+    // Custom name format - create a MYWATER_XXX ID but keep display name
+    const formattedNumber = String(nextUnitNumber).padStart(3, '0');
+    customId = `MYWATER_${formattedNumber}`;
+  }
   
   // Prepare base unit data
   const unitData: any = {

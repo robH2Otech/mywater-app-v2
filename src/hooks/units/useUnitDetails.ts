@@ -23,7 +23,7 @@ export function useUnitDetails(id: string | undefined) {
       let unitDocId = "";
       
       try {
-        // All units are stored in the units collection, including MYWATER units
+        // Get the unit from the units collection
         const unitDocRef = doc(db, "units", id);
         const unitSnapshot = await getDoc(unitDocRef);
         
@@ -33,7 +33,7 @@ export function useUnitDetails(id: string | undefined) {
           unitDocId = unitSnapshot.id;
         } else {
           console.error(`Unit ${id} not found in units collection`);
-          throw new Error("Unit not found");
+          throw new Error(`Unit not found: ${id}`);
         }
       } catch (error) {
         console.error(`Error fetching unit details for ${id}:`, error);
@@ -41,7 +41,7 @@ export function useUnitDetails(id: string | undefined) {
       }
       
       if (!unitData) {
-        throw new Error("Unable to fetch unit data");
+        throw new Error(`Unable to fetch unit data for ${id}`);
       }
       
       console.log(`Unit ${id} base data:`, unitData);
@@ -158,6 +158,6 @@ export function useUnitDetails(id: string | undefined) {
       return result;
     },
     enabled: !!id,
-    retry: 1, // Only retry once to avoid excessive error messages
+    retry: 2, // Retry twice for network issues
   });
 }

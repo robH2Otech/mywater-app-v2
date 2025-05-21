@@ -35,7 +35,7 @@ export function useMeasurementRefetch() {
     let unsubscribeFunc: (() => void) | null = null;
 
     try {
-      // Try to find the correct path - prioritize units/{unitId}/data for MYWATER units
+      // Try to find the correct path with priority for MYWATER units
       const measurementPath = await findMeasurementPath(unitId);
       
       if (setPathSearching) {

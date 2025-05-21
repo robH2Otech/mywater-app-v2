@@ -8,12 +8,11 @@ export const MEASUREMENT_PATHS = [
   "units/{unitId}/measurements",
   "units/{unitId}/data",
   
-  // MYWATER specific paths - removed devices references
+  // MYWATER specific paths
   "measurements/{unitId}/hourly",
   
   // Fallback paths
-  "measurements/{unitId}/data",
-  "device-data/{unitId}/measurements"
+  "measurements/{unitId}/data"
 ];
 
 export function getMeasurementsCollectionPath(unitId: string, isMyWaterUnit?: boolean): string {
@@ -64,23 +63,18 @@ export async function tryAllMeasurementPaths(unitId: string, count: number = 24)
   let prioritizedPaths = [...MEASUREMENT_PATHS];
   
   if (isMyWaterUnit) {
-    // For MYWATER units, now we only prioritize paths in the units collection
-    const myWaterPreferredPaths = [
-      "units/{unitId}/data",
-      "measurements/{unitId}/hourly"
-    ];
+    // For MYWATER units, prioritize this path
+    const myWaterPreferredPath = "units/{unitId}/data";
     
-    // Remove these paths from the array so we don't try them twice
-    myWaterPreferredPaths.forEach(path => {
-      const index = prioritizedPaths.indexOf(path);
-      if (index !== -1) {
-        prioritizedPaths.splice(index, 1);
-      }
-    });
+    // Remove this path from the array so we don't try it twice
+    const index = prioritizedPaths.indexOf(myWaterPreferredPath);
+    if (index !== -1) {
+      prioritizedPaths.splice(index, 1);
+    }
     
-    // Add the preferred paths to the front
-    prioritizedPaths = [...myWaterPreferredPaths, ...prioritizedPaths];
-    console.log(`MYWATER unit detected: ${unitId}. Using prioritized paths:`, myWaterPreferredPaths);
+    // Add the preferred path to the front
+    prioritizedPaths = [myWaterPreferredPath, ...prioritizedPaths];
+    console.log(`MYWATER unit detected: ${unitId}. Using prioritized path: ${myWaterPreferredPath}`);
   }
   
   // Try paths sequentially with a small delay to avoid overwhelming Firestore
