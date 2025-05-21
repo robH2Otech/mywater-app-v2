@@ -14,11 +14,17 @@ export const MEASUREMENT_PATHS = [
   "devices/{unitId}/measurements"
 ];
 
-export function getMeasurementsCollectionPath(unitId: string): string {
+export function getMeasurementsCollectionPath(unitId: string, isMyWaterUnit?: boolean): string {
+  // If isMyWaterUnit wasn't explicitly passed, check based on the ID
+  if (isMyWaterUnit === undefined) {
+    isMyWaterUnit = unitId.startsWith("MYWATER_");
+  }
+  
   // For MYWATER units, we need specific paths
-  if (unitId.startsWith("MYWATER_")) {
-    // Try both paths - first devices, then regular units path
-    return `devices/${unitId}/data`;
+  if (isMyWaterUnit) {
+    console.log(`Using MYWATER paths for unit ${unitId}`);
+    // Try these paths in order - units/{unitId}/data, devices/{unitId}/data, measurements/{unitId}/hourly
+    return `units/${unitId}/data`;
   }
   
   // Logic for other unit types
@@ -50,7 +56,32 @@ export async function tryCollectionPath(path: string, count: number = 24) {
 export async function tryAllMeasurementPaths(unitId: string, count: number = 24) {
   const attemptedPaths = [];
   
-  for (const pathTemplate of MEASUREMENT_PATHS) {
+  // For MYWATER units, prioritize these paths
+  const isMyWaterUnit = unitId.startsWith("MYWATER_");
+  let prioritizedPaths = [...MEASUREMENT_PATHS];
+  
+  if (isMyWaterUnit) {
+    // Prioritize these paths for MYWATER units
+    const myWaterPreferredPaths = [
+      "units/{unitId}/data",
+      "devices/{unitId}/data",
+      "measurements/{unitId}/hourly"
+    ];
+    
+    // Remove these paths from the array so we don't try them twice
+    myWaterPreferredPaths.forEach(path => {
+      const index = prioritizedPaths.indexOf(path);
+      if (index !== -1) {
+        prioritizedPaths.splice(index, 1);
+      }
+    });
+    
+    // Add the preferred paths to the front
+    prioritizedPaths = [...myWaterPreferredPaths, ...prioritizedPaths];
+    console.log(`MYWATER unit detected: ${unitId}. Using prioritized paths:`, myWaterPreferredPaths);
+  }
+  
+  for (const pathTemplate of prioritizedPaths) {
     const path = pathTemplate.replace('{unitId}', unitId);
     attemptedPaths.push(path);
     

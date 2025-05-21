@@ -17,74 +17,70 @@ export function useUnitDetails(id: string | undefined) {
       
       // Check if the ID is prefixed with MYWATER
       const isMyWaterUnit = id.startsWith("MYWATER_");
+      console.log(`Is MYWATER unit: ${isMyWaterUnit}`);
       
-      // Try the units collection first, which is where most units are stored
-      const unitDocRef = doc(db, "units", id);
-      const unitSnapshot = await getDoc(unitDocRef);
+      let unitData: Record<string, any> | null = null;
+      let unitDocId = "";
       
-      // If not found and it's a MYWATER unit, try the devices collection as fallback
-      if (!unitSnapshot.exists() && isMyWaterUnit) {
-        console.log(`Unit ${id} not found in units collection, trying devices collection`);
-        const deviceDocRef = doc(db, "devices", id);
-        const deviceSnapshot = await getDoc(deviceDocRef);
+      try {
+        // Try the units collection first, which is where most units are stored
+        const unitDocRef = doc(db, "units", id);
+        const unitSnapshot = await getDoc(unitDocRef);
         
-        if (deviceSnapshot.exists()) {
-          const deviceData = deviceSnapshot.data() as Record<string, any>;
-          console.log(`Found ${id} in devices collection:`, deviceData);
-          
-          // Process device data similar to unit data
-          const latestVolume = deviceData.total_volume || 0;
-          const totalUvcHours = deviceData.uvc_hours || 0;
-          
-          // Calculate statuses
-          const filterStatus = determineUnitStatus(latestVolume);
-          const uvcStatus = determineUVCStatus(totalUvcHours);
-          
-          // Return processed device data as unit data
-          return {
-            id: deviceSnapshot.id,
-            name: deviceData.name || id,
-            location: deviceData.location || "",
-            status: filterStatus,
-            total_volume: latestVolume,
-            uvc_hours: totalUvcHours,
-            uvc_status: uvcStatus,
-            is_uvc_accumulated: deviceData.is_uvc_accumulated || false,
-            unit_type: deviceData.unit_type || "uvc",
-            contact_name: deviceData.contact_name || "",
-            contact_email: deviceData.contact_email || "",
-            contact_phone: deviceData.contact_phone || "",
-            next_maintenance: deviceData.next_maintenance || null,
-            setup_date: deviceData.setup_date || null,
-            uvc_installation_date: deviceData.uvc_installation_date || null,
-            eid: deviceData.eid || "",
-            iccid: deviceData.iccid || ""
-          } as UnitData;
+        if (unitSnapshot.exists()) {
+          console.log(`Found unit ${id} in units collection`);
+          unitData = unitSnapshot.data() as Record<string, any>;
+          unitDocId = unitSnapshot.id;
+        } else {
+          console.log(`Unit ${id} not found in units collection, trying devices collection`);
+          // If not found and it's a MYWATER unit, try the devices collection as fallback
+          if (isMyWaterUnit) {
+            const deviceDocRef = doc(db, "devices", id);
+            const deviceSnapshot = await getDoc(deviceDocRef);
+            
+            if (deviceSnapshot.exists()) {
+              console.log(`Found unit ${id} in devices collection`);
+              unitData = deviceSnapshot.data() as Record<string, any>;
+              unitDocId = deviceSnapshot.id;
+            } else {
+              console.error(`Unit ${id} not found in units or devices collections`);
+              throw new Error("Unit not found in any collection");
+            }
+          } else {
+            console.error(`Unit ${id} not found in units collection`);
+            throw new Error("Unit not found");
+          }
         }
-        
-        // If still not found, throw error
-        throw new Error("Unit not found");
+      } catch (error) {
+        console.error(`Error fetching unit details for ${id}:`, error);
+        throw error;
       }
       
-      if (!unitSnapshot.exists()) {
-        throw new Error("Unit not found");
+      if (!unitData) {
+        throw new Error("Unable to fetch unit data");
       }
       
-      // Continue with existing code for processing unit data
-      const unitData = unitSnapshot.data() as Record<string, any>;
       console.log(`Unit ${id} base data:`, unitData);
       
       // 2. Get the latest measurements data using the correct collection path
-      const collectionPath = getMeasurementsCollectionPath(id);
+      const collectionPath = getMeasurementsCollectionPath(id, isMyWaterUnit);
       console.log(`Unit ${id} - Using measurements path: ${collectionPath}`);
       
-      const measurementsQuery = query(
-        collection(db, collectionPath),
-        orderBy("timestamp", "desc"),
-        limit(1)
-      );
-      
-      const measurementsSnapshot = await getDocs(measurementsQuery);
+      let measurementsSnapshot;
+      try {
+        const measurementsQuery = query(
+          collection(db, collectionPath),
+          orderBy("timestamp", "desc"),
+          limit(1)
+        );
+        
+        measurementsSnapshot = await getDocs(measurementsQuery);
+        console.log(`Got measurements for ${id}, count: ${measurementsSnapshot.size}`);
+      } catch (error) {
+        console.warn(`Error fetching measurements for ${id} from path ${collectionPath}:`, error);
+        // Don't throw here, just continue with no measurements
+        measurementsSnapshot = { empty: true, docs: [] };
+      }
       
       // Initialize values that we'll potentially update from measurements
       let latestMeasurementUvcHours = 0;
@@ -156,23 +152,23 @@ export function useUnitDetails(id: string | undefined) {
       console.log(`useUnitDetails - Unit ${id}: Volume - ${totalVolume}, UVC Hours - Base: ${baseUvcHours}, Latest: ${latestMeasurementUvcHours}, Total: ${totalUvcHours}, Status: ${uvcStatus}`);
       
       const result: UnitData = {
-        id: unitSnapshot.id,
-        name: unitData.name || "",
-        location: unitData.location,
+        id: unitDocId,
+        name: unitData.name || id,
+        location: unitData.location || "",
         status: filterStatus,
         total_volume: totalVolume,
         uvc_hours: totalUvcHours,
         uvc_status: uvcStatus,
         is_uvc_accumulated: unitData.is_uvc_accumulated || false,
-        unit_type: unitData.unit_type,
-        contact_name: unitData.contact_name,
-        contact_email: unitData.contact_email,
-        contact_phone: unitData.contact_phone,
-        next_maintenance: unitData.next_maintenance,
-        setup_date: unitData.setup_date,
-        uvc_installation_date: unitData.uvc_installation_date,
-        eid: unitData.eid,
-        iccid: unitData.iccid
+        unit_type: unitData.unit_type || "uvc",
+        contact_name: unitData.contact_name || "",
+        contact_email: unitData.contact_email || "",
+        contact_phone: unitData.contact_phone || "",
+        next_maintenance: unitData.next_maintenance || null,
+        setup_date: unitData.setup_date || null,
+        uvc_installation_date: unitData.uvc_installation_date || null,
+        eid: unitData.eid || "",
+        iccid: unitData.iccid || ""
       };
       
       return result;

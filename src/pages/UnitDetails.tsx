@@ -11,13 +11,15 @@ import { UnitError } from "@/components/units/details/UnitError";
 import { UnitLoading } from "@/components/units/details/UnitLoading";
 import { useUnitDetails } from "@/hooks/units/useUnitDetails";
 import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
+import { RefreshCw } from "lucide-react";
 
 const UnitDetails = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const [isSyncing, setIsSyncing] = useState(false);
   const { syncUnitMeasurements } = useFilterStatus();
-  const { data: unit, isLoading, error } = useUnitDetails(id);
+  const { data: unit, isLoading, error, refetch } = useUnitDetails(id);
 
   const handleSync = async () => {
     if (!id) return;
@@ -30,13 +32,38 @@ const UnitDetails = () => {
       console.error("Error syncing measurements:", err);
       toast.error("Failed to sync measurements");
     } finally {
-      setIsSyncing(false);
+      setTimeout(() => setIsSyncing(false), 1000);
+    }
+  };
+  
+  const handleRetry = async () => {
+    if (isLoading) return;
+    
+    setIsSyncing(true);
+    try {
+      await refetch();
+      toast.success("Data refreshed successfully");
+    } catch (err) {
+      console.error("Error refreshing unit data:", err);
+      toast.error("Failed to refresh data");
+    } finally {
+      setTimeout(() => setIsSyncing(false), 1000);
     }
   };
 
-  if (error) return <UnitError error={error} />;
+  if (error) {
+    return (
+      <UnitError 
+        error={error} 
+        onRetry={handleRetry} 
+        isSyncing={isSyncing}
+        unitId={id || ''}
+      />
+    );
+  }
+  
   if (isLoading) return <UnitLoading />;
-  if (!unit) return <UnitError error={new Error("Unit not found")} />;
+  if (!unit) return <UnitError error={new Error("Unit not found")} onRetry={handleRetry} isSyncing={isSyncing} unitId={id || ''} />;
 
   return (
     <div className="container mx-auto p-3 md:p-6 max-w-4xl animate-fadeIn space-y-4 md:space-y-6">
