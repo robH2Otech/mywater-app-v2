@@ -1,10 +1,6 @@
 
 import { Card } from "@/components/ui/card";
-import { useRealtimeMeasurements } from "@/hooks/measurements/useRealtimeMeasurements";
-import {
-  Table,
-  TableBody,
-} from "@/components/ui/table";
+import { useRealtimeMeasurements } from "@/hooks/measurements/hooks";
 import { useQuery } from "@tanstack/react-query";
 import { doc, getDoc } from "firebase/firestore";
 import { db } from "@/integrations/firebase/client";

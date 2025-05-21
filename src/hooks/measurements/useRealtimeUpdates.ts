@@ -3,6 +3,10 @@ import { onSnapshot, Query } from "firebase/firestore";
 import { ProcessedMeasurement } from "./types/measurementTypes";
 import { processMeasurementDocuments } from "./utils/dataProcessing";
 
+/**
+ * Sets up a realtime listener for Firestore documents
+ * @deprecated Use the hooks from hooks/measurements/hooks instead
+ */
 export function setupRealtimeListener(
   query: Query,
   onUpdate: (measurements: ProcessedMeasurement[]) => void,

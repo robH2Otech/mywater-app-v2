@@ -1,4 +1,3 @@
-
 import { useParams, useNavigate } from "react-router-dom";
 import { Card } from "@/components/ui/card";
 import { useState } from "react";
@@ -11,8 +10,6 @@ import { UnitError } from "@/components/units/details/UnitError";
 import { UnitLoading } from "@/components/units/details/UnitLoading";
 import { useUnitDetails } from "@/hooks/units/useUnitDetails";
 import { toast } from "sonner";
-import { Button } from "@/components/ui/button";
-import { RefreshCw } from "lucide-react";
 
 const UnitDetails = () => {
   const { id } = useParams();
