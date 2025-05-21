@@ -10,9 +10,16 @@ interface UnitErrorProps {
   onRetry?: () => void;
   isSyncing?: boolean;
   unitId?: string;
+  isMyWaterUnit?: boolean;
 }
 
-export function UnitError({ error, onRetry, isSyncing = false, unitId }: UnitErrorProps) {
+export function UnitError({ 
+  error, 
+  onRetry, 
+  isSyncing = false, 
+  unitId,
+  isMyWaterUnit = false
+}: UnitErrorProps) {
   const navigate = useNavigate();
   
   return (
@@ -23,9 +30,18 @@ export function UnitError({ error, onRetry, isSyncing = false, unitId }: UnitErr
           <p className="text-sm md:text-base mb-4">{error.message || "An unknown error occurred"}</p>
           
           {unitId && (
-            <p className="text-sm text-gray-400 mb-4">
-              Unit ID: {unitId} {unitId.startsWith("MYWATER_") ? "(MYWATER unit)" : ""}
-            </p>
+            <div className="mb-4 space-y-2">
+              <p className="text-sm text-gray-400">
+                Unit ID: {unitId} 
+                {isMyWaterUnit && <span className="ml-2 text-spotify-accent">(MYWATER unit)</span>}
+              </p>
+              
+              {isMyWaterUnit && (
+                <p className="text-xs text-gray-300 max-w-md">
+                  Note: MYWATER units have a different data structure and storage path. The system is attempting to locate the correct data source.
+                </p>
+              )}
+            </div>
           )}
           
           <div className="flex flex-wrap gap-3">

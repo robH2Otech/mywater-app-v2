@@ -51,6 +51,9 @@ const UnitDetails = () => {
     }
   };
 
+  const isMyWaterUnit = id ? id.startsWith("MYWATER_") : false;
+
+  // Show appropriate error message based on unit type
   if (error) {
     return (
       <UnitError 
@@ -58,18 +61,19 @@ const UnitDetails = () => {
         onRetry={handleRetry} 
         isSyncing={isSyncing}
         unitId={id || ''}
+        isMyWaterUnit={isMyWaterUnit}
       />
     );
   }
   
-  if (isLoading) return <UnitLoading />;
-  if (!unit) return <UnitError error={new Error("Unit not found")} onRetry={handleRetry} isSyncing={isSyncing} unitId={id || ''} />;
+  if (isLoading) return <UnitLoading isMyWaterUnit={isMyWaterUnit} />;
+  if (!unit) return <UnitError error={new Error("Unit not found")} onRetry={handleRetry} isSyncing={isSyncing} unitId={id || ''} isMyWaterUnit={isMyWaterUnit} />;
 
   return (
     <div className="container mx-auto p-3 md:p-6 max-w-4xl animate-fadeIn space-y-4 md:space-y-6">
       <Card className="bg-spotify-darker border-spotify-accent p-4 md:p-6">
         <UnitDetailsHeader 
-          title="Water Unit Details"
+          title={isMyWaterUnit ? "MYWATER Unit Details" : "Water Unit Details"}
           isSyncing={isSyncing}
           onSync={handleSync}
           onBack={() => navigate("/units")}

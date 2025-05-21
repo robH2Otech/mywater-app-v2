@@ -4,14 +4,18 @@ import { db } from "@/integrations/firebase/client";
 
 // These are all the possible paths where measurements could be stored
 export const MEASUREMENT_PATHS = [
+  // Primary paths
   "units/{unitId}/measurements",
   "units/{unitId}/data",
-  "measurements/{unitId}/data",
-  "device-data/{unitId}/measurements",
-  // Additional paths for MYWATER units
-  "measurements/{unitId}/hourly",
+  
+  // MYWATER specific paths
   "devices/{unitId}/data",
-  "devices/{unitId}/measurements"
+  "devices/{unitId}/measurements",
+  "measurements/{unitId}/hourly",
+  
+  // Fallback paths
+  "measurements/{unitId}/data",
+  "device-data/{unitId}/measurements"
 ];
 
 export function getMeasurementsCollectionPath(unitId: string, isMyWaterUnit?: boolean): string {
@@ -20,18 +24,19 @@ export function getMeasurementsCollectionPath(unitId: string, isMyWaterUnit?: bo
     isMyWaterUnit = unitId.startsWith("MYWATER_");
   }
   
-  // For MYWATER units, we need specific paths
+  // For MYWATER units, we prioritize specific paths
   if (isMyWaterUnit) {
     console.log(`Using MYWATER paths for unit ${unitId}`);
-    // Try these paths in order - units/{unitId}/data, devices/{unitId}/data, measurements/{unitId}/hourly
+    // For MYWATER units, this is usually the correct path
     return `units/${unitId}/data`;
   }
   
-  // Logic for other unit types
+  // For other unit types
   if (unitId.includes("UVC")) {
     return `units/${unitId}/measurements`;
   }
   
+  // Default path
   return `units/${unitId}/measurements`;
 }
 
@@ -81,6 +86,7 @@ export async function tryAllMeasurementPaths(unitId: string, count: number = 24)
     console.log(`MYWATER unit detected: ${unitId}. Using prioritized paths:`, myWaterPreferredPaths);
   }
   
+  // Try paths sequentially with a small delay to avoid overwhelming Firestore
   for (const pathTemplate of prioritizedPaths) {
     const path = pathTemplate.replace('{unitId}', unitId);
     attemptedPaths.push(path);
@@ -95,6 +101,9 @@ export async function tryAllMeasurementPaths(unitId: string, count: number = 24)
       } else {
         console.log(`❌ No data at path: ${path}`);
       }
+      
+      // Small delay between attempts
+      await new Promise(resolve => setTimeout(resolve, 50));
     } catch (err) {
       console.warn(`Error checking path: ${path}`, err);
     }
