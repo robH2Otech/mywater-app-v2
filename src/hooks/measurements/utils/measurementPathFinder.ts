@@ -23,9 +23,9 @@ export async function findMeasurementPath(unitId: string): Promise<string | null
   
   if (isMyWaterUnit) {
     // For MYWATER units, prioritize these specific paths
+    // Removed devices paths, only using units collection and measurements collection
     const myWaterPriorityPaths = [
       "units/{unitId}/data",
-      "devices/{unitId}/data", 
       "measurements/{unitId}/hourly"
     ];
     

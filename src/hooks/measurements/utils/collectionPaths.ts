@@ -8,9 +8,7 @@ export const MEASUREMENT_PATHS = [
   "units/{unitId}/measurements",
   "units/{unitId}/data",
   
-  // MYWATER specific paths
-  "devices/{unitId}/data",
-  "devices/{unitId}/measurements",
+  // MYWATER specific paths - removed devices references
   "measurements/{unitId}/hourly",
   
   // Fallback paths
@@ -27,7 +25,7 @@ export function getMeasurementsCollectionPath(unitId: string, isMyWaterUnit?: bo
   // For MYWATER units, we prioritize specific paths
   if (isMyWaterUnit) {
     console.log(`Using MYWATER paths for unit ${unitId}`);
-    // For MYWATER units, this is usually the correct path
+    // For MYWATER units, this is always the correct path
     return `units/${unitId}/data`;
   }
   
@@ -66,10 +64,9 @@ export async function tryAllMeasurementPaths(unitId: string, count: number = 24)
   let prioritizedPaths = [...MEASUREMENT_PATHS];
   
   if (isMyWaterUnit) {
-    // Prioritize these paths for MYWATER units
+    // For MYWATER units, now we only prioritize paths in the units collection
     const myWaterPreferredPaths = [
       "units/{unitId}/data",
-      "devices/{unitId}/data",
       "measurements/{unitId}/hourly"
     ];
     

@@ -1,48 +1,51 @@
 
-import { useState, useCallback } from "react";
+import { useState, useCallback } from 'react';
 import { collection, query, orderBy, limit, onSnapshot } from "firebase/firestore";
 import { db } from "@/integrations/firebase/client";
 import { ProcessedMeasurement } from "../types/measurementTypes";
 import { processMeasurementDocuments } from "../utils/dataProcessing";
 import { findMeasurementPath } from "../utils/measurementPathFinder";
-import { useLatestMeasurement } from "./useLatestMeasurement";
 
 /**
- * Hook providing a function to refetch measurements with proper cleanup
+ * Hook that handles refetching of measurement data
  */
 export function useMeasurementRefetch() {
-  const { processLatestMeasurement } = useLatestMeasurement();
+  const [isRefetching, setIsRefetching] = useState(false);
   
-  /**
-   * Refetch measurements for a specific unit
-   */
   const refetchMeasurements = useCallback(async (
     unitId: string,
     count: number,
     setMeasurements: (data: ProcessedMeasurement[]) => void,
-    setIsLoading: (isLoading: boolean) => void,
+    setIsLoading: (loading: boolean) => void,
     setError: (error: Error | null) => void,
-    setPathSearching: (isSearching: boolean) => void
+    setPathSearching?: (searching: boolean) => void
   ) => {
     if (!unitId) return () => {};
     
     console.log(`Refetching measurements for unit ${unitId}`);
+    setIsRefetching(true);
     setIsLoading(true);
     setError(null);
-    setPathSearching(true);
+    
+    if (setPathSearching) {
+      setPathSearching(true);
+    }
     
     // A single unsubscribe function that can be returned
     let unsubscribeFunc: (() => void) | null = null;
 
     try {
-      // Try to find the correct path
+      // Try to find the correct path - prioritize units/{unitId}/data for MYWATER units
       const measurementPath = await findMeasurementPath(unitId);
       
-      setPathSearching(false);
+      if (setPathSearching) {
+        setPathSearching(false);
+      }
       
       if (!measurementPath) {
         setError(new Error(`Could not find a valid data path for unit ${unitId}`));
         setIsLoading(false);
+        setIsRefetching(false);
         return () => {};
       }
       
@@ -68,13 +71,6 @@ export function useMeasurementRefetch() {
             try {
               const measurementsData = processMeasurementDocuments(snapshot.docs);
               setMeasurements(measurementsData);
-              
-              // Process the latest measurement if available
-              if (measurementsData.length > 0) {
-                processLatestMeasurement(unitId, measurementsData).catch(err => 
-                  console.error(`Error updating unit ${unitId} data:`, err)
-                );
-              }
             } catch (err) {
               console.error(`Error processing measurements for unit ${unitId}:`, err);
               setError(err instanceof Error ? err : new Error(String(err)));
@@ -82,11 +78,13 @@ export function useMeasurementRefetch() {
           }
           
           setIsLoading(false);
+          setIsRefetching(false);
         },
         (err) => {
           console.error(`Error in listener for unit ${unitId}:`, err);
           setError(err);
           setIsLoading(false);
+          setIsRefetching(false);
         }
       );
       
@@ -94,7 +92,11 @@ export function useMeasurementRefetch() {
       console.error(`Error setting up measurements for unit ${unitId}:`, err);
       setError(err instanceof Error ? err : new Error(String(err)));
       setIsLoading(false);
-      setPathSearching(false);
+      setIsRefetching(false);
+      
+      if (setPathSearching) {
+        setPathSearching(false);
+      }
     }
     
     // Return a function that calls the stored unsubscribe function
@@ -104,7 +106,7 @@ export function useMeasurementRefetch() {
         unsubscribeFunc();
       }
     };
-  }, [processLatestMeasurement]);
+  }, []);
 
-  return { refetchMeasurements };
+  return { refetchMeasurements, isRefetching };
 }

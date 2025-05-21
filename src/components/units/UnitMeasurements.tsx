@@ -25,7 +25,7 @@ export function UnitMeasurements({ unitId }: UnitMeasurementsProps) {
     queryKey: ["unit-type", unitId],
     queryFn: async () => {
       try {
-        // Try units collection first (where regular units are)
+        // All units are stored in the units collection
         const unitDocRef = doc(db, "units", unitId);
         const unitDoc = await getDoc(unitDocRef);
         
@@ -34,19 +34,7 @@ export function UnitMeasurements({ unitId }: UnitMeasurementsProps) {
           return unitDoc.data();
         }
         
-        // If not found and it's a MYWATER unit, try the devices collection
-        if (unitId.startsWith("MYWATER_")) {
-          console.log(`Unit ${unitId} not found in units collection, trying devices collection`);
-          const deviceDocRef = doc(db, "devices", unitId);
-          const deviceDoc = await getDoc(deviceDocRef);
-          
-          if (deviceDoc.exists()) {
-            console.log(`Found unit ${unitId} in devices collection`);
-            return deviceDoc.data();
-          }
-        }
-        
-        console.log(`Unit document not found for ${unitId} in any collection`);
+        console.log(`Unit document not found for ${unitId} in units collection`);
         return null;
       } catch (err) {
         console.error(`Error fetching unit details for ${unitId}:`, err);

@@ -23,7 +23,7 @@ export function useUnitDetails(id: string | undefined) {
       let unitDocId = "";
       
       try {
-        // Try the units collection first, which is where most units are stored
+        // All units are stored in the units collection, including MYWATER units
         const unitDocRef = doc(db, "units", id);
         const unitSnapshot = await getDoc(unitDocRef);
         
@@ -32,24 +32,8 @@ export function useUnitDetails(id: string | undefined) {
           unitData = unitSnapshot.data() as Record<string, any>;
           unitDocId = unitSnapshot.id;
         } else {
-          console.log(`Unit ${id} not found in units collection, trying devices collection`);
-          // If not found and it's a MYWATER unit, try the devices collection as fallback
-          if (isMyWaterUnit) {
-            const deviceDocRef = doc(db, "devices", id);
-            const deviceSnapshot = await getDoc(deviceDocRef);
-            
-            if (deviceSnapshot.exists()) {
-              console.log(`Found unit ${id} in devices collection`);
-              unitData = deviceSnapshot.data() as Record<string, any>;
-              unitDocId = deviceSnapshot.id;
-            } else {
-              console.error(`Unit ${id} not found in units or devices collections`);
-              throw new Error("Unit not found in any collection");
-            }
-          } else {
-            console.error(`Unit ${id} not found in units collection`);
-            throw new Error("Unit not found");
-          }
+          console.error(`Unit ${id} not found in units collection`);
+          throw new Error("Unit not found");
         }
       } catch (error) {
         console.error(`Error fetching unit details for ${id}:`, error);
