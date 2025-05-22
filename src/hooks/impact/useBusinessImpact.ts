@@ -33,7 +33,7 @@ interface UnitStatusData {
 
 export function useBusinessImpact(period: "day" | "month" | "year" | "all-time" = "year") {
   const [isLoading, setIsLoading] = useState(true);
-  const { units, isLoading: unitsLoading } = useUnits();
+  const { data: units = [], isLoading: unitsLoading } = useUnits();
   const { bottlesSaved, co2Saved, plasticSaved, waterSaved, equivalents } = useImpactCalculations(period);
   
   // Mock data for the business impact metrics
