@@ -1,8 +1,8 @@
-
 import { ReactNode, useEffect, useState } from "react";
 import { Navigate } from "react-router-dom";
 import { auth } from "@/integrations/firebase/client";
 import { onAuthStateChanged } from "firebase/auth";
+import { BusinessLayout } from "@/components/layout/BusinessLayout";
 
 export const ProtectedRoute = ({ children }: { children: ReactNode }) => {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
@@ -35,8 +35,8 @@ export const ProtectedRoute = ({ children }: { children: ReactNode }) => {
     return <Navigate to="/auth" />;
   }
 
-  // Return children directly without wrapping in BusinessLayout
-  return <>{children}</>;
+  // Wrap the children with BusinessLayout
+  return <BusinessLayout>{children}</BusinessLayout>;
 };
 
 export const PrivateProtectedRoute = ({ children }: { children: ReactNode }) => {
