@@ -1,3 +1,4 @@
+
 import React, { Suspense } from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
 import { ProtectedRoute, PrivateProtectedRoute } from "./ProtectedRoutes";
@@ -21,6 +22,7 @@ const PrivateDashboard = React.lazy(() => import("@/pages/PrivateDashboard"));
 const LandingPage = React.lazy(() => import("@/pages/LandingPage"));
 const NotFound = React.lazy(() => import("@/pages/NotFound"));
 const MigrationPage = React.lazy(() => import("@/pages/MigrationPage"));
+const ImpactOverview = React.lazy(() => import("@/pages/ImpactOverview"));
 
 // Loader component for suspense fallback
 const LoadingFallback = () => (
@@ -51,9 +53,10 @@ export function AppRoutes() {
         <Route path="/units" element={<ProtectedRoute><Units /></ProtectedRoute>} />
         <Route path="/units/:id" element={<ProtectedRoute><UnitDetails /></ProtectedRoute>} />
         <Route path="/locations" element={<ProtectedRoute><LocationsPage /></ProtectedRoute>} />
-        <Route path="/locations/:iccid" element={<ProtectedRoute><UnitLocationPage /></ProtectedRoute>} />
+        <Route path="/locations/:id" element={<ProtectedRoute><UnitLocationPage /></ProtectedRoute>} />
         <Route path="/uvc" element={<ProtectedRoute><UVC /></ProtectedRoute>} />
         <Route path="/analytics" element={<ProtectedRoute><Analytics /></ProtectedRoute>} />
+        <Route path="/impact" element={<ProtectedRoute><ImpactOverview /></ProtectedRoute>} />
         <Route path="/alerts" element={<ProtectedRoute><Alerts /></ProtectedRoute>} />
         <Route path="/filters" element={<ProtectedRoute><Filters /></ProtectedRoute>} />
         <Route path="/users" element={<ProtectedRoute><Users /></ProtectedRoute>} />

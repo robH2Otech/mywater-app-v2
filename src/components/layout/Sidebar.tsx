@@ -1,4 +1,3 @@
-
 import { LayoutDashboard, Droplet, MapPin, Filter, Zap, Bell, BarChart2, Users, MessageSquare, Settings, Activity } from "lucide-react";
 import { useLocation } from "react-router-dom";
 import { Link } from "react-router-dom";
@@ -94,6 +93,13 @@ export function Sidebar() {
             isActive={location.pathname === "/client-requests"}
           >
             Client Requests
+          </SidebarNavItem>
+          <SidebarNavItem 
+            to="/impact" 
+            icon={<Droplet size={16} />} 
+            isActive={location.pathname === "/impact"}
+          >
+            Impact
           </SidebarNavItem>
         </nav>
         
