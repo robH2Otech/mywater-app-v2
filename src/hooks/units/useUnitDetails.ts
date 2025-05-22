@@ -11,7 +11,9 @@ export function useUnitDetails(id: string | undefined) {
   return useQuery({
     queryKey: ["unit", id],
     queryFn: async () => {
-      if (!id) throw new Error("Unit ID is required");
+      if (!id) {
+        throw new Error("Unit ID is required");
+      }
       
       console.log(`Fetching unit details for ${id}`);
       

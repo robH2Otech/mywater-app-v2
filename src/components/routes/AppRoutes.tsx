@@ -49,9 +49,9 @@ export function AppRoutes() {
         {/* Protected business routes */}
         <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
         <Route path="/units" element={<ProtectedRoute><Units /></ProtectedRoute>} />
-        <Route path="/units/:unitId" element={<ProtectedRoute><UnitDetails /></ProtectedRoute>} />
+        <Route path="/units/:id" element={<ProtectedRoute><UnitDetails /></ProtectedRoute>} />
         <Route path="/locations" element={<ProtectedRoute><LocationsPage /></ProtectedRoute>} />
-        <Route path="/units/:unitId/location" element={<ProtectedRoute><UnitLocationPage /></ProtectedRoute>} />
+        <Route path="/locations/:iccid" element={<ProtectedRoute><UnitLocationPage /></ProtectedRoute>} />
         <Route path="/uvc" element={<ProtectedRoute><UVC /></ProtectedRoute>} />
         <Route path="/analytics" element={<ProtectedRoute><Analytics /></ProtectedRoute>} />
         <Route path="/alerts" element={<ProtectedRoute><Alerts /></ProtectedRoute>} />

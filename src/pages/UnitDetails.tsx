@@ -11,13 +11,28 @@ import { UnitError } from "@/components/units/details/UnitError";
 import { UnitLoading } from "@/components/units/details/UnitLoading";
 import { useUnitDetails } from "@/hooks/units/useUnitDetails";
 import { toast } from "sonner";
+import { UnitLocationLink } from "@/components/units/UnitLocationLink";
 
 const UnitDetails = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const [isSyncing, setIsSyncing] = useState(false);
   const { syncUnitMeasurements } = useFilterStatus();
-  const { data: unit, isLoading, error, refetch } = useUnitDetails(id);
+  
+  // Extra validation for ID
+  const unitId = id ? id.trim() : null;
+  const isMyWaterUnit = unitId ? unitId.startsWith("MYWATER_") : false;
+  
+  console.log(`UnitDetails: Loading unit with ID: "${unitId}", isMyWaterUnit: ${isMyWaterUnit}`);
+  
+  // Only fetch if we have a valid unitId
+  const { 
+    data: unit, 
+    isLoading, 
+    error, 
+    refetch 
+  } = useUnitDetails(unitId || undefined);
+  
   const [retryCount, setRetryCount] = useState(0);
 
   // Automatic retry for certain errors
@@ -34,11 +49,14 @@ const UnitDetails = () => {
   }, [error, retryCount, refetch]);
 
   const handleSync = async () => {
-    if (!id) return;
+    if (!unitId) {
+      toast.error("Cannot sync: Unit ID is missing");
+      return;
+    }
     
     setIsSyncing(true);
     try {
-      await syncUnitMeasurements(id);
+      await syncUnitMeasurements(unitId);
       toast.success("Measurements synced successfully");
     } catch (err) {
       console.error("Error syncing measurements:", err);
@@ -63,8 +81,19 @@ const UnitDetails = () => {
     }
   };
 
-  const isMyWaterUnit = id ? id.startsWith("MYWATER_") : false;
-
+  // Improved error handling with more specific messages
+  if (!unitId) {
+    return (
+      <UnitError 
+        error={new Error("Invalid unit ID in URL")} 
+        onRetry={() => navigate("/units")} 
+        isSyncing={false}
+        unitId=""
+        isMyWaterUnit={false}
+      />
+    );
+  }
+  
   // Show appropriate error message based on unit type
   if (error) {
     return (
@@ -72,14 +101,14 @@ const UnitDetails = () => {
         error={error} 
         onRetry={handleRetry} 
         isSyncing={isSyncing}
-        unitId={id || ''}
+        unitId={unitId}
         isMyWaterUnit={isMyWaterUnit}
       />
     );
   }
   
   if (isLoading) return <UnitLoading isMyWaterUnit={isMyWaterUnit} />;
-  if (!unit) return <UnitError error={new Error("Unit not found")} onRetry={handleRetry} isSyncing={isSyncing} unitId={id || ''} isMyWaterUnit={isMyWaterUnit} />;
+  if (!unit) return <UnitError error={new Error("Unit not found")} onRetry={handleRetry} isSyncing={isSyncing} unitId={unitId} isMyWaterUnit={isMyWaterUnit} />;
 
   return (
     <div className="container mx-auto p-3 md:p-6 max-w-4xl animate-fadeIn space-y-4 md:space-y-6">
@@ -89,14 +118,19 @@ const UnitDetails = () => {
           isSyncing={isSyncing}
           onSync={handleSync}
           onBack={() => navigate("/units")}
-          unitId={id}
+          unitId={unitId}
           unitIccid={unit.iccid || ''}
         />
-        <UnitLocationSection unit={unit} unitId={id || ''} />
+        
+        <div className="flex justify-end mb-4">
+          <UnitLocationLink unitId={unitId} iccid={unit.iccid} />
+        </div>
+        
+        <UnitLocationSection unit={unit} unitId={unitId} />
         <UnitDetailsCard unit={unit} />
       </Card>
 
-      {id && <UnitMeasurements unitId={id} />}
+      {unitId && <UnitMeasurements unitId={unitId} />}
     </div>
   );
 };

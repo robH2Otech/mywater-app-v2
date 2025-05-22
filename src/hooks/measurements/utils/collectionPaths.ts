@@ -1,12 +1,9 @@
 
-import { collection, query, orderBy, limit, getDocs } from "firebase/firestore";
-import { db } from "@/integrations/firebase/client";
-
 // These are all the possible paths where measurements could be stored
 export const MEASUREMENT_PATHS = [
   // Primary paths
-  "units/{unitId}/measurements",
   "units/{unitId}/data",
+  "units/{unitId}/measurements",
   
   // MYWATER specific paths
   "measurements/{unitId}/hourly",
@@ -41,6 +38,9 @@ export function getMeasurementsCollectionPath(unitId: string, isMyWaterUnit?: bo
 export async function tryCollectionPath(path: string, count: number = 24) {
   try {
     console.log(`Trying to fetch measurements from: ${path}`);
+    const { collection, query, orderBy, limit, getDocs } = require("firebase/firestore");
+    const { db } = require("@/integrations/firebase/client");
+    
     const measurementsQuery = query(
       collection(db, path),
       orderBy("timestamp", "desc"),
@@ -60,21 +60,43 @@ export async function tryAllMeasurementPaths(unitId: string, count: number = 24)
   
   // For MYWATER units, prioritize these paths
   const isMyWaterUnit = unitId.startsWith("MYWATER_");
+  
+  // Always try units/{unitId}/data first for MYWATER units
+  if (isMyWaterUnit) {
+    const myWaterPath = `units/${unitId}/data`;
+    console.log(`Trying primary MYWATER path first: ${myWaterPath}`);
+    
+    try {
+      const { collection, query, orderBy, limit, getDocs } = require("firebase/firestore");
+      const { db } = require("@/integrations/firebase/client");
+      
+      const measurementsQuery = query(
+        collection(db, myWaterPath),
+        orderBy("timestamp", "desc"),
+        limit(count)
+      );
+      
+      const snapshot = await getDocs(measurementsQuery);
+      
+      if (!snapshot.empty) {
+        console.log(`✅ Found data at MYWATER path: ${myWaterPath}, count: ${snapshot.docs.length}`);
+        return snapshot;
+      }
+    } catch (err) {
+      console.warn(`Error checking MYWATER path: ${myWaterPath}`, err);
+    }
+  }
+  
+  // Continue with other paths if needed
   let prioritizedPaths = [...MEASUREMENT_PATHS];
   
   if (isMyWaterUnit) {
-    // For MYWATER units, prioritize this path
-    const myWaterPreferredPath = "units/{unitId}/data";
-    
-    // Remove this path from the array so we don't try it twice
-    const index = prioritizedPaths.indexOf(myWaterPreferredPath);
+    // Already tried units/{unitId}/data, so remove it
+    const preferredPath = "units/{unitId}/data";
+    const index = prioritizedPaths.indexOf(preferredPath);
     if (index !== -1) {
       prioritizedPaths.splice(index, 1);
     }
-    
-    // Add the preferred path to the front
-    prioritizedPaths = [myWaterPreferredPath, ...prioritizedPaths];
-    console.log(`MYWATER unit detected: ${unitId}. Using prioritized path: ${myWaterPreferredPath}`);
   }
   
   // Try paths sequentially with a small delay to avoid overwhelming Firestore
@@ -83,14 +105,11 @@ export async function tryAllMeasurementPaths(unitId: string, count: number = 24)
     attemptedPaths.push(path);
     
     try {
-      console.log(`Trying path: ${path} for unit ${unitId}`);
       const snapshot = await tryCollectionPath(path, count);
       
       if (snapshot && !snapshot.empty) {
         console.log(`✅ Found data at path: ${path}, count: ${snapshot.docs.length}`);
         return snapshot;
-      } else {
-        console.log(`❌ No data at path: ${path}`);
       }
       
       // Small delay between attempts

@@ -17,12 +17,12 @@ export async function findMeasurementPath(unitId: string): Promise<string | null
     return cachedPath || null;
   }
 
-  // Create a specialized path list for different unit types
+  // For MYWATER units, try the preferred path first
   const isMyWaterUnit = unitId.startsWith("MYWATER_");
   let pathsToTry = [...MEASUREMENT_PATHS];
   
   if (isMyWaterUnit) {
-    // For MYWATER units, prioritize the correct path
+    // For MYWATER units, always prioritize this path as it's the most reliable
     const myWaterPriorityPath = "units/{unitId}/data";
     
     // Remove this path from the original array to avoid duplicates
@@ -65,5 +65,14 @@ export async function findMeasurementPath(unitId: string): Promise<string | null
   }
   
   console.warn(`⚠️ No valid measurement path found for unit ${unitId}`);
+  
+  // For MYWATER units, default to units/{unitId}/data even if empty
+  if (isMyWaterUnit) {
+    const defaultPath = `units/${unitId}/data`;
+    console.log(`Using default path for MYWATER unit: ${defaultPath}`);
+    successfulPathsCache.set(unitId, defaultPath);
+    return defaultPath;
+  }
+  
   return null;
 }

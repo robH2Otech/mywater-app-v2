@@ -20,7 +20,11 @@ export function useMeasurementRefetch() {
     setError: (error: Error | null) => void,
     setPathSearching?: (searching: boolean) => void
   ) => {
-    if (!unitId) return () => {};
+    if (!unitId) {
+      console.error("Cannot refetch measurements: Unit ID is missing");
+      setError(new Error("Unit ID is required"));
+      return () => {};
+    }
     
     console.log(`Refetching measurements for unit ${unitId}`);
     setIsRefetching(true);
@@ -36,13 +40,24 @@ export function useMeasurementRefetch() {
 
     try {
       // Try to find the correct path with priority for MYWATER units
-      const measurementPath = await findMeasurementPath(unitId);
+      const isMyWaterUnit = unitId.startsWith("MYWATER_");
+      let measurementPath: string | null = null;
+      
+      if (isMyWaterUnit) {
+        // For MYWATER units, directly use the primary path
+        measurementPath = `units/${unitId}/data`;
+        console.log(`Using primary path for MYWATER unit ${unitId}: ${measurementPath}`);
+      } else {
+        // For other units, find the best path
+        measurementPath = await findMeasurementPath(unitId);
+      }
       
       if (setPathSearching) {
         setPathSearching(false);
       }
       
       if (!measurementPath) {
+        console.error(`Could not find a valid data path for unit ${unitId}`);
         setError(new Error(`Could not find a valid data path for unit ${unitId}`));
         setIsLoading(false);
         setIsRefetching(false);
