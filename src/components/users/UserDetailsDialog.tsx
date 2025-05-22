@@ -1,4 +1,3 @@
-
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { useState, useEffect } from "react";
@@ -11,12 +10,13 @@ import { ScrollableDialogContent } from "@/components/shared/ScrollableDialogCon
 import { UserDetailsForm } from "./UserDetailsForm";
 import { UserActionButtons } from "./UserActionButtons";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { usePermissions } from "@/hooks/usePermissions";
+import { Shield, ShieldAlert, ShieldCheck } from "lucide-react";
 
 interface UserDetailsDialogProps {
   user: User | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  currentUserRole?: UserRole;
 }
 
 interface UserFormData {
@@ -31,10 +31,12 @@ interface UserFormData {
   password: string;
 }
 
-export function UserDetailsDialog({ user, open, onOpenChange, currentUserRole = "user" }: UserDetailsDialogProps) {
+export function UserDetailsDialog({ user, open, onOpenChange }: UserDetailsDialogProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const isMobile = useIsMobile();
+  const { hasPermission, userRole, company: currentUserCompany } = usePermissions();
+  
   const [formData, setFormData] = useState<UserFormData>({
     first_name: "",
     last_name: "",
@@ -63,10 +65,38 @@ export function UserDetailsDialog({ user, open, onOpenChange, currentUserRole = 
     }
   }, [user]);
 
-  const isEditable = currentUserRole === "superadmin";
+  // Check if current user can edit this user based on roles
+  const canEditUser = (): boolean => {
+    if (!user || !userRole) return false;
+    
+    // Superadmins can edit anyone
+    if (userRole === "superadmin") return true;
+    
+    // Admins can edit technicians and regular users, but not other admins or superadmins
+    if (userRole === "admin") {
+      return ["technician", "user"].includes(user.role);
+    }
+    
+    // Other roles can't edit users
+    return false;
+  };
+  
+  // Check if current user can edit this specific field
+  const canEditField = (field: keyof UserFormData): boolean => {
+    if (!canEditUser()) return false;
+    
+    // Only superadmins can change roles to admin or superadmin
+    if (field === "role" && userRole !== "superadmin" && ["superadmin", "admin"].includes(formData.role)) {
+      return false;
+    }
+    
+    return true;
+  };
+
+  const isEditable = canEditUser();
 
   const handleInputChange = (field: keyof UserFormData, value: string) => {
-    if (!isEditable) return;
+    if (!canEditField(field)) return;
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
@@ -77,7 +107,7 @@ export function UserDetailsDialog({ user, open, onOpenChange, currentUserRole = 
       }
       
       if (!isEditable) {
-        throw new Error("Only Super Admins can edit user details");
+        throw new Error("You don't have permission to edit this user");
       }
 
       const userDocRef = doc(db, "app_users_business", user.id);
@@ -144,15 +174,31 @@ export function UserDetailsDialog({ user, open, onOpenChange, currentUserRole = 
     });
   };
 
+  const getRoleIcon = (role: UserRole) => {
+    switch (role) {
+      case "superadmin":
+        return <ShieldAlert className="h-5 w-5 text-red-500" />;
+      case "admin":
+        return <ShieldCheck className="h-5 w-5 text-blue-400" />;
+      case "technician":
+        return <Shield className="h-5 w-5 text-yellow-500" />;
+      default:
+        return null;
+    }
+  };
+
   if (!user) return null;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className={`${isMobile ? 'w-[95vw] max-w-[95vw]' : 'w-full max-w-[800px]'} bg-spotify-darker border-spotify-accent overflow-hidden ${isMobile ? 'p-3' : 'p-5'}`}>
-        <DialogHeader className="mb-1">
-          <DialogTitle className="text-lg font-semibold text-white">
-            User Details
-          </DialogTitle>
+        <DialogHeader className="mb-1 flex items-center">
+          <div className="flex items-center gap-2">
+            {getRoleIcon(user.role)}
+            <DialogTitle className="text-lg font-semibold text-white">
+              User Details {user.company && `(${user.company})`}
+            </DialogTitle>
+          </div>
         </DialogHeader>
 
         <ScrollableDialogContent maxHeight={isMobile ? "60vh" : "65vh"}>
@@ -160,12 +206,15 @@ export function UserDetailsDialog({ user, open, onOpenChange, currentUserRole = 
             formData={formData}
             handleInputChange={handleInputChange}
             isEditable={isEditable}
+            canEditField={canEditField}
           />
         </ScrollableDialogContent>
 
         <div className={`flex ${isMobile ? 'flex-col gap-3' : 'justify-between items-center'} mt-4 pt-3 border-t border-gray-700`}>
           <div className={`${isMobile ? 'order-2' : ''}`}>
-            <UserActionButtons onAction={handleAction} />
+            {hasPermission("write") && (
+              <UserActionButtons onAction={handleAction} />
+            )}
           </div>
           <div className={`flex gap-2 ${isMobile ? 'order-1 justify-center' : ''}`}>
             <Button
@@ -173,7 +222,7 @@ export function UserDetailsDialog({ user, open, onOpenChange, currentUserRole = 
               onClick={() => onOpenChange(false)}
               className="bg-spotify-accent hover:bg-spotify-accent-hover h-8 text-sm px-3"
             >
-              Cancel
+              Close
             </Button>
             {isEditable && (
               <Button

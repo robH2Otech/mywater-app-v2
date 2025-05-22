@@ -2,7 +2,7 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { User, UserRole } from "@/types/users";
 import { UserAvatar } from "@/components/layout/UserAvatar";
-import { MailCheck, PhoneCall } from "lucide-react";
+import { MailCheck, PhoneCall, Briefcase } from "lucide-react";
 
 interface UserCardProps {
   user: User;
@@ -39,9 +39,16 @@ export function UserCard({ user, onClick }: UserCardProps) {
               <h3 className="text-lg font-medium text-white truncate">
                 {user.first_name} {user.last_name}
               </h3>
-              <span className={`text-xs px-2 py-0.5 rounded ${getRoleBadgeColor(user.role)} text-white uppercase inline-block mt-1`}>
-                {user.role}
-              </span>
+              <div className="flex flex-wrap gap-1 mt-1">
+                <span className={`text-xs px-2 py-0.5 rounded ${getRoleBadgeColor(user.role)} text-white uppercase inline-block`}>
+                  {user.role}
+                </span>
+                {user.company && (
+                  <span className="text-xs px-2 py-0.5 rounded bg-gray-700 text-white inline-block">
+                    {user.company}
+                  </span>
+                )}
+              </div>
             </div>
           </div>
           
@@ -55,6 +62,13 @@ export function UserCard({ user, onClick }: UserCardProps) {
               <div className="flex items-center text-sm text-gray-400 mt-1">
                 <PhoneCall className="h-3 w-3 mr-2 flex-shrink-0" />
                 <span className="truncate">{user.phone}</span>
+              </div>
+            )}
+            
+            {user.job_title && (
+              <div className="flex items-center text-sm text-gray-400 mt-1">
+                <Briefcase className="h-3 w-3 mr-2 flex-shrink-0" />
+                <span className="truncate">{user.job_title}</span>
               </div>
             )}
           </div>

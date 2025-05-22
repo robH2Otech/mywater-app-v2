@@ -22,14 +22,27 @@ interface AddUserDialogContentProps {
   handleInputChange: (field: keyof UserFormData, value: string) => void;
   handleSubmit: () => void;
   onCancel: () => void;
+  canCreateSuperAdmin?: boolean;
+  canCreateAdmin?: boolean;
 }
 
 export function AddUserDialogContent({ 
   formData, 
   handleInputChange, 
   handleSubmit, 
-  onCancel 
+  onCancel,
+  canCreateSuperAdmin = false,
+  canCreateAdmin = false
 }: AddUserDialogContentProps) {
+  // Function to determine if a field can be edited
+  const canEditField = (field: keyof UserFormData): boolean => {
+    if (field === "role") {
+      if (formData.role === "superadmin" && !canCreateSuperAdmin) return false;
+      if (formData.role === "admin" && !canCreateAdmin) return false;
+    }
+    return true;
+  };
+
   return (
     <>
       <DialogHeader>
@@ -41,6 +54,7 @@ export function AddUserDialogContent({
           formData={formData}
           handleInputChange={handleInputChange}
           isEditable={true}
+          canEditField={canEditField}
         />
       </ScrollableDialogContent>
       

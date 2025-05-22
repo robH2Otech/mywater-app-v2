@@ -12,18 +12,19 @@ import { db } from "@/integrations/firebase/client";
 import { Card } from "@/components/ui/card";
 import { Users as UsersIcon } from "lucide-react";
 import { User } from "@/types/users";
+import { usePermissions } from "@/hooks/usePermissions";
 
 const Users = () => {
   const { toast } = useToast();
+  const { hasPermission } = usePermissions();
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [isAddUserOpen, setIsAddUserOpen] = useState(false);
 
-  const { data: users = [], isLoading: unitsLoading, error: unitsError } = useQuery({
+  const { data: users = [], isLoading: usersLoading, error: usersError } = useQuery({
     queryKey: ["users"],
     queryFn: async () => {
       console.log("Fetching users data from Firebase...");
       try {
-        // Updated to fetch from app_users_business collection
         const usersCollection = collection(db, "app_users_business");
         const usersSnapshot = await getDocs(usersCollection);
         const usersList = usersSnapshot.docs.map(doc => ({
@@ -31,6 +32,7 @@ const Users = () => {
           first_name: doc.data().first_name || "",
           last_name: doc.data().last_name || "",
           email: doc.data().email || "",
+          company: doc.data().company || "",
           role: doc.data().role || "user",
           status: doc.data().status || "active",
           ...doc.data()
@@ -50,14 +52,17 @@ const Users = () => {
     },
   });
 
-  if (unitsError) {
+  // Check if the current user can add new users
+  const canAddUsers = hasPermission("admin");
+
+  if (usersError) {
     return (
       <div className="space-y-6 animate-fadeIn p-2 md:p-0">
         <PageHeader
           title="Users"
           description="Manage system users and permissions"
-          onAddClick={() => setIsAddUserOpen(true)}
-          addButtonText="Add User"
+          onAddClick={canAddUsers ? () => setIsAddUserOpen(true) : undefined}
+          addButtonText={canAddUsers ? "Add User" : undefined}
         />
         <div className="bg-spotify-darker border-spotify-accent p-6 rounded-lg">
           <div className="text-red-400">Error loading users. Please try again.</div>
@@ -66,14 +71,14 @@ const Users = () => {
     );
   }
 
-  if (unitsLoading) {
+  if (usersLoading) {
     return (
       <div className="space-y-6 animate-fadeIn p-2 md:p-0">
         <PageHeader
           title="Users"
           description="Manage system users and permissions"
-          onAddClick={() => setIsAddUserOpen(true)}
-          addButtonText="Add User"
+          onAddClick={canAddUsers ? () => setIsAddUserOpen(true) : undefined}
+          addButtonText={canAddUsers ? "Add User" : undefined}
         />
         <LoadingSkeleton />
       </div>
@@ -85,8 +90,8 @@ const Users = () => {
       <PageHeader
         title="Users"
         description="Manage system users and permissions"
-        onAddClick={() => setIsAddUserOpen(true)}
-        addButtonText="Add User"
+        onAddClick={canAddUsers ? () => setIsAddUserOpen(true) : undefined}
+        addButtonText={canAddUsers ? "Add User" : undefined}
       />
       
       <Card className="p-6 bg-spotify-darker border-spotify-accent">
@@ -97,7 +102,7 @@ const Users = () => {
         
         {users.length === 0 ? (
           <div className="text-center text-gray-400 py-8">
-            No users found. Click "Add User" to create one.
+            No users found. {canAddUsers ? "Click \"Add User\" to create one." : ""}
           </div>
         ) : (
           <UsersList
@@ -107,16 +112,17 @@ const Users = () => {
         )}
       </Card>
 
-      <AddUserDialog 
-        open={isAddUserOpen}
-        onOpenChange={setIsAddUserOpen}
-      />
+      {canAddUsers && (
+        <AddUserDialog 
+          open={isAddUserOpen}
+          onOpenChange={setIsAddUserOpen}
+        />
+      )}
 
       <UserDetailsDialog
         open={!!selectedUser}
         onOpenChange={(open) => !open && setSelectedUser(null)}
         user={selectedUser}
-        currentUserRole="superadmin" // TODO: Get this from authentication context
       />
     </div>
   );

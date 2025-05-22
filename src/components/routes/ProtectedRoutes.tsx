@@ -1,8 +1,10 @@
+
 import { ReactNode, useEffect, useState } from "react";
 import { Navigate } from "react-router-dom";
 import { auth } from "@/integrations/firebase/client";
 import { onAuthStateChanged } from "firebase/auth";
 import { BusinessLayout } from "@/components/layout/BusinessLayout";
+import { AuthProvider } from "@/contexts/AuthContext";
 
 export const ProtectedRoute = ({ children }: { children: ReactNode }) => {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
@@ -35,8 +37,12 @@ export const ProtectedRoute = ({ children }: { children: ReactNode }) => {
     return <Navigate to="/auth" />;
   }
 
-  // Wrap the children with BusinessLayout
-  return <BusinessLayout>{children}</BusinessLayout>;
+  // Wrap the children with AuthProvider and BusinessLayout
+  return (
+    <AuthProvider>
+      <BusinessLayout>{children}</BusinessLayout>
+    </AuthProvider>
+  );
 };
 
 export const PrivateProtectedRoute = ({ children }: { children: ReactNode }) => {
@@ -65,5 +71,5 @@ export const PrivateProtectedRoute = ({ children }: { children: ReactNode }) => 
     return <Navigate to="/private-auth" />;
   }
 
-  return <>{children}</>;
+  return <AuthProvider>{children}</AuthProvider>;
 };

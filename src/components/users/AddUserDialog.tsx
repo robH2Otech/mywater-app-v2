@@ -7,6 +7,7 @@ import { collection, addDoc } from "firebase/firestore";
 import { db } from "@/integrations/firebase/client";
 import { UserRole, UserStatus } from "@/types/users";
 import { AddUserDialogContent } from "./AddUserDialogContent";
+import { usePermissions } from "@/hooks/usePermissions";
 
 interface FormData {
   first_name: string;
@@ -28,27 +29,55 @@ interface AddUserDialogProps {
 export function AddUserDialog({ open, onOpenChange }: AddUserDialogProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { hasPermission, userRole, company: currentUserCompany } = usePermissions();
+  
   const [formData, setFormData] = useState<FormData>({
     first_name: "",
     last_name: "",
     email: "",
     phone: "",
-    company: "",
+    company: currentUserCompany || "",
     job_title: "",
-    role: "user",
+    role: "user", // Default role for new users
     status: "active",
     password: ""
   });
 
+  // Check if user can create users with specific role
+  const canCreateWithRole = (role: UserRole): boolean => {
+    if (userRole === "superadmin") return true;
+    if (userRole === "admin" && ["technician", "user"].includes(role)) return true;
+    return false;
+  };
+
   const handleInputChange = (field: keyof FormData, value: string) => {
+    if (field === "role" && !canCreateWithRole(value as UserRole)) {
+      toast({
+        title: "Permission denied",
+        description: `You don't have permission to create ${value} users`,
+        variant: "destructive",
+      });
+      return;
+    }
+    
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
   const handleSubmit = async () => {
     try {
+      // Only admins and above can create users
+      if (!hasPermission("admin")) {
+        throw new Error("You don't have permission to create users");
+      }
+      
       // Validate required fields
       if (!formData.first_name || !formData.last_name || !formData.email || !formData.password || !formData.company) {
         throw new Error("First name, last name, email, password and company are required");
+      }
+
+      // Validate role permissions
+      if (!canCreateWithRole(formData.role)) {
+        throw new Error(`You don't have permission to create ${formData.role} users`);
       }
 
       // Add user to Firebase in the app_users_business collection
@@ -70,7 +99,7 @@ export function AddUserDialog({ open, onOpenChange }: AddUserDialogProps) {
         last_name: "",
         email: "",
         phone: "",
-        company: "",
+        company: currentUserCompany || "",
         job_title: "",
         role: "user",
         status: "active",
@@ -101,6 +130,8 @@ export function AddUserDialog({ open, onOpenChange }: AddUserDialogProps) {
           handleInputChange={handleInputChange}
           handleSubmit={handleSubmit}
           onCancel={() => onOpenChange?.(false)}
+          canCreateSuperAdmin={userRole === "superadmin"}
+          canCreateAdmin={userRole === "superadmin"}
         />
       </DialogContent>
     </Dialog>
