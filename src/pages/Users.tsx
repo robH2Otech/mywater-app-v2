@@ -16,7 +16,7 @@ import { usePermissions } from "@/hooks/usePermissions";
 
 const Users = () => {
   const { toast } = useToast();
-  const { hasPermission } = usePermissions();
+  const { hasPermission, userRole, company } = usePermissions();
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [isAddUserOpen, setIsAddUserOpen] = useState(false);
 

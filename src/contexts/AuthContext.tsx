@@ -19,6 +19,7 @@ interface AuthContextType {
   canEdit: () => boolean;
   canDelete: () => boolean;
   canManageUsers: () => boolean;
+  canComment: () => boolean;
 }
 
 const AuthContext = createContext<AuthContextType>({
@@ -32,6 +33,7 @@ const AuthContext = createContext<AuthContextType>({
   canEdit: () => false,
   canDelete: () => false,
   canManageUsers: () => false,
+  canComment: () => false,
 });
 
 export const useAuth = () => useContext(AuthContext);
@@ -57,7 +59,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             const userWithId = { id: querySnapshot.docs[0].id, ...userData };
             
             setCurrentUser(userWithId);
-            setUserRole(userWithId.role || "user");
+            setUserRole(userWithId.role || "user"); // Default to user if role is not set
             setCompany(userWithId.company || null);
           } else {
             console.error("User exists in Firebase Auth but not in Firestore");
@@ -83,7 +85,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return () => unsubscribe();
   }, []);
 
-  // Define permission hierarchy
+  // Define permission hierarchy - updated to include user role at the lowest level
   const permissionHierarchy: Record<UserRole, PermissionLevel> = {
     superadmin: "full",
     admin: "admin",
@@ -134,6 +136,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return hasPermission("admin");
   };
 
+  // Check if user can comment (technicians and above)
+  const canComment = (): boolean => {
+    return userRole !== "user"; // Only user role cannot comment on standard items
+  };
+
   const value = {
     currentUser,
     isLoading,
@@ -145,6 +152,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     canEdit,
     canDelete,
     canManageUsers,
+    canComment,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

@@ -1,13 +1,16 @@
+
 import { LayoutDashboard, Droplet, MapPin, Filter, Zap, Bell, BarChart2, Users, MessageSquare, Settings, Activity } from "lucide-react";
 import { useLocation } from "react-router-dom";
 import { Link } from "react-router-dom";
 import { auth } from "@/integrations/firebase/client";
 import { useNavigate } from "react-router-dom";
+import { usePermissions } from "@/hooks/usePermissions";
 
 // We'll use our own components instead of importing from non-existent files
 export function Sidebar() {
   const location = useLocation();
   const navigate = useNavigate();
+  const { userRole, isCompanyUser, canManageUsers } = usePermissions();
 
   const handleLogout = async () => {
     try {
@@ -18,89 +21,98 @@ export function Sidebar() {
     }
   };
 
+  // Define menu items with role-based visibility
+  const menuItems = [
+    { 
+      to: "/dashboard", 
+      icon: <LayoutDashboard size={16} />,
+      text: "Dashboard",
+      visible: true // Visible to all roles
+    },
+    { 
+      to: "/units", 
+      icon: <Droplet size={16} />,
+      text: "Water Units",
+      visible: true // Visible to all roles
+    },
+    { 
+      to: "/locations", 
+      icon: <MapPin size={16} />,
+      text: "Units Location",
+      visible: true // Visible to all roles
+    },
+    { 
+      to: "/filters", 
+      icon: <Filter size={16} />,
+      text: "Filters",
+      visible: true // Visible to all roles
+    },
+    { 
+      to: "/uvc", 
+      icon: <Zap size={16} />,
+      text: "UVC",
+      visible: true // Visible to all roles
+    },
+    { 
+      to: "/alerts", 
+      icon: <Bell size={16} />,
+      text: "Alerts",
+      visible: true // Visible to all roles
+    },
+    { 
+      to: "/analytics", 
+      icon: <BarChart2 size={16} />,
+      text: "Analytics",
+      visible: true // Visible to all roles
+    },
+    { 
+      to: "/analytics?tab=predictive", 
+      icon: <Activity size={16} />,
+      text: "Predictive Maintenance",
+      visible: true // Visible to all roles 
+    },
+    { 
+      to: "/users", 
+      icon: <Users size={16} />,
+      text: "Users",
+      visible: !isCompanyUser() && canManageUsers() // Not visible to company users
+    },
+    { 
+      to: "/client-requests", 
+      icon: <MessageSquare size={16} />,
+      text: "Client Requests",
+      visible: true // Visible to all roles, but with different access levels
+    },
+    { 
+      to: "/impact", 
+      icon: <Droplet size={16} />,
+      text: "Impact",
+      visible: true // Visible to all roles
+    }
+  ];
+
   return (
     <aside className="w-60 bg-spotify-darker text-white border-r border-gray-800 hidden md:block fixed h-full overflow-y-auto z-20">
       <SidebarHeader />
       
       <div className="flex flex-col p-3 h-[calc(100%-60px)]">
         <nav className="space-y-1 flex-1">
-          <SidebarNavItem 
-            to="/dashboard" 
-            icon={<LayoutDashboard size={16} />} 
-            isActive={location.pathname === "/dashboard"}
-          >
-            Dashboard
-          </SidebarNavItem>
-          <SidebarNavItem 
-            to="/units" 
-            icon={<Droplet size={16} />} 
-            isActive={location.pathname.startsWith("/units")}
-          >
-            Water Units
-          </SidebarNavItem>
-          <SidebarNavItem 
-            to="/locations" 
-            icon={<MapPin size={16} />} 
-            isActive={location.pathname.startsWith("/locations")}
-          >
-            Units Location
-          </SidebarNavItem>
-          <SidebarNavItem 
-            to="/filters" 
-            icon={<Filter size={16} />} 
-            isActive={location.pathname === "/filters"}
-          >
-            Filters
-          </SidebarNavItem>
-          <SidebarNavItem 
-            to="/uvc" 
-            icon={<Zap size={16} />} 
-            isActive={location.pathname === "/uvc"}
-          >
-            UVC
-          </SidebarNavItem>
-          <SidebarNavItem 
-            to="/alerts" 
-            icon={<Bell size={16} />} 
-            isActive={location.pathname === "/alerts"}
-          >
-            Alerts
-          </SidebarNavItem>
-          <SidebarNavItem 
-            to="/analytics" 
-            icon={<BarChart2 size={16} />} 
-            isActive={location.pathname === "/analytics" && !location.search.includes("tab=predictive")}
-          >
-            Analytics
-          </SidebarNavItem>
-          <SidebarNavItem 
-            to="/analytics?tab=predictive" 
-            icon={<Activity size={16} />} 
-            isActive={location.pathname === "/analytics" && location.search.includes("tab=predictive")}
-          >
-            Predictive Maintenance
-          </SidebarNavItem>
-          <SidebarNavItem 
-            to="/users" 
-            icon={<Users size={16} />} 
-            isActive={location.pathname === "/users"}
-          >
-            Users
-          </SidebarNavItem>
-          <SidebarNavItem 
-            to="/client-requests" 
-            icon={<MessageSquare size={16} />} 
-            isActive={location.pathname === "/client-requests"}
-          >
-            Client Requests
-          </SidebarNavItem>
-          <SidebarNavItem 
-            to="/impact" 
-            icon={<Droplet size={16} />} 
-            isActive={location.pathname === "/impact"}
-          >
-            Impact
-          </SidebarNavItem>
+          {menuItems
+            .filter(item => item.visible)
+            .map((item) => (
+              <SidebarNavItem
+                key={item.to}
+                to={item.to}
+                icon={item.icon}
+                isActive={location.pathname === item.to || 
+                  (item.to.includes('?') && 
+                   location.pathname === item.to.split('?')[0] && 
+                   location.search.includes(item.to.split('?')[1]))}
+              >
+                {item.text}
+              </SidebarNavItem>
+            ))
+          }
         </nav>
         
         <div className="mt-auto">

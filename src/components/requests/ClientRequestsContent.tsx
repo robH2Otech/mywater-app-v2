@@ -6,8 +6,11 @@ import { RequestsHeader } from "@/components/requests/RequestsHeader";
 import { RequestsList } from "@/components/requests/RequestsList";
 import { useClientRequests } from "@/hooks/useClientRequests";
 import { useEffect } from "react";
+import { usePermissions } from "@/hooks/usePermissions";
 
 export function ClientRequestsContent() {
+  const { isCompanyUser } = usePermissions();
+  
   const {
     requests,
     isLoading,
@@ -42,6 +45,7 @@ export function ClientRequestsContent() {
       <RequestsHeader 
         onRefresh={handleRetry}
         onCreateRequest={() => setShowCreateRequestDialog(true)}
+        isReadOnly={isCompanyUser()}
       />
       
       <Card className="p-4 bg-spotify-darker">
@@ -53,6 +57,7 @@ export function ClientRequestsContent() {
           onFilterChange={setActiveFilter}
           onRetry={handleRetry}
           onAction={handleRequestAction}
+          isReadOnly={isCompanyUser()}
         />
       </Card>
       

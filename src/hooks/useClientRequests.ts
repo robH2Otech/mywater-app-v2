@@ -3,8 +3,11 @@ import { useEffect } from "react";
 import { SupportRequest } from "@/types/supportRequests";
 import { useRequestFilter } from "./requests/useRequestFilter";
 import { useRequestActions } from "./requests/useRequestActions";
+import { usePermissions } from "@/hooks/usePermissions";
 
 export function useClientRequests() {
+  const { company, userRole } = usePermissions();
+  
   const {
     activeFilter,
     requests,
@@ -12,7 +15,7 @@ export function useClientRequests() {
     error,
     setActiveFilter,
     fetchRequests
-  } = useRequestFilter();
+  } = useRequestFilter(company, userRole);
   
   const {
     selectedRequest,
@@ -27,8 +30,7 @@ export function useClientRequests() {
     handleReplyByEmail,
     setSelectedRequest
   } = useRequestActions(requests, (newRequests: SupportRequest[]) => {
-    // This was the error - there was no setRequests function from useRequestFilter
-    // We need to re-fetch requests instead of trying to update the state directly
+    // Re-fetch requests instead of trying to update the state directly
     fetchRequests();
   }, fetchRequests);
 
@@ -50,6 +52,12 @@ export function useClientRequests() {
     request: SupportRequest,
     newStatus?: "new" | "in_progress" | "resolved"
   ) => {
+    // If user role is "user", they can only add comments
+    if (userRole === 'user' && action !== 'comment') {
+      console.log("User role can only add comments");
+      return;
+    }
+    
     if (action === 'status' && newStatus) {
       handleUpdateRequestStatus(request.id, newStatus);
     } else if (action === 'email') {
