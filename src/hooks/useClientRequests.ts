@@ -15,7 +15,7 @@ export function useClientRequests() {
     error,
     setActiveFilter,
     fetchRequests
-  } = useRequestFilter(company, userRole);
+  } = useRequestFilter(); // No arguments needed here
   
   const {
     selectedRequest,

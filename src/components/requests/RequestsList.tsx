@@ -16,6 +16,7 @@ interface RequestsListProps {
   onFilterChange: (filter: string) => void;
   onRetry: () => void;
   onAction: (action: 'status' | 'email' | 'comment', request: SupportRequest, newStatus?: "new" | "in_progress" | "resolved") => void;
+  isReadOnly?: boolean;
 }
 
 export function RequestsList({
@@ -25,7 +26,8 @@ export function RequestsList({
   activeFilter,
   onFilterChange,
   onRetry,
-  onAction
+  onAction,
+  isReadOnly
 }: RequestsListProps) {
   const [isEmailSending, setIsEmailSending] = useState<string | null>(null);
   
@@ -92,6 +94,7 @@ export function RequestsList({
             onComment={() => onAction('comment', request)}
             onEmail={() => handleEmailAction(request)}
             isEmailSending={isEmailSending === request.id}
+            isReadOnly={isReadOnly}
           />
         ))}
       </TabsContent>
@@ -107,6 +110,7 @@ export function RequestsList({
               onComment={() => onAction('comment', request)}
               onEmail={() => handleEmailAction(request)}
               isEmailSending={isEmailSending === request.id}
+              isReadOnly={isReadOnly}
             />
           ))}
       </TabsContent>
@@ -122,6 +126,7 @@ export function RequestsList({
               onComment={() => onAction('comment', request)}
               onEmail={() => handleEmailAction(request)}
               isEmailSending={isEmailSending === request.id}
+              isReadOnly={isReadOnly}
             />
           ))}
       </TabsContent>
@@ -137,6 +142,7 @@ export function RequestsList({
               onComment={() => onAction('comment', request)}
               onEmail={() => handleEmailAction(request)}
               isEmailSending={isEmailSending === request.id}
+              isReadOnly={isReadOnly}
             />
           ))}
       </TabsContent>

@@ -5,9 +5,10 @@ import { RefreshCw, Plus } from "lucide-react";
 interface RequestsHeaderProps {
   onRefresh: () => void;
   onCreateRequest: () => void;
+  isReadOnly?: boolean;
 }
 
-export function RequestsHeader({ onRefresh, onCreateRequest }: RequestsHeaderProps) {
+export function RequestsHeader({ onRefresh, onCreateRequest, isReadOnly }: RequestsHeaderProps) {
   return (
     <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-3">
       <div>
@@ -23,13 +24,15 @@ export function RequestsHeader({ onRefresh, onCreateRequest }: RequestsHeaderPro
           <RefreshCw className="h-4 w-4 mr-2" />
           Refresh
         </Button>
-        <Button 
-          className="bg-mywater-blue hover:bg-mywater-blue/90 w-full md:w-auto"
-          onClick={onCreateRequest}
-        >
-          <Plus className="h-4 w-4 mr-2" />
-          Create Request
-        </Button>
+        {!isReadOnly && (
+          <Button 
+            className="bg-mywater-blue hover:bg-mywater-blue/90 w-full md:w-auto"
+            onClick={onCreateRequest}
+          >
+            <Plus className="h-4 w-4 mr-2" />
+            Create Request
+          </Button>
+        )}
       </div>
     </div>
   );
