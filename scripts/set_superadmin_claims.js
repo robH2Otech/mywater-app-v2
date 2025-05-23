@@ -9,6 +9,13 @@ admin.initializeApp({
   credential: admin.credential.cert(serviceAccount)
 });
 
+// Array of superadmin emails to set claims for
+const superadminEmails = [
+  'rob.istria@gmail.com',
+  'robert.slavec@gmail.com',
+  'aljaz.slavec@gmail.com'
+];
+
 async function setSuperadminClaims(email) {
   try {
     // Get the user by email
@@ -17,26 +24,38 @@ async function setSuperadminClaims(email) {
     // Set custom claims
     await admin.auth().setCustomUserClaims(user.uid, {
       role: 'superadmin',
-      company: 'xwater',  // Set appropriate company or null if superadmin can access all
+      company: 'xwater',  // Keep this for identification and logging purposes
       mfaEnrolled: false, // Update to true when MFA is implemented
       createdAt: new Date().toISOString()
     });
     
-    console.log(`Superadmin claims set for user: ${email}`);
+    console.log(`✓ Superadmin claims set for user: ${email}`);
     
     // Verify the claims were set
     const updatedUser = await admin.auth().getUser(user.uid);
-    console.log('Updated user claims:', updatedUser.customClaims);
+    console.log(`Claims for ${email}:`, updatedUser.customClaims);
     
     return true;
   } catch (error) {
-    console.error('Error setting superadmin claims:', error);
+    console.error(`✗ Failed to set claims for ${email}:`, error);
     return false;
   }
 }
 
-// Call the function with your email
-setSuperadminClaims('rob.istria@gmail.com')
+// Process all superadmin emails
+async function processAllSuperadmins() {
+  console.log("Setting superadmin claims for multiple users...");
+  
+  for (const email of superadminEmails) {
+    console.log(`Processing: ${email}`);
+    await setSuperadminClaims(email);
+  }
+  
+  console.log("Finished setting superadmin claims");
+}
+
+// Execute the function to process all superadmins
+processAllSuperadmins()
   .then(() => process.exit(0))
   .catch(error => {
     console.error('Script execution failed:', error);
