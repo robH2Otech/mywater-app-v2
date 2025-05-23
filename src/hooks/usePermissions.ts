@@ -1,7 +1,7 @@
-
 import { useAuth } from "@/contexts/AuthContext";
 import { PermissionLevel } from "@/contexts/AuthContext";
-import { validateTokenClaims, logAuditEvent } from "@/utils/auth/securityUtils";
+import { verifyUserClaims, refreshUserClaims } from "@/utils/admin/adminClaimsManager";
+import { logAuditEvent } from "@/utils/auth/securityUtils";
 import { useEffect, useState } from "react";
 
 export function usePermissions() {
@@ -14,7 +14,8 @@ export function usePermissions() {
     canEdit,
     canDelete,
     canManageUsers,
-    canComment
+    canComment,
+    refreshUserSession
   } = useAuth();
 
   const [secureRoleVerified, setSecureRoleVerified] = useState(false);
@@ -22,21 +23,48 @@ export function usePermissions() {
   // Verify token claims on mount for enhanced security
   useEffect(() => {
     const verifySecureClaims = async () => {
-      const { hasValidClaims, role } = await validateTokenClaims();
-      setSecureRoleVerified(hasValidClaims);
-      
-      // Log potential security issues
-      if (!hasValidClaims && userRole) {
-        logAuditEvent('security_warning', {
-          type: 'role_mismatch',
-          clientRole: userRole,
-          tokenRole: role
-        }, 'warning');
+      // First check if we have a role from the context
+      if (userRole) {
+        // Then verify it matches what's in the token
+        const { hasValidClaims, role } = await verifyUserClaims();
+        setSecureRoleVerified(hasValidClaims && role === userRole);
+        
+        // Log potential security issues
+        if (!hasValidClaims && userRole) {
+          logAuditEvent('security_warning', {
+            type: 'role_mismatch',
+            clientRole: userRole,
+            tokenRole: role
+          }, 'warning');
+          
+          // Try to refresh the token
+          console.log("Attempting to refresh token due to claims mismatch");
+          await refreshUserSession();
+        } else if (role !== userRole) {
+          logAuditEvent('security_warning', {
+            type: 'role_discrepancy',
+            clientRole: userRole,
+            tokenRole: role
+          }, 'warning');
+          
+          // Try to refresh the session to resolve the discrepancy
+          console.log("Attempting to refresh session due to role discrepancy");
+          await refreshUserSession();
+        }
+      } else {
+        // No role in context, so not verified
+        setSecureRoleVerified(false);
+        
+        // If we're logged in but have no role, try refreshing the token
+        if (!userRole && !secureRoleVerified) {
+          console.log("No role found but user appears logged in, attempting refresh");
+          await refreshUserSession();
+        }
       }
     };
     
     verifySecureClaims();
-  }, [userRole]);
+  }, [userRole, refreshUserSession, secureRoleVerified]);
 
   // Check if user has a specific role
   const hasRole = (role: string | string[]): boolean => {
@@ -134,6 +162,7 @@ export function usePermissions() {
     canSubmitRequests,
     canExportData,
     canAccessAPI,
-    secureRoleVerified
+    secureRoleVerified,
+    refreshPermissions: refreshUserSession
   };
 }

@@ -5,6 +5,7 @@ import { collection, query, where, getDocs } from "firebase/firestore";
 import { auth, db } from "@/integrations/firebase/client";
 import { User, UserRole } from "@/types/users";
 import { validateTokenClaims, useSecurityMonitor, logAuditEvent } from "@/utils/auth/securityUtils";
+import { refreshUserClaims, verifyUserClaims } from "@/utils/admin/adminClaimsManager";
 
 // Define permission levels for different roles
 export type PermissionLevel = "none" | "read" | "write" | "admin" | "full";
@@ -21,6 +22,7 @@ interface AuthContextType {
   canDelete: () => boolean;
   canManageUsers: () => boolean;
   canComment: () => boolean;
+  refreshUserSession: () => Promise<boolean>;
 }
 
 const AuthContext = createContext<AuthContextType>({
@@ -35,6 +37,7 @@ const AuthContext = createContext<AuthContextType>({
   canDelete: () => false,
   canManageUsers: () => false,
   canComment: () => false,
+  refreshUserSession: async () => false
 });
 
 export const useAuth = () => useContext(AuthContext);
@@ -46,16 +49,52 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [company, setCompany] = useState<string | null>(null);
   const { startTokenExpiryMonitor, setupActivityMonitoring, cleanupActivityMonitoring } = useSecurityMonitor();
 
+  // Refresh user session (token and claims)
+  const refreshUserSession = async (): Promise<boolean> => {
+    try {
+      if (!auth.currentUser) return false;
+      
+      // Force token refresh
+      const refreshed = await refreshUserClaims();
+      
+      if (refreshed) {
+        // Get the updated claims
+        const { hasValidClaims, role, company: updatedCompany } = await verifyUserClaims();
+        
+        if (hasValidClaims && role) {
+          setUserRole(role as UserRole);
+          setCompany(updatedCompany);
+          
+          // Log the successful refresh
+          logAuditEvent('authentication', {
+            action: 'session_refreshed',
+            role,
+            company: updatedCompany
+          });
+          
+          return true;
+        }
+      }
+      
+      return false;
+    } catch (error) {
+      console.error("Error refreshing user session:", error);
+      return false;
+    }
+  };
+
   // Fetch user details from Firestore when auth state changes
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       if (firebaseUser) {
         try {
           // First validate token claims (secure server-verified roles)
-          const { hasValidClaims, role, company: claimedCompany } = await validateTokenClaims();
+          const { hasValidClaims, role, company: claimedCompany } = await verifyUserClaims();
           
           // If valid claims exist, use them directly (secure)
           if (hasValidClaims && role) {
+            console.log("Valid claims found:", { role, company: claimedCompany });
+            
             // Query Firestore only for additional user details, not for role/permissions
             const usersRef = collection(db, "app_users_business");
             const q = query(usersRef, where("email", "==", firebaseUser.email));
@@ -83,16 +122,53 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
               setupActivityMonitoring();
             } else {
               console.error("User exists in Firebase Auth but not in Firestore");
+              // Try to refresh token - maybe claims were just added
+              await refreshUserClaims();
               setCurrentUser(null);
               setUserRole(null);
               setCompany(null);
             }
           } else {
-            // No valid claims - the user needs to be properly set up by an admin
-            console.error("User has no valid role claims in their token");
-            setCurrentUser(null);
-            setUserRole(null);
-            setCompany(null);
+            // No valid claims - try to refresh the token once
+            console.log("No valid claims found, attempting token refresh...");
+            
+            await refreshUserClaims();
+            
+            // Check claims again after refresh
+            const refreshResult = await verifyUserClaims();
+            
+            if (refreshResult.hasValidClaims && refreshResult.role) {
+              console.log("Claims obtained after refresh:", refreshResult);
+              
+              // Try to fetch Firestore data again
+              const usersRef = collection(db, "app_users_business");
+              const q = query(usersRef, where("email", "==", firebaseUser.email));
+              const querySnapshot = await getDocs(q);
+              
+              if (!querySnapshot.empty) {
+                const userData = querySnapshot.docs[0].data() as User;
+                const userWithId = { id: querySnapshot.docs[0].id, ...userData };
+                
+                setCurrentUser(userWithId);
+                setUserRole(refreshResult.role as UserRole);
+                setCompany(refreshResult.company);
+                
+                // Start security monitoring
+                startTokenExpiryMonitor();
+                setupActivityMonitoring();
+              } else {
+                console.error("User exists in Firebase Auth but not in Firestore");
+                setCurrentUser(null);
+                setUserRole(null);
+                setCompany(null);
+              }
+            } else {
+              // Still no valid claims after refresh
+              console.error("User has no valid role claims in their token even after refresh");
+              setCurrentUser(null);
+              setUserRole(null);
+              setCompany(null);
+            }
           }
         } catch (error) {
           console.error("Error fetching user data:", error);
@@ -184,6 +260,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     canDelete,
     canManageUsers,
     canComment,
+    refreshUserSession
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

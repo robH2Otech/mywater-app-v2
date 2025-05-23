@@ -6,6 +6,7 @@ import { onAuthStateChanged } from "firebase/auth";
 import { BusinessLayout } from "@/components/layout/BusinessLayout";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import { validateTokenClaims, logAuditEvent } from "@/utils/auth/securityUtils";
+import { verifyUserClaims, refreshUserClaims } from "@/utils/admin/adminClaimsManager";
 
 export const ProtectedRoute = ({ children }: { children: ReactNode }) => {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
@@ -23,8 +24,19 @@ export const ProtectedRoute = ({ children }: { children: ReactNode }) => {
       
       // For security, validate token claims
       if (user) {
-        const { hasValidClaims, role } = await validateTokenClaims();
+        // Use our enhanced claims verification
+        const { hasValidClaims, role } = await verifyUserClaims();
         setHasValidRoleClaims(hasValidClaims);
+        
+        // If no valid claims, try to refresh
+        if (!hasValidClaims) {
+          console.log("No valid claims detected on protected route, attempting refresh");
+          await refreshUserClaims();
+          
+          // Check again after refresh
+          const refreshResult = await verifyUserClaims();
+          setHasValidRoleClaims(refreshResult.hasValidClaims);
+        }
         
         // Log route access for audit trail
         logAuditEvent('route_access', {
