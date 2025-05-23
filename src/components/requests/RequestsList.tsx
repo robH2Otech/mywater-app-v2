@@ -86,7 +86,7 @@ export function RequestsList({
   const handleEmailAction = async (request: SupportRequest) => {
     try {
       // Security check - verify user can access this company's data
-      if (!canViewData(request.company || null, 'requests')) {
+      if (request.company && !canViewData(request.company || null, 'requests')) {
         logAuditEvent('security_violation', {
           type: 'unauthorized_request_access',
           action: 'email',

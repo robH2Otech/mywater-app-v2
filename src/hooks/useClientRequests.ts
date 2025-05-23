@@ -42,7 +42,7 @@ export function useClientRequests() {
   // Initial data load with company filter
   useEffect(() => {
     // Pass the company filter to ensure we only get data for the user's company
-    fetchRequests(5, company || undefined);
+    fetchRequests(5);
     
     // Track data access for audit purposes
     logAuditEvent('data_access', {
@@ -57,7 +57,7 @@ export function useClientRequests() {
     if (activeFilter) {
       console.log(`Active filter changed to: ${activeFilter}`);
       // Always pass company to ensure data isolation
-      fetchRequests(undefined, company || undefined);
+      fetchRequests();
       
       // Track filter changes for audit
       logAuditEvent('data_access', {

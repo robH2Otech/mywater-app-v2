@@ -19,6 +19,7 @@ export interface SupportRequest {
   created_at: Date;
   comments?: Comment[];
   assigned_to?: string;
+  company?: string; // Added company field
 }
 
 export interface RequestFormData {
