@@ -73,28 +73,12 @@ export function EnvironmentalKPIs({ period, showExtended = false }: Environmenta
         />
         
         {showExtended && (
-          <>
-            <ImpactCard 
-              title="Purified Water Consumed" 
-              value={`${totals.waterSaved.toLocaleString()} L`} 
-              icon={Droplet}
-              iconColor="text-blue-400"
-            />
-            
-            <ImpactCard 
-              title="Trees Equivalent" 
-              value={totals.equivalents.treesEquivalent.toString()} 
-              icon={Leaf}
-              iconColor="text-green-500"
-            />
-            
-            <ImpactCard 
-              title="Car KM Equivalent" 
-              value={`${totals.equivalents.carKilometers.toLocaleString()} km`} 
-              icon={BarChart2}
-              iconColor="text-amber-500"
-            />
-          </>
+          <ImpactCard 
+            title="Car KM Equivalent" 
+            value={`${totals.equivalents.carKilometers.toLocaleString()} km`} 
+            icon={BarChart2}
+            iconColor="text-amber-500"
+          />
         )}
       </div>
       
