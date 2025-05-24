@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { onAuthStateChanged } from "firebase/auth";
 import { collection, query, where, getDocs } from "firebase/firestore";
@@ -22,6 +21,7 @@ interface AuthContextType {
   canDelete: () => boolean;
   canManageUsers: () => boolean;
   canComment: () => boolean;
+  canViewNavItem: (navItem: string) => boolean;
   refreshUserSession: () => Promise<boolean>;
 }
 
@@ -37,6 +37,7 @@ const AuthContext = createContext<AuthContextType>({
   canDelete: () => false,
   canManageUsers: () => false,
   canComment: () => false,
+  canViewNavItem: () => false,
   refreshUserSession: async () => false
 });
 
@@ -248,6 +249,27 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return userRole !== "user"; // Only user role cannot comment on standard items
   };
 
+  // Check if user can view specific navigation items
+  const canViewNavItem = (navItem: string): boolean => {
+    const navPermissions: Record<string, string[]> = {
+      'dashboard': ['superadmin', 'admin', 'technician', 'user'],
+      'units': ['superadmin', 'admin', 'technician', 'user'],
+      'locations': ['superadmin', 'admin', 'technician', 'user'],
+      'filters': ['superadmin', 'admin', 'technician', 'user'],
+      'uvc': ['superadmin', 'admin', 'technician', 'user'],
+      'alerts': ['superadmin', 'admin', 'technician', 'user'],
+      'analytics': ['superadmin', 'admin', 'technician', 'user'],
+      'predictive': ['superadmin', 'admin', 'technician', 'user'],
+      'users': ['superadmin', 'admin'], // Only admins and superadmins can manage users
+      'client-requests': ['superadmin', 'admin', 'technician', 'user'],
+      'impact': ['superadmin', 'admin', 'technician', 'user'],
+      'settings': ['superadmin', 'admin', 'user'] // Technicians cannot access settings
+    };
+    
+    const allowedRoles = navPermissions[navItem] || [];
+    return userRole ? allowedRoles.includes(userRole) : false;
+  };
+
   const value = {
     currentUser,
     isLoading,
@@ -260,6 +282,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     canDelete,
     canManageUsers,
     canComment,
+    canViewNavItem,
     refreshUserSession
   };
 

@@ -19,6 +19,7 @@ interface UVCCardProps {
   onClick?: () => void;
   onEditClick?: (e: React.MouseEvent) => void;
   unit_type?: string;
+  readOnly?: boolean;
 }
 
 export function UVCCard({ 
@@ -31,7 +32,8 @@ export function UVCCard({
   location, 
   onClick,
   onEditClick,
-  unit_type
+  unit_type,
+  readOnly = false
 }: UVCCardProps) {
   // Calculate the percentage of UVC life used
   const percentage = calculateUVCLifePercentage(uvc_hours);
@@ -56,7 +58,7 @@ export function UVCCard({
       className="p-6 bg-spotify-darker hover:bg-spotify-accent/40 transition-colors cursor-pointer relative group"
       onClick={onClick}
     >
-      {onEditClick && (
+      {onEditClick && !readOnly && (
         <Button
           variant="ghost"
           size="icon"
