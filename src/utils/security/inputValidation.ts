@@ -78,9 +78,12 @@ export const createRequestSchema = z.object({
   company_id: companySchema
 });
 
-// Comment validation
+// Comment validation - fix the schema chain
 export const commentSchema = z.object({
-  content: textContentSchema.min(1, 'Comment cannot be empty')
+  content: z.string()
+    .min(1, 'Comment cannot be empty')
+    .max(5000, 'Content too long')
+    .transform(sanitizeInput)
 });
 
 // Validate and sanitize user input
