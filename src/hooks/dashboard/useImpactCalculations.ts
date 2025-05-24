@@ -7,6 +7,8 @@ import {
   calculateMoneySaved,
   calculateCO2Reduction,
   calculatePlasticReduction,
+  calculateEnergySaved,
+  calculateWaterWastePrevented,
   getEnvironmentalEquivalents,
   formatMetricValue
 } from "@/utils/formatUnitVolume";
@@ -20,22 +22,10 @@ export interface ImpactConfig {
   userType: 'home'; // User type affects which metrics are shown - always 'home' now
 }
 
-// Updated CO2 values per specification
-const getCO2ForBottleSize = (size: number): number => {
-  if (size === 0.5) return 160.5;
-  if (size === 1.0) return 321;
-  if (size === 1.5) return 481.5;
-  if (size === 2.0) return 642;
-  // For custom sizes, calculate proportionally based on 321g per liter
-  return size * 321;
-};
-
 // Default configuration
 const DEFAULT_CONFIG: ImpactConfig = {
   bottleSize: BOTTLE_CONFIGS.small.size,
   bottleCost: BOTTLE_CONFIGS.small.cost,
-  co2PerBottle: getCO2ForBottleSize(BOTTLE_CONFIGS.small.size),
-  plasticPerBottle: BOTTLE_CONFIGS.small.plastic,
   dailyIntake: DEFAULT_DAILY_INTAKE,
   userType: 'home'
 };
@@ -47,10 +37,7 @@ export function useImpactCalculations(
   // Merge default config with provided config
   const fullConfig: ImpactConfig = { 
     ...DEFAULT_CONFIG, 
-    ...config,
-    // Ensure CO2 is consistent with bottle size
-    co2PerBottle: config.co2PerBottle || getCO2ForBottleSize(config.bottleSize || DEFAULT_CONFIG.bottleSize),
-    plasticPerBottle: config.plasticPerBottle || (config.bottleSize || DEFAULT_CONFIG.bottleSize) * 40
+    ...config
   };
   
   // Multipliers based on selected period
@@ -72,11 +59,13 @@ export function useImpactCalculations(
   // Calculate base water consumption in liters
   const waterConsumedLiters = (fullConfig.dailyIntake || DEFAULT_DAILY_INTAKE) * periodMultiplier;
   
-  // Calculate impact values
+  // Calculate impact values using the new utility functions
   const bottlesSaved = calculateBottlesSaved(waterConsumedLiters, fullConfig.bottleSize);
   const moneySaved = calculateMoneySaved(bottlesSaved, fullConfig.bottleCost);
-  const co2Saved = calculateCO2Reduction(bottlesSaved, fullConfig.co2PerBottle);
-  const plasticSaved = calculatePlasticReduction(bottlesSaved, fullConfig.plasticPerBottle);
+  const co2Saved = calculateCO2Reduction(waterConsumedLiters);
+  const plasticSaved = calculatePlasticReduction(waterConsumedLiters);
+  const energySaved = calculateEnergySaved(waterConsumedLiters);
+  const waterWastePrevented = calculateWaterWastePrevented(waterConsumedLiters);
   
   // Get environmental equivalents
   const equivalents = getEnvironmentalEquivalents(co2Saved, plasticSaved);
@@ -103,6 +92,14 @@ export function useImpactCalculations(
         value: `${formatMetricValue(co2Saved, 'co2')} kg` 
       },
       { 
+        label: "Energy saved", 
+        value: `${formatMetricValue(energySaved, 'energy')} kWh` 
+      },
+      { 
+        label: "Water waste prevented", 
+        value: `${formatMetricValue(waterWastePrevented, 'water')} liters` 
+      },
+      { 
         label: "Estimated yearly impact", 
         value: `${formatMetricValue(bottlesSaved * yearMultiplier, 'bottles')} bottles` 
       },
@@ -127,21 +124,13 @@ export function useImpactCalculations(
         value: `${equivalents.recyclingEquivalent} kg of waste` 
       },
       { 
-        label: "Water footprint reduced", 
-        value: `${(waterConsumedLiters * 1.5).toFixed(0)} liters` 
-      },
-      { 
-        label: "Energy saved", 
-        value: `${(bottlesSaved * 2).toFixed(1)} kWh` 
-      },
-      { 
         label: "Money saved on bottled water", 
         value: `€${formatMetricValue(moneySaved, 'money')}` 
       }
     ];
     
     return details;
-  }, [bottlesSaved, waterConsumedLiters, plasticSaved, co2Saved, period, moneySaved, equivalents]);
+  }, [bottlesSaved, waterConsumedLiters, plasticSaved, co2Saved, energySaved, waterWastePrevented, period, moneySaved, equivalents]);
 
   return {
     impactDetails,
@@ -150,6 +139,8 @@ export function useImpactCalculations(
     moneySaved,
     plasticSaved,
     co2Saved,
+    energySaved,
+    waterWastePrevented,
     equivalents,
     config: fullConfig
   };

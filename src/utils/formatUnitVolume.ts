@@ -41,40 +41,58 @@ export const calculateMoneySaved = (
 };
 
 /**
- * Calculates CO2 emissions reduction
- * @param bottlesSaved - Number of bottles saved
- * @param co2PerBottle - CO2 emissions per bottle in grams (default: based on 0.5L bottle)
+ * Calculates CO2 emissions reduction (321g per liter)
+ * @param litersConsumed - Amount of water consumed in liters
  * @returns CO2 reduction in kg
  */
 export const calculateCO2Reduction = (
-  bottlesSaved: number,
-  co2PerBottle: number = 160.5 // 321g per liter for 0.5L bottle = 160.5g
+  litersConsumed: number
 ): number => {
-  return (bottlesSaved * co2PerBottle) / 1000; // Convert from g to kg
+  return (litersConsumed * 321) / 1000; // Convert from g to kg
 };
 
 /**
- * Calculates plastic waste reduction
- * @param bottlesSaved - Number of bottles saved
- * @param plasticPerBottle - Plastic per bottle in grams (default: based on 0.5L bottle)
+ * Calculates plastic waste reduction (40g per liter)
+ * @param litersConsumed - Amount of water consumed in liters
  * @returns Plastic reduction in kg
  */
 export const calculatePlasticReduction = (
-  bottlesSaved: number,
-  plasticPerBottle: number = BOTTLE_CONFIGS.small.plastic
+  litersConsumed: number
 ): number => {
-  return (bottlesSaved * plasticPerBottle) / 1000; // Convert from g to kg
+  return (litersConsumed * 40) / 1000; // Convert from g to kg
+};
+
+/**
+ * Calculates energy saved (1.55 kWh per liter)
+ * @param litersConsumed - Amount of water consumed in liters
+ * @returns Energy saved in kWh
+ */
+export const calculateEnergySaved = (
+  litersConsumed: number
+): number => {
+  return litersConsumed * 1.55;
+};
+
+/**
+ * Calculates water waste prevented (3.5L waste per 1.5L produced = 2.33L per 1L)
+ * @param litersConsumed - Amount of water consumed in liters
+ * @returns Water waste prevented in liters
+ */
+export const calculateWaterWastePrevented = (
+  litersConsumed: number
+): number => {
+  return litersConsumed * 2.33; // 3.5L waste per 1.5L produced
 };
 
 /**
  * Formats a metric value for display with appropriate units
  * @param value - Numeric value to format
- * @param metricType - Type of metric ('bottles', 'plastic', 'co2', 'money')
+ * @param metricType - Type of metric ('bottles', 'plastic', 'co2', 'money', 'energy', 'water')
  * @returns Formatted string
  */
 export const formatMetricValue = (
   value: number,
-  metricType: 'bottles' | 'plastic' | 'co2' | 'money'
+  metricType: 'bottles' | 'plastic' | 'co2' | 'money' | 'energy' | 'water'
 ): string => {
   if (value >= 1000000) {
     return `${(value / 1000000).toFixed(1)}M`;

@@ -2,11 +2,12 @@
 import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ImpactCard } from "../dashboard/private/impact/ImpactCard";
-import { BarChart2, Droplet, Leaf, Recycle } from "lucide-react";
+import { BarChart2, Droplet, Leaf, Recycle, Zap, Waves } from "lucide-react";
 import { useBusinessImpact } from "@/hooks/impact/useBusinessImpact";
 import { ChartContainer, ChartLegend, ChartLegendContent, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, ResponsiveContainer, Tooltip, Legend } from "recharts";
 import { Skeleton } from "@/components/ui/skeleton";
+import { ScientificReferences } from "./ScientificReferences";
 
 interface EnvironmentalKPIsProps {
   period: "day" | "month" | "year" | "all-time";
@@ -57,6 +58,20 @@ export function EnvironmentalKPIs({ period, showExtended = false }: Environmenta
           iconColor="text-blue-400"
         />
         
+        <ImpactCard 
+          title="Energy Saved" 
+          value={`${totals.energySaved?.toFixed(1) || '0'} kWh`} 
+          icon={Zap}
+          iconColor="text-yellow-400"
+        />
+        
+        <ImpactCard 
+          title="Water Waste Prevented" 
+          value={`${totals.waterWastePrevented?.toFixed(1) || '0'} L`} 
+          icon={Waves}
+          iconColor="text-cyan-400"
+        />
+        
         {showExtended && (
           <>
             <ImpactCard 
@@ -94,7 +109,9 @@ export function EnvironmentalKPIs({ period, showExtended = false }: Environmenta
                 config={{
                   bottles: { label: "Bottles", color: "#10b981" },
                   co2: { label: "CO₂ (kg)", color: "#0ea5e9" },
-                  plastic: { label: "Plastic (kg)", color: "#8b5cf6" }
+                  plastic: { label: "Plastic (kg)", color: "#8b5cf6" },
+                  energy: { label: "Energy (kWh)", color: "#f59e0b" },
+                  waterWaste: { label: "Water Waste (L)", color: "#06b6d4" }
                 }}
               >
                 <ResponsiveContainer width="100%" height="100%">
@@ -131,6 +148,18 @@ export function EnvironmentalKPIs({ period, showExtended = false }: Environmenta
                       name="Plastic Avoided (kg)"
                       radius={[4, 4, 0, 0]} 
                     />
+                    <Bar 
+                      dataKey="energy" 
+                      fill="var(--color-energy)" 
+                      name="Energy Saved (kWh)"
+                      radius={[4, 4, 0, 0]} 
+                    />
+                    <Bar 
+                      dataKey="waterWaste" 
+                      fill="var(--color-waterWaste)" 
+                      name="Water Waste Prevented (L)"
+                      radius={[4, 4, 0, 0]} 
+                    />
                   </BarChart>
                 </ResponsiveContainer>
               </ChartContainer>
@@ -138,6 +167,8 @@ export function EnvironmentalKPIs({ period, showExtended = false }: Environmenta
           </CardContent>
         </Card>
       )}
+      
+      <ScientificReferences />
     </div>
   );
 }
