@@ -3,7 +3,7 @@ import { onAuthStateChanged } from "firebase/auth";
 import { collection, query, where, getDocs } from "firebase/firestore";
 import { auth, db } from "@/integrations/firebase/client";
 import { User, UserRole } from "@/types/users";
-import { validateTokenClaims, useSecurityMonitor, logAuditEvent } from "@/utils/auth/securityUtils";
+import { validateTokenClaims, logAuditEvent } from "@/utils/auth/securityUtils";
 import { refreshUserClaims, verifyUserClaims } from "@/utils/admin/adminClaimsManager";
 import { useSecurityMonitor } from "@/hooks/security/useSecurityMonitor";
 import { validateInput, emailSchema } from "@/utils/security/inputValidation";
@@ -50,7 +50,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [userRole, setUserRole] = useState<UserRole | null>(null);
   const [company, setCompany] = useState<string | null>(null);
-  const [securityAlerts, setSecurityAlerts] = useState<string[]>([]);
   
   // Initialize security monitoring
   const { reportSecurityIncident, forceLogout } = useSecurityMonitor({
@@ -217,10 +216,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 company: claimedCompany,
                 security_validated: true
               });
-              
-              // Start security monitoring
-              startTokenExpiryMonitor();
-              setupActivityMonitoring();
             } else {
               console.error("User exists in Firebase Auth but not in Firestore");
               await reportSecurityIncident({
@@ -258,10 +253,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 setCurrentUser(userWithId);
                 setUserRole(refreshResult.role as UserRole);
                 setCompany(refreshResult.company);
-                
-                // Start security monitoring
-                startTokenExpiryMonitor();
-                setupActivityMonitoring();
               } else {
                 console.error("User exists in Firebase Auth but not in Firestore");
                 setCurrentUser(null);
@@ -296,7 +287,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setCurrentUser(null);
         setUserRole(null);
         setCompany(null);
-        cleanupActivityMonitoring();
       }
       
       setIsLoading(false);
@@ -304,9 +294,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     
     return () => {
       unsubscribe();
-      cleanupActivityMonitoring();
     }
-  }, []);
+  }, [reportSecurityIncident, forceLogout]);
 
   // Define permission hierarchy - updated to include user role at the lowest level
   const permissionHierarchy: Record<UserRole, PermissionLevel> = {
