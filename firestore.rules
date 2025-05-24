@@ -1,0 +1,188 @@
+
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Helper functions for security
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    function getUserRole() {
+      return request.auth.token.role;
+    }
+    
+    function getUserCompany() {
+      return request.auth.token.company;
+    }
+    
+    function isSuperAdmin() {
+      return isAuthenticated() && getUserRole() == 'superadmin';
+    }
+    
+    function isAdmin() {
+      return isAuthenticated() && (getUserRole() == 'admin' || getUserRole() == 'superadmin');
+    }
+    
+    function isTechnician() {
+      return isAuthenticated() && (getUserRole() == 'technician' || isAdmin());
+    }
+    
+    function canAccessCompany(companyId) {
+      return isSuperAdmin() || getUserCompany() == companyId;
+    }
+    
+    function isValidRole(role) {
+      return role in ['superadmin', 'admin', 'technician', 'user'];
+    }
+    
+    function isValidEmail(email) {
+      return email.matches('.*@.*\\..*');
+    }
+    
+    // Business users collection
+    match /app_users_business/{userId} {
+      allow read: if isAuthenticated() && (
+        request.auth.uid == userId || 
+        isAdmin() ||
+        (resource.data.company == getUserCompany())
+      );
+      
+      allow create: if isAdmin() && 
+        isValidRole(request.resource.data.role) &&
+        isValidEmail(request.resource.data.email) &&
+        canAccessCompany(request.resource.data.company);
+      
+      allow update: if isAdmin() && 
+        (request.auth.uid == userId || canAccessCompany(resource.data.company)) &&
+        (!('role' in request.resource.data.diff(resource.data).affectedKeys()) || isAdmin()) &&
+        isValidRole(request.resource.data.role);
+      
+      allow delete: if isSuperAdmin() || 
+        (isAdmin() && canAccessCompany(resource.data.company));
+    }
+    
+    // Private users collection
+    match /app_users_privat/{userId} {
+      allow read, write: if isAuthenticated() && request.auth.uid == userId;
+    }
+    
+    // Units collection
+    match /units/{unitId} {
+      allow read: if isAuthenticated() && 
+        (isSuperAdmin() || canAccessCompany(resource.data.company_id));
+      
+      allow create: if isTechnician() && 
+        canAccessCompany(request.resource.data.company_id) &&
+        request.resource.data.keys().hasAll(['name', 'company_id']) &&
+        request.resource.data.name is string &&
+        request.resource.data.name.size() > 0;
+      
+      allow update: if isTechnician() && 
+        canAccessCompany(resource.data.company_id) &&
+        (!('company_id' in request.resource.data.diff(resource.data).affectedKeys()) || isSuperAdmin());
+      
+      allow delete: if isAdmin() && canAccessCompany(resource.data.company_id);
+    }
+    
+    // Measurements collection
+    match /measurements/{measurementId} {
+      allow read: if isAuthenticated() && 
+        (isSuperAdmin() || canAccessCompany(resource.data.company_id));
+      
+      allow create: if isTechnician() && 
+        canAccessCompany(request.resource.data.company_id) &&
+        request.resource.data.keys().hasAll(['unit_id', 'company_id']) &&
+        request.resource.data.timestamp != null;
+      
+      allow update: if isTechnician() && 
+        canAccessCompany(resource.data.company_id);
+      
+      allow delete: if isAdmin() && canAccessCompany(resource.data.company_id);
+    }
+    
+    // Alerts collection
+    match /alerts/{alertId} {
+      allow read: if isAuthenticated() && 
+        (isSuperAdmin() || canAccessCompany(resource.data.company_id));
+      
+      allow create: if isTechnician() && 
+        canAccessCompany(request.resource.data.company_id);
+      
+      allow update: if isTechnician() && 
+        canAccessCompany(resource.data.company_id);
+      
+      allow delete: if isAdmin() && canAccessCompany(resource.data.company_id);
+    }
+    
+    // Client requests collection
+    match /client_requests/{requestId} {
+      allow read: if isAuthenticated() && 
+        (isSuperAdmin() || canAccessCompany(resource.data.company_id));
+      
+      allow create: if isAuthenticated() && 
+        canAccessCompany(request.resource.data.company_id) &&
+        request.resource.data.keys().hasAll(['title', 'description', 'company_id']) &&
+        request.resource.data.title is string &&
+        request.resource.data.title.size() > 0;
+      
+      allow update: if isAuthenticated() && 
+        canAccessCompany(resource.data.company_id);
+      
+      allow delete: if isAdmin() && canAccessCompany(resource.data.company_id);
+    }
+    
+    // Locations collection
+    match /locations/{locationId} {
+      allow read: if isAuthenticated() && 
+        (isSuperAdmin() || canAccessCompany(resource.data.company_id));
+      
+      allow create: if isTechnician() && 
+        canAccessCompany(request.resource.data.company_id);
+      
+      allow update: if isTechnician() && 
+        canAccessCompany(resource.data.company_id);
+      
+      allow delete: if isAdmin() && canAccessCompany(resource.data.company_id);
+    }
+    
+    // Filters collection
+    match /filters/{filterId} {
+      allow read: if isAuthenticated() && 
+        (isSuperAdmin() || canAccessCompany(resource.data.company_id));
+      
+      allow create: if isTechnician() && 
+        canAccessCompany(request.resource.data.company_id);
+      
+      allow update: if isTechnician() && 
+        canAccessCompany(resource.data.company_id);
+      
+      allow delete: if isAdmin() && canAccessCompany(resource.data.company_id);
+    }
+    
+    // Reports collection
+    match /reports/{reportId} {
+      allow read: if isAuthenticated() && 
+        (isSuperAdmin() || canAccessCompany(resource.data.company_id));
+      
+      allow create: if isTechnician() && 
+        canAccessCompany(request.resource.data.company_id);
+      
+      allow update: if isTechnician() && 
+        canAccessCompany(resource.data.company_id);
+      
+      allow delete: if isAdmin() && canAccessCompany(resource.data.company_id);
+    }
+    
+    // Audit logs - only superadmins can access
+    match /audit_logs/{logId} {
+      allow read: if isSuperAdmin();
+      allow create: if isAuthenticated(); // Allow system to create logs
+      allow update, delete: if false; // Audit logs are immutable
+    }
+    
+    // Deny all other access
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

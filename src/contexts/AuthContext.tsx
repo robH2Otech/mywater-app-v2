@@ -5,6 +5,8 @@ import { auth, db } from "@/integrations/firebase/client";
 import { User, UserRole } from "@/types/users";
 import { validateTokenClaims, useSecurityMonitor, logAuditEvent } from "@/utils/auth/securityUtils";
 import { refreshUserClaims, verifyUserClaims } from "@/utils/admin/adminClaimsManager";
+import { useSecurityMonitor } from "@/hooks/security/useSecurityMonitor";
+import { validateInput, emailSchema } from "@/utils/security/inputValidation";
 
 // Define permission levels for different roles
 export type PermissionLevel = "none" | "read" | "write" | "admin" | "full";
@@ -48,12 +50,65 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [userRole, setUserRole] = useState<UserRole | null>(null);
   const [company, setCompany] = useState<string | null>(null);
-  const { startTokenExpiryMonitor, setupActivityMonitoring, cleanupActivityMonitoring } = useSecurityMonitor();
+  const [securityAlerts, setSecurityAlerts] = useState<string[]>([]);
+  
+  // Initialize security monitoring
+  const { reportSecurityIncident, forceLogout } = useSecurityMonitor({
+    maxInactivityTime: 30 * 60 * 1000, // 30 minutes
+    maxSessionTime: 8 * 60 * 60 * 1000, // 8 hours
+    detectAnomalies: true
+  });
 
-  // Refresh user session (token and claims)
+  // Enhanced session validation
+  const validateSecureSession = async (): Promise<boolean> => {
+    try {
+      const user = auth.currentUser;
+      if (!user) return false;
+
+      // Validate token claims
+      const { hasValidClaims, role, company: claimedCompany } = await verifyUserClaims();
+      
+      if (!hasValidClaims) {
+        await reportSecurityIncident({
+          type: 'invalid_token_claims',
+          details: { user_id: user.uid },
+          severity: 'warning'
+        });
+        return false;
+      }
+
+      // Check for role escalation attempts
+      if (userRole && role !== userRole) {
+        await reportSecurityIncident({
+          type: 'role_escalation_attempt',
+          details: { 
+            user_id: user.uid, 
+            current_role: userRole, 
+            claimed_role: role 
+          },
+          severity: 'critical'
+        });
+        await forceLogout('Role escalation detected');
+        return false;
+      }
+
+      return true;
+    } catch (error) {
+      console.error('Session validation failed:', error);
+      return false;
+    }
+  };
+
+  // Enhanced refresh user session with security checks
   const refreshUserSession = async (): Promise<boolean> => {
     try {
       if (!auth.currentUser) return false;
+      
+      // Validate current session first
+      const isSessionValid = await validateSecureSession();
+      if (!isSessionValid) {
+        return false;
+      }
       
       // Force token refresh
       const refreshed = await refreshUserClaims();
@@ -70,7 +125,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           logAuditEvent('authentication', {
             action: 'session_refreshed',
             role,
-            company: updatedCompany
+            company: updatedCompany,
+            security_validated: true
           });
           
           return true;
@@ -80,15 +136,43 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       return false;
     } catch (error) {
       console.error("Error refreshing user session:", error);
+      await reportSecurityIncident({
+        type: 'session_refresh_failed',
+        details: { error: (error as Error).message },
+        severity: 'warning'
+      });
       return false;
     }
   };
 
-  // Fetch user details from Firestore when auth state changes
+  // Fetch user details with enhanced security validation
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       if (firebaseUser) {
         try {
+          // Enhanced security validation
+          const securityCheck = await validateSecureSession();
+          if (!securityCheck) {
+            setCurrentUser(null);
+            setUserRole(null);
+            setCompany(null);
+            setIsLoading(false);
+            return;
+          }
+
+          // Validate email format for security
+          try {
+            validateInput(emailSchema, firebaseUser.email);
+          } catch (error) {
+            await reportSecurityIncident({
+              type: 'invalid_email_format',
+              details: { user_id: firebaseUser.uid, email: firebaseUser.email },
+              severity: 'warning'
+            });
+            await forceLogout('Invalid email format detected');
+            return;
+          }
+
           // First validate token claims (secure server-verified roles)
           const { hasValidClaims, role, company: claimedCompany } = await verifyUserClaims();
           
@@ -105,17 +189,33 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
               const userData = querySnapshot.docs[0].data() as User;
               const userWithId = { id: querySnapshot.docs[0].id, ...userData };
               
+              // Security check: ensure Firestore role matches token role
+              if (userData.role !== role) {
+                await reportSecurityIncident({
+                  type: 'role_mismatch_firestore_token',
+                  details: {
+                    user_id: firebaseUser.uid,
+                    firestore_role: userData.role,
+                    token_role: role
+                  },
+                  severity: 'critical'
+                });
+                await forceLogout('Security violation: Role mismatch detected');
+                return;
+              }
+              
               setCurrentUser(userWithId);
               // Use secure role from token claims, not from Firestore
               setUserRole(role as UserRole);
               setCompany(claimedCompany);
               
-              // Log successful authentication
+              // Log successful authentication with security validation
               logAuditEvent('user_authenticated', {
                 user_id: firebaseUser.uid,
                 email: firebaseUser.email,
                 role,
-                company: claimedCompany
+                company: claimedCompany,
+                security_validated: true
               });
               
               // Start security monitoring
@@ -123,6 +223,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
               setupActivityMonitoring();
             } else {
               console.error("User exists in Firebase Auth but not in Firestore");
+              await reportSecurityIncident({
+                type: 'user_not_in_firestore',
+                details: { user_id: firebaseUser.uid, email: firebaseUser.email },
+                severity: 'warning'
+              });
               // Try to refresh token - maybe claims were just added
               await refreshUserClaims();
               setCurrentUser(null);
@@ -166,6 +271,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             } else {
               // Still no valid claims after refresh
               console.error("User has no valid role claims in their token even after refresh");
+              await reportSecurityIncident({
+                type: 'no_valid_claims_after_refresh',
+                details: { user_id: firebaseUser.uid },
+                severity: 'critical'
+              });
               setCurrentUser(null);
               setUserRole(null);
               setCompany(null);
@@ -173,6 +283,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           }
         } catch (error) {
           console.error("Error fetching user data:", error);
+          await reportSecurityIncident({
+            type: 'user_data_fetch_error',
+            details: { error: (error as Error).message },
+            severity: 'warning'
+          });
           setCurrentUser(null);
           setUserRole(null);
           setCompany(null);
