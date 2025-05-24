@@ -1,4 +1,3 @@
-
 import { ReactNode, useEffect, useState } from "react";
 import { Navigate, useLocation } from "react-router-dom";
 import { auth } from "@/integrations/firebase/client";
@@ -18,27 +17,21 @@ export const ProtectedRoute = ({ children }: { children: ReactNode }) => {
     const tempAccess = localStorage.getItem('tempAccess') === 'true';
     setIsTempAccess(tempAccess);
 
-    // Use Firebase authentication directly
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       setIsAuthenticated(!!user);
       
-      // For security, validate token claims
       if (user) {
-        // Use our enhanced claims verification
         const { hasValidClaims, role } = await verifyUserClaims();
         setHasValidRoleClaims(hasValidClaims);
         
-        // If no valid claims, try to refresh
         if (!hasValidClaims) {
           console.log("No valid claims detected on protected route, attempting refresh");
           await refreshUserClaims();
           
-          // Check again after refresh
           const refreshResult = await verifyUserClaims();
           setHasValidRoleClaims(refreshResult.hasValidClaims);
         }
         
-        // Log route access for audit trail
         logAuditEvent('route_access', {
           path: location.pathname,
           role: role,
@@ -67,16 +60,12 @@ export const ProtectedRoute = ({ children }: { children: ReactNode }) => {
     return <Navigate to="/auth" />;
   }
   
-  // Additional security check - if authenticated but no valid role claims
-  // Force logout and redirect to auth page
   if (isAuthenticated && hasValidRoleClaims === false) {
-    // Log security issue
     logAuditEvent('security_violation', {
       type: 'missing_role_claims',
       path: location.pathname
     }, 'warning');
     
-    // Force logout
     auth.signOut().then(() => {
       return <Navigate to="/auth" state={{ securityIssue: true }} />;
     });
@@ -91,7 +80,6 @@ export const ProtectedRoute = ({ children }: { children: ReactNode }) => {
     );
   }
 
-  // Wrap the children with AuthProvider and BusinessLayout
   return (
     <AuthProvider>
       <RoleBasedRouteGuard>
@@ -101,12 +89,11 @@ export const ProtectedRoute = ({ children }: { children: ReactNode }) => {
   );
 };
 
-// Role-based route guard with enhanced security
+// Enhanced role-based route guard with comprehensive restrictions
 const RoleBasedRouteGuard = ({ children }: { children: ReactNode }) => {
   const location = useLocation();
-  const { userRole, isLoading, company } = useAuth();
+  const { userRole, isLoading, company, canViewNavItem } = useAuth();
   
-  // Still loading auth state
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -118,30 +105,33 @@ const RoleBasedRouteGuard = ({ children }: { children: ReactNode }) => {
     );
   }
   
-  // Enhanced restriction tables for different roles
-  const restrictedRoutes = {
-    user: ['/users', '/maintenance', '/admin'],
-    technician: ['/admin'],
-    admin: [], // Admins can access everything except superadmin routes
-    superadmin: [] // Superadmins can access everything
+  // Enhanced route-to-permission mapping
+  const routePermissions: Record<string, string> = {
+    '/dashboard': 'dashboard',
+    '/units': 'units',
+    '/locations': 'locations',
+    '/filters': 'filters',
+    '/uvc': 'uvc',
+    '/alerts': 'alerts',
+    '/analytics': 'analytics',
+    '/users': 'users',
+    '/client-requests': 'client-requests',
+    '/impact': 'impact',
+    '/settings': 'settings'
   };
   
-  // Get restricted routes for current user role
-  const currentRoleRestrictions = userRole ? restrictedRoutes[userRole] || [] : [];
+  // Get the base path for permission checking
+  const basePath = location.pathname.split('/')[1] ? `/${location.pathname.split('/')[1]}` : location.pathname;
+  const requiredPermission = routePermissions[basePath];
   
-  // Check if current path is restricted for user role
-  const isRestrictedRoute = currentRoleRestrictions.some(route => 
-    location.pathname.startsWith(route)
-  );
-  
-  // Redirect if user is trying to access a restricted route
-  if (isRestrictedRoute) {
-    // Log security violation attempt
+  // Check if user can view this route
+  if (requiredPermission && !canViewNavItem(requiredPermission)) {
     logAuditEvent('security_violation', {
       type: 'unauthorized_route_access',
       path: location.pathname,
       role: userRole,
-      company
+      company,
+      requiredPermission
     }, 'warning');
     
     return <Navigate to="/dashboard" />;
@@ -153,15 +143,10 @@ const RoleBasedRouteGuard = ({ children }: { children: ReactNode }) => {
     twoFactorRequiredRoutes.some(route => location.pathname.startsWith(route));
   
   if (needsTwoFactor) {
-    // In a real implementation, check if 2FA is verified for this session
-    // For now, just log the event
     logAuditEvent('2fa_required', {
       path: location.pathname,
       role: userRole
     });
-    
-    // In a real implementation, redirect to 2FA verification
-    // return <Navigate to="/verify-2fa" state={{ returnUrl: location.pathname }} />;
   }
   
   return <>{children}</>;
@@ -175,7 +160,6 @@ export const PrivateProtectedRoute = ({ children }: { children: ReactNode }) => 
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       setIsAuthenticated(!!user);
       
-      // Log private route access
       if (user) {
         logAuditEvent('private_route_access', {
           path: location.pathname,

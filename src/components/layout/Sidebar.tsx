@@ -6,11 +6,17 @@ import { auth } from "@/integrations/firebase/client";
 import { useNavigate } from "react-router-dom";
 import { usePermissions } from "@/hooks/usePermissions";
 
-// We'll use our own components instead of importing from non-existent files
 export function Sidebar() {
   const location = useLocation();
   const navigate = useNavigate();
-  const { userRole, isCompanyUser, canManageUsers } = usePermissions();
+  const { 
+    userRole, 
+    canViewNavItem, 
+    isSuperAdmin, 
+    isAdmin, 
+    isTechnician, 
+    isCompanyUser 
+  } = usePermissions();
 
   const handleLogout = async () => {
     try {
@@ -21,79 +27,79 @@ export function Sidebar() {
     }
   };
 
-  // Define menu items with role-based visibility
+  // Define menu items with role-based visibility using the permission system
   const menuItems = [
     { 
       to: "/dashboard", 
       icon: <LayoutDashboard size={16} />,
       text: "Dashboard",
-      visible: true // Visible to all roles
+      visible: canViewNavItem('dashboard')
     },
     { 
       to: "/units", 
       icon: <Droplet size={16} />,
       text: "Water Units",
-      visible: true // Visible to all roles
+      visible: canViewNavItem('units')
     },
     { 
       to: "/locations", 
       icon: <MapPin size={16} />,
       text: "Units Location",
-      visible: true // Visible to all roles
+      visible: canViewNavItem('locations')
     },
     { 
       to: "/filters", 
       icon: <Filter size={16} />,
       text: "Filters",
-      visible: true // Visible to all roles
+      visible: canViewNavItem('filters')
     },
     { 
       to: "/uvc", 
       icon: <Zap size={16} />,
       text: "UVC",
-      visible: true // Visible to all roles
+      visible: canViewNavItem('uvc')
     },
     { 
       to: "/alerts", 
       icon: <Bell size={16} />,
       text: "Alerts",
-      visible: true // Visible to all roles
+      visible: canViewNavItem('alerts')
     },
     { 
       to: "/analytics", 
       icon: <BarChart2 size={16} />,
       text: "Analytics",
-      visible: true // Visible to all roles
+      visible: canViewNavItem('analytics')
     },
     { 
       to: "/analytics?tab=predictive", 
       icon: <Activity size={16} />,
       text: "Predictive Maintenance",
-      visible: true // Visible to all roles 
+      visible: canViewNavItem('predictive')
     },
     { 
       to: "/users", 
       icon: <Users size={16} />,
       text: "Users",
-      visible: !isCompanyUser() && canManageUsers() // Not visible to company users
+      visible: canViewNavItem('users') // Only admins and superadmins
     },
     { 
       to: "/client-requests", 
       icon: <MessageSquare size={16} />,
       text: "Client Requests",
-      visible: true // Visible to all roles, but with different access levels
+      visible: canViewNavItem('client-requests')
     },
     { 
       to: "/impact", 
       icon: <Droplet size={16} />,
       text: "Impact",
-      visible: true // Visible to all roles
+      visible: canViewNavItem('impact')
     }
   ];
 
   return (
     <aside className="w-60 bg-spotify-darker text-white border-r border-gray-800 hidden md:block fixed h-full overflow-y-auto z-20">
-      <SidebarHeader />
+      <SidebarHeader userRole={userRole} />
       
       <div className="flex flex-col p-3 h-[calc(100%-60px)]">
         <nav className="space-y-1 flex-1">
@@ -116,13 +122,16 @@ export function Sidebar() {
         </nav>
         
         <div className="mt-auto">
-          <SidebarNavItem 
-            to="/settings" 
-            icon={<Settings size={16} />} 
-            isActive={location.pathname === "/settings"}
-          >
-            Settings
-          </SidebarNavItem>
+          {/* Settings only visible to non-technicians */}
+          {canViewNavItem('settings') && (
+            <SidebarNavItem 
+              to="/settings" 
+              icon={<Settings size={16} />} 
+              isActive={location.pathname === "/settings"}
+            >
+              Settings
+            </SidebarNavItem>
+          )}
           <button
             onClick={handleLogout}
             className="w-full flex items-center gap-3 px-4 py-3 mt-2 rounded-md transition-colors text-gray-400 hover:text-white hover:bg-red-600/20 border border-transparent hover:border-red-600/30 bg-white/5"
@@ -157,17 +166,32 @@ function SidebarNavItem({ to, icon, isActive, children }: { to: string; icon: Re
   );
 }
 
-// Internal component for SidebarHeader
-function SidebarHeader() {
+// Internal component for SidebarHeader with role indicator
+function SidebarHeader({ userRole }: { userRole: string | null }) {
+  const getRoleColor = (role: string | null) => {
+    switch (role) {
+      case 'superadmin': return 'text-red-400';
+      case 'admin': return 'text-yellow-400';
+      case 'technician': return 'text-blue-400';
+      case 'user': return 'text-green-400';
+      default: return 'text-gray-400';
+    }
+  };
+
   return (
     <div className="p-4 border-b border-gray-800">
-      <div className="flex items-center">
+      <div className="flex items-center justify-between">
         <div className="flex items-center">
           <div className="h-8 w-8 rounded-md bg-gradient-to-r from-blue-600 to-blue-400 flex items-center justify-center mr-2">
             <Droplet className="h-5 w-5 text-white" />
           </div>
           <span className="text-white font-bold text-lg">X-WATER</span>
         </div>
+        {userRole && (
+          <div className={`text-xs px-2 py-1 rounded ${getRoleColor(userRole)} bg-white/10`}>
+            {userRole.toUpperCase()}
+          </div>
+        )}
       </div>
     </div>
   );
