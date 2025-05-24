@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useMemo } from "react";
 import { useImpactCalculations } from "@/hooks/dashboard/useImpactCalculations";
 import { useUnits } from "@/hooks/useUnits";
@@ -9,6 +8,8 @@ interface BusinessImpactData {
   co2Saved: number;
   plasticSaved: number;
   waterSaved: number;
+  energySaved: number;
+  waterWastePrevented: number;
   equivalents: {
     treesEquivalent: number;
     carKilometers: number;
@@ -34,7 +35,7 @@ interface UnitStatusData {
 export function useBusinessImpact(period: "day" | "month" | "year" | "all-time" = "year") {
   const [isLoading, setIsLoading] = useState(true);
   const { data: units = [], isLoading: unitsLoading } = useUnits();
-  const { bottlesSaved, co2Saved, plasticSaved, waterSaved, equivalents } = useImpactCalculations(period);
+  const { bottlesSaved, co2Saved, plasticSaved, waterSaved, energySaved, waterWastePrevented, equivalents } = useImpactCalculations(period);
   
   // Mock data for the business impact metrics
   const totals: BusinessImpactData = useMemo(() => {
@@ -46,6 +47,8 @@ export function useBusinessImpact(period: "day" | "month" | "year" | "all-time" 
       co2Saved: co2Saved * multiplier,
       plasticSaved: plasticSaved * multiplier,
       waterSaved: waterSaved * multiplier,
+      energySaved: energySaved * multiplier,
+      waterWastePrevented: waterWastePrevented * multiplier,
       equivalents: {
         treesEquivalent: Math.round(equivalents.treesEquivalent * multiplier),
         carKilometers: Math.round(equivalents.carKilometers * multiplier),
@@ -53,7 +56,7 @@ export function useBusinessImpact(period: "day" | "month" | "year" | "all-time" 
         recyclingEquivalent: Math.round(equivalents.recyclingEquivalent * multiplier)
       }
     };
-  }, [bottlesSaved, co2Saved, plasticSaved, waterSaved, equivalents, units, period]);
+  }, [bottlesSaved, co2Saved, plasticSaved, waterSaved, energySaved, waterWastePrevented, equivalents, units, period]);
   
   // Mock data for environmental impact chart
   const chartData = useMemo(() => {
@@ -62,7 +65,9 @@ export function useBusinessImpact(period: "day" | "month" | "year" | "all-time" 
       name: month,
       bottles: Math.round(Math.random() * 5000 + 1000),
       co2: Math.round((Math.random() * 500 + 100) * 10) / 10,
-      plastic: Math.round((Math.random() * 200 + 50) * 10) / 10
+      plastic: Math.round((Math.random() * 200 + 50) * 10) / 10,
+      energy: Math.round((Math.random() * 1000 + 200) * 10) / 10,
+      waterWaste: Math.round((Math.random() * 2000 + 500) * 10) / 10
     }));
   }, [period]);
   

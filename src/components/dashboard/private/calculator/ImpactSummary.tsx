@@ -28,11 +28,11 @@ export function ImpactSummary({ period, config }: ImpactSummaryProps) {
   // Calculate base water consumption
   const waterConsumedLiters = config.dailyIntake * periodMultiplier;
   
-  // Calculate metrics
+  // Calculate metrics - only pass liters consumed
   const bottlesSaved = calculateBottlesSaved(waterConsumedLiters, config.bottleSize);
   const moneySaved = calculateMoneySaved(bottlesSaved, config.bottleCost);
-  const co2Saved = calculateCO2Reduction(bottlesSaved, config.bottleSize * 321); // 321g CO2 per liter
-  const plasticSaved = calculatePlasticReduction(bottlesSaved, config.bottleSize * 40); // 40g plastic per liter
+  const co2Saved = calculateCO2Reduction(waterConsumedLiters);
+  const plasticSaved = calculatePlasticReduction(waterConsumedLiters);
 
   return (
     <div className="space-y-6">

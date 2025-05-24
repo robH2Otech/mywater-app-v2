@@ -1,3 +1,4 @@
+
 import { useMemo } from "react";
 import { Card } from "@/components/ui/card";
 import { calculateBottlesSaved, calculateCO2Reduction, calculatePlasticReduction } from "@/utils/formatUnitVolume";
@@ -27,10 +28,10 @@ export function CO2Impact({ period, config }: CO2ImpactProps) {
   // Calculate base water consumption
   const waterConsumedLiters = config.dailyIntake * periodMultiplier;
   
-  // Calculate metrics
+  // Calculate metrics - only pass liters consumed
   const bottlesSaved = calculateBottlesSaved(waterConsumedLiters, config.bottleSize);
-  const co2Saved = calculateCO2Reduction(bottlesSaved, config.bottleSize * 321); // 321g CO2 per liter
-  const plasticSaved = calculatePlasticReduction(bottlesSaved, config.bottleSize * 40); // 40g plastic per liter
+  const co2Saved = calculateCO2Reduction(waterConsumedLiters);
+  const plasticSaved = calculatePlasticReduction(waterConsumedLiters);
   
   // Calculate equivalents
   const carKilometers = co2Saved * 6; // 6km per kg of CO2
