@@ -24,19 +24,19 @@ export class DataProtection {
     }
   }
 
-  // Data anonymization for analytics
+  // Data anonymization for analytics - Fixed generic type constraints
   static anonymizeData<T extends Record<string, any>>(data: T): T {
-    const anonymized = { ...data };
+    const anonymized = { ...data } as { [K in keyof T]: T[K] };
     
     // Fields to anonymize
-    const sensitiveFields = ['email', 'phone', 'first_name', 'last_name', 'address'];
+    const sensitiveFields = ['email', 'phone', 'first_name', 'last_name', 'address'] as const;
     
     sensitiveFields.forEach(field => {
       if (field in anonymized && anonymized[field]) {
         if (field === 'email') {
-          anonymized[field] = this.hashField(anonymized[field]);
+          (anonymized as any)[field] = this.hashField(String(anonymized[field]));
         } else {
-          anonymized[field] = '[REDACTED]';
+          (anonymized as any)[field] = '[REDACTED]';
         }
       }
     });

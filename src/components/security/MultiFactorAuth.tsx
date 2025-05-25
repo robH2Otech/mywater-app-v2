@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -38,17 +37,12 @@ export function MultiFactorAuth({ onComplete }: MFASetupProps) {
     );
   };
 
-  // Setup phone MFA
+  // Setup phone MFA - Fixed Firebase API usage
   const setupPhoneMFA = async () => {
     if (!firebaseUser) return;
     
     setIsLoading(true);
     try {
-      // Initialize RecaptchaVerifier
-      const recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
-        size: 'invisible'
-      });
-
       const multiFactorSession = await multiFactor(firebaseUser).getSession();
       const phoneAuthCredential = PhoneAuthProvider.credential(verificationId, verificationCode);
       const multiFactorAssertion = PhoneMultiFactorGenerator.assertion(phoneAuthCredential);
@@ -75,7 +69,7 @@ export function MultiFactorAuth({ onComplete }: MFASetupProps) {
     }
   };
 
-  // Send verification code
+  // Send verification code - Fixed Firebase API usage
   const sendVerificationCode = async () => {
     if (!firebaseUser || !phoneNumber) return;
     
@@ -89,7 +83,10 @@ export function MultiFactorAuth({ onComplete }: MFASetupProps) {
       const phoneAuthProvider = new PhoneAuthProvider(auth);
       
       const verId = await phoneAuthProvider.verifyPhoneNumber(
-        phoneNumber,
+        {
+          phoneNumber: phoneNumber,
+          session: multiFactorSession
+        },
         recaptchaVerifier
       );
       

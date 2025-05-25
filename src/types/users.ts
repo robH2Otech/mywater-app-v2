@@ -14,6 +14,9 @@ export interface AppUser {
   updated_at?: string;
 }
 
+// Export User as an alias to AppUser for backward compatibility
+export type User = AppUser;
+
 export type UserRole = "superadmin" | "admin" | "technician" | "user";
 export type UserStatus = "active" | "inactive" | "pending";
 
