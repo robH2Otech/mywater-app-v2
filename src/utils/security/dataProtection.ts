@@ -32,7 +32,7 @@ export class DataProtection {
     const sensitiveFields = ['email', 'phone', 'first_name', 'last_name', 'address'];
     
     sensitiveFields.forEach(field => {
-      if (anonymized[field]) {
+      if (field in anonymized && anonymized[field]) {
         if (field === 'email') {
           anonymized[field] = this.hashField(anonymized[field]);
         } else {
@@ -127,6 +127,3 @@ export class DataProtection {
     return Array.from(array, byte => byte.toString(16).padStart(2, '0')).join('');
   }
 }
-
-// Add crypto-js dependency
-// This would be added via package.json in a real implementation

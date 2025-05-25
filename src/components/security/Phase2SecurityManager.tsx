@@ -23,24 +23,24 @@ import { advancedSecurityMonitor } from '@/utils/security/advancedSecurityMonito
 
 export function Phase2SecurityManager() {
   const { toast } = useToast();
-  const { currentUser, userRole } = useAuth();
+  const { firebaseUser, userRole } = useAuth();
   const [activeTab, setActiveTab] = useState('dashboard');
   const [isLoading, setIsLoading] = useState(false);
 
   // Handle GDPR data export
   const handleDataExport = async () => {
-    if (!currentUser) return;
+    if (!firebaseUser) return;
     
     setIsLoading(true);
     try {
-      const exportData = await ComplianceManager.exportUserData(currentUser.uid);
+      const exportData = await ComplianceManager.exportUserData(firebaseUser.uid);
       
       // Create download link
       const blob = new Blob([exportData], { type: 'application/json' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `user-data-export-${currentUser.uid}-${new Date().toISOString().split('T')[0]}.json`;
+      a.download = `user-data-export-${firebaseUser.uid}-${new Date().toISOString().split('T')[0]}.json`;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
@@ -63,7 +63,7 @@ export function Phase2SecurityManager() {
 
   // Handle account deletion request
   const handleAccountDeletion = async () => {
-    if (!currentUser) return;
+    if (!firebaseUser) return;
     
     if (!confirm('Are you sure you want to delete your account? This action cannot be undone.')) {
       return;
@@ -72,7 +72,7 @@ export function Phase2SecurityManager() {
     setIsLoading(true);
     try {
       const deleted = await ComplianceManager.deleteUserData(
-        currentUser.uid, 
+        firebaseUser.uid, 
         'User requested account deletion'
       );
       
@@ -147,8 +147,8 @@ export function Phase2SecurityManager() {
   const testSecurityMonitoring = async () => {
     try {
       // Simulate security events
-      await advancedSecurityMonitor.detectGeoAnomaly(currentUser?.uid || 'test-user');
-      await advancedSecurityMonitor.detectDeviceChange(currentUser?.uid || 'test-user');
+      await advancedSecurityMonitor.detectGeoAnomaly(firebaseUser?.uid || 'test-user');
+      await advancedSecurityMonitor.detectDeviceChange(firebaseUser?.uid || 'test-user');
       
       toast({
         title: 'Security Test Complete',

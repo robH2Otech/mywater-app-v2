@@ -1,8 +1,8 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
-import { onAuthStateChanged } from "firebase/auth";
+import { onAuthStateChanged, User as FirebaseUser } from "firebase/auth";
 import { collection, query, where, getDocs } from "firebase/firestore";
 import { auth, db } from "@/integrations/firebase/client";
-import { User, UserRole } from "@/types/users";
+import { AppUser, UserRole } from "@/types/users";
 import { validateTokenClaims, logAuditEvent } from "@/utils/auth/securityUtils";
 import { refreshUserClaims, verifyUserClaims } from "@/utils/admin/adminClaimsManager";
 import { useSecurityMonitor } from "@/hooks/security/useSecurityMonitor";
@@ -12,7 +12,8 @@ import { validateInput, emailSchema } from "@/utils/security/inputValidation";
 export type PermissionLevel = "none" | "read" | "write" | "admin" | "full";
 
 interface AuthContextType {
-  currentUser: User | null;
+  currentUser: AppUser | null;
+  firebaseUser: FirebaseUser | null;
   isLoading: boolean;
   userRole: UserRole | null;
   company: string | null;
@@ -29,6 +30,7 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType>({
   currentUser: null,
+  firebaseUser: null,
   isLoading: true,
   userRole: null,
   company: null,
@@ -46,7 +48,8 @@ const AuthContext = createContext<AuthContextType>({
 export const useAuth = () => useContext(AuthContext);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [currentUser, setCurrentUser] = useState<User | null>(null);
+  const [currentUser, setCurrentUser] = useState<AppUser | null>(null);
+  const [firebaseUser, setFirebaseUser] = useState<FirebaseUser | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [userRole, setUserRole] = useState<UserRole | null>(null);
   const [company, setCompany] = useState<string | null>(null);
@@ -147,6 +150,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   // Fetch user details with enhanced security validation
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+      setFirebaseUser(firebaseUser);
+      
       if (firebaseUser) {
         try {
           // Enhanced security validation
@@ -185,7 +190,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             const querySnapshot = await getDocs(q);
             
             if (!querySnapshot.empty) {
-              const userData = querySnapshot.docs[0].data() as User;
+              const userData = querySnapshot.docs[0].data() as AppUser;
               const userWithId = { id: querySnapshot.docs[0].id, ...userData };
               
               // Security check: ensure Firestore role matches token role
@@ -247,7 +252,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
               const querySnapshot = await getDocs(q);
               
               if (!querySnapshot.empty) {
-                const userData = querySnapshot.docs[0].data() as User;
+                const userData = querySnapshot.docs[0].data() as AppUser;
                 const userWithId = { id: querySnapshot.docs[0].id, ...userData };
                 
                 setCurrentUser(userWithId);
@@ -376,6 +381,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const value = {
     currentUser,
+    firebaseUser,
     isLoading,
     userRole,
     company,

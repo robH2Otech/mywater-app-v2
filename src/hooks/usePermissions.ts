@@ -1,4 +1,3 @@
-
 import { useAuth } from "@/contexts/AuthContext";
 import { PermissionLevel } from "@/contexts/AuthContext";
 import { verifyUserClaims, refreshUserClaims } from "@/utils/admin/adminClaimsManager";

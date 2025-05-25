@@ -20,7 +20,7 @@ interface MFASetupProps {
 
 export function MultiFactorAuth({ onComplete }: MFASetupProps) {
   const { toast } = useToast();
-  const { currentUser, userRole } = useAuth();
+  const { firebaseUser, userRole } = useAuth();
   const [step, setStep] = useState<'choose' | 'phone' | 'verify' | 'backup'>('choose');
   const [phoneNumber, setPhoneNumber] = useState('');
   const [verificationCode, setVerificationCode] = useState('');
@@ -40,7 +40,7 @@ export function MultiFactorAuth({ onComplete }: MFASetupProps) {
 
   // Setup phone MFA
   const setupPhoneMFA = async () => {
-    if (!currentUser) return;
+    if (!firebaseUser) return;
     
     setIsLoading(true);
     try {
@@ -49,11 +49,11 @@ export function MultiFactorAuth({ onComplete }: MFASetupProps) {
         size: 'invisible'
       });
 
-      const multiFactorSession = await multiFactor(currentUser).getSession();
+      const multiFactorSession = await multiFactor(firebaseUser).getSession();
       const phoneAuthCredential = PhoneAuthProvider.credential(verificationId, verificationCode);
       const multiFactorAssertion = PhoneMultiFactorGenerator.assertion(phoneAuthCredential);
       
-      await multiFactor(currentUser).enroll(multiFactorAssertion, multiFactorSession);
+      await multiFactor(firebaseUser).enroll(multiFactorAssertion, multiFactorSession);
       
       toast({
         title: 'MFA Enabled',
@@ -77,7 +77,7 @@ export function MultiFactorAuth({ onComplete }: MFASetupProps) {
 
   // Send verification code
   const sendVerificationCode = async () => {
-    if (!currentUser || !phoneNumber) return;
+    if (!firebaseUser || !phoneNumber) return;
     
     setIsLoading(true);
     try {
@@ -85,13 +85,13 @@ export function MultiFactorAuth({ onComplete }: MFASetupProps) {
         size: 'invisible'
       });
 
-      const multiFactorSession = await multiFactor(currentUser).getSession();
+      const multiFactorSession = await multiFactor(firebaseUser).getSession();
       const phoneAuthProvider = new PhoneAuthProvider(auth);
       
-      const verId = await phoneAuthProvider.verifyPhoneNumber({
+      const verId = await phoneAuthProvider.verifyPhoneNumber(
         phoneNumber,
-        session: multiFactorSession
-      }, recaptchaVerifier);
+        recaptchaVerifier
+      );
       
       setVerificationId(verId);
       setStep('verify');
@@ -257,17 +257,17 @@ export function MultiFactorAuth({ onComplete }: MFASetupProps) {
 
 // MFA Status Component
 export function MFAStatus() {
-  const { currentUser } = useAuth();
+  const { firebaseUser } = useAuth();
   const [mfaEnabled, setMfaEnabled] = useState(false);
   const [enrolledFactors, setEnrolledFactors] = useState<string[]>([]);
 
   useEffect(() => {
-    if (currentUser) {
-      const factors = multiFactor(currentUser).enrolledFactors;
+    if (firebaseUser) {
+      const factors = multiFactor(firebaseUser).enrolledFactors;
       setMfaEnabled(factors.length > 0);
       setEnrolledFactors(factors.map(factor => factor.factorId));
     }
-  }, [currentUser]);
+  }, [firebaseUser]);
 
   return (
     <Card className="p-4">
