@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { FormInput } from "@/components/shared/FormInput";
 import { useToast } from "@/hooks/use-toast";
 import { signInWithEmailAndPassword, createUserWithEmailAndPassword } from "firebase/auth";
-import { collection, addDoc, doc, getDoc, getDocs, query, where } from "firebase/firestore";
+import { collection, doc, getDoc, getDocs, query, where, setDoc } from "firebase/firestore";
 import { auth, db } from "@/integrations/firebase/client";
 
 interface BusinessAuthFormProps {
@@ -32,7 +32,7 @@ export function BusinessAuthForm({ isLogin, setIsLogin }: BusinessAuthFormProps)
         
         console.log("Firebase user authenticated, UID:", user.uid);
         
-        // First check using UID as document ID (primary method)
+        // Primary method: Check using UID as document ID
         const userDocRef = doc(db, "app_users_business", user.uid);
         const userDoc = await getDoc(userDocRef);
         
@@ -58,20 +58,28 @@ export function BusinessAuthForm({ isLogin, setIsLogin }: BusinessAuthFormProps)
         const emailQuerySnapshot = await getDocs(emailQuery);
         
         if (!emailQuerySnapshot.empty) {
-          console.log("User found by email, this might be old data structure");
+          console.log("User found by email, migrating to UID-based document...");
           const userData = emailQuerySnapshot.docs[0].data();
           console.log("User data from email query:", userData);
           
+          // Migrate to UID-based document
+          await setDoc(doc(db, "app_users_business", user.uid), {
+            ...userData,
+            id: user.uid,
+            email: user.email,
+            migrated_at: new Date().toISOString(),
+          });
+          
           toast({
             title: "Success", 
-            description: "Welcome back! Redirecting to dashboard...",
+            description: "Welcome back! Account migrated successfully.",
           });
           
           navigate("/dashboard");
           return;
         }
         
-        // If not found in business collection, check app_users for migration
+        // Check app_users for migration
         console.log("Checking app_users collection for migration...");
         const usersRef = collection(db, "app_users");
         const usersQuery = query(usersRef, where("email", "==", user.email));
@@ -82,7 +90,7 @@ export function BusinessAuthForm({ isLogin, setIsLogin }: BusinessAuthFormProps)
           const userData = usersSnapshot.docs[0].data();
           
           // Migrate user to app_users_business using UID as document ID
-          await addDoc(collection(db, "app_users_business"), {
+          await setDoc(doc(db, "app_users_business", user.uid), {
             ...userData,
             id: user.uid,
             email: user.email,
@@ -119,9 +127,8 @@ export function BusinessAuthForm({ isLogin, setIsLogin }: BusinessAuthFormProps)
         
         console.log("New user created, UID:", user.uid);
         
-        // Create user document using UID as document ID
-        const userDocRef = doc(db, "app_users_business", user.uid);
-        await addDoc(collection(db, "app_users_business"), {
+        // Create user document using UID as document ID (FIXED: use setDoc instead of addDoc)
+        await setDoc(doc(db, "app_users_business", user.uid), {
           id: user.uid,
           email: user.email,
           first_name: "",

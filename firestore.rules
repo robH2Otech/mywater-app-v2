@@ -39,23 +39,27 @@ service cloud.firestore {
       return email.matches('.*@.*\\..*');
     }
     
-    // Business users collection
+    // Business users collection - FIXED: Allow users to read their own document by UID during authentication
     match /app_users_business/{userId} {
       allow read: if isAuthenticated() && (
         request.auth.uid == userId || 
         isAdmin() ||
-        (resource.data.company == getUserCompany())
+        (resource != null && resource.data.company == getUserCompany())
       );
       
-      allow create: if isAdmin() && 
-        isValidRole(request.resource.data.role) &&
-        isValidEmail(request.resource.data.email) &&
-        canAccessCompany(request.resource.data.company);
+      // Allow users to create their own document during registration
+      allow create: if isAuthenticated() && (
+        request.auth.uid == userId ||
+        (isAdmin() && 
+         isValidRole(request.resource.data.role) &&
+         isValidEmail(request.resource.data.email) &&
+         canAccessCompany(request.resource.data.company))
+      );
       
-      allow update: if isAdmin() && 
-        (request.auth.uid == userId || canAccessCompany(resource.data.company)) &&
-        (!('role' in request.resource.data.diff(resource.data).affectedKeys()) || isAdmin()) &&
-        isValidRole(request.resource.data.role);
+      allow update: if isAuthenticated() && (
+        request.auth.uid == userId || 
+        (isAdmin() && canAccessCompany(resource.data.company))
+      ) && isValidRole(request.resource.data.role);
       
       allow delete: if isSuperAdmin() || 
         (isAdmin() && canAccessCompany(resource.data.company));

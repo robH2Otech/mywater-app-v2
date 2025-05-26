@@ -1,6 +1,7 @@
+
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { onAuthStateChanged, User as FirebaseUser } from "firebase/auth";
-import { collection, query, where, getDocs } from "firebase/firestore";
+import { doc, getDoc } from "firebase/firestore";
 import { auth, db } from "@/integrations/firebase/client";
 import { AppUser, UserRole } from "@/types/users";
 import { validateTokenClaims, logAuditEvent } from "@/utils/auth/securityUtils";
@@ -147,7 +148,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  // Fetch user details with enhanced security validation
+  // Fetch user details with enhanced security validation - FIXED: Use UID-based lookup
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       setFirebaseUser(firebaseUser);
@@ -184,14 +185,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           if (hasValidClaims && role) {
             console.log("Valid claims found:", { role, company: claimedCompany });
             
-            // Query Firestore only for additional user details, not for role/permissions
-            const usersRef = collection(db, "app_users_business");
-            const q = query(usersRef, where("email", "==", firebaseUser.email));
-            const querySnapshot = await getDocs(q);
+            // FIXED: Use UID-based document lookup instead of email query
+            const userDocRef = doc(db, "app_users_business", firebaseUser.uid);
+            const userDoc = await getDoc(userDocRef);
             
-            if (!querySnapshot.empty) {
-              const userData = querySnapshot.docs[0].data() as AppUser;
-              const userWithId = { id: querySnapshot.docs[0].id, ...userData };
+            if (userDoc.exists()) {
+              const userData = userDoc.data() as AppUser;
+              const userWithId = { id: userDoc.id, ...userData };
               
               // Security check: ensure Firestore role matches token role
               if (userData.role !== role) {
@@ -222,14 +222,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 security_validated: true
               });
             } else {
-              console.error("User exists in Firebase Auth but not in Firestore");
+              console.error("User document not found for UID:", firebaseUser.uid);
               await reportSecurityIncident({
-                type: 'user_not_in_firestore',
+                type: 'user_document_not_found',
                 details: { user_id: firebaseUser.uid, email: firebaseUser.email },
                 severity: 'warning'
               });
-              // Try to refresh token - maybe claims were just added
-              await refreshUserClaims();
               setCurrentUser(null);
               setUserRole(null);
               setCompany(null);
@@ -246,20 +244,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             if (refreshResult.hasValidClaims && refreshResult.role) {
               console.log("Claims obtained after refresh:", refreshResult);
               
-              // Try to fetch Firestore data again
-              const usersRef = collection(db, "app_users_business");
-              const q = query(usersRef, where("email", "==", firebaseUser.email));
-              const querySnapshot = await getDocs(q);
+              // Try to fetch Firestore data again using UID
+              const userDocRef = doc(db, "app_users_business", firebaseUser.uid);
+              const userDoc = await getDoc(userDocRef);
               
-              if (!querySnapshot.empty) {
-                const userData = querySnapshot.docs[0].data() as AppUser;
-                const userWithId = { id: querySnapshot.docs[0].id, ...userData };
+              if (userDoc.exists()) {
+                const userData = userDoc.data() as AppUser;
+                const userWithId = { id: userDoc.id, ...userData };
                 
                 setCurrentUser(userWithId);
                 setUserRole(refreshResult.role as UserRole);
                 setCompany(refreshResult.company);
               } else {
-                console.error("User exists in Firebase Auth but not in Firestore");
+                console.error("User document not found even after token refresh");
                 setCurrentUser(null);
                 setUserRole(null);
                 setCompany(null);
