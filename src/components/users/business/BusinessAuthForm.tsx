@@ -4,8 +4,8 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { FormInput } from "@/components/shared/FormInput";
 import { useToast } from "@/hooks/use-toast";
-import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword } from "firebase/auth";
-import { collection, addDoc, getDocs, query, where } from "firebase/firestore";
+import { signInWithEmailAndPassword, createUserWithEmailAndPassword } from "firebase/auth";
+import { collection, addDoc, doc, getDoc, getDocs, query, where } from "firebase/firestore";
 import { auth, db } from "@/integrations/firebase/client";
 
 interface BusinessAuthFormProps {
@@ -26,49 +26,101 @@ export function BusinessAuthForm({ isLogin, setIsLogin }: BusinessAuthFormProps)
     
     try {
       if (isLogin) {
+        console.log("Attempting to sign in with email:", email);
         const userCredential = await signInWithEmailAndPassword(auth, email, password);
         const user = userCredential.user;
         
-        // Check if user exists in business collection
-        const businessUsersRef = collection(db, "app_users_business");
-        const q = query(businessUsersRef, where("email", "==", user.email));
-        const querySnapshot = await getDocs(q);
+        console.log("Firebase user authenticated, UID:", user.uid);
         
-        if (querySnapshot.empty) {
-          // If not found, check app_users as fallback and migrate if found
-          const usersRef = collection(db, "app_users");
-          const usersQuery = query(usersRef, where("email", "==", user.email));
-          const usersSnapshot = await getDocs(usersQuery);
-          
-          if (!usersSnapshot.empty) {
-            // Migrate the user to app_users_business
-            const userData = usersSnapshot.docs[0].data();
-            await addDoc(collection(db, "app_users_business"), {
-              ...userData,
-              email: user.email,
-              migrated_at: new Date().toISOString(),
-            });
-            
-            console.log("User migrated during login:", user.email);
-            navigate("/dashboard");
-            return;
-          }
+        // First check using UID as document ID (primary method)
+        const userDocRef = doc(db, "app_users_business", user.uid);
+        const userDoc = await getDoc(userDocRef);
+        
+        if (userDoc.exists()) {
+          console.log("User found in app_users_business by UID:", user.uid);
+          const userData = userDoc.data();
+          console.log("User data:", userData);
           
           toast({
-            title: "Access Denied",
-            description: "You don't have access to the business section.",
-            variant: "destructive",
+            title: "Success",
+            description: "Welcome back! Redirecting to dashboard...",
           });
-          setIsLoading(false);
+          
+          navigate("/dashboard");
           return;
         }
         
-        console.log("Business user signed in:", user);
-        navigate("/dashboard");
+        console.log("User not found by UID, checking by email as fallback...");
+        
+        // Fallback: check by email in case of old data structure
+        const businessUsersRef = collection(db, "app_users_business");
+        const emailQuery = query(businessUsersRef, where("email", "==", user.email));
+        const emailQuerySnapshot = await getDocs(emailQuery);
+        
+        if (!emailQuerySnapshot.empty) {
+          console.log("User found by email, this might be old data structure");
+          const userData = emailQuerySnapshot.docs[0].data();
+          console.log("User data from email query:", userData);
+          
+          toast({
+            title: "Success", 
+            description: "Welcome back! Redirecting to dashboard...",
+          });
+          
+          navigate("/dashboard");
+          return;
+        }
+        
+        // If not found in business collection, check app_users for migration
+        console.log("Checking app_users collection for migration...");
+        const usersRef = collection(db, "app_users");
+        const usersQuery = query(usersRef, where("email", "==", user.email));
+        const usersSnapshot = await getDocs(usersQuery);
+        
+        if (!usersSnapshot.empty) {
+          console.log("User found in app_users, migrating to app_users_business...");
+          const userData = usersSnapshot.docs[0].data();
+          
+          // Migrate user to app_users_business using UID as document ID
+          await addDoc(collection(db, "app_users_business"), {
+            ...userData,
+            id: user.uid,
+            email: user.email,
+            migrated_at: new Date().toISOString(),
+          });
+          
+          console.log("User migrated successfully");
+          
+          toast({
+            title: "Success",
+            description: "Account migrated successfully. Welcome back!",
+          });
+          
+          navigate("/dashboard");
+          return;
+        }
+        
+        // No user found anywhere
+        console.error("User not found in any collection");
+        toast({
+          title: "Access Denied",
+          description: "You don't have access to the business section. Please contact support if you believe this is an error.",
+          variant: "destructive",
+        });
+        
+        // Sign out the user since they don't have access
+        await auth.signOut();
+        
       } else {
+        // Registration flow
+        console.log("Creating new user account...");
         const userCredential = await createUserWithEmailAndPassword(auth, email, password);
         const user = userCredential.user;
         
+        console.log("New user created, UID:", user.uid);
+        
+        // Create user document using UID as document ID
+        const userDocRef = doc(db, "app_users_business", user.uid);
         await addDoc(collection(db, "app_users_business"), {
           id: user.uid,
           email: user.email,
@@ -79,6 +131,8 @@ export function BusinessAuthForm({ isLogin, setIsLogin }: BusinessAuthFormProps)
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString()
         });
+        
+        console.log("User document created successfully");
         
         toast({
           title: "Success",
@@ -103,6 +157,8 @@ export function BusinessAuthForm({ isLogin, setIsLogin }: BusinessAuthFormProps)
         errorMessage = "An account with this email already exists";
       } else if (error.code === 'auth/weak-password') {
         errorMessage = "Password should be at least 6 characters";
+      } else if (error.code === 'auth/invalid-credential') {
+        errorMessage = "Invalid email or password";
       }
       
       toast({
