@@ -43,15 +43,16 @@ export class MFAUtils {
     verificationId: string, 
     verificationCode: string
   ): Promise<void> {
+    // Get the multi-factor session
     const multiFactorSession = await multiFactor(firebaseUser).getSession();
     
     // Create phone auth credential first
     const phoneAuthCredential = PhoneAuthProvider.credential(verificationId, verificationCode);
     
-    // Create the MFA assertion from the credential only (no session parameter)
+    // Create the MFA assertion from the credential only
     const multiFactorAssertion = PhoneMultiFactorGenerator.assertion(phoneAuthCredential);
     
-    // Finally enroll the MFA factor
+    // Finally enroll the MFA factor with both assertion and session
     await multiFactor(firebaseUser).enroll(multiFactorAssertion, multiFactorSession);
   }
 
