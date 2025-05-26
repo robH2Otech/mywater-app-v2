@@ -1,6 +1,6 @@
 
 import { auth } from "@/integrations/firebase/client";
-import { assignUserRole, requireTwoFactorAuth } from "./secureAdminService";
+import { refreshUserToken, getCurrentUserClaims } from "./claimsService";
 import { logAuditEvent } from "@/utils/auth/securityUtils";
 
 /**
@@ -9,15 +9,13 @@ import { logAuditEvent } from "@/utils/auth/securityUtils";
  */
 export const refreshUserClaims = async (): Promise<boolean> => {
   try {
-    const user = auth.currentUser;
-    if (!user) return false;
-    
-    // Force token refresh to get updated custom claims
-    await user.getIdToken(true);
-    console.log("User token refreshed successfully");
-    return true;
+    const refreshed = await refreshUserToken();
+    if (refreshed) {
+      console.log("User claims refreshed successfully");
+    }
+    return refreshed;
   } catch (error) {
-    console.error("Error refreshing user token:", error);
+    console.error("Error refreshing user claims:", error);
     return false;
   }
 };
@@ -37,10 +35,8 @@ export const verifyUserClaims = async (): Promise<{
       return { hasValidClaims: false, role: null, company: null };
     }
     
-    // Get the latest token with claims
-    const idTokenResult = await user.getIdTokenResult();
-    const role = idTokenResult.claims.role as string;
-    const company = idTokenResult.claims.company as string;
+    // Get the latest claims
+    const { role, company } = await getCurrentUserClaims();
     
     console.log("Current user claims:", {
       uid: user.uid,
