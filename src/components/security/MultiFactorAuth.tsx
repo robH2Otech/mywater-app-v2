@@ -1,5 +1,3 @@
-
-
 import { useState, useEffect } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -82,12 +80,13 @@ export function MultiFactorAuth({ onComplete }: MFASetupProps) {
       });
 
       const multiFactorSession = await multiFactor(firebaseUser).getSession();
-      const phoneAuthProvider = new PhoneAuthProvider(auth);
+      const phoneInfoOptions = {
+        phoneNumber: phoneNumber,
+        session: multiFactorSession
+      };
       
-      const verId = await phoneAuthProvider.verifyPhoneNumber(
-        phoneNumber,
-        recaptchaVerifier
-      );
+      const phoneAuthProvider = new PhoneAuthProvider(auth);
+      const verId = await phoneAuthProvider.verifyPhoneNumber(phoneInfoOptions, recaptchaVerifier);
       
       setVerificationId(verId);
       setStep('verify');
@@ -296,4 +295,3 @@ export function MFAStatus() {
     </Card>
   );
 }
-
