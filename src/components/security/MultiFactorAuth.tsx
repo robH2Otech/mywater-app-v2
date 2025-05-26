@@ -9,16 +9,19 @@ import { MFAChooseStep } from './mfa/MFAChooseStep';
 import { MFAPhoneStep } from './mfa/MFAPhoneStep';
 import { MFAVerifyStep } from './mfa/MFAVerifyStep';
 import { MFABackupStep } from './mfa/MFABackupStep';
+import { MFASetupGuide } from './mfa/MFASetupGuide';
 import { MFAStatus } from './mfa/MFAStatus';
 
 interface MFASetupProps {
   onComplete: () => void;
+  showGuide?: boolean;
+  showTesting?: boolean;
 }
 
-export function MultiFactorAuth({ onComplete }: MFASetupProps) {
+export function MultiFactorAuth({ onComplete, showGuide = false, showTesting = false }: MFASetupProps) {
   const { toast } = useToast();
   const { firebaseUser, userRole } = useAuth();
-  const [step, setStep] = useState<'choose' | 'phone' | 'verify' | 'backup'>('choose');
+  const [step, setStep] = useState<'guide' | 'choose' | 'phone' | 'verify' | 'backup'>(showGuide ? 'guide' : 'choose');
   const [phoneNumber, setPhoneNumber] = useState('');
   const [verificationCode, setVerificationCode] = useState('');
   const [verificationId, setVerificationId] = useState('');
@@ -30,22 +33,45 @@ export function MultiFactorAuth({ onComplete }: MFASetupProps) {
   const handleSendVerificationCode = async () => {
     if (!firebaseUser || !phoneNumber) return;
     
+    // Validate phone number first
+    const formattedPhone = MFAUtils.formatPhoneNumber(phoneNumber);
+    if (!MFAUtils.validatePhoneNumber(formattedPhone)) {
+      toast({
+        title: 'Invalid Phone Number',
+        description: 'Please enter a valid phone number with country code (e.g., +1234567890)',
+        variant: 'destructive'
+      });
+      return;
+    }
+    
     setIsLoading(true);
     try {
-      const verId = await MFAUtils.sendVerificationCode(firebaseUser, phoneNumber);
+      const verId = await MFAUtils.sendVerificationCode(firebaseUser, formattedPhone);
       setVerificationId(verId);
       setStep('verify');
       
       toast({
         title: 'Code Sent',
-        description: 'Verification code has been sent to your phone.'
+        description: `Verification code has been sent to ${formattedPhone}`
       });
       
     } catch (error: any) {
       console.error('Phone verification error:', error);
+      
+      let errorMessage = 'Failed to send verification code';
+      if (error.code === 'auth/invalid-phone-number') {
+        errorMessage = 'Invalid phone number format';
+      } else if (error.code === 'auth/quota-exceeded') {
+        errorMessage = 'SMS quota exceeded. Please try again later';
+      } else if (error.code === 'auth/missing-phone-number') {
+        errorMessage = 'Phone number is required';
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+      
       toast({
         title: 'Verification Failed',
-        description: error.message || 'Failed to send verification code',
+        description: errorMessage,
         variant: 'destructive'
       });
     } finally {
@@ -70,9 +96,21 @@ export function MultiFactorAuth({ onComplete }: MFASetupProps) {
       
     } catch (error: any) {
       console.error('MFA setup error:', error);
+      
+      let errorMessage = 'Failed to setup multi-factor authentication';
+      if (error.code === 'auth/invalid-verification-code') {
+        errorMessage = 'Invalid verification code. Please try again';
+      } else if (error.code === 'auth/code-expired') {
+        errorMessage = 'Verification code has expired. Please request a new one';
+      } else if (error.code === 'auth/session-expired') {
+        errorMessage = 'Session has expired. Please start over';
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+      
       toast({
         title: 'MFA Setup Failed',
-        description: error.message || 'Failed to setup multi-factor authentication',
+        description: errorMessage,
         variant: 'destructive'
       });
     } finally {
@@ -80,14 +118,24 @@ export function MultiFactorAuth({ onComplete }: MFASetupProps) {
     }
   };
 
+  const handleCompleteSetup = () => {
+    // Clean up resources
+    MFAUtils.cleanup();
+    onComplete();
+  };
+
   const renderStep = () => {
     switch (step) {
+      case 'guide':
+        return (
+          <MFASetupGuide onStartSetup={() => setStep('choose')} />
+        );
       case 'choose':
         return (
           <MFAChooseStep
             isMFARequired={isMFARequired}
             onSetupPhone={() => setStep('phone')}
-            onComplete={onComplete}
+            onComplete={handleCompleteSetup}
           />
         );
       case 'phone':
@@ -114,7 +162,7 @@ export function MultiFactorAuth({ onComplete }: MFASetupProps) {
         return (
           <MFABackupStep
             backupCodes={backupCodes}
-            onComplete={onComplete}
+            onComplete={handleCompleteSetup}
           />
         );
       default:
