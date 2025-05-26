@@ -26,7 +26,6 @@ export class MFAUtils {
       size: 'invisible'
     });
 
-    const multiFactorSession = await multiFactor(firebaseUser).getSession();
     const phoneAuthProvider = new PhoneAuthProvider(auth);
     
     // Use correct API - pass phone number directly, not as object
@@ -49,7 +48,7 @@ export class MFAUtils {
     // Create phone auth credential first
     const phoneAuthCredential = PhoneAuthProvider.credential(verificationId, verificationCode);
     
-    // Then create the MFA assertion from the credential
+    // Create the MFA assertion from the credential only (no session parameter)
     const multiFactorAssertion = PhoneMultiFactorGenerator.assertion(phoneAuthCredential);
     
     // Finally enroll the MFA factor
