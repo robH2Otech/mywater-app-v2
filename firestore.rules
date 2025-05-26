@@ -7,68 +7,25 @@ service cloud.firestore {
       return request.auth != null;
     }
     
-    function getUserRole() {
-      // Try to get role from custom claims, fallback to empty string
-      return request.auth != null && 'role' in request.auth.token ? request.auth.token.role : '';
-    }
-    
-    function getUserCompany() {
-      // Try to get company from custom claims, fallback to empty string
-      return request.auth != null && 'company' in request.auth.token ? request.auth.token.company : '';
-    }
-    
-    function isSuperAdmin() {
-      return isAuthenticated() && getUserRole() == 'superadmin';
-    }
-    
-    function isAdmin() {
-      return isAuthenticated() && (getUserRole() == 'admin' || getUserRole() == 'superadmin');
-    }
-    
-    function isTechnician() {
-      return isAuthenticated() && (getUserRole() == 'technician' || isAdmin());
-    }
-    
-    function canAccessCompany(companyId) {
-      return isSuperAdmin() || getUserCompany() == companyId || getUserCompany() == '';
-    }
-    
-    function isValidRole(role) {
-      return role in ['superadmin', 'admin', 'technician', 'user'];
-    }
-    
-    function isValidEmail(email) {
-      return email.matches('.*@.*\\..*');
-    }
-    
-    // Business users collection - RELAXED rules for debugging
+    // TEMPORARILY SIMPLIFIED RULES FOR DEBUGGING
+    // Business users collection - allow authenticated users to access their own documents
     match /app_users_business/{userId} {
-      // Allow authenticated users to read their own data or any data during debugging
+      // Allow authenticated users to read any document (for migration purposes)
       allow read: if isAuthenticated();
       
-      // Allow users to create their own document or admins to create any
-      allow create: if isAuthenticated() && (
-        request.auth.uid == userId ||
-        isValidRole(request.resource.data.role) &&
-        isValidEmail(request.resource.data.email)
-      );
+      // Allow users to create/update their own document or any document during setup
+      allow create, update: if isAuthenticated();
       
-      // Allow updates for own document or by admins
-      allow update: if isAuthenticated() && (
-        request.auth.uid == userId || 
-        getUserRole() in ['admin', 'superadmin']
-      ) && isValidRole(request.resource.data.role);
-      
-      // Allow deletion by superadmins or admins
-      allow delete: if isAuthenticated() && getUserRole() in ['admin', 'superadmin'];
+      // Allow deletion by authenticated users (will restrict later)
+      allow delete: if isAuthenticated();
     }
     
-    // Private users collection - RELAXED rules
+    // Private users collection - allow authenticated access
     match /app_users_privat/{userId} {
       allow read, write: if isAuthenticated();
     }
     
-    // All other collections - RELAXED rules for debugging
+    // All other collections - allow authenticated access for now
     match /units/{unitId} {
       allow read, write: if isAuthenticated();
     }
@@ -97,10 +54,9 @@ service cloud.firestore {
       allow read, write: if isAuthenticated();
     }
     
-    // Audit logs - only superadmins can access
+    // Audit logs - allow creation for now
     match /audit_logs/{logId} {
-      allow read: if isSuperAdmin();
-      allow create: if isAuthenticated();
+      allow read, create: if isAuthenticated();
       allow update, delete: if false;
     }
     
