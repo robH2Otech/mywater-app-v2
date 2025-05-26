@@ -80,17 +80,20 @@ export class MFAUtils {
     verificationCode: string
   ): Promise<void> {
     try {
-      // Get the multi-factor session first
-      const multiFactorSession = await multiFactor(firebaseUser).getSession();
-      
       // Create phone auth credential
       const phoneAuthCredential = PhoneAuthProvider.credential(verificationId, verificationCode);
       
       // Create the MFA assertion from the credential
       const multiFactorAssertion = PhoneMultiFactorGenerator.assertion(phoneAuthCredential);
       
+      // Get the multi-factor session
+      const multiFactorSession = await multiFactor(firebaseUser).getSession();
+      
       // Enroll the MFA factor - Fixed API call for Firebase v10
+      // The session parameter is optional in Firebase v10
       await multiFactor(firebaseUser).enroll(multiFactorAssertion, multiFactorSession);
+      
+      console.log('MFA enrollment successful');
       
       // Clean up verifier after successful enrollment
       if (this.recaptchaVerifier) {
