@@ -1,4 +1,5 @@
 
+
 import { useState, useEffect } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -40,7 +41,7 @@ export function MultiFactorAuth({ onComplete }: MFASetupProps) {
 
   // Setup phone MFA - Fixed Firebase API usage
   const setupPhoneMFA = async () => {
-    if (!firebaseUser) return;
+    if (!firebaseUser || !verificationId || !verificationCode) return;
     
     setIsLoading(true);
     try {
@@ -295,3 +296,4 @@ export function MFAStatus() {
     </Card>
   );
 }
+
