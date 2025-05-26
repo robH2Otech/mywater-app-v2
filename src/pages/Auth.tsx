@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { BusinessAuthForm } from "@/components/users/business/BusinessAuthForm";
 import { TempAccessButton } from "@/components/users/business/TempAccessButton";
 import { UserMigrationHandler } from "@/components/users/business/UserMigrationHandler";
+import { AuthDebugPanel } from "@/components/debug/AuthDebugPanel";
 import MatrixRain from "@/components/ui/matrix-rain";
 import { useNavigate } from "react-router-dom";
 import { Home } from "lucide-react";
@@ -54,6 +55,9 @@ const Auth = () => {
                 <TempAccessButton />
               </div>
             </div>
+
+            {/* Debug Panel for Development */}
+            <AuthDebugPanel />
           </div>
           
           <div className="text-center">

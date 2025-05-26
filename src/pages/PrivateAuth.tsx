@@ -5,6 +5,7 @@ import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { LoginForm } from "@/components/users/private/LoginForm";
 import { PrivateUserRegisterForm } from "@/components/users/private/PrivateUserRegisterForm";
+import { AuthDebugPanel } from "@/components/debug/AuthDebugPanel";
 import { useFirebaseAuth } from "@/hooks/useFirebaseAuth";
 import { Droplets, Home } from "lucide-react";
 import MatrixRain from "@/components/ui/matrix-rain";
@@ -120,6 +121,9 @@ const PrivateAuth = () => {
               )}
             </p>
           </div>
+
+          {/* Debug Panel for Development */}
+          <AuthDebugPanel />
         </Card>
 
         <div className="text-center">

@@ -23,6 +23,8 @@ interface AuthContextType {
   canComment: () => boolean;
   canViewNavItem: (navItem: string) => boolean;
   refreshUserSession: () => Promise<boolean>;
+  authError: string | null;
+  debugInfo: any;
 }
 
 const AuthContext = createContext<AuthContextType>({
@@ -39,7 +41,9 @@ const AuthContext = createContext<AuthContextType>({
   canManageUsers: () => false,
   canComment: () => false,
   canViewNavItem: () => false,
-  refreshUserSession: async () => false
+  refreshUserSession: async () => false,
+  authError: null,
+  debugInfo: null
 });
 
 export const useAuth = () => useContext(AuthContext);
@@ -47,6 +51,8 @@ export const useAuth = () => useContext(AuthContext);
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [firebaseUser, setFirebaseUser] = useState<FirebaseUser | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [authError, setAuthError] = useState<string | null>(null);
+  const [debugInfo, setDebugInfo] = useState<any>(null);
   
   const {
     currentUser,
@@ -59,18 +65,53 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const permissions = usePermissionsManager(userRole, company);
 
   useEffect(() => {
+    console.log("🔄 Setting up Firebase auth state listener");
+    
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
-      console.log("Auth state changed:", firebaseUser ? firebaseUser.email : "no user");
+      console.log("🔥 Firebase auth state changed:", {
+        user: firebaseUser ? firebaseUser.email : "no user",
+        uid: firebaseUser?.uid,
+        emailVerified: firebaseUser?.emailVerified
+      });
+      
       setFirebaseUser(firebaseUser);
+      setAuthError(null);
       
       if (firebaseUser) {
-        await handleAuthStateChange(firebaseUser);
+        try {
+          // Get token to check for custom claims
+          const idTokenResult = await firebaseUser.getIdTokenResult();
+          const claims = idTokenResult.claims;
+          
+          console.log("🎫 User token claims:", {
+            role: claims.role,
+            company: claims.company,
+            allClaims: claims
+          });
+          
+          setDebugInfo({
+            uid: firebaseUser.uid,
+            email: firebaseUser.email,
+            claims: claims,
+            tokenExpiry: new Date(idTokenResult.expirationTime).toISOString()
+          });
+          
+          await handleAuthStateChange(firebaseUser);
+        } catch (error) {
+          console.error("❌ Error processing auth state change:", error);
+          setAuthError(`Auth processing error: ${error}`);
+        }
+      } else {
+        setDebugInfo(null);
       }
       
       setIsLoading(false);
     });
     
-    return () => unsubscribe();
+    return () => {
+      console.log("🧹 Cleaning up auth state listener");
+      unsubscribe();
+    };
   }, [handleAuthStateChange]);
 
   const value = {
@@ -80,6 +121,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     userRole,
     company,
     refreshUserSession,
+    authError,
+    debugInfo,
     ...permissions
   };
 
