@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -83,10 +84,7 @@ export function MultiFactorAuth({ onComplete }: MFASetupProps) {
       const phoneAuthProvider = new PhoneAuthProvider(auth);
       
       const verId = await phoneAuthProvider.verifyPhoneNumber(
-        {
-          phoneNumber: phoneNumber,
-          session: multiFactorSession
-        },
+        phoneNumber,
         recaptchaVerifier
       );
       
