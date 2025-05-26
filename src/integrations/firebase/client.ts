@@ -1,8 +1,8 @@
-
 import { initializeApp } from "firebase/app";
 import { getAuth, connectAuthEmulator, setPersistence, browserSessionPersistence } from "firebase/auth";
 import { getFirestore, connectFirestoreEmulator } from "firebase/firestore";
 import { getStorage, connectStorageEmulator } from "firebase/storage";
+import { getFunctions, connectFunctionsEmulator } from "firebase/functions";
 
 // Firebase configuration for your project
 const firebaseConfig = {
@@ -22,6 +22,7 @@ const firebaseApp = initializeApp(firebaseConfig);
 export const auth = getAuth(firebaseApp);
 export const db = getFirestore(firebaseApp);
 export const storage = getStorage(firebaseApp);
+export const functions = getFunctions(firebaseApp);
 
 // Set language before auth state is determined
 auth.useDeviceLanguage();
@@ -54,6 +55,7 @@ if (import.meta.env.DEV) {
     connectAuthEmulator(auth, "http://localhost:9099");
     connectFirestoreEmulator(db, "localhost", 8080);
     connectStorageEmulator(storage, "localhost", 9199);
+    connectFunctionsEmulator(functions, "localhost", 5001);
     console.log("Using Firebase emulator suite");
   }
 }
