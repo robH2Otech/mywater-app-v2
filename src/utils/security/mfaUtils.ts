@@ -90,8 +90,8 @@ export class MFAUtils {
       const multiFactorSession = await multiFactor(firebaseUser).getSession();
       
       // Enroll the MFA factor - Fixed API call for Firebase v10
-      // The session parameter is optional in Firebase v10
-      await multiFactor(firebaseUser).enroll(multiFactorAssertion, multiFactorSession);
+      // In Firebase v10, enroll takes (assertion, displayName?) as parameters
+      await multiFactor(firebaseUser).enroll(multiFactorAssertion, 'Phone Number');
       
       console.log('MFA enrollment successful');
       
