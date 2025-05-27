@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { setUserClaims, migrateAllUserClaims, refreshUserToken } from "@/utils/admin/claimsService";
-import { Loader2, Shield, Users, RefreshCw } from "lucide-react";
+import { Loader2, Shield, Users, RefreshCw, AlertCircle } from "lucide-react";
 
 export function UserClaimsManager() {
   const { toast } = useToast();
@@ -32,6 +32,7 @@ export function UserClaimsManager() {
 
     setIsSettingClaims(true);
     try {
+      console.log("Setting claims for user:", claimsForm.userId);
       await setUserClaims(claimsForm);
       
       toast({
@@ -47,9 +48,16 @@ export function UserClaimsManager() {
       });
     } catch (error: any) {
       console.error("Failed to set claims:", error);
+      
+      // Show more detailed error information
+      let errorDescription = error.message;
+      if (error.message.includes('not found')) {
+        errorDescription = "Firebase Functions not deployed or user ID not found. Please ensure functions are deployed.";
+      }
+      
       toast({
-        title: "Error",
-        description: error.message,
+        title: "Error Setting Claims",
+        description: errorDescription,
         variant: "destructive",
       });
     } finally {
@@ -60,6 +68,7 @@ export function UserClaimsManager() {
   const handleMigration = async () => {
     setIsMigrating(true);
     try {
+      console.log("Starting user migration...");
       const result = await migrateAllUserClaims();
       
       toast({
@@ -68,9 +77,16 @@ export function UserClaimsManager() {
       });
     } catch (error: any) {
       console.error("Migration failed:", error);
+      
+      // Show more detailed error information
+      let errorDescription = error.message;
+      if (error.message.includes('not found')) {
+        errorDescription = "Firebase Functions not deployed. Please deploy functions and try again.";
+      }
+      
       toast({
         title: "Migration Failed",
-        description: error.message,
+        description: errorDescription,
         variant: "destructive",
       });
     } finally {
@@ -109,6 +125,19 @@ export function UserClaimsManager() {
 
   return (
     <div className="space-y-6">
+      {/* Deployment Status Warning */}
+      <Card className="bg-orange-900/20 border-orange-500/30">
+        <CardHeader>
+          <CardTitle className="text-orange-400 flex items-center gap-2">
+            <AlertCircle className="h-5 w-5" />
+            Important: Firebase Functions Deployment
+          </CardTitle>
+          <CardDescription className="text-orange-300">
+            For claims management to work, Firebase Functions must be deployed. Run: <code className="bg-orange-950/50 px-2 py-1 rounded">firebase deploy --only functions</code>
+          </CardDescription>
+        </CardHeader>
+      </Card>
+
       <Card className="bg-spotify-darker border-spotify-accent">
         <CardHeader>
           <CardTitle className="text-white flex items-center gap-2">
@@ -178,7 +207,7 @@ export function UserClaimsManager() {
               Migrate All Users
             </CardTitle>
             <CardDescription className="text-gray-400">
-              Sync all existing users from Firestore to have proper custom claims
+              Sync all existing users from Firebase Auth to have proper custom claims and Firestore documents
             </CardDescription>
           </CardHeader>
           <CardContent>

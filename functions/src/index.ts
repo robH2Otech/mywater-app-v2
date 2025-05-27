@@ -4,6 +4,7 @@ import { updateAllLocations, manualLocationUpdate, cleanupLocationHistory } from
 import { onOrderCreated } from './orders/orderWebhook';
 import { onReferralUsed } from './referrals/handleReferralWebhook';
 import { setUserClaims, syncUserClaims, initializeUserClaims, migrateUserClaims } from './auth/claimsManager';
+import { createBusinessUser } from './auth/createBusinessUser';
 
 // Initialize Firebase Admin
 admin.initializeApp();
@@ -49,5 +50,6 @@ export {
   setUserClaims,
   syncUserClaims,
   initializeUserClaims,
-  migrateUserClaims
+  migrateUserClaims,
+  createBusinessUser
 };
