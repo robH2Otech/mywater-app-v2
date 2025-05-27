@@ -1,7 +1,6 @@
-
 import { useEffect, useState } from "react";
 import { auth } from "@/integrations/firebase/client";
-import { collection, query, where, getDocs } from "firebase/firestore";
+import { doc, getDoc } from "firebase/firestore";
 import { db } from "@/integrations/firebase/client";
 
 interface WelcomeMessageProps {
@@ -12,18 +11,18 @@ export function WelcomeMessage({ firstName }: WelcomeMessageProps) {
   const [userName, setUserName] = useState<string>("");
   
   useEffect(() => {
+    // If firstName prop is provided, use it directly
+    if (firstName) {
+      setUserName(firstName);
+      sessionStorage.setItem('userDisplayName', firstName);
+      return;
+    }
+    
     // Check if we already have the name in session storage
     const storedName = sessionStorage.getItem('userDisplayName');
     
     if (storedName) {
       setUserName(storedName);
-      return;
-    }
-    
-    // If firstName prop is provided, use it
-    if (firstName) {
-      setUserName(firstName);
-      sessionStorage.setItem('userDisplayName', firstName);
       return;
     }
     
@@ -36,13 +35,12 @@ export function WelcomeMessage({ firstName }: WelcomeMessageProps) {
       }
       
       try {
-        // Try to get user from private users collection
-        const privateUsersRef = collection(db, "app_users_private");
-        const q = query(privateUsersRef, where("id", "==", currentUser.uid));
-        const querySnapshot = await getDocs(q);
+        // First check business users collection using UID as document ID
+        const businessUserDocRef = doc(db, "app_users_business", currentUser.uid);
+        const businessUserDoc = await getDoc(businessUserDocRef);
         
-        if (!querySnapshot.empty) {
-          const userData = querySnapshot.docs[0].data();
+        if (businessUserDoc.exists()) {
+          const userData = businessUserDoc.data();
           // Only use the first name
           const name = userData.first_name || "";
           setUserName(name);
@@ -50,13 +48,12 @@ export function WelcomeMessage({ firstName }: WelcomeMessageProps) {
           return;
         }
         
-        // If not found in private users, check business users
-        const businessUsersRef = collection(db, "app_users_business");
-        const businessQuery = query(businessUsersRef, where("id", "==", currentUser.uid));
-        const businessSnapshot = await getDocs(businessQuery);
+        // Fallback to private users collection
+        const privateUserDocRef = doc(db, "app_users_privat", currentUser.uid);
+        const privateUserDoc = await getDoc(privateUserDocRef);
         
-        if (!businessSnapshot.empty) {
-          const userData = businessSnapshot.docs[0].data();
+        if (privateUserDoc.exists()) {
+          const userData = privateUserDoc.data();
           // Only use the first name
           const name = userData.first_name || "";
           setUserName(name);
