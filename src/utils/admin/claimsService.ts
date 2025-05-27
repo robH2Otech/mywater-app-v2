@@ -47,11 +47,24 @@ export const migrateAllUserClaims = async (): Promise<{ migrated: number }> => {
 export const refreshUserToken = async (): Promise<boolean> => {
   try {
     const user = auth.currentUser;
-    if (!user) return false;
+    if (!user) {
+      console.log("No authenticated user to refresh token for");
+      return false;
+    }
+    
+    console.log("Refreshing token for user:", user.email);
     
     // Force token refresh to get updated custom claims
     await user.getIdToken(true);
     console.log("User token refreshed successfully");
+    
+    // Log the new claims for verification
+    const idTokenResult = await user.getIdTokenResult();
+    console.log("New token claims:", {
+      role: idTokenResult.claims.role,
+      company: idTokenResult.claims.company
+    });
+    
     return true;
   } catch (error) {
     console.error("Error refreshing user token:", error);
@@ -80,5 +93,34 @@ export const getCurrentUserClaims = async (): Promise<{
   } catch (error) {
     console.error("Error getting user claims:", error);
     return { role: null, company: null };
+  }
+};
+
+/**
+ * Initialize claims for the current user if they don't exist
+ */
+export const initializeUserClaims = async (): Promise<boolean> => {
+  try {
+    const user = auth.currentUser;
+    if (!user) return false;
+    
+    // Check if user already has claims
+    const { role } = await getCurrentUserClaims();
+    if (role) {
+      console.log("User already has role claims:", role);
+      return true;
+    }
+    
+    console.log("User missing role claims, attempting to initialize...");
+    
+    // For now, we'll just refresh the token and see if claims appear
+    // In a production system, you might want to call a function to assign default claims
+    await refreshUserToken();
+    
+    const { role: newRole } = await getCurrentUserClaims();
+    return !!newRole;
+  } catch (error) {
+    console.error("Error initializing user claims:", error);
+    return false;
   }
 };

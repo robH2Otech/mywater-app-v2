@@ -1,6 +1,6 @@
 
 import { auth } from "@/integrations/firebase/client";
-import { refreshUserToken, getCurrentUserClaims } from "./claimsService";
+import { refreshUserToken, getCurrentUserClaims, initializeUserClaims } from "./claimsService";
 import { logAuditEvent } from "@/utils/auth/securityUtils";
 
 /**
@@ -12,6 +12,12 @@ export const refreshUserClaims = async (): Promise<boolean> => {
     const refreshed = await refreshUserToken();
     if (refreshed) {
       console.log("User claims refreshed successfully");
+      
+      // Log this event for security audit
+      logAuditEvent('claims_refresh', {
+        action: 'manual_token_refresh',
+        timestamp: new Date().toISOString()
+      });
     }
     return refreshed;
   } catch (error) {
@@ -38,11 +44,12 @@ export const verifyUserClaims = async (): Promise<{
     // Get the latest claims
     const { role, company } = await getCurrentUserClaims();
     
-    console.log("Current user claims:", {
+    console.log("Current user claims verification:", {
       uid: user.uid,
       email: user.email,
       role,
-      company
+      company,
+      hasValidClaims: !!role
     });
     
     return {
@@ -61,14 +68,68 @@ export const verifyUserClaims = async (): Promise<{
  * Called when authentication state seems incomplete
  */
 export const checkAndRefreshUserClaims = async () => {
-  const { hasValidClaims } = await verifyUserClaims();
+  const { hasValidClaims, role, company } = await verifyUserClaims();
   
   if (!hasValidClaims) {
-    console.log("Missing or invalid claims detected, refreshing token...");
-    await refreshUserClaims();
-    // Verify again after refresh
-    return await verifyUserClaims();
+    console.log("Missing or invalid claims detected, attempting refresh...");
+    
+    // First try to refresh token
+    const refreshed = await refreshUserClaims();
+    
+    if (refreshed) {
+      // Verify again after refresh
+      const refreshResult = await verifyUserClaims();
+      
+      if (!refreshResult.hasValidClaims) {
+        console.log("Still no valid claims after refresh, attempting initialization...");
+        await initializeUserClaims();
+        
+        // Final verification
+        return await verifyUserClaims();
+      }
+      
+      return refreshResult;
+    }
   }
   
-  return { hasValidClaims, role: null, company: null };
+  return { hasValidClaims, role, company };
+};
+
+/**
+ * Complete user setup with proper claims
+ * This function should be called when a user needs to be fully initialized
+ */
+export const completeUserSetup = async (): Promise<boolean> => {
+  try {
+    const user = auth.currentUser;
+    if (!user) {
+      console.log("No authenticated user for setup");
+      return false;
+    }
+    
+    console.log("Starting complete user setup for:", user.email);
+    
+    // Step 1: Verify current claims
+    const { hasValidClaims } = await verifyUserClaims();
+    
+    if (hasValidClaims) {
+      console.log("User already has valid claims");
+      return true;
+    }
+    
+    // Step 2: Initialize claims if missing
+    const initialized = await initializeUserClaims();
+    
+    if (initialized) {
+      console.log("User claims initialized successfully");
+      return true;
+    }
+    
+    console.log("Failed to initialize user claims");
+    return false;
+    
+  } catch (error) {
+    console.error("Error in complete user setup:", error);
+    return false;
+  }
 };
