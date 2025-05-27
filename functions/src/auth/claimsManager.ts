@@ -38,21 +38,31 @@ export const setUserClaims = functions.https.onCall(async (data, context) => {
   }
 
   try {
+    console.log(`Setting claims for user ${userId}: role=${role}, company=${company}`);
+    
     // Set custom claims
     await auth.setCustomUserClaims(userId, { role, company });
 
     // Update Firestore document to match
-    await db.collection('app_users_business').doc(userId).update({
-      role,
-      company,
-      updated_at: admin.firestore.FieldValue.serverTimestamp()
-    });
+    const userDocRef = db.collection('app_users_business').doc(userId);
+    const userDoc = await userDocRef.get();
+    
+    if (userDoc.exists()) {
+      await userDocRef.update({
+        role,
+        company,
+        updated_at: admin.firestore.FieldValue.serverTimestamp()
+      });
+      console.log(`Firestore document updated for user ${userId}`);
+    } else {
+      console.log(`Warning: Firestore document not found for user ${userId}`);
+    }
 
-    console.log(`Claims set for user ${userId}: role=${role}, company=${company}`);
+    console.log(`Claims set successfully for user ${userId}: role=${role}, company=${company}`);
     return { success: true, message: 'Claims updated successfully' };
   } catch (error) {
     console.error('Error setting claims:', error);
-    throw new functions.https.HttpsError('internal', 'Failed to set user claims');
+    throw new functions.https.HttpsError('internal', `Failed to set user claims: ${error.message}`);
   }
 });
 
@@ -125,31 +135,58 @@ export const migrateUserClaims = functions.https.onCall(async (data, context) =>
   }
 
   try {
+    console.log('Starting user claims migration...');
+    
     const usersSnapshot = await db.collection('app_users_business').get();
-    const batch = db.batch();
     let migrated = 0;
+    let skipped = 0;
+    let errors = 0;
 
     for (const doc of usersSnapshot.docs) {
       const userData = doc.data();
       const userId = doc.id;
 
-      if (userData.role && userData.company) {
-        try {
-          await auth.setCustomUserClaims(userId, {
-            role: userData.role,
-            company: userData.company
-          });
-          migrated++;
-          console.log(`Migrated claims for user ${userId}`);
-        } catch (error) {
-          console.error(`Failed to migrate claims for user ${userId}:`, error);
+      if (!userData.role || !userData.company) {
+        console.log(`Skipping user ${userId} - missing role or company data`);
+        skipped++;
+        continue;
+      }
+
+      try {
+        // Check if user exists in Firebase Auth
+        const userRecord = await auth.getUser(userId);
+        
+        // Set custom claims
+        await auth.setCustomUserClaims(userId, {
+          role: userData.role,
+          company: userData.company
+        });
+        
+        console.log(`Migrated claims for user ${userId}: ${userData.role}@${userData.company}`);
+        migrated++;
+      } catch (authError: any) {
+        if (authError.code === 'auth/user-not-found') {
+          console.log(`User ${userId} not found in Firebase Auth, skipping...`);
+          skipped++;
+        } else {
+          console.error(`Failed to migrate claims for user ${userId}:`, authError);
+          errors++;
         }
       }
     }
 
-    return { success: true, migrated, message: `Successfully migrated ${migrated} users` };
+    const result = { 
+      success: true, 
+      migrated, 
+      skipped, 
+      errors,
+      message: `Migration completed: ${migrated} users migrated, ${skipped} skipped, ${errors} errors` 
+    };
+    
+    console.log('Migration completed:', result);
+    return result;
   } catch (error) {
     console.error('Error during migration:', error);
-    throw new functions.https.HttpsError('internal', 'Migration failed');
+    throw new functions.https.HttpsError('internal', `Migration failed: ${error.message}`);
   }
 });

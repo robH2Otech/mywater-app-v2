@@ -1,4 +1,3 @@
-
 import { auth } from "@/integrations/firebase/client";
 import { httpsCallable } from "firebase/functions";
 import { functions } from "@/integrations/firebase/client";
@@ -14,30 +13,56 @@ export interface SetClaimsRequest {
  */
 export const setUserClaims = async (request: SetClaimsRequest): Promise<boolean> => {
   try {
+    console.log('Setting user claims:', request);
+    
     const setClaimsFunction = httpsCallable(functions, 'setUserClaims');
     const result = await setClaimsFunction(request);
     
     console.log('Claims set successfully:', result.data);
     return true;
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error setting user claims:', error);
-    throw error;
+    
+    // Provide more specific error messages
+    if (error.code === 'functions/unauthenticated') {
+      throw new Error('You must be authenticated to set user claims');
+    } else if (error.code === 'functions/permission-denied') {
+      throw new Error('Only superadmins can set user claims');
+    } else if (error.code === 'functions/invalid-argument') {
+      throw new Error('Invalid arguments provided for setting claims');
+    } else if (error.code === 'functions/not-found') {
+      throw new Error('Claims management function not found. Please ensure Firebase Functions are deployed.');
+    } else {
+      throw new Error(error.message || 'Failed to set user claims');
+    }
   }
 };
 
 /**
  * Migrate all existing users to have proper claims (superadmin only)
  */
-export const migrateAllUserClaims = async (): Promise<{ migrated: number }> => {
+export const migrateAllUserClaims = async (): Promise<{ migrated: number; skipped: number; errors: number }> => {
   try {
+    console.log('Starting user claims migration...');
+    
     const migrateFunction = httpsCallable(functions, 'migrateUserClaims');
     const result = await migrateFunction({});
     
     console.log('Migration completed:', result.data);
-    return result.data as { migrated: number };
-  } catch (error) {
+    return result.data as { migrated: number; skipped: number; errors: number };
+  } catch (error: any) {
     console.error('Error migrating user claims:', error);
-    throw error;
+    
+    // Provide more specific error messages
+    if (error.code === 'functions/unauthenticated') {
+      throw new Error('You must be authenticated to migrate user claims');
+    } else if (error.code === 'functions/permission-denied') {
+      throw new Error('Only superadmins can migrate user claims');
+    } else if (error.code === 'functions/not-found') {
+      throw new Error('Migration function not found. Please ensure Firebase Functions are deployed.');
+    } else {
+      throw new Error(error.message || 'Failed to migrate user claims');
+    }
   }
 };
 

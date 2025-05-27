@@ -3,8 +3,9 @@ import { useState } from "react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
-import { collection, addDoc } from "firebase/firestore";
-import { db } from "@/integrations/firebase/client";
+import { doc, setDoc } from "firebase/firestore";
+import { createUserWithEmailAndPassword } from "firebase/auth";
+import { auth, db } from "@/integrations/firebase/client";
 import { UserRole, UserStatus } from "@/types/users";
 import { AddUserDialogContent } from "./AddUserDialogContent";
 import { usePermissions } from "@/hooks/usePermissions";
@@ -80,17 +81,35 @@ export function AddUserDialog({ open, onOpenChange }: AddUserDialogProps) {
         throw new Error(`You don't have permission to create ${formData.role} users`);
       }
 
-      // Add user to Firebase in the app_users_business collection
-      const usersCollectionRef = collection(db, "app_users_business");
-      await addDoc(usersCollectionRef, {
-        ...formData,
+      console.log("Creating new user:", formData.email);
+
+      // Step 1: Create Firebase Auth user
+      const userCredential = await createUserWithEmailAndPassword(auth, formData.email, formData.password);
+      const firebaseUser = userCredential.user;
+      
+      console.log("Firebase Auth user created with UID:", firebaseUser.uid);
+
+      // Step 2: Create Firestore document using the Firebase Auth UID as document ID
+      const userDocRef = doc(db, "app_users_business", firebaseUser.uid);
+      await setDoc(userDocRef, {
+        id: firebaseUser.uid,
+        first_name: formData.first_name,
+        last_name: formData.last_name,
+        email: formData.email,
+        phone: formData.phone || "",
+        company: formData.company,
+        job_title: formData.job_title || "",
+        role: formData.role,
+        status: formData.status,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString()
       });
 
+      console.log("Firestore document created successfully");
+
       toast({
         title: "Success",
-        description: "User has been added successfully",
+        description: "User has been created successfully in both Authentication and Firestore",
       });
 
       // Reset form and close dialog
@@ -114,9 +133,20 @@ export function AddUserDialog({ open, onOpenChange }: AddUserDialogProps) {
       queryClient.invalidateQueries({ queryKey: ["users"] });
 
     } catch (error: any) {
+      console.error("Error creating user:", error);
+      
+      let errorMessage = error.message;
+      if (error.code === 'auth/email-already-in-use') {
+        errorMessage = "A user with this email already exists";
+      } else if (error.code === 'auth/weak-password') {
+        errorMessage = "Password should be at least 6 characters";
+      } else if (error.code === 'auth/invalid-email') {
+        errorMessage = "Invalid email address";
+      }
+
       toast({
         title: "Error",
-        description: error.message,
+        description: errorMessage,
         variant: "destructive",
       });
     }
