@@ -1,5 +1,6 @@
 
 import * as functions from 'firebase-functions';
+import { onSchedule } from 'firebase-functions/v2/scheduler';
 import * as admin from 'firebase-admin';
 import { authenticate, getDeviceLocation } from './oneotApi';
 import { storeLocationData, cleanupExpiredLocationHistory } from './locationStorage';
@@ -7,7 +8,7 @@ import { storeLocationData, cleanupExpiredLocationHistory } from './locationStor
 /**
  * Cloud Function to update locations for all units
  */
-export const updateAllLocations = functions.pubsub.schedule('0 6,18 * * *').onRun(async (context) => {
+export const updateAllLocations = onSchedule('0 6,18 * * *', async (event) => {
   const db = admin.firestore();
   
   try {
@@ -60,7 +61,7 @@ export { manualLocationUpdate } from './manualLocationUpdate';
  * Cloud Function to delete expired location history records
  * This is a backup to ensure old records are removed even if the inline deletion fails
  */
-export const cleanupLocationHistory = functions.pubsub.schedule('0 3 * * *').onRun(async (context) => {
+export const cleanupLocationHistory = onSchedule('0 3 * * *', async (event) => {
   try {
     const deletedCount = await cleanupExpiredLocationHistory();
     
