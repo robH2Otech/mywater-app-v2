@@ -1,4 +1,5 @@
 
+
 import { HttpsError } from 'firebase-functions/v2/https';
 
 export interface FunctionError {
@@ -21,6 +22,26 @@ export class BusinessUserError extends Error {
     this.name = 'BusinessUserError';
   }
 }
+
+// Define a type for Firebase HTTPS error codes
+type FirebaseHttpsErrorCode = 
+  | 'ok' 
+  | 'cancelled' 
+  | 'unknown' 
+  | 'invalid-argument' 
+  | 'deadline-exceeded' 
+  | 'not-found' 
+  | 'already-exists' 
+  | 'permission-denied' 
+  | 'resource-exhausted' 
+  | 'failed-precondition' 
+  | 'aborted' 
+  | 'out-of-range' 
+  | 'unimplemented' 
+  | 'internal' 
+  | 'unavailable' 
+  | 'data-loss' 
+  | 'unauthenticated';
 
 export const createHttpsError = (error: BusinessUserError | Error): HttpsError => {
   if (error instanceof BusinessUserError) {
@@ -45,7 +66,7 @@ export const createHttpsError = (error: BusinessUserError | Error): HttpsError =
   });
 };
 
-const mapErrorCode = (code: string): 'ok' | 'cancelled' | 'unknown' | 'invalid-argument' | 'deadline-exceeded' | 'not-found' | 'already-exists' | 'permission-denied' | 'resource-exhausted' | 'failed-precondition' | 'aborted' | 'out-of-range' | 'unimplemented' | 'internal' | 'unavailable' | 'data-loss' | 'unauthenticated' => {
+const mapErrorCode = (code: string): FirebaseHttpsErrorCode => {
   switch (code) {
     case 'INVALID_ARGUMENT':
     case 'VALIDATION_ERROR':
@@ -107,3 +128,4 @@ const sanitizeLogData = (data: any): any => {
   
   return sanitized;
 };
+
