@@ -1,24 +1,25 @@
 
-import * as functions from 'firebase-functions';
+import { onCall } from 'firebase-functions/v2/https';
 import { getAuth, getFirestore } from '../utils/adminInit';
 import { validateCreateUserData, validateCallerPermissions } from '../utils/validationUtils';
 import { BusinessUserError, createHttpsError, logFunctionStart, logFunctionStep, logFunctionSuccess, logFunctionError } from '../utils/errorUtils';
 
-export const createBusinessUser = functions.https.onCall(async (data, context) => {
+export const createBusinessUser = onCall(async (request) => {
   const functionName = 'createBusinessUser';
+  const { data, auth: context } = request;
   
   try {
     logFunctionStart(functionName, data, context);
 
     // Step 1: Authentication check
     logFunctionStep('authentication_check');
-    if (!context.auth) {
+    if (!context) {
       throw new BusinessUserError('UNAUTHENTICATED', 'Must be authenticated', {}, 'authentication_check');
     }
 
     // Step 2: Validate caller permissions
     logFunctionStep('permission_validation');
-    const callerClaims = context.auth.token;
+    const callerClaims = context.token;
     validateCallerPermissions(callerClaims, data.role);
 
     // Step 3: Validate and sanitize input data

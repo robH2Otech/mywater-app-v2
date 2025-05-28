@@ -1,4 +1,5 @@
 
+import { onCall } from 'firebase-functions/v2/https';
 import * as functions from 'firebase-functions';
 import { getAuth, getFirestore } from '../utils/adminInit';
 import { BusinessUserError, createHttpsError, logFunctionStart, logFunctionStep, logFunctionSuccess, logFunctionError } from '../utils/errorUtils';
@@ -12,21 +13,22 @@ export interface UserClaims {
  * Cloud Function to set custom claims for a user
  * Only accessible by superadmins
  */
-export const setUserClaims = functions.https.onCall(async (data, context) => {
+export const setUserClaims = onCall(async (request) => {
   const functionName = 'setUserClaims';
+  const { data, auth: context } = request;
   
   try {
     logFunctionStart(functionName, data, context);
 
     // Step 1: Authentication check
     logFunctionStep('authentication_check');
-    if (!context.auth) {
+    if (!context) {
       throw new BusinessUserError('UNAUTHENTICATED', 'Must be authenticated', {}, 'authentication_check');
     }
 
     // Step 2: Permission check
     logFunctionStep('permission_check');
-    const callerClaims = context.auth.token;
+    const callerClaims = context.token;
     if (callerClaims.role !== 'superadmin') {
       throw new BusinessUserError('PERMISSION_DENIED', 'Only superadmins can set user claims', { callerRole: callerClaims.role }, 'permission_check');
     }
@@ -203,18 +205,19 @@ export const initializeUserClaims = functions.firestore
 /**
  * Cloud Function to migrate existing users to have proper claims
  */
-export const migrateUserClaims = functions.https.onCall(async (data, context) => {
+export const migrateUserClaims = onCall(async (request) => {
   const functionName = 'migrateUserClaims';
+  const { data, auth: context } = request;
   
   try {
     logFunctionStart(functionName, data, context);
 
     // Step 1: Authentication and permission check
     logFunctionStep('authentication_and_permission_check');
-    if (!context.auth || context.auth.token.role !== 'superadmin') {
+    if (!context || context.token.role !== 'superadmin') {
       throw new BusinessUserError('PERMISSION_DENIED', 'Only superadmins can migrate claims', { 
-        authenticated: !!context.auth, 
-        role: context.auth?.token?.role 
+        authenticated: !!context, 
+        role: context?.token?.role 
       }, 'permission_check');
     }
 
