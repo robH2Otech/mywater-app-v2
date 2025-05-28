@@ -1,6 +1,6 @@
 
 import { onCall } from 'firebase-functions/v2/https';
-import * as functions from 'firebase-functions';
+import { onDocumentUpdated, onDocumentCreated } from 'firebase-functions/v2/firestore';
 import { getAuth, getFirestore } from '../utils/adminInit';
 import { BusinessUserError, createHttpsError, logFunctionStart, logFunctionStep, logFunctionSuccess, logFunctionError } from '../utils/errorUtils';
 
@@ -123,84 +123,80 @@ export const setUserClaims = onCall(async (request) => {
  * Cloud Function to sync Firestore user data with Auth claims
  * Triggered when user document is updated
  */
-export const syncUserClaims = functions.firestore
-  .document('app_users_business/{userId}')
-  .onUpdate(async (change, context) => {
-    const functionName = 'syncUserClaims';
-    const userId = context.params.userId;
+export const syncUserClaims = onDocumentUpdated('app_users_business/{userId}', async (event) => {
+  const functionName = 'syncUserClaims';
+  const userId = event.params.userId;
+  
+  try {
+    logFunctionStart(functionName, { userId }, { auth: null });
     
-    try {
-      logFunctionStart(functionName, { userId }, { auth: null });
-      
-      const newData = change.after.data();
-      
-      if (!newData.role || !newData.company) {
-        logFunctionStep('skipping_sync_missing_data', { userId, role: newData.role, company: newData.company });
-        return;
-      }
-
-      const auth = getAuth();
-
-      // Get current claims
-      logFunctionStep('getting_current_claims', { userId });
-      const userRecord = await auth.getUser(userId);
-      const currentClaims = userRecord.customClaims || {};
-
-      // Only update if claims are different
-      if (currentClaims.role !== newData.role || currentClaims.company !== newData.company) {
-        logFunctionStep('updating_claims', { 
-          userId, 
-          oldClaims: currentClaims, 
-          newClaims: { role: newData.role, company: newData.company } 
-        });
-        
-        await auth.setCustomUserClaims(userId, {
-          role: newData.role,
-          company: newData.company
-        });
-        
-        logFunctionSuccess(functionName, { userId, role: newData.role, company: newData.company });
-      } else {
-        logFunctionStep('claims_already_synced', { userId });
-      }
-    } catch (error: any) {
-      logFunctionError(functionName, error, 'sync_operation');
+    const newData = event.data?.after.data();
+    
+    if (!newData || !newData.role || !newData.company) {
+      logFunctionStep('skipping_sync_missing_data', { userId, role: newData?.role, company: newData?.company });
+      return;
     }
-  });
+
+    const auth = getAuth();
+
+    // Get current claims
+    logFunctionStep('getting_current_claims', { userId });
+    const userRecord = await auth.getUser(userId);
+    const currentClaims = userRecord.customClaims || {};
+
+    // Only update if claims are different
+    if (currentClaims.role !== newData.role || currentClaims.company !== newData.company) {
+      logFunctionStep('updating_claims', { 
+        userId, 
+        oldClaims: currentClaims, 
+        newClaims: { role: newData.role, company: newData.company } 
+      });
+      
+      await auth.setCustomUserClaims(userId, {
+        role: newData.role,
+        company: newData.company
+      });
+      
+      logFunctionSuccess(functionName, { userId, role: newData.role, company: newData.company });
+    } else {
+      logFunctionStep('claims_already_synced', { userId });
+    }
+  } catch (error: any) {
+    logFunctionError(functionName, error, 'sync_operation');
+  }
+});
 
 /**
  * Cloud Function to initialize claims for new users
  * Triggered when user document is created
  */
-export const initializeUserClaims = functions.firestore
-  .document('app_users_business/{userId}')
-  .onCreate(async (snap, context) => {
-    const functionName = 'initializeUserClaims';
-    const userId = context.params.userId;
+export const initializeUserClaims = onDocumentCreated('app_users_business/{userId}', async (event) => {
+  const functionName = 'initializeUserClaims';
+  const userId = event.params.userId;
+  
+  try {
+    logFunctionStart(functionName, { userId }, { auth: null });
     
-    try {
-      logFunctionStart(functionName, { userId }, { auth: null });
-      
-      const userData = snap.data();
-      
-      if (!userData.role || !userData.company) {
-        logFunctionStep('skipping_initialization_missing_data', { userId, role: userData.role, company: userData.company });
-        return;
-      }
-
-      const auth = getAuth();
-      
-      logFunctionStep('initializing_claims', { userId, role: userData.role, company: userData.company });
-      await auth.setCustomUserClaims(userId, {
-        role: userData.role,
-        company: userData.company
-      });
-      
-      logFunctionSuccess(functionName, { userId, role: userData.role, company: userData.company });
-    } catch (error: any) {
-      logFunctionError(functionName, error, 'initialization');
+    const userData = event.data?.data();
+    
+    if (!userData || !userData.role || !userData.company) {
+      logFunctionStep('skipping_initialization_missing_data', { userId, role: userData?.role, company: userData?.company });
+      return;
     }
-  });
+
+    const auth = getAuth();
+    
+    logFunctionStep('initializing_claims', { userId, role: userData.role, company: userData.company });
+    await auth.setCustomUserClaims(userId, {
+      role: userData.role,
+      company: userData.company
+    });
+    
+    logFunctionSuccess(functionName, { userId, role: userData.role, company: userData.company });
+  } catch (error: any) {
+    logFunctionError(functionName, error, 'initialization');
+  }
+});
 
 /**
  * Cloud Function to migrate existing users to have proper claims
