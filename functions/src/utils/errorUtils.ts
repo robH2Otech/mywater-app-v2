@@ -1,5 +1,5 @@
 
-import * as functions from 'firebase-functions';
+import { HttpsError } from 'firebase-functions/v2/https';
 
 export interface FunctionError {
   code: string;
@@ -22,7 +22,7 @@ export class BusinessUserError extends Error {
   }
 }
 
-export const createHttpsError = (error: BusinessUserError | Error): functions.https.HttpsError => {
+export const createHttpsError = (error: BusinessUserError | Error): HttpsError => {
   if (error instanceof BusinessUserError) {
     console.error(`Business User Error [${error.code}] at step [${error.step}]:`, {
       message: error.message,
@@ -32,7 +32,7 @@ export const createHttpsError = (error: BusinessUserError | Error): functions.ht
 
     // Map business error codes to HTTPS error codes
     const httpsErrorCode = mapErrorCode(error.code);
-    return new functions.https.HttpsError(httpsErrorCode, error.message, {
+    return new HttpsError(httpsErrorCode, error.message, {
       code: error.code,
       step: error.step,
       details: error.details
@@ -40,12 +40,12 @@ export const createHttpsError = (error: BusinessUserError | Error): functions.ht
   }
 
   console.error('Unexpected error:', error);
-  return new functions.https.HttpsError('internal', 'An unexpected error occurred', {
+  return new HttpsError('internal', 'An unexpected error occurred', {
     message: error.message
   });
 };
 
-const mapErrorCode = (code: string): functions.https.HttpsErrorCode => {
+const mapErrorCode = (code: string): 'ok' | 'cancelled' | 'unknown' | 'invalid-argument' | 'deadline-exceeded' | 'not-found' | 'already-exists' | 'permission-denied' | 'resource-exhausted' | 'failed-precondition' | 'aborted' | 'out-of-range' | 'unimplemented' | 'internal' | 'unavailable' | 'data-loss' | 'unauthenticated' => {
   switch (code) {
     case 'INVALID_ARGUMENT':
     case 'VALIDATION_ERROR':

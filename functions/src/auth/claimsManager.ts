@@ -13,7 +13,9 @@ export interface UserClaims {
  * Cloud Function to set custom claims for a user
  * Only accessible by superadmins
  */
-export const setUserClaims = onCall(async (request) => {
+export const setUserClaims = onCall({
+  cors: true
+}, async (request) => {
   const functionName = 'setUserClaims';
   const { data, auth: context } = request;
   
@@ -201,7 +203,9 @@ export const initializeUserClaims = onDocumentCreated('app_users_business/{userI
 /**
  * Cloud Function to migrate existing users to have proper claims
  */
-export const migrateUserClaims = onCall(async (request) => {
+export const migrateUserClaims = onCall({
+  cors: true
+}, async (request) => {
   const functionName = 'migrateUserClaims';
   const { data, auth: context } = request;
   

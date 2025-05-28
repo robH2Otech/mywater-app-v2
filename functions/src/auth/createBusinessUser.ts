@@ -4,7 +4,9 @@ import { getAuth, getFirestore } from '../utils/adminInit';
 import { validateCreateUserData, validateCallerPermissions } from '../utils/validationUtils';
 import { BusinessUserError, createHttpsError, logFunctionStart, logFunctionStep, logFunctionSuccess, logFunctionError } from '../utils/errorUtils';
 
-export const createBusinessUser = onCall(async (request) => {
+export const createBusinessUser = onCall({
+  cors: true
+}, async (request) => {
   const functionName = 'createBusinessUser';
   const { data, auth: context } = request;
   
