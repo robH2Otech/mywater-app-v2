@@ -1,0 +1,109 @@
+
+import * as functions from 'firebase-functions';
+
+export interface FunctionError {
+  code: string;
+  message: string;
+  details?: any;
+  step?: string;
+}
+
+export class BusinessUserError extends Error {
+  public code: string;
+  public details?: any;
+  public step?: string;
+
+  constructor(code: string, message: string, details?: any, step?: string) {
+    super(message);
+    this.code = code;
+    this.details = details;
+    this.step = step;
+    this.name = 'BusinessUserError';
+  }
+}
+
+export const createHttpsError = (error: BusinessUserError | Error): functions.https.HttpsError => {
+  if (error instanceof BusinessUserError) {
+    console.error(`Business User Error [${error.code}] at step [${error.step}]:`, {
+      message: error.message,
+      details: error.details,
+      stack: error.stack
+    });
+
+    // Map business error codes to HTTPS error codes
+    const httpsErrorCode = mapErrorCode(error.code);
+    return new functions.https.HttpsError(httpsErrorCode, error.message, {
+      code: error.code,
+      step: error.step,
+      details: error.details
+    });
+  }
+
+  console.error('Unexpected error:', error);
+  return new functions.https.HttpsError('internal', 'An unexpected error occurred', {
+    message: error.message
+  });
+};
+
+const mapErrorCode = (code: string): functions.https.HttpsErrorCode => {
+  switch (code) {
+    case 'INVALID_ARGUMENT':
+    case 'VALIDATION_ERROR':
+      return 'invalid-argument';
+    case 'PERMISSION_DENIED':
+      return 'permission-denied';
+    case 'UNAUTHENTICATED':
+      return 'unauthenticated';
+    case 'NOT_FOUND':
+      return 'not-found';
+    case 'ALREADY_EXISTS':
+      return 'already-exists';
+    default:
+      return 'internal';
+  }
+};
+
+export const logFunctionStart = (functionName: string, data: any, context: any) => {
+  console.log(`=== ${functionName} START ===`, {
+    timestamp: new Date().toISOString(),
+    caller: context.auth?.uid || 'anonymous',
+    callerRole: context.auth?.token?.role || 'no-role',
+    data: sanitizeLogData(data)
+  });
+};
+
+export const logFunctionStep = (step: string, data?: any) => {
+  console.log(`STEP: ${step}`, data ? sanitizeLogData(data) : '');
+};
+
+export const logFunctionSuccess = (functionName: string, result: any) => {
+  console.log(`=== ${functionName} SUCCESS ===`, {
+    timestamp: new Date().toISOString(),
+    result: sanitizeLogData(result)
+  });
+};
+
+export const logFunctionError = (functionName: string, error: any, step?: string) => {
+  console.error(`=== ${functionName} ERROR ===`, {
+    timestamp: new Date().toISOString(),
+    step,
+    error: {
+      name: error.name,
+      message: error.message,
+      code: error.code,
+      stack: error.stack
+    }
+  });
+};
+
+const sanitizeLogData = (data: any): any => {
+  if (!data) return data;
+  
+  const sanitized = { ...data };
+  
+  // Remove sensitive fields
+  if (sanitized.password) sanitized.password = '[REDACTED]';
+  if (sanitized.token) sanitized.token = '[REDACTED]';
+  
+  return sanitized;
+};

@@ -1,4 +1,3 @@
-
 import * as admin from 'firebase-admin';
 import { updateAllLocations, manualLocationUpdate, cleanupLocationHistory } from './locations/updateLocations';
 import { onOrderCreated } from './orders/orderWebhook';
@@ -40,7 +39,7 @@ async function setupFirestoreTTL() {
 // Run the TTL setup
 setupFirestoreTTL().catch(console.error);
 
-// Export the Cloud Functions
+// Export the Cloud Functions with enhanced error handling and logging
 export {
   updateAllLocations,
   manualLocationUpdate,
