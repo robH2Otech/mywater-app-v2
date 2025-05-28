@@ -7,10 +7,7 @@ import { storeLocationData, cleanupExpiredLocationHistory } from './locationStor
 /**
  * Cloud Function to update locations for all units
  */
-export const updateAllLocations = functions.scheduler.onSchedule({
-  schedule: '0 6,18 * * *',  // Run at 6am and 6pm every day
-  timeZone: 'UTC',
-}, async (context) => {
+export const updateAllLocations = functions.pubsub.schedule('0 6,18 * * *').onRun(async (context) => {
   const db = admin.firestore();
   
   try {
@@ -63,10 +60,7 @@ export { manualLocationUpdate } from './manualLocationUpdate';
  * Cloud Function to delete expired location history records
  * This is a backup to ensure old records are removed even if the inline deletion fails
  */
-export const cleanupLocationHistory = functions.scheduler.onSchedule({
-  schedule: '0 3 * * *',  // Run at 3am every day
-  timeZone: 'UTC',
-}, async (context) => {
+export const cleanupLocationHistory = functions.pubsub.schedule('0 3 * * *').onRun(async (context) => {
   try {
     const deletedCount = await cleanupExpiredLocationHistory();
     

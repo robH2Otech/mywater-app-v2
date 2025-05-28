@@ -60,8 +60,8 @@ export const onReferralUsed = functions.https.onRequest(async (request, response
 
     // Get referrer's user ID
     const referralDoc = referralCodesSnapshot.docs[0];
-    const referralData = referralDoc.data();
-    const referrerId = referralData.user_id;
+    const referralCodeData = referralDoc.data();
+    const referrerId = referralCodeData.user_id;
     
     console.log(`Found referral code ${referralData.referral_code} belonging to user ${referrerId}`);
     
@@ -121,7 +121,7 @@ export const onReferralUsed = functions.https.onRequest(async (request, response
       await db.collection('notifications').add({
         user_id: referrerId,
         title: 'Congratulations!',
-        message: 'You've earned a free €150 replacement cartridge! Visit the shop to claim your reward.',
+        message: 'You have earned a free EUR 150 replacement cartridge! Visit the shop to claim your reward.',
         type: 'reward',
         read: false,
         created_at: admin.firestore.FieldValue.serverTimestamp()
