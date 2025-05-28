@@ -7,52 +7,52 @@ import { storeLocationData, cleanupExpiredLocationHistory } from './locationStor
 /**
  * Cloud Function to update locations for all units
  */
-export const updateAllLocations = functions.pubsub
-  .schedule('0 6,18 * * *')  // Run at 6am and 6pm every day
-  .timeZone('UTC')
-  .onRun(async () => {
-    const db = admin.firestore();
+export const updateAllLocations = functions.scheduler.onSchedule({
+  schedule: '0 6,18 * * *',  // Run at 6am and 6pm every day
+  timeZone: 'UTC',
+}, async (context) => {
+  const db = admin.firestore();
+  
+  try {
+    // Get all units with ICCID
+    const unitsSnapshot = await db.collection('units').get();
+    const units = unitsSnapshot.docs.filter(doc => doc.data().iccid);
     
-    try {
-      // Get all units with ICCID
-      const unitsSnapshot = await db.collection('units').get();
-      const units = unitsSnapshot.docs.filter(doc => doc.data().iccid);
+    functions.logger.info(`Found ${units.length} units with ICCID to update`);
+    
+    // Get authentication token once to use for all requests
+    const token = await authenticate();
+    
+    // Process each unit
+    const updates = units.map(async (unitDoc) => {
+      const unit = unitDoc.data();
+      const iccid = unit.iccid;
       
-      functions.logger.info(`Found ${units.length} units with ICCID to update`);
-      
-      // Get authentication token once to use for all requests
-      const token = await authenticate();
-      
-      // Process each unit
-      const updates = units.map(async (unitDoc) => {
-        const unit = unitDoc.data();
-        const iccid = unit.iccid;
+      try {
+        // Get location data from 1oT API
+        const locationData = await getDeviceLocation(iccid, token);
         
-        try {
-          // Get location data from 1oT API
-          const locationData = await getDeviceLocation(iccid, token);
-          
-          // Store location data with timestamp
-          await storeLocationData(unitDoc.id, locationData);
-          
-          return { success: true, iccid };
-        } catch (error) {
-          functions.logger.error(`Error updating location for unit ${unitDoc.id}:`, error);
-          return { success: false, iccid, error };
-        }
-      });
-      
-      // Wait for all updates to complete
-      const results = await Promise.all(updates);
-      const succeeded = results.filter(r => r.success).length;
-      
-      functions.logger.info(`Location update completed. Success: ${succeeded}/${units.length}`);
-      return { success: true, updated: succeeded, total: units.length };
-    } catch (error) {
-      functions.logger.error('Error in updateAllLocations function:', error);
-      throw error;
-    }
-  });
+        // Store location data with timestamp
+        await storeLocationData(unitDoc.id, locationData);
+        
+        return { success: true, iccid };
+      } catch (error) {
+        functions.logger.error(`Error updating location for unit ${unitDoc.id}:`, error);
+        return { success: false, iccid, error };
+      }
+    });
+    
+    // Wait for all updates to complete
+    const results = await Promise.all(updates);
+    const succeeded = results.filter(r => r.success).length;
+    
+    functions.logger.info(`Location update completed. Success: ${succeeded}/${units.length}`);
+    return { success: true, updated: succeeded, total: units.length };
+  } catch (error) {
+    functions.logger.error('Error in updateAllLocations function:', error);
+    throw error;
+  }
+});
 
 /**
  * Cloud Function to update location for a specific unit (on-demand)
@@ -63,22 +63,22 @@ export { manualLocationUpdate } from './manualLocationUpdate';
  * Cloud Function to delete expired location history records
  * This is a backup to ensure old records are removed even if the inline deletion fails
  */
-export const cleanupLocationHistory = functions.pubsub
-  .schedule('0 3 * * *')  // Run at 3am every day
-  .timeZone('UTC')
-  .onRun(async () => {
-    try {
-      const deletedCount = await cleanupExpiredLocationHistory();
-      
-      if (deletedCount === 0) {
-        functions.logger.info('No expired location history records to delete');
-        return null;
-      }
-      
-      functions.logger.info(`Successfully deleted ${deletedCount} expired location history records`);
-      return { success: true, deletedCount };
-    } catch (error) {
-      functions.logger.error('Error cleaning up location history:', error);
-      throw error;
+export const cleanupLocationHistory = functions.scheduler.onSchedule({
+  schedule: '0 3 * * *',  // Run at 3am every day
+  timeZone: 'UTC',
+}, async (context) => {
+  try {
+    const deletedCount = await cleanupExpiredLocationHistory();
+    
+    if (deletedCount === 0) {
+      functions.logger.info('No expired location history records to delete');
+      return null;
     }
-  });
+    
+    functions.logger.info(`Successfully deleted ${deletedCount} expired location history records`);
+    return { success: true, deletedCount };
+  } catch (error) {
+    functions.logger.error('Error cleaning up location history:', error);
+    throw error;
+  }
+});
