@@ -1,5 +1,4 @@
 
-
 import { HttpsError } from 'firebase-functions/v2/https';
 
 export interface FunctionError {
@@ -16,15 +15,15 @@ export class BusinessUserError extends Error {
 
   constructor(code: string, message: string, details?: any, step?: string) {
     super(message);
+    this.name = 'BusinessUserError';
     this.code = code;
     this.details = details;
     this.step = step;
-    this.name = 'BusinessUserError';
   }
 }
 
 // Define a type for Firebase HTTPS error codes
-type FirebaseHttpsErrorCode = 
+type HttpsErrorCode = 
   | 'ok' 
   | 'cancelled' 
   | 'unknown' 
@@ -43,7 +42,7 @@ type FirebaseHttpsErrorCode =
   | 'data-loss' 
   | 'unauthenticated';
 
-export const createHttpsError = (error: BusinessUserError | Error): HttpsError => {
+export function createHttpsError(error: BusinessUserError | Error): HttpsError {
   if (error instanceof BusinessUserError) {
     console.error(`Business User Error [${error.code}] at step [${error.step}]:`, {
       message: error.message,
@@ -64,9 +63,9 @@ export const createHttpsError = (error: BusinessUserError | Error): HttpsError =
   return new HttpsError('internal', 'An unexpected error occurred', {
     message: error.message
   });
-};
+}
 
-const mapErrorCode = (code: string): FirebaseHttpsErrorCode => {
+const mapErrorCode = (code: string): HttpsErrorCode => {
   switch (code) {
     case 'INVALID_ARGUMENT':
     case 'VALIDATION_ERROR':
@@ -84,27 +83,27 @@ const mapErrorCode = (code: string): FirebaseHttpsErrorCode => {
   }
 };
 
-export const logFunctionStart = (functionName: string, data: any, context: any) => {
+export function logFunctionStart(functionName: string, data: any, context: any): void {
   console.log(`=== ${functionName} START ===`, {
     timestamp: new Date().toISOString(),
-    caller: context.auth?.uid || 'anonymous',
-    callerRole: context.auth?.token?.role || 'no-role',
+    caller: context?.auth?.uid || 'anonymous',
+    callerRole: context?.auth?.token?.role || 'no-role',
     data: sanitizeLogData(data)
   });
-};
+}
 
-export const logFunctionStep = (step: string, data?: any) => {
+export function logFunctionStep(step: string, data?: any): void {
   console.log(`STEP: ${step}`, data ? sanitizeLogData(data) : '');
-};
+}
 
-export const logFunctionSuccess = (functionName: string, result: any) => {
+export function logFunctionSuccess(functionName: string, result: any): void {
   console.log(`=== ${functionName} SUCCESS ===`, {
     timestamp: new Date().toISOString(),
     result: sanitizeLogData(result)
   });
-};
+}
 
-export const logFunctionError = (functionName: string, error: any, step?: string) => {
+export function logFunctionError(functionName: string, error: any, step?: string): void {
   console.error(`=== ${functionName} ERROR ===`, {
     timestamp: new Date().toISOString(),
     step,
@@ -115,9 +114,9 @@ export const logFunctionError = (functionName: string, error: any, step?: string
       stack: error.stack
     }
   });
-};
+}
 
-const sanitizeLogData = (data: any): any => {
+function sanitizeLogData(data: any): any {
   if (!data) return data;
   
   const sanitized = { ...data };
@@ -127,5 +126,4 @@ const sanitizeLogData = (data: any): any => {
   if (sanitized.token) sanitized.token = '[REDACTED]';
   
   return sanitized;
-};
-
+}
