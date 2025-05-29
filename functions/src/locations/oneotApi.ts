@@ -1,7 +1,6 @@
 
 import { logger } from 'firebase-functions/v2';
 import { defineSecret } from 'firebase-functions/params';
-import fetch from 'node-fetch';
 
 // Define secrets for 1oT API credentials
 const oneotApiKey = defineSecret('ONEOT_API_KEY');
