@@ -1,14 +1,17 @@
 
 import { onCall } from 'firebase-functions/v2/https';
-import { onDocumentUpdated, onDocumentCreated } from 'firebase-functions/v2/firestore';
 import { getAuth, getFirestore } from '../utils/adminInit';
-import { BusinessUserError, createHttpsError, logFunctionStart, logFunctionStep, logFunctionSuccess, logFunctionError } from '../utils/errorUtils';
+import { BusinessUserError, createHttpsError, logFunctionStart, logFunctionSuccess, logFunctionError } from '../utils/errorUtils';
 
-export interface UserClaims {
+interface SetClaimsRequest {
+  userId: string;
   role: 'superadmin' | 'admin' | 'technician' | 'user';
   company: string;
 }
 
+/**
+ * Set custom claims for a user (superadmin only)
+ */
 export const setUserClaims = onCall({
   cors: true
 }, async (request) => {
@@ -17,227 +20,271 @@ export const setUserClaims = onCall({
   
   try {
     logFunctionStart(functionName, data, context);
-
+    
     if (!context) {
-      throw new BusinessUserError('UNAUTHENTICATED', 'Must be authenticated', {}, 'authentication_check');
+      throw new BusinessUserError('UNAUTHENTICATED', 'User must be authenticated', {}, 'authentication_check');
     }
-
-    const callerClaims = context.token;
-    if (callerClaims.role !== 'superadmin') {
-      throw new BusinessUserError('PERMISSION_DENIED', 'Only superadmins can set user claims', { callerRole: callerClaims.role }, 'permission_check');
-    }
-
-    const { userId, role, company } = data;
-    if (!userId || !role || !company) {
-      throw new BusinessUserError('VALIDATION_ERROR', 'userId, role, and company are required', { userId, role, company }, 'input_validation');
-    }
-
-    const validRoles = ['superadmin', 'admin', 'technician', 'user'];
-    if (!validRoles.includes(role)) {
-      throw new BusinessUserError('VALIDATION_ERROR', `Invalid role. Must be one of: ${validRoles.join(', ')}`, { role }, 'input_validation');
-    }
-
-    const auth = getAuth();
-    const db = getFirestore();
-
-    let userRecord;
-    try {
-      userRecord = await auth.getUser(userId);
-    } catch (error: any) {
-      if (error.code === 'auth/user-not-found') {
-        throw new BusinessUserError('NOT_FOUND', 'User not found in Firebase Auth', { userId }, 'user_verification');
-      }
-      throw error;
-    }
-
-    await auth.setCustomUserClaims(userId, { role, company });
-
-    const userDocRef = db.collection('app_users_business').doc(userId);
     
-    await db.runTransaction(async (transaction) => {
-      const userDoc = await transaction.get(userDocRef);
-      
-      if (userDoc.exists) {
-        transaction.update(userDocRef, {
-          role,
-          company,
-          updated_at: new Date()
-        });
-      }
-    });
-
-    const updatedUser = await auth.getUser(userId);
-    const setClaims = updatedUser.customClaims || {};
+    // Check if current user is superadmin
+    const currentUser = await getAuth().getUser(context.uid);
+    const currentClaims = currentUser.customClaims || {};
     
-    if (setClaims.role !== role || setClaims.company !== company) {
-      throw new BusinessUserError('INTERNAL', 'Claims verification failed after setting', { 
-        expected: { role, company }, 
-        actual: setClaims 
-      }, 'claims_verification');
+    if (currentClaims.role !== 'superadmin') {
+      throw new BusinessUserError('PERMISSION_DENIED', 'Only superadmins can set user claims', {}, 'permission_check');
     }
-
-    const result = { 
-      success: true, 
-      message: 'Claims updated successfully',
-      userId,
-      claims: { role, company }
-    };
-
+    
+    const { userId, role, company } = data as SetClaimsRequest;
+    
+    // Set custom claims
+    await getAuth().setCustomUserClaims(userId, { role, company });
+    
+    const result = { success: true, userId, role, company };
     logFunctionSuccess(functionName, result);
     return result;
-
+    
   } catch (error: any) {
     logFunctionError(functionName, error);
     
     if (error instanceof BusinessUserError) {
       throw createHttpsError(error);
     }
-
-    const businessError = new BusinessUserError('INTERNAL', `Failed to set user claims: ${error.message}`, { originalError: error }, 'unknown');
+    
+    const businessError = new BusinessUserError('INTERNAL', `Failed to set user claims: ${error.message}`, { originalError: error }, 'claims_update');
     throw createHttpsError(businessError);
   }
 });
 
-export const syncUserClaims = onDocumentUpdated('app_users_business/{userId}', async (event) => {
-  const functionName = 'syncUserClaims';
-  const userId = event.params.userId;
-  
-  try {
-    logFunctionStart(functionName, { userId }, { auth: null });
-    
-    const newData = event.data?.after.data();
-    
-    if (!newData || !newData.role || !newData.company) {
-      logFunctionStep('skipping_sync_missing_data', { userId, role: newData?.role, company: newData?.company });
-      return;
-    }
-
-    const auth = getAuth();
-    const userRecord = await auth.getUser(userId);
-    const currentClaims = userRecord.customClaims || {};
-
-    if (currentClaims.role !== newData.role || currentClaims.company !== newData.company) {
-      await auth.setCustomUserClaims(userId, {
-        role: newData.role,
-        company: newData.company
-      });
-      
-      logFunctionSuccess(functionName, { userId, role: newData.role, company: newData.company });
-    }
-  } catch (error: any) {
-    logFunctionError(functionName, error, 'sync_operation');
-  }
-});
-
-export const initializeUserClaims = onDocumentCreated('app_users_business/{userId}', async (event) => {
-  const functionName = 'initializeUserClaims';
-  const userId = event.params.userId;
-  
-  try {
-    logFunctionStart(functionName, { userId }, { auth: null });
-    
-    const userData = event.data?.data();
-    
-    if (!userData || !userData.role || !userData.company) {
-      return;
-    }
-
-    const auth = getAuth();
-    
-    await auth.setCustomUserClaims(userId, {
-      role: userData.role,
-      company: userData.company
-    });
-    
-    logFunctionSuccess(functionName, { userId, role: userData.role, company: userData.company });
-  } catch (error: any) {
-    logFunctionError(functionName, error, 'initialization');
-  }
-});
-
-export const migrateUserClaims = onCall({
+/**
+ * Sync user claims with Firestore data
+ */
+export const syncUserClaims = onCall({
   cors: true
 }, async (request) => {
-  const functionName = 'migrateUserClaims';
+  const functionName = 'syncUserClaims';
   const { data, auth: context } = request;
   
   try {
     logFunctionStart(functionName, data, context);
-
-    if (!context || context.token.role !== 'superadmin') {
-      throw new BusinessUserError('PERMISSION_DENIED', 'Only superadmins can migrate claims', { 
-        authenticated: !!context, 
-        role: context?.token?.role 
-      }, 'permission_check');
+    
+    if (!context) {
+      throw new BusinessUserError('UNAUTHENTICATED', 'User must be authenticated', {}, 'authentication_check');
     }
-
-    const auth = getAuth();
+    
+    const { userId } = data;
     const db = getFirestore();
-
-    const usersSnapshot = await db.collection('app_users_business').get();
     
-    let migrated = 0;
-    let skipped = 0;
-    let errors = 0;
-
-    for (const doc of usersSnapshot.docs) {
-      const userData = doc.data();
-      const userId = doc.id;
-
-      try {
-        if (!userData.role || !userData.company) {
-          skipped++;
-          continue;
-        }
-
-        let userRecord;
-        try {
-          userRecord = await auth.getUser(userId);
-        } catch (authError: any) {
-          if (authError.code === 'auth/user-not-found') {
-            skipped++;
-            continue;
-          }
-          throw authError;
-        }
-
-        const currentClaims = userRecord.customClaims || {};
-        if (currentClaims.role === userData.role && currentClaims.company === userData.company) {
-          skipped++;
-          continue;
-        }
-
-        await auth.setCustomUserClaims(userId, {
-          role: userData.role,
-          company: userData.company
-        });
-        
-        migrated++;
-
-      } catch (userError: any) {
-        errors++;
-      }
+    // Get user data from Firestore
+    const userDoc = await db.collection('app_users_business').doc(userId).get();
+    
+    if (!userDoc.exists) {
+      throw new BusinessUserError('NOT_FOUND', 'User not found in database', { userId }, 'user_lookup');
     }
-
-    const result = { 
-      success: true, 
-      migrated, 
-      skipped, 
-      errors,
-      message: `Migration completed: ${migrated} users migrated, ${skipped} skipped, ${errors} errors` 
-    };
     
+    const userData = userDoc.data();
+    
+    // Update custom claims
+    await getAuth().setCustomUserClaims(userId, {
+      role: userData?.role,
+      company: userData?.company
+    });
+    
+    const result = { success: true, userId, synced: true };
     logFunctionSuccess(functionName, result);
     return result;
-
+    
   } catch (error: any) {
     logFunctionError(functionName, error);
     
     if (error instanceof BusinessUserError) {
       throw createHttpsError(error);
     }
+    
+    const businessError = new BusinessUserError('INTERNAL', `Failed to sync user claims: ${error.message}`, { originalError: error }, 'claims_sync');
+    throw createHttpsError(businessError);
+  }
+});
 
-    const businessError = new BusinessUserError('INTERNAL', `Migration failed: ${error.message}`, { originalError: error }, 'migration_process');
+/**
+ * Initialize claims for users who don't have them
+ */
+export const initializeUserClaims = onCall({
+  cors: true
+}, async (request) => {
+  const functionName = 'initializeUserClaims';
+  const { auth: context } = request;
+  
+  try {
+    logFunctionStart(functionName, {}, context);
+    
+    if (!context) {
+      throw new BusinessUserError('UNAUTHENTICATED', 'User must be authenticated', {}, 'authentication_check');
+    }
+    
+    const auth = getAuth();
+    const db = getFirestore();
+    const userId = context.uid;
+    
+    // Check if user already has claims
+    const currentUser = await auth.getUser(userId);
+    const currentClaims = currentUser.customClaims || {};
+    
+    if (currentClaims.role) {
+      const result = { success: true, userId, message: 'User already has claims', claims: currentClaims };
+      logFunctionSuccess(functionName, result);
+      return result;
+    }
+    
+    // Look for user in business users collection
+    const businessUserDoc = await db.collection('app_users_business').doc(userId).get();
+    
+    if (businessUserDoc.exists) {
+      const userData = businessUserDoc.data();
+      await auth.setCustomUserClaims(userId, {
+        role: userData?.role || 'user',
+        company: userData?.company || 'default'
+      });
+      
+      const result = { success: true, userId, initialized: true, role: userData?.role };
+      logFunctionSuccess(functionName, result);
+      return result;
+    }
+    
+    // Look for user in private users collection
+    const privateUserDoc = await db.collection('app_users_privat').doc(userId).get();
+    
+    if (privateUserDoc.exists) {
+      await auth.setCustomUserClaims(userId, {
+        role: 'user',
+        company: 'private'
+      });
+      
+      const result = { success: true, userId, initialized: true, role: 'user' };
+      logFunctionSuccess(functionName, result);
+      return result;
+    }
+    
+    // Default claims if no user document found
+    await auth.setCustomUserClaims(userId, {
+      role: 'user',
+      company: 'default'
+    });
+    
+    const result = { success: true, userId, initialized: true, role: 'user', company: 'default' };
+    logFunctionSuccess(functionName, result);
+    return result;
+    
+  } catch (error: any) {
+    logFunctionError(functionName, error);
+    
+    if (error instanceof BusinessUserError) {
+      throw createHttpsError(error);
+    }
+    
+    const businessError = new BusinessUserError('INTERNAL', `Failed to initialize user claims: ${error.message}`, { originalError: error }, 'claims_initialization');
+    throw createHttpsError(businessError);
+  }
+});
+
+/**
+ * Migrate all existing users to have proper claims (superadmin only)
+ */
+export const migrateUserClaims = onCall({
+  cors: true
+}, async (request) => {
+  const functionName = 'migrateUserClaims';
+  const { auth: context } = request;
+  
+  try {
+    logFunctionStart(functionName, {}, context);
+    
+    if (!context) {
+      throw new BusinessUserError('UNAUTHENTICATED', 'User must be authenticated', {}, 'authentication_check');
+    }
+    
+    // Check if current user is superadmin
+    const currentUser = await getAuth().getUser(context.uid);
+    const currentClaims = currentUser.customClaims || {};
+    
+    if (currentClaims.role !== 'superadmin') {
+      throw new BusinessUserError('PERMISSION_DENIED', 'Only superadmins can migrate user claims', {}, 'permission_check');
+    }
+    
+    const auth = getAuth();
+    const db = getFirestore();
+    
+    let migrated = 0;
+    let skipped = 0;
+    let errors = 0;
+    
+    // Get all business users
+    const businessUsers = await db.collection('app_users_business').get();
+    
+    for (const userDoc of businessUsers.docs) {
+      try {
+        const userData = userDoc.data();
+        const userId = userDoc.id;
+        
+        // Check if user exists in Auth
+        try {
+          await auth.getUser(userId);
+          
+          // Set claims
+          await auth.setCustomUserClaims(userId, {
+            role: userData.role || 'user',
+            company: userData.company || 'default'
+          });
+          
+          migrated++;
+        } catch (authError) {
+          console.warn(`User ${userId} not found in Auth, skipping`);
+          skipped++;
+        }
+      } catch (error) {
+        console.error(`Error migrating user ${userDoc.id}:`, error);
+        errors++;
+      }
+    }
+    
+    // Get all private users
+    const privateUsers = await db.collection('app_users_privat').get();
+    
+    for (const userDoc of privateUsers.docs) {
+      try {
+        const userId = userDoc.id;
+        
+        // Check if user exists in Auth
+        try {
+          await auth.getUser(userId);
+          
+          // Set claims for private users
+          await auth.setCustomUserClaims(userId, {
+            role: 'user',
+            company: 'private'
+          });
+          
+          migrated++;
+        } catch (authError) {
+          console.warn(`User ${userId} not found in Auth, skipping`);
+          skipped++;
+        }
+      } catch (error) {
+        console.error(`Error migrating user ${userDoc.id}:`, error);
+        errors++;
+      }
+    }
+    
+    const result = { success: true, migrated, skipped, errors };
+    logFunctionSuccess(functionName, result);
+    return result;
+    
+  } catch (error: any) {
+    logFunctionError(functionName, error);
+    
+    if (error instanceof BusinessUserError) {
+      throw createHttpsError(error);
+    }
+    
+    const businessError = new BusinessUserError('INTERNAL', `Failed to migrate user claims: ${error.message}`, { originalError: error }, 'claims_migration');
     throw createHttpsError(businessError);
   }
 });
