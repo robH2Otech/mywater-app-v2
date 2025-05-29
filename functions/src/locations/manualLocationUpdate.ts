@@ -9,7 +9,8 @@ import { BusinessUserError, createHttpsError, logFunctionStart, logFunctionStep,
  * Cloud Function to update location for a specific ICCID (on-demand)
  */
 export const manualLocationUpdate = onCall({
-  cors: true
+  cors: true,
+  secrets: ['ONEOT_API_KEY', 'ONEOT_API_SECRET', 'ONEOT_ENDPOINT']
 }, async (request) => {
   const functionName = 'manualLocationUpdate';
   const { data, auth: context } = request;

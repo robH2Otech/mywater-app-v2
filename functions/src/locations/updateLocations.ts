@@ -8,7 +8,10 @@ import { logFunctionStart, logFunctionSuccess, logFunctionError } from '../utils
 /**
  * Cloud Function to update locations for all units
  */
-export const updateAllLocations = onSchedule('0 6,18 * * *', async (event) => {
+export const updateAllLocations = onSchedule({
+  schedule: '0 6,18 * * *',
+  secrets: ['ONEOT_API_KEY', 'ONEOT_API_SECRET', 'ONEOT_ENDPOINT']
+}, async (event) => {
   const functionName = 'updateAllLocations';
   
   try {
@@ -63,7 +66,9 @@ export const updateAllLocations = onSchedule('0 6,18 * * *', async (event) => {
 /**
  * Cloud Function to delete expired location history records
  */
-export const cleanupLocationHistory = onSchedule('0 3 * * *', async (event) => {
+export const cleanupLocationHistory = onSchedule({
+  schedule: '0 3 * * *'
+}, async (event) => {
   const functionName = 'cleanupLocationHistory';
   
   try {

@@ -1,13 +1,13 @@
 
-import * as admin from 'firebase-admin';
-import * as functions from 'firebase-functions';
+import { getFirestore, FieldValue, Timestamp } from 'firebase-admin/firestore';
+import { logger } from 'firebase-functions/v2';
 
 /**
  * Store location data with timestamp and add to history
  */
 export async function storeLocationData(unitId: string, locationData: any): Promise<void> {
-  const db = admin.firestore();
-  const now = admin.firestore.FieldValue.serverTimestamp();
+  const db = getFirestore();
+  const now = FieldValue.serverTimestamp();
   
   // Current location data to update on the unit
   const locationUpdate = {
@@ -28,20 +28,20 @@ export async function storeLocationData(unitId: string, locationData: any): Prom
     unitId,
     createdAt: now,
     // TTL field for automatic deletion after 24 hours
-    expireAt: admin.firestore.Timestamp.fromMillis(Date.now() + (24 * 60 * 60 * 1000))
+    expireAt: Timestamp.fromMillis(Date.now() + (24 * 60 * 60 * 1000))
   };
   
   await db.collection('locationHistory').add(historyData);
   
-  functions.logger.info(`Updated location for unit ${unitId}`);
+  logger.info(`Updated location for unit ${unitId}`);
 }
 
 /**
  * Clean up expired location history
  */
 export async function cleanupExpiredLocationHistory(): Promise<number> {
-  const db = admin.firestore();
-  const twentyFourHoursAgo = admin.firestore.Timestamp.fromMillis(Date.now() - (24 * 60 * 60 * 1000));
+  const db = getFirestore();
+  const twentyFourHoursAgo = Timestamp.fromMillis(Date.now() - (24 * 60 * 60 * 1000));
   const expiredDocs = await db.collection('locationHistory')
     .where('expireAt', '<', twentyFourHoursAgo)
     .limit(100) // Process in batches to avoid timeout
@@ -58,7 +58,7 @@ export async function cleanupExpiredLocationHistory(): Promise<number> {
   
   if (deletionCount > 0) {
     await batch.commit();
-    functions.logger.info(`Deleted ${deletionCount} expired location history records`);
+    logger.info(`Deleted ${deletionCount} expired location history records`);
   }
   
   return deletionCount;

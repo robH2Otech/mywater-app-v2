@@ -1,5 +1,7 @@
 
 // Export all Cloud Functions
+
+// Auth functions
 export { createBusinessUser } from './auth/createBusinessUser';
 export { setUserClaims, syncUserClaims, initializeUserClaims, migrateUserClaims } from './auth/claimsManager';
 
