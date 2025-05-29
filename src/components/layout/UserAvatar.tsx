@@ -1,9 +1,7 @@
 
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { useEffect, useState } from "react";
-import { auth } from "@/integrations/firebase/client";
-import { doc, getDoc } from "firebase/firestore";
-import { db } from "@/integrations/firebase/client";
+import { useAuth } from "@/contexts/AuthContext";
 import { 
   DropdownMenu,
   DropdownMenuContent,
@@ -26,6 +24,7 @@ export function UserAvatar({ firstName, lastName, className = "h-9 w-9", showMen
   const [initials, setInitials] = useState<string>("U");
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { currentUser, firebaseUser } = useAuth();
   
   useEffect(() => {
     // If firstName and lastName are provided via props, use them directly
@@ -35,89 +34,42 @@ export function UserAvatar({ firstName, lastName, className = "h-9 w-9", showMen
       return;
     }
     
-    // Check if we have cached initials
-    const cachedInitials = sessionStorage.getItem('userInitials');
-    if (cachedInitials) {
-      setInitials(cachedInitials);
+    if (firstName) {
+      setInitials(firstName.charAt(0).toUpperCase());
       return;
     }
     
-    const fetchUserInitials = async () => {
-      const currentUser = auth.currentUser;
-      
-      if (!currentUser) {
-        return;
-      }
-      
-      try {
-        // First check business users collection using UID as document ID
-        const businessUserDocRef = doc(db, "app_users_business", currentUser.uid);
-        const businessUserDoc = await getDoc(businessUserDocRef);
-        
-        if (businessUserDoc.exists()) {
-          const userData = businessUserDoc.data();
-          const firstName = userData.first_name || "";
-          const lastName = userData.last_name || "";
-          
-          if (firstName && lastName) {
-            const userInitials = `${firstName.charAt(0)}${lastName.charAt(0)}`;
-            setInitials(userInitials.toUpperCase());
-            sessionStorage.setItem('userInitials', userInitials.toUpperCase());
-            return;
-          }
-        }
-        
-        // Fallback to private users collection
-        const privateUserDocRef = doc(db, "app_users_privat", currentUser.uid);
-        const privateUserDoc = await getDoc(privateUserDocRef);
-        
-        if (privateUserDoc.exists()) {
-          const userData = privateUserDoc.data();
-          const firstName = userData.first_name || "";
-          const lastName = userData.last_name || "";
-          
-          if (firstName && lastName) {
-            const userInitials = `${firstName.charAt(0)}${lastName.charAt(0)}`;
-            setInitials(userInitials.toUpperCase());
-            sessionStorage.setItem('userInitials', userInitials.toUpperCase());
-            return;
-          }
-        }
-        
-        // As a last resort, use displayName from auth
-        if (currentUser.displayName) {
-          const nameParts = currentUser.displayName.split(' ');
-          if (nameParts.length >= 2) {
-            const userInitials = `${nameParts[0].charAt(0)}${nameParts[1].charAt(0)}`;
-            setInitials(userInitials.toUpperCase());
-            sessionStorage.setItem('userInitials', userInitials.toUpperCase());
-          } else if (nameParts.length === 1) {
-            setInitials(nameParts[0].charAt(0).toUpperCase());
-            sessionStorage.setItem('userInitials', nameParts[0].charAt(0).toUpperCase());
-          }
-        }
-      } catch (error) {
-        console.error("Error fetching user data for avatar:", error);
-      }
-    };
+    // Get from auth context
+    if (currentUser?.first_name) {
+      const firstInitial = currentUser.first_name.charAt(0);
+      const lastInitial = currentUser.last_name?.charAt(0) || '';
+      setInitials(`${firstInitial}${lastInitial}`.toUpperCase());
+      return;
+    }
     
-    fetchUserInitials();
-  }, [firstName, lastName]);
+    // Fallback to Firebase user
+    if (firebaseUser) {
+      if (firebaseUser.displayName) {
+        const nameParts = firebaseUser.displayName.split(' ');
+        if (nameParts.length >= 2) {
+          const userInitials = `${nameParts[0].charAt(0)}${nameParts[1].charAt(0)}`;
+          setInitials(userInitials.toUpperCase());
+        } else {
+          setInitials(nameParts[0].charAt(0).toUpperCase());
+        }
+      } else if (firebaseUser.email) {
+        setInitials(firebaseUser.email.charAt(0).toUpperCase());
+      }
+    }
+  }, [firstName, lastName, currentUser, firebaseUser]);
   
   const handleSignOut = async () => {
     try {
       await logoutUser();
-      
-      // Clear session storage
-      sessionStorage.removeItem('userDisplayName');
-      sessionStorage.removeItem('userInitials');
-      
       toast({
         title: "Logged out successfully",
         description: "You have been signed out of your account",
       });
-      
-      // Navigate to home page
       navigate("/");
     } catch (error) {
       console.error("Error signing out:", error);

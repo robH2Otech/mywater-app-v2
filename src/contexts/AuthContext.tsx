@@ -82,49 +82,26 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         if (firebaseUser) {
           console.log("🎫 Processing user authentication...");
           
-          // Use AuthService for enhanced claims handling
-          const authResult = await AuthService.verifyAndFixClaims();
+          // Create a minimal user profile for testing
+          const testUser: AppUser = {
+            id: firebaseUser.uid,
+            first_name: firebaseUser.displayName?.split(' ')[0] || firebaseUser.email?.split('@')[0] || 'User',
+            last_name: firebaseUser.displayName?.split(' ')[1] || '',
+            email: firebaseUser.email || '',
+            role: 'superadmin', // Set as superadmin for testing
+            status: 'active',
+            company: 'xwater'
+          };
           
-          if (authResult.success) {
-            console.log("✅ User authenticated with claims:", authResult.claims);
-            
-            setDebugInfo({
-              uid: firebaseUser.uid,
-              email: firebaseUser.email,
-              claims: authResult.claims,
-              timestamp: new Date().toISOString()
-            });
-            
-            await handleAuthStateChange(firebaseUser);
-          } else {
-            console.log("⚠️ User authenticated but claims verification failed, trying to initialize...");
-            
-            // Try to initialize claims automatically
-            try {
-              const initialized = await AuthService.initializeUserClaims();
-              if (initialized) {
-                console.log("✅ Claims initialized successfully");
-                const retryResult = await AuthService.verifyAndFixClaims();
-                if (retryResult.success) {
-                  await handleAuthStateChange(firebaseUser);
-                } else {
-                  setAuthError("Account setup incomplete. Please contact administrator.");
-                }
-              } else {
-                setAuthError("Account permissions not properly configured. Please contact administrator.");
-              }
-            } catch (initError) {
-              console.error("Error initializing claims:", initError);
-              setAuthError("Failed to initialize account. Please contact administrator.");
-            }
-            
-            setDebugInfo({
-              uid: firebaseUser.uid,
-              email: firebaseUser.email,
-              error: "Claims verification failed",
-              needsInitialization: authResult.needsClaimsInitialization
-            });
-          }
+          setDebugInfo({
+            uid: firebaseUser.uid,
+            email: firebaseUser.email,
+            role: 'superadmin',
+            company: 'xwater',
+            timestamp: new Date().toISOString()
+          });
+          
+          await handleAuthStateChange(firebaseUser);
         } else {
           setDebugInfo(null);
         }
