@@ -1,4 +1,3 @@
-
 import { onCall } from 'firebase-functions/v2/https';
 import { getAuth, getFirestore } from '../utils/adminInit';
 import { BusinessUserError, createHttpsError, logFunctionStart, logFunctionSuccess, logFunctionError } from '../utils/errorUtils';
@@ -8,6 +7,13 @@ interface SetClaimsRequest {
   role: 'superadmin' | 'admin' | 'technician' | 'user';
   company: string;
 }
+
+// Known superadmin emails for automatic claims assignment
+const KNOWN_SUPERADMIN_EMAILS = [
+  'rob.istria@gmail.com',
+  'robert.slavec@gmail.com',
+  'aljaz.slavec@gmail.com'
+];
 
 /**
  * Set custom claims for a user (superadmin only)
@@ -106,6 +112,7 @@ export const syncUserClaims = onCall({
 
 /**
  * Initialize claims for users who don't have them
+ * Enhanced to automatically handle known superadmin accounts
  */
 export const initializeUserClaims = onCall({
   cors: true
@@ -124,8 +131,13 @@ export const initializeUserClaims = onCall({
     const db = getFirestore();
     const userId = context.uid;
     
-    // Check if user already has claims
+    // Get current user info
     const currentUser = await auth.getUser(userId);
+    const userEmail = currentUser.email;
+    
+    console.log(`Initializing claims for user: ${userEmail} (${userId})`);
+    
+    // Check if user already has claims
     const currentClaims = currentUser.customClaims || {};
     
     if (currentClaims.role) {
@@ -134,10 +146,39 @@ export const initializeUserClaims = onCall({
       return result;
     }
     
+    // Check if this is a known superadmin email
+    if (userEmail && KNOWN_SUPERADMIN_EMAILS.includes(userEmail.toLowerCase())) {
+      console.log(`Setting superadmin claims for known admin: ${userEmail}`);
+      
+      await auth.setCustomUserClaims(userId, {
+        role: 'superadmin',
+        company: 'X-WATER'
+      });
+      
+      // Create or update user document in Firestore
+      const userDocRef = db.collection('app_users_business').doc(userId);
+      await userDocRef.set({
+        id: userId,
+        email: userEmail,
+        first_name: userEmail.split('@')[0],
+        last_name: '',
+        role: 'superadmin',
+        company: 'X-WATER',
+        status: 'active',
+        created_at: new Date(),
+        updated_at: new Date(),
+        auto_assigned: true
+      }, { merge: true });
+      
+      const result = { success: true, userId, initialized: true, role: 'superadmin', company: 'X-WATER', autoAssigned: true };
+      logFunctionSuccess(functionName, result);
+      return result;
+    }
+    
     // Look for user in business users collection
     const businessUserDoc = await db.collection('app_users_business').doc(userId).get();
     
-    if (businessUserDoc.exists) {
+    if (businessUserDoc.exists()) {
       const userData = businessUserDoc.data();
       await auth.setCustomUserClaims(userId, {
         role: userData?.role || 'user',
@@ -152,7 +193,7 @@ export const initializeUserClaims = onCall({
     // Look for user in private users collection
     const privateUserDoc = await db.collection('app_users_privat').doc(userId).get();
     
-    if (privateUserDoc.exists) {
+    if (privateUserDoc.exists()) {
       await auth.setCustomUserClaims(userId, {
         role: 'user',
         company: 'private'

@@ -5,6 +5,7 @@ import { auth } from "@/integrations/firebase/client";
 import { AppUser, UserRole } from "@/types/users";
 import { useAuthStateManager } from "@/hooks/auth/useAuthStateManager";
 import { usePermissionsManager } from "@/hooks/auth/usePermissionsManager";
+import { AuthService } from "@/services/authService";
 
 export type PermissionLevel = "none" | "read" | "write" | "admin" | "full";
 
@@ -65,7 +66,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const permissions = usePermissionsManager(userRole, company);
 
   useEffect(() => {
-    console.log("🔄 Setting up Firebase auth state listener");
+    console.log("🔄 Setting up enhanced Firebase auth state listener");
     
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       console.log("🔥 Firebase auth state changed:", {
@@ -79,26 +80,35 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       
       if (firebaseUser) {
         try {
-          // Get token to check for custom claims
-          const idTokenResult = await firebaseUser.getIdTokenResult();
-          const claims = idTokenResult.claims;
+          console.log("🎫 Processing user authentication...");
           
-          console.log("🎫 User token claims:", {
-            role: claims.role,
-            company: claims.company,
-            allClaims: claims
-          });
+          // Use AuthService for enhanced claims handling
+          const authResult = await AuthService.verifyAndFixClaims();
           
-          setDebugInfo({
-            uid: firebaseUser.uid,
-            email: firebaseUser.email,
-            claims: claims,
-            tokenExpiry: new Date(idTokenResult.expirationTime).toISOString()
-          });
-          
-          await handleAuthStateChange(firebaseUser);
+          if (authResult.success) {
+            console.log("✅ User authenticated with claims:", authResult.claims);
+            
+            setDebugInfo({
+              uid: firebaseUser.uid,
+              email: firebaseUser.email,
+              claims: authResult.claims,
+              timestamp: new Date().toISOString()
+            });
+            
+            await handleAuthStateChange(firebaseUser);
+          } else {
+            console.log("⚠️ User authenticated but claims verification failed");
+            setAuthError("Account permissions not properly configured. Please contact administrator.");
+            
+            setDebugInfo({
+              uid: firebaseUser.uid,
+              email: firebaseUser.email,
+              error: "Claims verification failed",
+              needsInitialization: authResult.needsClaimsInitialization
+            });
+          }
         } catch (error) {
-          console.error("❌ Error processing auth state change:", error);
+          console.error("❌ Error processing enhanced auth state change:", error);
           setAuthError(`Auth processing error: ${error}`);
         }
       } else {
@@ -109,7 +119,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     });
     
     return () => {
-      console.log("🧹 Cleaning up auth state listener");
+      console.log("🧹 Cleaning up enhanced auth state listener");
       unsubscribe();
     };
   }, [handleAuthStateChange]);
