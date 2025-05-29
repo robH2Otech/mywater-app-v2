@@ -24,7 +24,7 @@ export function usePermissionsManager(userRole: UserRole | null, company: string
   const hasPermission = (requiredLevel: PermissionLevel): boolean => {
     if (!userRole) return false;
     const userPermission = permissionHierarchy[userRole];
-    return comparePermissions(userPermission, requiredPermission);
+    return comparePermissions(userPermission, requiredLevel);
   };
 
   // Check if user can access all companies (superadmin or admin)

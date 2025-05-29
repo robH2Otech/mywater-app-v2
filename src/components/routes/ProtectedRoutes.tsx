@@ -7,6 +7,7 @@ import { BusinessLayout } from "@/components/layout/BusinessLayout";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import { validateTokenClaims, logAuditEvent } from "@/utils/auth/securityUtils";
 import { verifyUserClaims, refreshUserClaims } from "@/utils/admin/adminClaimsManager";
+import { UserRole } from "@/types/users";
 
 export const ProtectedRoute = ({ children }: { children: ReactNode }) => {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
