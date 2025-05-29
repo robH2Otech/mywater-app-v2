@@ -39,6 +39,10 @@ service cloud.firestore {
       return email.matches('.*@.*\\..*');
     }
     
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+    
     // Business users collection - secure role-based access
     match /app_users_business/{userId} {
       // Users can read their own data, admins can read company users, superadmins can read all
@@ -73,31 +77,48 @@ service cloud.firestore {
     match /units/{unitId} {
       allow read: if isAuthenticated() && (isSuperAdmin() || canAccessCompany(resource.data.company));
       allow write: if isTechnician() && (isSuperAdmin() || canAccessCompany(resource.data.company));
+      allow create: if isTechnician() && (isSuperAdmin() || canAccessCompany(request.resource.data.company));
+      allow delete: if isAdmin() && (isSuperAdmin() || canAccessCompany(resource.data.company));
     }
     
     match /measurements/{measurementId} {
       allow read: if isAuthenticated() && (isSuperAdmin() || canAccessCompany(resource.data.company));
       allow write: if isTechnician() && (isSuperAdmin() || canAccessCompany(resource.data.company));
+      allow create: if isTechnician() && (isSuperAdmin() || canAccessCompany(request.resource.data.company));
     }
     
     match /alerts/{alertId} {
       allow read: if isAuthenticated() && (isSuperAdmin() || canAccessCompany(resource.data.company));
       allow write: if isTechnician() && (isSuperAdmin() || canAccessCompany(resource.data.company));
+      allow create: if isTechnician() && (isSuperAdmin() || canAccessCompany(request.resource.data.company));
+      allow delete: if isAdmin() && (isSuperAdmin() || canAccessCompany(resource.data.company));
     }
     
     match /client_requests/{requestId} {
       allow read: if isAuthenticated() && (isSuperAdmin() || canAccessCompany(resource.data.company));
       allow write: if isAuthenticated() && (isSuperAdmin() || canAccessCompany(resource.data.company));
+      allow create: if isAuthenticated() && (isSuperAdmin() || canAccessCompany(request.resource.data.company));
     }
     
     match /locations/{locationId} {
       allow read: if isAuthenticated() && (isSuperAdmin() || canAccessCompany(resource.data.company));
       allow write: if isTechnician() && (isSuperAdmin() || canAccessCompany(resource.data.company));
+      allow create: if isTechnician() && (isSuperAdmin() || canAccessCompany(request.resource.data.company));
+    }
+    
+    // Location history with automatic cleanup
+    match /locationHistory/{historyId} {
+      allow read: if isAuthenticated() && (isSuperAdmin() || canAccessCompany(resource.data.company));
+      allow write: if false; // Only functions can write location history
+      allow create: if false; // Only functions can create location history
+      allow delete: if false; // Only automatic cleanup
     }
     
     match /filters/{filterId} {
       allow read: if isAuthenticated() && (isSuperAdmin() || canAccessCompany(resource.data.company));
       allow write: if isTechnician() && (isSuperAdmin() || canAccessCompany(resource.data.company));
+      allow create: if isTechnician() && (isSuperAdmin() || canAccessCompany(request.resource.data.company));
+      allow delete: if isAdmin() && (isSuperAdmin() || canAccessCompany(resource.data.company));
     }
     
     match /reports/{reportId} {
@@ -106,11 +127,51 @@ service cloud.firestore {
       allow update, delete: if isAdmin() && (isSuperAdmin() || canAccessCompany(resource.data.company));
     }
     
+    // Orders - private users can see their own orders
+    match /orders/{orderId} {
+      allow read: if isAuthenticated() && (
+        isOwner(resource.data.user_id) || 
+        isSuperAdmin()
+      );
+      allow write: if false; // Only functions can write orders
+    }
+    
+    // Referral system
+    match /referral_codes/{codeId} {
+      allow read: if isAuthenticated() && (
+        isOwner(resource.data.user_id) || 
+        isSuperAdmin()
+      );
+      allow create: if isAuthenticated() && isOwner(request.resource.data.user_id);
+      allow update: if isAuthenticated() && isOwner(resource.data.user_id);
+      allow delete: if isAuthenticated() && isOwner(resource.data.user_id);
+    }
+    
+    match /referrals/{referralId} {
+      allow read: if isAuthenticated() && (
+        isOwner(resource.data.referrer_id) || 
+        isSuperAdmin()
+      );
+      allow write: if false; // Only functions can write referrals
+    }
+    
     // Audit logs - only superadmins can read, all authenticated users can create
     match /audit_logs/{logId} {
       allow read: if isSuperAdmin();
       allow create: if isAuthenticated();
       allow update, delete: if false;
+    }
+    
+    // System notifications
+    match /notifications/{notificationId} {
+      allow read: if isAuthenticated() && (
+        isOwner(resource.data.user_id) || 
+        canAccessCompany(resource.data.company) ||
+        isSuperAdmin()
+      );
+      allow create: if isAuthenticated();
+      allow update: if isAuthenticated() && isOwner(resource.data.user_id);
+      allow delete: if isAuthenticated() && isOwner(resource.data.user_id);
     }
     
     // Deny all other access

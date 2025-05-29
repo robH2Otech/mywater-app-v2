@@ -1,44 +1,44 @@
 
-import * as functions from 'firebase-functions';
-import * as admin from 'firebase-admin';
+import { onCall } from 'firebase-functions/v2/https';
+import { getFirestore } from '../utils/adminInit';
 import { authenticate, getDeviceLocation } from './oneotApi';
 import { storeLocationData } from './locationStorage';
+import { BusinessUserError, createHttpsError, logFunctionStart, logFunctionStep, logFunctionSuccess, logFunctionError } from '../utils/errorUtils';
 
 /**
  * Cloud Function to update location for a specific ICCID (on-demand)
  */
-export const manualLocationUpdate = functions.https.onCall(async (data, context) => {
-  // Ensure user is authenticated
-  if (!context.auth) {
-    functions.logger.warn('Unauthenticated request to update location');
-    throw new functions.https.HttpsError(
-      'unauthenticated',
-      'User must be authenticated to update unit location'
-    );
-  }
-  
-  const { iccid } = data;
-  
-  if (!iccid) {
-    functions.logger.warn('Missing ICCID in request');
-    throw new functions.https.HttpsError(
-      'invalid-argument',
-      'ICCID is required'
-    );
-  }
-  
-  functions.logger.info(`Manual location update requested for ICCID: ${iccid} by user ${context.auth.uid}`);
+export const manualLocationUpdate = onCall({
+  cors: true
+}, async (request) => {
+  const functionName = 'manualLocationUpdate';
+  const { data, auth: context } = request;
   
   try {
+    logFunctionStart(functionName, data, context);
+    
+    // Ensure user is authenticated
+    if (!context) {
+      throw new BusinessUserError('UNAUTHENTICATED', 'User must be authenticated to update unit location', {}, 'authentication_check');
+    }
+    
+    const { iccid } = data;
+    
+    if (!iccid) {
+      throw new BusinessUserError('VALIDATION_ERROR', 'ICCID is required', { iccid }, 'input_validation');
+    }
+    
+    logFunctionStep('finding_unit_with_iccid', { iccid });
+    
     // Find unit with this ICCID
-    const db = admin.firestore();
+    const db = getFirestore();
     const unitsRef = db.collection('units');
     
     // First try exact match
     let unitQuery = await unitsRef.where('iccid', '==', iccid).limit(1).get();
     
     if (unitQuery.empty) {
-      functions.logger.info(`No exact match for ICCID ${iccid}, trying partial match`);
+      logFunctionStep('trying_partial_match', { iccid });
       
       // Try contains match (both directions)
       const allUnits = await unitsRef.get();
@@ -50,7 +50,6 @@ export const manualLocationUpdate = functions.https.onCall(async (data, context)
       });
       
       if (matchingUnits.length > 0) {
-        functions.logger.info(`Found ${matchingUnits.length} units with partial ICCID match for ${iccid}`);
         // If multiple matches, take the closest match by length
         matchingUnits.sort((a, b) => {
           return Math.abs(a.data().iccid.length - iccid.length) - 
@@ -60,9 +59,9 @@ export const manualLocationUpdate = functions.https.onCall(async (data, context)
         const unitId = matchingUnits[0].id;
         const unitData = matchingUnits[0].data();
         
-        functions.logger.info(`Selected unit ${unitId} with ICCID ${unitData.iccid}`);
+        logFunctionStep('unit_found_partial_match', { unitId, actualIccid: unitData.iccid });
         
-        // Use the unit's actual ICCID for the API request (could be different format)
+        // Use the unit's actual ICCID for the API request
         const actualIccid = unitData.iccid;
         
         // Authenticate with 1oT API
@@ -74,7 +73,7 @@ export const manualLocationUpdate = functions.https.onCall(async (data, context)
         // Store location data
         await storeLocationData(unitId, locationData);
         
-        return {
+        const result = {
           success: true,
           location: {
             latitude: locationData.latitude,
@@ -85,17 +84,17 @@ export const manualLocationUpdate = functions.https.onCall(async (data, context)
             timestamp: new Date().toISOString()
           }
         };
+        
+        logFunctionSuccess(functionName, result);
+        return result;
       } else {
-        functions.logger.warn(`No unit found matching ICCID ${iccid}`);
-        throw new functions.https.HttpsError(
-          'not-found',
-          `No unit found with ICCID ${iccid}`
-        );
+        throw new BusinessUserError('NOT_FOUND', `No unit found with ICCID ${iccid}`, { iccid }, 'unit_lookup');
       }
     } else {
       const unitId = unitQuery.docs[0].id;
       const unitData = unitQuery.docs[0].data();
-      functions.logger.info(`Found unit ${unitId} with exact ICCID match ${unitData.iccid}`);
+      
+      logFunctionStep('unit_found_exact_match', { unitId, iccid: unitData.iccid });
       
       // Authenticate with 1oT API
       const token = await authenticate();
@@ -106,7 +105,7 @@ export const manualLocationUpdate = functions.https.onCall(async (data, context)
       // Store location data
       await storeLocationData(unitId, locationData);
       
-      return {
+      const result = {
         success: true,
         location: {
           latitude: locationData.latitude,
@@ -117,12 +116,18 @@ export const manualLocationUpdate = functions.https.onCall(async (data, context)
           timestamp: new Date().toISOString()
         }
       };
+      
+      logFunctionSuccess(functionName, result);
+      return result;
     }
-  } catch (error) {
-    functions.logger.error(`Error updating location for ICCID ${iccid}:`, error);
-    throw new functions.https.HttpsError(
-      'internal',
-      `Failed to update location: ${error instanceof Error ? error.message : 'Unknown error'}`
-    );
+  } catch (error: any) {
+    logFunctionError(functionName, error);
+    
+    if (error instanceof BusinessUserError) {
+      throw createHttpsError(error);
+    }
+    
+    const businessError = new BusinessUserError('INTERNAL', `Failed to update location: ${error.message}`, { originalError: error }, 'location_update');
+    throw createHttpsError(businessError);
   }
 });

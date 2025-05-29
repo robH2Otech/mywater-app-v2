@@ -1,22 +1,26 @@
 
-import * as functions from 'firebase-functions';
 import { onSchedule } from 'firebase-functions/v2/scheduler';
-import * as admin from 'firebase-admin';
+import { getFirestore } from '../utils/adminInit';
 import { authenticate, getDeviceLocation } from './oneotApi';
 import { storeLocationData, cleanupExpiredLocationHistory } from './locationStorage';
+import { logFunctionStart, logFunctionSuccess, logFunctionError } from '../utils/errorUtils';
 
 /**
  * Cloud Function to update locations for all units
  */
 export const updateAllLocations = onSchedule('0 6,18 * * *', async (event) => {
-  const db = admin.firestore();
+  const functionName = 'updateAllLocations';
   
   try {
+    logFunctionStart(functionName, {}, null);
+    
+    const db = getFirestore();
+    
     // Get all units with ICCID
     const unitsSnapshot = await db.collection('units').get();
     const units = unitsSnapshot.docs.filter(doc => doc.data().iccid);
     
-    functions.logger.info(`Found ${units.length} units with ICCID to update`);
+    console.log(`Found ${units.length} units with ICCID to update`);
     
     // Get authentication token once to use for all requests
     const token = await authenticate();
@@ -35,7 +39,7 @@ export const updateAllLocations = onSchedule('0 6,18 * * *', async (event) => {
         
         return { success: true, iccid };
       } catch (error) {
-        functions.logger.error(`Error updating location for unit ${unitDoc.id}:`, error);
+        console.error(`Error updating location for unit ${unitDoc.id}:`, error);
         return { success: false, iccid, error };
       }
     });
@@ -44,36 +48,42 @@ export const updateAllLocations = onSchedule('0 6,18 * * *', async (event) => {
     const results = await Promise.all(updates);
     const succeeded = results.filter(r => r.success).length;
     
-    functions.logger.info(`Location update completed. Success: ${succeeded}/${units.length}`);
-    return { success: true, updated: succeeded, total: units.length };
+    const result = { success: true, updated: succeeded, total: units.length };
+    logFunctionSuccess(functionName, result);
+    
+    console.log(`Location update completed. Success: ${succeeded}/${units.length}`);
+    return result;
   } catch (error) {
-    functions.logger.error('Error in updateAllLocations function:', error);
+    logFunctionError(functionName, error);
+    console.error('Error in updateAllLocations function:', error);
     throw error;
   }
 });
 
 /**
- * Cloud Function to update location for a specific unit (on-demand)
- */
-export { manualLocationUpdate } from './manualLocationUpdate';
-
-/**
  * Cloud Function to delete expired location history records
- * This is a backup to ensure old records are removed even if the inline deletion fails
  */
 export const cleanupLocationHistory = onSchedule('0 3 * * *', async (event) => {
+  const functionName = 'cleanupLocationHistory';
+  
   try {
+    logFunctionStart(functionName, {}, null);
+    
     const deletedCount = await cleanupExpiredLocationHistory();
     
     if (deletedCount === 0) {
-      functions.logger.info('No expired location history records to delete');
+      console.log('No expired location history records to delete');
       return null;
     }
     
-    functions.logger.info(`Successfully deleted ${deletedCount} expired location history records`);
-    return { success: true, deletedCount };
+    const result = { success: true, deletedCount };
+    logFunctionSuccess(functionName, result);
+    
+    console.log(`Successfully deleted ${deletedCount} expired location history records`);
+    return result;
   } catch (error) {
-    functions.logger.error('Error cleaning up location history:', error);
+    logFunctionError(functionName, error);
+    console.error('Error cleaning up location history:', error);
     throw error;
   }
 });
