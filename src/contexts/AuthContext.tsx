@@ -66,7 +66,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const permissions = usePermissionsManager(userRole, company);
 
   useEffect(() => {
-    console.log("🔄 Setting up enhanced Firebase auth state listener");
+    console.log("🔄 Setting up Firebase auth state listener");
     
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       console.log("🔥 Firebase auth state changed:", {
@@ -75,11 +75,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         emailVerified: firebaseUser?.emailVerified
       });
       
-      setFirebaseUser(firebaseUser);
-      setAuthError(null);
-      
-      if (firebaseUser) {
-        try {
+      try {
+        setFirebaseUser(firebaseUser);
+        setAuthError(null);
+        
+        if (firebaseUser) {
           console.log("🎫 Processing user authentication...");
           
           // Use AuthService for enhanced claims handling
@@ -97,8 +97,26 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             
             await handleAuthStateChange(firebaseUser);
           } else {
-            console.log("⚠️ User authenticated but claims verification failed");
-            setAuthError("Account permissions not properly configured. Please contact administrator.");
+            console.log("⚠️ User authenticated but claims verification failed, trying to initialize...");
+            
+            // Try to initialize claims automatically
+            try {
+              const initialized = await AuthService.initializeUserClaims();
+              if (initialized) {
+                console.log("✅ Claims initialized successfully");
+                const retryResult = await AuthService.verifyAndFixClaims();
+                if (retryResult.success) {
+                  await handleAuthStateChange(firebaseUser);
+                } else {
+                  setAuthError("Account setup incomplete. Please contact administrator.");
+                }
+              } else {
+                setAuthError("Account permissions not properly configured. Please contact administrator.");
+              }
+            } catch (initError) {
+              console.error("Error initializing claims:", initError);
+              setAuthError("Failed to initialize account. Please contact administrator.");
+            }
             
             setDebugInfo({
               uid: firebaseUser.uid,
@@ -107,19 +125,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
               needsInitialization: authResult.needsClaimsInitialization
             });
           }
-        } catch (error) {
-          console.error("❌ Error processing enhanced auth state change:", error);
-          setAuthError(`Auth processing error: ${error}`);
+        } else {
+          setDebugInfo(null);
         }
-      } else {
-        setDebugInfo(null);
+      } catch (error) {
+        console.error("❌ Error processing auth state change:", error);
+        setAuthError(`Auth processing error: ${error}`);
+      } finally {
+        setIsLoading(false);
       }
-      
-      setIsLoading(false);
     });
     
     return () => {
-      console.log("🧹 Cleaning up enhanced auth state listener");
+      console.log("🧹 Cleaning up auth state listener");
       unsubscribe();
     };
   }, [handleAuthStateChange]);

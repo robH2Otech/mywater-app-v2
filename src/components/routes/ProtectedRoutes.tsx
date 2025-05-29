@@ -1,3 +1,4 @@
+
 import { ReactNode, useEffect, useState } from "react";
 import { Navigate, useLocation } from "react-router-dom";
 import { auth } from "@/integrations/firebase/client";
@@ -21,22 +22,27 @@ export const ProtectedRoute = ({ children }: { children: ReactNode }) => {
       setIsAuthenticated(!!user);
       
       if (user) {
-        const { hasValidClaims, role } = await verifyUserClaims();
-        setHasValidRoleClaims(hasValidClaims);
-        
-        if (!hasValidClaims) {
-          console.log("No valid claims detected on protected route, attempting refresh");
-          await refreshUserClaims();
+        try {
+          const { hasValidClaims, role } = await verifyUserClaims();
+          setHasValidRoleClaims(hasValidClaims);
           
-          const refreshResult = await verifyUserClaims();
-          setHasValidRoleClaims(refreshResult.hasValidClaims);
+          if (!hasValidClaims) {
+            console.log("No valid claims detected on protected route, attempting refresh");
+            await refreshUserClaims();
+            
+            const refreshResult = await verifyUserClaims();
+            setHasValidRoleClaims(refreshResult.hasValidClaims);
+          }
+          
+          logAuditEvent('route_access', {
+            path: location.pathname,
+            role: role,
+            hasValidClaims
+          });
+        } catch (error) {
+          console.error("Error verifying claims in protected route:", error);
+          setHasValidRoleClaims(false);
         }
-        
-        logAuditEvent('route_access', {
-          path: location.pathname,
-          role: role,
-          hasValidClaims
-        });
       } else {
         setHasValidRoleClaims(false);
       }
@@ -47,7 +53,7 @@ export const ProtectedRoute = ({ children }: { children: ReactNode }) => {
 
   if (isAuthenticated === null && !isTempAccess) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
+      <div className="flex items-center justify-center min-h-screen bg-spotify-dark">
         <div className="flex flex-col items-center">
           <div className="w-10 h-10 border-t-2 border-b-2 border-blue-500 rounded-full animate-spin"></div>
           <p className="text-blue-200 mt-4">Authenticating...</p>
@@ -60,21 +66,18 @@ export const ProtectedRoute = ({ children }: { children: ReactNode }) => {
     return <Navigate to="/auth" />;
   }
   
-  if (isAuthenticated && hasValidRoleClaims === false) {
-    logAuditEvent('security_violation', {
-      type: 'missing_role_claims',
-      path: location.pathname
-    }, 'warning');
-    
-    auth.signOut().then(() => {
-      return <Navigate to="/auth" state={{ securityIssue: true }} />;
-    });
+  // Allow access if temp access is enabled or if the user has valid claims
+  if (isAuthenticated && hasValidRoleClaims === false && !isTempAccess) {
+    console.log("User authenticated but no valid claims, redirecting to auth");
     
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="flex flex-col items-center">
+      <div className="flex items-center justify-center min-h-screen bg-spotify-dark">
+        <div className="flex flex-col items-center text-center max-w-md">
           <div className="w-10 h-10 border-t-2 border-b-2 border-red-500 rounded-full animate-spin"></div>
-          <p className="text-red-400 mt-4">Security validation failed. Logging out...</p>
+          <p className="text-red-400 mt-4">Account setup incomplete. Redirecting...</p>
+          <p className="text-gray-400 text-sm mt-2">
+            Your account needs to be configured by an administrator.
+          </p>
         </div>
       </div>
     );
@@ -89,14 +92,14 @@ export const ProtectedRoute = ({ children }: { children: ReactNode }) => {
   );
 };
 
-// Enhanced role-based route guard with comprehensive restrictions
+// Simplified role-based route guard
 const RoleBasedRouteGuard = ({ children }: { children: ReactNode }) => {
   const location = useLocation();
   const { userRole, isLoading, company, canViewNavItem } = useAuth();
   
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
+      <div className="flex items-center justify-center min-h-screen bg-spotify-dark">
         <div className="flex flex-col items-center">
           <div className="w-10 h-10 border-t-2 border-b-2 border-blue-500 rounded-full animate-spin"></div>
           <p className="text-blue-200 mt-4">Loading permissions...</p>
@@ -105,7 +108,12 @@ const RoleBasedRouteGuard = ({ children }: { children: ReactNode }) => {
     );
   }
   
-  // Enhanced route-to-permission mapping
+  // Allow superadmin to access everything
+  if (userRole === 'superadmin') {
+    return <>{children}</>;
+  }
+  
+  // Enhanced route-to-permission mapping for other roles
   const routePermissions: Record<string, string> = {
     '/dashboard': 'dashboard',
     '/units': 'units',
@@ -124,8 +132,8 @@ const RoleBasedRouteGuard = ({ children }: { children: ReactNode }) => {
   const basePath = location.pathname.split('/')[1] ? `/${location.pathname.split('/')[1]}` : location.pathname;
   const requiredPermission = routePermissions[basePath];
   
-  // Check if user can view this route
-  if (requiredPermission && !canViewNavItem(requiredPermission)) {
+  // Check if user can view this route (skip for superadmin)
+  if (requiredPermission && userRole !== 'superadmin' && !canViewNavItem(requiredPermission)) {
     logAuditEvent('security_violation', {
       type: 'unauthorized_route_access',
       path: location.pathname,
@@ -135,18 +143,6 @@ const RoleBasedRouteGuard = ({ children }: { children: ReactNode }) => {
     }, 'warning');
     
     return <Navigate to="/dashboard" />;
-  }
-  
-  // Special handling for 2FA-required routes (superadmin operations)
-  const twoFactorRequiredRoutes = ['/users/create', '/settings/advanced'];
-  const needsTwoFactor = userRole === 'superadmin' && 
-    twoFactorRequiredRoutes.some(route => location.pathname.startsWith(route));
-  
-  if (needsTwoFactor) {
-    logAuditEvent('2fa_required', {
-      path: location.pathname,
-      role: userRole
-    });
   }
   
   return <>{children}</>;
@@ -173,7 +169,7 @@ export const PrivateProtectedRoute = ({ children }: { children: ReactNode }) => 
 
   if (isAuthenticated === null) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
+      <div className="flex items-center justify-center min-h-screen bg-spotify-dark">
         <div className="flex flex-col items-center">
           <div className="w-10 h-10 border-t-2 border-b-2 border-blue-500 rounded-full animate-spin"></div>
           <p className="text-blue-200 mt-4">Authenticating...</p>
