@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { onAuthStateChanged, User as FirebaseUser } from "firebase/auth";
 import { auth } from "@/integrations/firebase/client";
@@ -46,7 +47,7 @@ const AuthContext = createContext<AuthContextType>({
   debugInfo: null
 });
 
-export const useAuth = () => useContext(AuthContext);
+export const useAuth = (): AuthContextType => useContext(AuthContext);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [firebaseUser, setFirebaseUser] = useState<FirebaseUser | null>(null);
