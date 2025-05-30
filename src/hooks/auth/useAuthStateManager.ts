@@ -17,88 +17,71 @@ export function useAuthStateManager(firebaseUser: FirebaseUser | null) {
       
       // Step 1: Try to get user document by UID first (business users)
       const userDocRef = doc(db, "app_users_business", firebaseUser.uid);
-      let userDoc;
+      let userDoc = await getDoc(userDocRef);
       let userData: AppUser | null = null;
       
-      try {
-        userDoc = await getDoc(userDocRef);
+      if (userDoc.exists()) {
+        userData = userDoc.data() as AppUser;
+        console.log("✅ Business user document found:", userData);
+      } else {
+        // Step 2: Try private users collection
+        const privateUserDocRef = doc(db, "app_users_privat", firebaseUser.uid);
+        const privateUserDoc = await getDoc(privateUserDocRef);
         
-        if (userDoc.exists()) {
-          userData = userDoc.data() as AppUser;
-          console.log("✅ Business user document found:", userData);
+        if (privateUserDoc.exists()) {
+          userData = privateUserDoc.data() as AppUser;
+          console.log("✅ Private user document found:", userData);
         } else {
-          // Step 2: Try private users collection
-          const privateUserDocRef = doc(db, "app_users_privat", firebaseUser.uid);
-          const privateUserDoc = await getDoc(privateUserDocRef);
+          // Step 3: Search by email in business collection (for migration)
+          console.log("🔍 Searching for user by email...");
+          const usersQuery = query(
+            collection(db, "app_users_business"),
+            where("email", "==", firebaseUser.email)
+          );
+          const querySnapshot = await getDocs(usersQuery);
           
-          if (privateUserDoc.exists()) {
-            userData = privateUserDoc.data() as AppUser;
-            console.log("✅ Private user document found:", userData);
-          } else {
-            // Step 3: Search by email in business collection (for migration)
-            console.log("🔍 Searching for user by email...");
-            const usersQuery = query(
-              collection(db, "app_users_business"),
-              where("email", "==", firebaseUser.email)
-            );
-            const querySnapshot = await getDocs(usersQuery);
+          if (!querySnapshot.empty) {
+            // Migrate existing document to correct UID
+            console.log("📋 Migrating user document to correct UID...");
+            const existingData = querySnapshot.docs[0].data();
             
-            if (!querySnapshot.empty) {
-              // Migrate existing document to correct UID
-              console.log("📋 Migrating user document to correct UID...");
-              const existingData = querySnapshot.docs[0].data();
-              
-              userData = {
-                id: firebaseUser.uid,
-                email: firebaseUser.email || '',
-                first_name: existingData.first_name || '',
-                last_name: existingData.last_name || '',
-                role: existingData.role as UserRole || 'user',
-                company: existingData.company || 'mywater',
-                status: existingData.status || 'active',
-                created_at: existingData.created_at || new Date().toISOString(),
-                updated_at: new Date().toISOString()
-              };
-              
-              await setDoc(userDocRef, userData);
-              console.log("✅ User document migrated successfully");
-            } else {
-              console.log("❌ No user document found anywhere");
-              setCurrentUser(null);
-              setUserRole(null);
-              setCompany(null);
-              return;
-            }
+            userData = {
+              id: firebaseUser.uid,
+              email: firebaseUser.email || '',
+              first_name: existingData.first_name || '',
+              last_name: existingData.last_name || '',
+              role: existingData.role as UserRole || 'user',
+              company: existingData.company || 'mywater',
+              status: existingData.status || 'active',
+              created_at: existingData.created_at || new Date().toISOString(),
+              updated_at: new Date().toISOString()
+            };
+            
+            await setDoc(userDocRef, userData);
+            console.log("✅ User document migrated successfully");
+          } else {
+            console.log("❌ No user document found anywhere");
+            setCurrentUser(null);
+            setUserRole(null);
+            setCompany(null);
+            return;
           }
         }
-      } catch (firestoreError) {
-        console.error("Firestore error:", firestoreError);
-        // Set default values to prevent undefined state
-        setCurrentUser(null);
-        setUserRole(null);
-        setCompany(null);
-        return;
       }
       
       // Step 4: Set user data
-      if (userData) {
-        setCurrentUser({ id: firebaseUser.uid, ...userData });
-        setUserRole(userData.role as UserRole);
-        setCompany(userData.company || 'mywater');
-        
-        // Step 5: Log successful authentication
-        try {
-          logAuditEvent('user_authenticated', {
-            user_id: firebaseUser.uid,
-            email: firebaseUser.email,
-            role: userData.role,
-            company: userData.company,
-            source: 'auth_state_change'
-          });
-        } catch (auditError) {
-          console.error("Audit logging error:", auditError);
-        }
-      }
+      setCurrentUser({ id: firebaseUser.uid, ...userData });
+      setUserRole(userData.role as UserRole);
+      setCompany(userData.company || 'mywater');
+      
+      // Step 5: Log successful authentication
+      logAuditEvent('user_authenticated', {
+        user_id: firebaseUser.uid,
+        email: firebaseUser.email,
+        role: userData.role,
+        company: userData.company,
+        source: 'auth_state_change'
+      });
       
     } catch (error) {
       console.error("❌ Error processing auth state change:", error);

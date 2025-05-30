@@ -7,6 +7,7 @@ import { BusinessLayout } from "@/components/layout/BusinessLayout";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import { validateTokenClaims, logAuditEvent } from "@/utils/auth/securityUtils";
 import { verifyUserClaims, refreshUserClaims } from "@/utils/admin/adminClaimsManager";
+import { UserRole } from "@/types/users";
 
 export const ProtectedRoute = ({ children }: { children: ReactNode }) => {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
@@ -34,15 +35,11 @@ export const ProtectedRoute = ({ children }: { children: ReactNode }) => {
             setHasValidRoleClaims(refreshResult.hasValidClaims);
           }
           
-          try {
-            logAuditEvent('route_access', {
-              path: location.pathname,
-              role: role,
-              hasValidClaims
-            });
-          } catch (auditError) {
-            console.error("Audit logging error:", auditError);
-          }
+          logAuditEvent('route_access', {
+            path: location.pathname,
+            role: role,
+            hasValidClaims
+          });
         } catch (error) {
           console.error("Error verifying claims in protected route:", error);
           setHasValidRoleClaims(false);
@@ -112,8 +109,8 @@ const RoleBasedRouteGuard = ({ children }: { children: ReactNode }) => {
     );
   }
   
-  // Allow superadmin to access everything (check string value directly)
-  if (userRole && userRole === 'superadmin') {
+  // Allow superadmin to access everything
+  if (userRole === 'superadmin') {
     return <>{children}</>;
   }
   
@@ -136,19 +133,15 @@ const RoleBasedRouteGuard = ({ children }: { children: ReactNode }) => {
   const basePath = location.pathname.split('/')[1] ? `/${location.pathname.split('/')[1]}` : location.pathname;
   const requiredPermission = routePermissions[basePath];
   
-  // Check if user can view this route (skip check for superadmin, which was already handled above)
-  if (requiredPermission && userRole && userRole !== 'superadmin' && !canViewNavItem(requiredPermission)) {
-    try {
-      logAuditEvent('security_violation', {
-        type: 'unauthorized_route_access',
-        path: location.pathname,
-        role: userRole,
-        company,
-        requiredPermission
-      }, 'warning');
-    } catch (auditError) {
-      console.error("Audit logging error:", auditError);
-    }
+  // Check if user can view this route (skip for superadmin)
+  if (requiredPermission && userRole !== 'superadmin' && !canViewNavItem(requiredPermission)) {
+    logAuditEvent('security_violation', {
+      type: 'unauthorized_route_access',
+      path: location.pathname,
+      role: userRole,
+      company,
+      requiredPermission
+    }, 'warning');
     
     return <Navigate to="/dashboard" />;
   }
@@ -165,14 +158,10 @@ export const PrivateProtectedRoute = ({ children }: { children: ReactNode }) => 
       setIsAuthenticated(!!user);
       
       if (user) {
-        try {
-          logAuditEvent('private_route_access', {
-            path: location.pathname,
-            uid: user.uid
-          });
-        } catch (auditError) {
-          console.error("Audit logging error:", auditError);
-        }
+        logAuditEvent('private_route_access', {
+          path: location.pathname,
+          uid: user.uid
+        });
       }
     });
     
