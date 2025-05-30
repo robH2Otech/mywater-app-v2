@@ -64,119 +64,81 @@ export function ReportGenerationForm({
 
     setIsGenerating(true);
     try {
-      console.log("Starting report generation for unit:", selectedUnit);
+      console.log("🔄 Starting report generation for unit:", selectedUnit);
 
-      // Create mock unit data for testing
-      const mockUnitData: UnitData = {
-        id: selectedUnit,
-        name: `Water Unit ${selectedUnit}`,
-        location: "Test Location",
-        status: "active",
-        total_volume: 1250.75,
-        unit_type: "filter",
-        setup_date: "2024-01-15",
-        last_maintenance: "2024-11-01"
+      // Fetch real unit data from Firebase
+      const unitDocRef = doc(db, "units", selectedUnit);
+      const unitSnapshot = await getDoc(unitDocRef);
+      
+      if (!unitSnapshot.exists()) {
+        throw new Error(`Unit ${selectedUnit} not found in Firebase`);
+      }
+
+      const unitData: UnitData = {
+        id: unitSnapshot.id,
+        name: unitSnapshot.data().name || `Unit ${selectedUnit}`,
+        ...unitSnapshot.data() as DocumentData
       };
-
+      
+      console.log("✅ Fetched unit data from Firebase:", unitData);
+      
+      // Try to fetch real measurements for the report period
+      let measurements: Measurement[] = [];
       try {
-        // Try to fetch unit data from Firebase
-        const unitDocRef = doc(db, "units", selectedUnit);
-        const unitSnapshot = await getDoc(unitDocRef);
-        
-        let unitData: UnitData = mockUnitData;
-        
-        if (unitSnapshot.exists()) {
-          unitData = {
-            id: unitSnapshot.id,
-            name: unitSnapshot.data().name || mockUnitData.name,
-            ...unitSnapshot.data() as DocumentData
-          };
-        } else {
-          console.log("Unit not found in Firebase, using mock data");
-        }
-        
-        // Try to fetch measurements for the report period
-        let measurements: Measurement[] = [];
-        try {
-          measurements = await fetchMeasurementsForReport(selectedUnit, reportType);
-        } catch (measurementError) {
-          console.log("Could not fetch measurements, using sample data:", measurementError);
-          // Create sample measurements for demo
-          measurements = [
-            {
-              id: "sample-1",
-              unit_id: selectedUnit,
-              volume: 1250.75,
-              temperature: 22.5,
-              timestamp: new Date(Date.now() - 86400000).toISOString(), // Yesterday
-              uvc_hours: 240.5
-            },
-            {
-              id: "sample-2", 
-              unit_id: selectedUnit,
-              volume: 1245.20,
-              temperature: 23.1,
-              timestamp: new Date(Date.now() - 172800000).toISOString(), // 2 days ago
-              uvc_hours: 238.2
-            }
-          ];
-        }
-        
-        // Update unit data with latest measurement values if available
-        if (measurements.length > 0) {
-          const latestMeasurement = measurements[0];
-          if (latestMeasurement.volume !== undefined) {
-            unitData.total_volume = Number(latestMeasurement.volume.toFixed(2));
-          }
-          if (latestMeasurement.uvc_hours !== undefined) {
-            unitData.uvc_hours = Number(latestMeasurement.uvc_hours.toFixed(1));
-          }
-        }
-        
-        // Generate report content based on unit data and measurements
-        const reportContent = generateReportContent(unitData, reportType, measurements);
-
-        // Save report to database
-        try {
-          const reportsCollection = collection(db, "reports");
-          await addDoc(reportsCollection, {
-            unit_id: selectedUnit,
-            report_type: reportType,
-            content: reportContent,
-            measurements: measurements,
-            generated_by: firebaseUser.uid,
-            created_at: new Date().toISOString()
-          });
-          
-          console.log("Report saved successfully to Firebase");
-        } catch (saveError) {
-          console.log("Could not save to Firebase, report generated locally:", saveError);
-        }
-
-        // Notify parent component to refetch reports
-        onReportGenerated();
-
-        toast({
-          title: "Success",
-          description: `Generated ${reportType} report for ${unitData.name || 'selected unit'}`,
-        });
-        
-      } catch (fetchError) {
-        console.log("Using mock data for report generation:", fetchError);
-        
-        // Generate report with mock data
-        const reportContent = generateReportContent(mockUnitData, reportType, []);
-        
-        toast({
-          title: "Report Generated",
-          description: `Generated ${reportType} report with sample data`,
-        });
-        
-        onReportGenerated();
+        measurements = await fetchMeasurementsForReport(selectedUnit, reportType);
+        console.log("✅ Fetched", measurements.length, "measurements from Firebase");
+      } catch (measurementError) {
+        console.log("⚠️ Could not fetch measurements from Firebase:", measurementError);
+        // If no measurements available, create empty array - don't use fake data
+        measurements = [];
       }
       
+      // Update unit data with latest measurement values if available
+      if (measurements.length > 0) {
+        const latestMeasurement = measurements[0];
+        if (latestMeasurement.volume !== undefined) {
+          unitData.total_volume = Number(latestMeasurement.volume.toFixed(2));
+        }
+        if (latestMeasurement.uvc_hours !== undefined) {
+          unitData.uvc_hours = Number(latestMeasurement.uvc_hours.toFixed(1));
+        }
+      }
+      
+      // Generate report content based on real unit data and measurements
+      const reportContent = generateReportContent(unitData, reportType, measurements);
+
+      // Save report to Firebase
+      try {
+        const reportsCollection = collection(db, "reports");
+        await addDoc(reportsCollection, {
+          unit_id: selectedUnit,
+          report_type: reportType,
+          content: reportContent,
+          measurements: measurements,
+          generated_by: firebaseUser.uid,
+          created_at: new Date().toISOString()
+        });
+        
+        console.log("✅ Report saved successfully to Firebase");
+        
+        toast({
+          title: "Success",
+          description: `Generated ${reportType} report for ${unitData.name}`,
+        });
+      } catch (saveError) {
+        console.error("❌ Could not save report to Firebase:", saveError);
+        toast({
+          title: "Report Generated",
+          description: `Generated ${reportType} report but could not save to database`,
+          variant: "destructive"
+        });
+      }
+
+      // Notify parent component to refetch reports
+      onReportGenerated();
+      
     } catch (error: any) {
-      console.error("Error generating report:", error);
+      console.error("❌ Error generating report:", error);
       toast({
         variant: "destructive",
         title: "Error",

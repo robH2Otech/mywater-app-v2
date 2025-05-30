@@ -27,53 +27,21 @@ const Users = () => {
   const { data: users = [], isLoading: usersLoading, error: usersError } = useQuery({
     queryKey: ["users"],
     queryFn: async () => {
-      console.log("Fetching users data from Firebase...");
+      console.log("🔄 Fetching real users from Firebase...");
       
-      // Create properly typed mock data for testing
-      const mockUsers: User[] = [
-        {
-          id: firebaseUser?.uid || "1",
-          first_name: firebaseUser?.displayName?.split(' ')[0] || firebaseUser?.email?.split('@')[0] || "Admin",
-          last_name: firebaseUser?.displayName?.split(' ')[1] || "User",
-          email: firebaseUser?.email || "admin@xwater.com",
-          company: "xwater",
-          role: "superadmin" as UserRole,
-          status: "active" as UserStatus,
-          job_title: "System Administrator"
-        },
-        {
-          id: "2",
-          first_name: "John",
-          last_name: "Doe",
-          email: "john.doe@xwater.com",
-          company: "xwater",
-          role: "admin" as UserRole,
-          status: "active" as UserStatus,
-          job_title: "Water Engineer"
-        },
-        {
-          id: "3",
-          first_name: "Jane",
-          last_name: "Smith",
-          email: "jane.smith@xwater.com",
-          company: "xwater",
-          role: "technician" as UserRole,
-          status: "active" as UserStatus,
-          job_title: "Field Technician"
-        }
-      ];
-
       try {
         const usersCollection = collection(db, "app_users_business");
         const usersSnapshot = await getDocs(usersCollection);
         
         if (usersSnapshot.empty) {
-          console.log("No users found in Firebase, using mock data");
-          return mockUsers;
+          console.log("❌ No users found in Firebase app_users_business collection");
+          return [];
         }
         
         const usersList = usersSnapshot.docs.map(doc => {
           const data = doc.data();
+          console.log("📋 Processing user:", doc.id, data);
+          
           return {
             id: doc.id,
             first_name: data.first_name || "",
@@ -89,19 +57,24 @@ const Users = () => {
           } as User;
         });
         
-        console.log("Users data:", usersList);
-        return usersList.length > 0 ? usersList : mockUsers;
-      } catch (firestoreError) {
-        console.log("Firebase error, using mock data:", firestoreError);
-        return mockUsers;
+        console.log("✅ Successfully fetched", usersList.length, "real users from Firebase");
+        console.log("👥 Users:", usersList.map(u => ({ email: u.email, role: u.role })));
+        
+        return usersList;
+      } catch (error) {
+        console.error("❌ Error fetching users from Firebase:", error);
+        throw new Error(`Failed to fetch users: ${error}`);
       }
     },
+    retry: 2,
+    retryDelay: 1000
   });
 
   // Check if the current user can add new users
   const canAddUsers = hasPermission("admin");
 
   if (usersError) {
+    console.error("💥 Users query error:", usersError);
     return (
       <div className="space-y-6 animate-fadeIn p-2 md:p-0">
         <PageHeader
@@ -111,11 +84,16 @@ const Users = () => {
           addButtonText={canAddUsers ? "Add User" : undefined}
         />
         <Card className="p-6 bg-spotify-darker border-spotify-accent">
-          <div className="flex items-center space-x-3 text-yellow-400">
+          <div className="flex items-center space-x-3 text-red-400">
             <AlertCircle className="h-5 w-5" />
             <div>
-              <p className="font-medium">Connection Issue</p>
-              <p className="text-sm text-gray-400">Using cached user data. Some features may be limited.</p>
+              <p className="font-medium">Failed to Load Users</p>
+              <p className="text-sm text-gray-400">
+                Could not connect to Firebase: {usersError.message}
+              </p>
+              <p className="text-sm text-gray-400 mt-2">
+                Please check your Firebase configuration and permissions.
+              </p>
             </div>
           </div>
         </Card>
@@ -151,7 +129,7 @@ const Users = () => {
           <TabsList className="grid w-full grid-cols-2 bg-spotify-darker">
             <TabsTrigger value="users" className="flex items-center gap-2">
               <UsersIcon className="h-4 w-4" />
-              Users Management
+              Users Management ({users.length})
             </TabsTrigger>
             <TabsTrigger value="claims" className="flex items-center gap-2">
               <Shield className="h-4 w-4" />
@@ -163,12 +141,16 @@ const Users = () => {
             <Card className="p-6 bg-spotify-darker border-spotify-accent">
               <div className="flex items-center mb-4">
                 <UsersIcon className="h-5 w-5 text-mywater-blue mr-2" />
-                <h2 className="text-xl font-semibold text-white">System Users</h2>
+                <h2 className="text-xl font-semibold text-white">
+                  Firebase Users ({users.length} found)
+                </h2>
               </div>
               
               {users.length === 0 ? (
                 <div className="text-center text-gray-400 py-8">
-                  No users found. {canAddUsers ? "Click \"Add User\" to create one." : ""}
+                  <p>No users found in Firebase collection.</p>
+                  <p className="text-sm mt-2">Check app_users_business collection in Firestore.</p>
+                  {canAddUsers && <p className="text-sm mt-2">Click "Add User" to create one.</p>}
                 </div>
               ) : (
                 <UsersList
@@ -187,12 +169,16 @@ const Users = () => {
         <Card className="p-6 bg-spotify-darker border-spotify-accent">
           <div className="flex items-center mb-4">
             <UsersIcon className="h-5 w-5 text-mywater-blue mr-2" />
-            <h2 className="text-xl font-semibold text-white">System Users</h2>
+            <h2 className="text-xl font-semibold text-white">
+              System Users ({users.length} found)
+            </h2>
           </div>
           
           {users.length === 0 ? (
             <div className="text-center text-gray-400 py-8">
-              No users found. {canAddUsers ? "Click \"Add User\" to create one." : ""}
+              <p>No users found in Firebase collection.</p>
+              <p className="text-sm mt-2">Check app_users_business collection in Firestore.</p>
+              {canAddUsers && <p className="text-sm mt-2">Click "Add User" to create one.</p>}
             </div>
           ) : (
             <UsersList

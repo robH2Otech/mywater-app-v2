@@ -36,25 +36,97 @@ export function useAuthStateManager(firebaseUser: FirebaseUser | null): AuthStat
     return { firstName, lastName };
   };
 
+  const fetchUserFromFirestore = useCallback(async (firebaseUser: FirebaseUser): Promise<AppUser | null> => {
+    try {
+      console.log("🔍 Fetching user data from Firestore for:", firebaseUser.email);
+
+      // Try to get user by document ID (UID)
+      const userDocRef = doc(db, "app_users_business", firebaseUser.uid);
+      const userDoc = await getDoc(userDocRef);
+      
+      if (userDoc.exists()) {
+        const userData = userDoc.data() as AppUser;
+        console.log("✅ Found user by UID:", userData);
+        return {
+          ...userData,
+          id: userDoc.id,
+        };
+      }
+
+      // Fallback: Query by email
+      console.log("🔄 User not found by UID, searching by email...");
+      const userQuery = query(
+        collection(db, "app_users_business"),
+        where("email", "==", firebaseUser.email)
+      );
+      
+      const userSnapshot = await getDocs(userQuery);
+      
+      if (!userSnapshot.empty) {
+        const userData = userSnapshot.docs[0].data() as AppUser;
+        console.log("✅ Found user by email:", userData);
+        return {
+          ...userData,
+          id: userSnapshot.docs[0].id,
+        };
+      }
+
+      console.log("❌ User not found in Firestore app_users_business collection");
+      return null;
+    } catch (error) {
+      console.error("❌ Error fetching user from Firestore:", error);
+      return null;
+    }
+  }, []);
+
   const refreshUserSession = useCallback(async (): Promise<boolean> => {
     try {
       if (!firebaseUser) return false;
       
       console.log("🔄 Refreshing user session...");
       
-      // For testing, set superadmin role
-      setUserRole('superadmin');
-      setCompany('xwater');
-      console.log("✅ Session refreshed successfully with role: superadmin");
-      return true;
+      const firestoreUser = await fetchUserFromFirestore(firebaseUser);
+      
+      if (firestoreUser) {
+        setCurrentUser(firestoreUser);
+        setUserRole(firestoreUser.role);
+        setCompany(firestoreUser.company || null);
+        console.log("✅ Session refreshed with Firestore data:", {
+          email: firestoreUser.email,
+          role: firestoreUser.role,
+          company: firestoreUser.company
+        });
+        return true;
+      } else {
+        console.log("⚠️ User not found in Firestore, using Firebase auth data");
+        const { firstName, lastName } = extractUserNames(firebaseUser);
+        
+        const fallbackUser: AppUser = {
+          id: firebaseUser.uid,
+          email: firebaseUser.email || "",
+          first_name: firstName,
+          last_name: lastName,
+          role: 'user', // Default role when not found in Firestore
+          status: "active",
+          company: null
+        };
+        
+        setCurrentUser(fallbackUser);
+        setUserRole('user');
+        setCompany(null);
+        
+        console.log("⚠️ Using fallback user data:", fallbackUser);
+        return false;
+      }
     } catch (error) {
       console.error("❌ Error refreshing user session:", error);
       return false;
     }
-  }, [firebaseUser]);
+  }, [firebaseUser, fetchUserFromFirestore]);
 
   const handleAuthStateChange = useCallback(async (firebaseUser: FirebaseUser | null) => {
     if (!firebaseUser) {
+      console.log("🚪 User signed out, clearing state");
       setCurrentUser(null);
       setUserRole(null);
       setCompany(null);
@@ -64,71 +136,62 @@ export function useAuthStateManager(firebaseUser: FirebaseUser | null): AuthStat
     try {
       console.log("🔄 Processing auth state change for:", firebaseUser.email);
       
-      // Set superadmin role for testing
-      setUserRole('superadmin');
-      setCompany('xwater');
+      const firestoreUser = await fetchUserFromFirestore(firebaseUser);
       
-      // Extract names with better logic
-      const { firstName, lastName } = extractUserNames(firebaseUser);
-      
-      // Try to fetch user profile from Firestore, but fallback gracefully
-      try {
-        const businessUserDocRef = doc(db, "app_users_business", firebaseUser.uid);
-        const businessUserDoc = await getDoc(businessUserDocRef);
+      if (firestoreUser) {
+        setCurrentUser(firestoreUser);
+        setUserRole(firestoreUser.role);
+        setCompany(firestoreUser.company || null);
         
-        if (businessUserDoc.exists()) {
-          const userData = businessUserDoc.data() as AppUser;
-          setCurrentUser({
-            ...userData,
-            id: businessUserDoc.id,
-            role: 'superadmin', // Override role for testing
-            first_name: userData.first_name || firstName,
-            last_name: userData.last_name || lastName
-          });
-        } else {
-          // Create a minimal user object with extracted name
-          setCurrentUser({
-            id: firebaseUser.uid,
-            email: firebaseUser.email || "",
-            first_name: firstName,
-            last_name: lastName,
-            role: 'superadmin',
-            status: "active",
-            company: 'xwater'
-          });
-        }
-      } catch (firestoreError) {
-        console.log("Could not fetch user from Firestore, using Firebase data:", firestoreError);
-        // Fallback to Firebase user data with extracted names
-        setCurrentUser({
+        console.log("✅ User authenticated with Firestore data:", {
+          id: firestoreUser.id,
+          email: firestoreUser.email,
+          name: `${firestoreUser.first_name} ${firestoreUser.last_name}`,
+          role: firestoreUser.role,
+          company: firestoreUser.company
+        });
+      } else {
+        console.log("⚠️ User authenticated but not found in Firestore");
+        const { firstName, lastName } = extractUserNames(firebaseUser);
+        
+        const fallbackUser: AppUser = {
           id: firebaseUser.uid,
           email: firebaseUser.email || "",
           first_name: firstName,
           last_name: lastName,
-          role: 'superadmin',
+          role: 'user',
           status: "active",
-          company: 'xwater'
-        });
+          company: null
+        };
+        
+        setCurrentUser(fallbackUser);
+        setUserRole('user');
+        setCompany(null);
+        
+        console.log("⚠️ Using fallback authentication data for:", firebaseUser.email);
       }
-      
-      console.log("✅ User authenticated successfully with role: superadmin");
     } catch (error) {
       console.error("❌ Error in auth state change handler:", error);
-      // Even on error, set minimal user data with extracted names
+      
+      // Fallback to basic Firebase user data
       const { firstName, lastName } = extractUserNames(firebaseUser);
-      setUserRole('superadmin');
-      setCompany('xwater');
-      setCurrentUser({
+      const fallbackUser: AppUser = {
         id: firebaseUser.uid,
         email: firebaseUser.email || "",
         first_name: firstName,
         last_name: lastName,
-        role: 'superadmin',
+        role: 'user',
         status: "active",
-        company: 'xwater'
-      });
+        company: null
+      };
+      
+      setCurrentUser(fallbackUser);
+      setUserRole('user');
+      setCompany(null);
+      
+      console.log("🚨 Error fallback - using basic Firebase data");
     }
-  }, []);
+  }, [fetchUserFromFirestore]);
 
   return {
     currentUser,
