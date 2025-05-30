@@ -112,8 +112,8 @@ const RoleBasedRouteGuard = ({ children }: { children: ReactNode }) => {
     );
   }
   
-  // Allow superadmin to access everything
-  if (userRole === 'superadmin') {
+  // Allow superadmin to access everything (check string value directly)
+  if (userRole && userRole === 'superadmin') {
     return <>{children}</>;
   }
   
@@ -136,8 +136,8 @@ const RoleBasedRouteGuard = ({ children }: { children: ReactNode }) => {
   const basePath = location.pathname.split('/')[1] ? `/${location.pathname.split('/')[1]}` : location.pathname;
   const requiredPermission = routePermissions[basePath];
   
-  // Check if user can view this route (skip for superadmin)
-  if (requiredPermission && userRole !== 'superadmin' && !canViewNavItem(requiredPermission)) {
+  // Check if user can view this route (skip check for superadmin, which was already handled above)
+  if (requiredPermission && userRole && userRole !== 'superadmin' && !canViewNavItem(requiredPermission)) {
     try {
       logAuditEvent('security_violation', {
         type: 'unauthorized_route_access',
