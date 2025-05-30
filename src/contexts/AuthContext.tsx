@@ -26,6 +26,10 @@ interface AuthContextType {
   refreshUserSession: () => Promise<boolean>;
   authError: string | null;
   debugInfo: any;
+  // New methods for better user data access
+  getUserDisplayName: () => string;
+  getUserInitials: () => string;
+  getUserFirstName: () => string;
 }
 
 const AuthContext = createContext<AuthContextType>({
@@ -44,7 +48,10 @@ const AuthContext = createContext<AuthContextType>({
   canViewNavItem: () => false,
   refreshUserSession: async () => false,
   authError: null,
-  debugInfo: null
+  debugInfo: null,
+  getUserDisplayName: () => "User",
+  getUserInitials: () => "U",
+  getUserFirstName: () => "User"
 });
 
 export const useAuth = (): AuthContextType => useContext(AuthContext);
@@ -65,6 +72,56 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const permissions = usePermissionsManager(userRole, company);
 
+  // Helper functions for user data access
+  const getUserDisplayName = (): string => {
+    if (currentUser?.first_name && currentUser?.last_name) {
+      return `${currentUser.first_name} ${currentUser.last_name}`;
+    }
+    if (currentUser?.first_name) {
+      return currentUser.first_name;
+    }
+    if (firebaseUser?.displayName) {
+      return firebaseUser.displayName;
+    }
+    if (firebaseUser?.email) {
+      return firebaseUser.email.split('@')[0];
+    }
+    return "User";
+  };
+
+  const getUserInitials = (): string => {
+    if (currentUser?.first_name && currentUser?.last_name) {
+      return `${currentUser.first_name.charAt(0)}${currentUser.last_name.charAt(0)}`.toUpperCase();
+    }
+    if (currentUser?.first_name) {
+      return currentUser.first_name.charAt(0).toUpperCase();
+    }
+    if (firebaseUser?.displayName) {
+      const nameParts = firebaseUser.displayName.split(' ');
+      if (nameParts.length >= 2) {
+        return `${nameParts[0].charAt(0)}${nameParts[1].charAt(0)}`.toUpperCase();
+      }
+      return nameParts[0].charAt(0).toUpperCase();
+    }
+    if (firebaseUser?.email) {
+      return firebaseUser.email.charAt(0).toUpperCase();
+    }
+    return "U";
+  };
+
+  const getUserFirstName = (): string => {
+    if (currentUser?.first_name) {
+      return currentUser.first_name;
+    }
+    if (firebaseUser?.displayName) {
+      return firebaseUser.displayName.split(' ')[0];
+    }
+    if (firebaseUser?.email) {
+      return firebaseUser.email.split('@')[0];
+    }
+    return "User";
+  };
+
   useEffect(() => {
     console.log("🔄 Setting up Firebase auth state listener");
     
@@ -82,20 +139,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         if (firebaseUser) {
           console.log("🎫 Processing user authentication...");
           
-          // Create a minimal user profile for testing
-          const testUser: AppUser = {
-            id: firebaseUser.uid,
-            first_name: firebaseUser.displayName?.split(' ')[0] || firebaseUser.email?.split('@')[0] || 'User',
-            last_name: firebaseUser.displayName?.split(' ')[1] || '',
-            email: firebaseUser.email || '',
-            role: 'superadmin', // Set as superadmin for testing
-            status: 'active',
-            company: 'xwater'
-          };
-          
           setDebugInfo({
             uid: firebaseUser.uid,
             email: firebaseUser.email,
+            displayName: firebaseUser.displayName,
             role: 'superadmin',
             company: 'xwater',
             timestamp: new Date().toISOString()
@@ -128,6 +175,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     refreshUserSession,
     authError,
     debugInfo,
+    getUserDisplayName,
+    getUserInitials,
+    getUserFirstName,
     ...permissions
   };
 

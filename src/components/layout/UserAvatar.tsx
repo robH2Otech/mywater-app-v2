@@ -1,6 +1,5 @@
 
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { useEffect, useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { 
   DropdownMenu,
@@ -20,48 +19,13 @@ interface UserAvatarProps {
   showMenu?: boolean;
 }
 
-export function UserAvatar({ firstName, lastName, className = "h-9 w-9", showMenu = true }: UserAvatarProps) {
-  const [initials, setInitials] = useState<string>("U");
+export function UserAvatar({ className = "h-9 w-9", showMenu = true }: UserAvatarProps) {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { currentUser, firebaseUser } = useAuth();
+  const { getUserInitials } = useAuth();
   
-  useEffect(() => {
-    // If firstName and lastName are provided via props, use them directly
-    if (firstName && lastName) {
-      const userInitials = `${firstName.charAt(0)}${lastName.charAt(0)}`;
-      setInitials(userInitials.toUpperCase());
-      return;
-    }
-    
-    if (firstName) {
-      setInitials(firstName.charAt(0).toUpperCase());
-      return;
-    }
-    
-    // Get from auth context
-    if (currentUser?.first_name) {
-      const firstInitial = currentUser.first_name.charAt(0);
-      const lastInitial = currentUser.last_name?.charAt(0) || '';
-      setInitials(`${firstInitial}${lastInitial}`.toUpperCase());
-      return;
-    }
-    
-    // Fallback to Firebase user
-    if (firebaseUser) {
-      if (firebaseUser.displayName) {
-        const nameParts = firebaseUser.displayName.split(' ');
-        if (nameParts.length >= 2) {
-          const userInitials = `${nameParts[0].charAt(0)}${nameParts[1].charAt(0)}`;
-          setInitials(userInitials.toUpperCase());
-        } else {
-          setInitials(nameParts[0].charAt(0).toUpperCase());
-        }
-      } else if (firebaseUser.email) {
-        setInitials(firebaseUser.email.charAt(0).toUpperCase());
-      }
-    }
-  }, [firstName, lastName, currentUser, firebaseUser]);
+  // Get initials from auth context
+  const initials = getUserInitials();
   
   const handleSignOut = async () => {
     try {

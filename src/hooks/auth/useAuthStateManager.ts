@@ -18,6 +18,24 @@ export function useAuthStateManager(firebaseUser: FirebaseUser | null): AuthStat
   const [userRole, setUserRole] = useState<UserRole | null>(null);
   const [company, setCompany] = useState<string | null>(null);
 
+  const extractUserNames = (firebaseUser: FirebaseUser) => {
+    let firstName = "";
+    let lastName = "";
+
+    if (firebaseUser.displayName) {
+      const nameParts = firebaseUser.displayName.trim().split(' ');
+      firstName = nameParts[0] || "";
+      lastName = nameParts.length > 1 ? nameParts.slice(1).join(' ') : "";
+    } else if (firebaseUser.email) {
+      // Extract name from email and capitalize it
+      const emailName = firebaseUser.email.split('@')[0];
+      firstName = emailName.charAt(0).toUpperCase() + emailName.slice(1);
+      lastName = "";
+    }
+
+    return { firstName, lastName };
+  };
+
   const refreshUserSession = useCallback(async (): Promise<boolean> => {
     try {
       if (!firebaseUser) return false;
@@ -50,6 +68,9 @@ export function useAuthStateManager(firebaseUser: FirebaseUser | null): AuthStat
       setUserRole('superadmin');
       setCompany('xwater');
       
+      // Extract names with better logic
+      const { firstName, lastName } = extractUserNames(firebaseUser);
+      
       // Try to fetch user profile from Firestore, but fallback gracefully
       try {
         const businessUserDocRef = doc(db, "app_users_business", firebaseUser.uid);
@@ -60,15 +81,12 @@ export function useAuthStateManager(firebaseUser: FirebaseUser | null): AuthStat
           setCurrentUser({
             ...userData,
             id: businessUserDoc.id,
-            role: 'superadmin' // Override role for testing
+            role: 'superadmin', // Override role for testing
+            first_name: userData.first_name || firstName,
+            last_name: userData.last_name || lastName
           });
         } else {
           // Create a minimal user object with extracted name
-          const firstName = firebaseUser.displayName?.split(" ")[0] || 
-                          firebaseUser.email?.split("@")[0] || 
-                          "User";
-          const lastName = firebaseUser.displayName?.split(" ")[1] || "";
-          
           setCurrentUser({
             id: firebaseUser.uid,
             email: firebaseUser.email || "",
@@ -81,12 +99,7 @@ export function useAuthStateManager(firebaseUser: FirebaseUser | null): AuthStat
         }
       } catch (firestoreError) {
         console.log("Could not fetch user from Firestore, using Firebase data:", firestoreError);
-        // Fallback to Firebase user data
-        const firstName = firebaseUser.displayName?.split(" ")[0] || 
-                        firebaseUser.email?.split("@")[0] || 
-                        "User";
-        const lastName = firebaseUser.displayName?.split(" ")[1] || "";
-        
+        // Fallback to Firebase user data with extracted names
         setCurrentUser({
           id: firebaseUser.uid,
           email: firebaseUser.email || "",
@@ -101,14 +114,15 @@ export function useAuthStateManager(firebaseUser: FirebaseUser | null): AuthStat
       console.log("✅ User authenticated successfully with role: superadmin");
     } catch (error) {
       console.error("❌ Error in auth state change handler:", error);
-      // Even on error, set minimal user data
+      // Even on error, set minimal user data with extracted names
+      const { firstName, lastName } = extractUserNames(firebaseUser);
       setUserRole('superadmin');
       setCompany('xwater');
       setCurrentUser({
         id: firebaseUser.uid,
         email: firebaseUser.email || "",
-        first_name: firebaseUser.email?.split("@")[0] || "User",
-        last_name: "",
+        first_name: firstName,
+        last_name: lastName,
         role: 'superadmin',
         status: "active",
         company: 'xwater'
