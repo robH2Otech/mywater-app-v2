@@ -12,7 +12,7 @@ import { collection, getDocs } from "firebase/firestore";
 import { db } from "@/integrations/firebase/client";
 import { Card } from "@/components/ui/card";
 import { Users as UsersIcon, Shield, AlertCircle } from "lucide-react";
-import { User } from "@/types/users";
+import { User, UserRole, UserStatus } from "@/types/users";
 import { usePermissions } from "@/hooks/usePermissions";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAuth } from "@/contexts/AuthContext";
@@ -28,82 +28,72 @@ const Users = () => {
     queryKey: ["users"],
     queryFn: async () => {
       console.log("Fetching users data from Firebase...");
-      try {
-        // Create mock data for testing when Firebase fails
-        const mockUsers: User[] = [
-          {
-            id: firebaseUser?.uid || "1",
-            first_name: firebaseUser?.displayName?.split(' ')[0] || firebaseUser?.email?.split('@')[0] || "Admin",
-            last_name: firebaseUser?.displayName?.split(' ')[1] || "User",
-            email: firebaseUser?.email || "admin@xwater.com",
-            company: "xwater",
-            role: "superadmin",
-            status: "active",
-            job_title: "System Administrator"
-          },
-          {
-            id: "2",
-            first_name: "John",
-            last_name: "Doe",
-            email: "john.doe@xwater.com",
-            company: "xwater",
-            role: "admin",
-            status: "active",
-            job_title: "Water Engineer"
-          },
-          {
-            id: "3",
-            first_name: "Jane",
-            last_name: "Smith",
-            email: "jane.smith@xwater.com",
-            company: "xwater",
-            role: "technician",
-            status: "active",
-            job_title: "Field Technician"
-          }
-        ];
+      
+      // Create properly typed mock data for testing
+      const mockUsers: User[] = [
+        {
+          id: firebaseUser?.uid || "1",
+          first_name: firebaseUser?.displayName?.split(' ')[0] || firebaseUser?.email?.split('@')[0] || "Admin",
+          last_name: firebaseUser?.displayName?.split(' ')[1] || "User",
+          email: firebaseUser?.email || "admin@xwater.com",
+          company: "xwater",
+          role: "superadmin" as UserRole,
+          status: "active" as UserStatus,
+          job_title: "System Administrator"
+        },
+        {
+          id: "2",
+          first_name: "John",
+          last_name: "Doe",
+          email: "john.doe@xwater.com",
+          company: "xwater",
+          role: "admin" as UserRole,
+          status: "active" as UserStatus,
+          job_title: "Water Engineer"
+        },
+        {
+          id: "3",
+          first_name: "Jane",
+          last_name: "Smith",
+          email: "jane.smith@xwater.com",
+          company: "xwater",
+          role: "technician" as UserRole,
+          status: "active" as UserStatus,
+          job_title: "Field Technician"
+        }
+      ];
 
-        try {
-          const usersCollection = collection(db, "app_users_business");
-          const usersSnapshot = await getDocs(usersCollection);
-          
-          if (usersSnapshot.empty) {
-            console.log("No users found in Firebase, using mock data");
-            return mockUsers;
-          }
-          
-          const usersList = usersSnapshot.docs.map(doc => ({
-            id: doc.id,
-            first_name: doc.data().first_name || "",
-            last_name: doc.data().last_name || "",
-            email: doc.data().email || "",
-            company: doc.data().company || "",
-            role: doc.data().role || "user",
-            status: doc.data().status || "active",
-            ...doc.data()
-          })) as User[];
-          
-          console.log("Users data:", usersList);
-          return usersList.length > 0 ? usersList : mockUsers;
-        } catch (firestoreError) {
-          console.log("Firebase error, using mock data:", firestoreError);
+      try {
+        const usersCollection = collection(db, "app_users_business");
+        const usersSnapshot = await getDocs(usersCollection);
+        
+        if (usersSnapshot.empty) {
+          console.log("No users found in Firebase, using mock data");
           return mockUsers;
         }
-      } catch (error) {
-        console.error("Error fetching users:", error);
-        // Return mock data instead of throwing
-        return [
-          {
-            id: firebaseUser?.uid || "1",
-            first_name: firebaseUser?.displayName?.split(' ')[0] || "Admin",
-            last_name: firebaseUser?.displayName?.split(' ')[1] || "User",
-            email: firebaseUser?.email || "admin@example.com",
-            company: "xwater",
-            role: "superadmin",
-            status: "active",
-            job_title: "System Administrator"
-          }
-        ];
+        
+        const usersList = usersSnapshot.docs.map(doc => {
+          const data = doc.data();
+          return {
+            id: doc.id,
+            first_name: data.first_name || "",
+            last_name: data.last_name || "",
+            email: data.email || "",
+            company: data.company || "",
+            role: (data.role as UserRole) || "user",
+            status: (data.status as UserStatus) || "active",
+            job_title: data.job_title || "",
+            phone: data.phone || "",
+            created_at: data.created_at || "",
+            updated_at: data.updated_at || ""
+          } as User;
+        });
+        
+        console.log("Users data:", usersList);
+        return usersList.length > 0 ? usersList : mockUsers;
+      } catch (firestoreError) {
+        console.log("Firebase error, using mock data:", firestoreError);
+        return mockUsers;
       }
     },
   });
