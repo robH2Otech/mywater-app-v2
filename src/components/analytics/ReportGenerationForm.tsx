@@ -74,7 +74,7 @@ export function ReportGenerationForm({
         status: "active",
         total_volume: 1250.75,
         unit_type: "filter",
-        installation_date: "2024-01-15",
+        setup_date: "2024-01-15",
         last_maintenance: "2024-11-01"
       };
 
@@ -107,7 +107,7 @@ export function ReportGenerationForm({
               id: "sample-1",
               unit_id: selectedUnit,
               volume: 1250.75,
-              flow_rate: 12.5,
+              temperature: 22.5,
               timestamp: new Date(Date.now() - 86400000).toISOString(), // Yesterday
               uvc_hours: 240.5
             },
@@ -115,7 +115,7 @@ export function ReportGenerationForm({
               id: "sample-2", 
               unit_id: selectedUnit,
               volume: 1245.20,
-              flow_rate: 11.8,
+              temperature: 23.1,
               timestamp: new Date(Date.now() - 172800000).toISOString(), // 2 days ago
               uvc_hours: 238.2
             }

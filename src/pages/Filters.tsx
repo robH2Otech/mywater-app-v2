@@ -37,28 +37,24 @@ const Filters = () => {
           status: "active",
           total_volume: 1250.5,
           unit_type: "filter",
-          installation_date: "2024-01-15",
+          setup_date: "2024-01-15",
           last_maintenance: "2024-11-01",
           filters: [
             {
               id: "filter-1",
               unit_id: "unit-1",
-              filter_type: "Carbon Block",
               installation_date: "2024-01-15",
-              last_replaced: "2024-10-01",
-              replacement_due: "2025-01-01",
-              status: "good",
-              efficiency: 95
+              last_change: "2024-10-01",
+              next_change: "2025-01-01",
+              volume_processed: 950
             },
             {
               id: "filter-2",
               unit_id: "unit-1",
-              filter_type: "Sediment",
               installation_date: "2024-01-15",
-              last_replaced: "2024-09-15",
-              replacement_due: "2024-12-15",
-              status: "needs_replacement",
-              efficiency: 78
+              last_change: "2024-09-15",
+              next_change: "2024-12-15",
+              volume_processed: 780
             }
           ]
         },
@@ -69,18 +65,16 @@ const Filters = () => {
           status: "active",
           total_volume: 890.3,
           unit_type: "filter",
-          installation_date: "2024-02-20",
+          setup_date: "2024-02-20",
           last_maintenance: "2024-10-15",
           filters: [
             {
               id: "filter-3",
               unit_id: "unit-2",
-              filter_type: "Carbon Block",
               installation_date: "2024-02-20",
-              last_replaced: "2024-11-01",
-              replacement_due: "2025-02-01",
-              status: "good",
-              efficiency: 92
+              last_change: "2024-11-01",
+              next_change: "2025-02-01",
+              volume_processed: 650
             }
           ]
         }
