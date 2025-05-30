@@ -26,10 +26,6 @@ interface AuthContextType {
   refreshUserSession: () => Promise<boolean>;
   authError: string | null;
   debugInfo: any;
-  // New methods for better user data access
-  getUserDisplayName: () => string;
-  getUserInitials: () => string;
-  getUserFirstName: () => string;
 }
 
 const AuthContext = createContext<AuthContextType>({
@@ -48,13 +44,10 @@ const AuthContext = createContext<AuthContextType>({
   canViewNavItem: () => false,
   refreshUserSession: async () => false,
   authError: null,
-  debugInfo: null,
-  getUserDisplayName: () => "User",
-  getUserInitials: () => "U",
-  getUserFirstName: () => "User"
+  debugInfo: null
 });
 
-export const useAuth = (): AuthContextType => useContext(AuthContext);
+export const useAuth = () => useContext(AuthContext);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [firebaseUser, setFirebaseUser] = useState<FirebaseUser | null>(null);
@@ -71,56 +64,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   } = useAuthStateManager(firebaseUser);
 
   const permissions = usePermissionsManager(userRole, company);
-
-  // Helper functions for user data access
-  const getUserDisplayName = (): string => {
-    if (currentUser?.first_name && currentUser?.last_name) {
-      return `${currentUser.first_name} ${currentUser.last_name}`;
-    }
-    if (currentUser?.first_name) {
-      return currentUser.first_name;
-    }
-    if (firebaseUser?.displayName) {
-      return firebaseUser.displayName;
-    }
-    if (firebaseUser?.email) {
-      return firebaseUser.email.split('@')[0];
-    }
-    return "User";
-  };
-
-  const getUserInitials = (): string => {
-    if (currentUser?.first_name && currentUser?.last_name) {
-      return `${currentUser.first_name.charAt(0)}${currentUser.last_name.charAt(0)}`.toUpperCase();
-    }
-    if (currentUser?.first_name) {
-      return currentUser.first_name.charAt(0).toUpperCase();
-    }
-    if (firebaseUser?.displayName) {
-      const nameParts = firebaseUser.displayName.split(' ');
-      if (nameParts.length >= 2) {
-        return `${nameParts[0].charAt(0)}${nameParts[1].charAt(0)}`.toUpperCase();
-      }
-      return nameParts[0].charAt(0).toUpperCase();
-    }
-    if (firebaseUser?.email) {
-      return firebaseUser.email.charAt(0).toUpperCase();
-    }
-    return "U";
-  };
-
-  const getUserFirstName = (): string => {
-    if (currentUser?.first_name) {
-      return currentUser.first_name;
-    }
-    if (firebaseUser?.displayName) {
-      return firebaseUser.displayName.split(' ')[0];
-    }
-    if (firebaseUser?.email) {
-      return firebaseUser.email.split('@')[0];
-    }
-    return "User";
-  };
 
   useEffect(() => {
     console.log("🔄 Setting up Firebase auth state listener");
@@ -139,16 +82,49 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         if (firebaseUser) {
           console.log("🎫 Processing user authentication...");
           
-          setDebugInfo({
-            uid: firebaseUser.uid,
-            email: firebaseUser.email,
-            displayName: firebaseUser.displayName,
-            role: 'superadmin',
-            company: 'xwater',
-            timestamp: new Date().toISOString()
-          });
+          // Use AuthService for enhanced claims handling
+          const authResult = await AuthService.verifyAndFixClaims();
           
-          await handleAuthStateChange(firebaseUser);
+          if (authResult.success) {
+            console.log("✅ User authenticated with claims:", authResult.claims);
+            
+            setDebugInfo({
+              uid: firebaseUser.uid,
+              email: firebaseUser.email,
+              claims: authResult.claims,
+              timestamp: new Date().toISOString()
+            });
+            
+            await handleAuthStateChange(firebaseUser);
+          } else {
+            console.log("⚠️ User authenticated but claims verification failed, trying to initialize...");
+            
+            // Try to initialize claims automatically
+            try {
+              const initialized = await AuthService.initializeUserClaims();
+              if (initialized) {
+                console.log("✅ Claims initialized successfully");
+                const retryResult = await AuthService.verifyAndFixClaims();
+                if (retryResult.success) {
+                  await handleAuthStateChange(firebaseUser);
+                } else {
+                  setAuthError("Account setup incomplete. Please contact administrator.");
+                }
+              } else {
+                setAuthError("Account permissions not properly configured. Please contact administrator.");
+              }
+            } catch (initError) {
+              console.error("Error initializing claims:", initError);
+              setAuthError("Failed to initialize account. Please contact administrator.");
+            }
+            
+            setDebugInfo({
+              uid: firebaseUser.uid,
+              email: firebaseUser.email,
+              error: "Claims verification failed",
+              needsInitialization: authResult.needsClaimsInitialization
+            });
+          }
         } else {
           setDebugInfo(null);
         }
@@ -166,7 +142,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     };
   }, [handleAuthStateChange]);
 
-  const value: AuthContextType = {
+  const value = {
     currentUser,
     firebaseUser,
     isLoading,
@@ -175,9 +151,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     refreshUserSession,
     authError,
     debugInfo,
-    getUserDisplayName,
-    getUserInitials,
-    getUserFirstName,
     ...permissions
   };
 

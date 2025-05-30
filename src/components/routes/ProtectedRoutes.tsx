@@ -7,7 +7,6 @@ import { BusinessLayout } from "@/components/layout/BusinessLayout";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import { validateTokenClaims, logAuditEvent } from "@/utils/auth/securityUtils";
 import { verifyUserClaims, refreshUserClaims } from "@/utils/admin/adminClaimsManager";
-import { UserRole } from "@/types/users";
 
 export const ProtectedRoute = ({ children }: { children: ReactNode }) => {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
@@ -109,8 +108,8 @@ const RoleBasedRouteGuard = ({ children }: { children: ReactNode }) => {
     );
   }
   
-  // Allow superadmin to access everything - use type assertion to ensure TypeScript knows userRole can be superadmin
-  if ((userRole as UserRole) === 'superadmin') {
+  // Allow superadmin to access everything
+  if (userRole === 'superadmin') {
     return <>{children}</>;
   }
   
@@ -134,7 +133,7 @@ const RoleBasedRouteGuard = ({ children }: { children: ReactNode }) => {
   const requiredPermission = routePermissions[basePath];
   
   // Check if user can view this route (skip for superadmin)
-  if (requiredPermission && (userRole as UserRole) !== 'superadmin' && !canViewNavItem(requiredPermission)) {
+  if (requiredPermission && userRole !== 'superadmin' && !canViewNavItem(requiredPermission)) {
     logAuditEvent('security_violation', {
       type: 'unauthorized_route_access',
       path: location.pathname,

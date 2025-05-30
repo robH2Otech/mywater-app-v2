@@ -3,7 +3,7 @@ import { UserRole } from "@/types/users";
 import { PermissionLevel } from "@/contexts/AuthContext";
 
 export function usePermissionsManager(userRole: UserRole | null, company: string | null) {
-  // Define permission hierarchy - explicitly include all roles
+  // Define permission hierarchy
   const permissionHierarchy: Record<UserRole, PermissionLevel> = {
     superadmin: "full",
     admin: "admin", 
@@ -12,12 +12,12 @@ export function usePermissionsManager(userRole: UserRole | null, company: string
   };
 
   // Compare permission levels
-  const comparePermissions = (userPermission: PermissionLevel, requiredLevel: PermissionLevel): boolean => {
+  const comparePermissions = (userPermission: PermissionLevel, requiredPermission: PermissionLevel): boolean => {
     const permissionOrder: PermissionLevel[] = ["none", "read", "write", "admin", "full"];
     const userLevel = permissionOrder.indexOf(userPermission);
-    const requiredLevelIndex = permissionOrder.indexOf(requiredLevel);
+    const requiredLevel = permissionOrder.indexOf(requiredPermission);
     
-    return userLevel >= requiredLevelIndex;
+    return userLevel >= requiredLevel;
   };
 
   // Check if user has required permission based on role
@@ -60,7 +60,7 @@ export function usePermissionsManager(userRole: UserRole | null, company: string
 
   // Check if user can view specific navigation items
   const canViewNavItem = (navItem: string): boolean => {
-    const navPermissions: Record<string, UserRole[]> = {
+    const navPermissions: Record<string, string[]> = {
       'dashboard': ['superadmin', 'admin', 'technician', 'user'],
       'units': ['superadmin', 'admin', 'technician', 'user'],
       'locations': ['superadmin', 'admin', 'technician', 'user'],

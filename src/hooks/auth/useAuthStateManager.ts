@@ -1,197 +1,117 @@
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useCallback } from "react";
 import { User as FirebaseUser } from "firebase/auth";
-import { collection, query, where, getDocs, doc, getDoc } from "firebase/firestore";
+import { doc, getDoc, setDoc, collection, query, where, getDocs } from "firebase/firestore";
 import { db } from "@/integrations/firebase/client";
 import { AppUser, UserRole } from "@/types/users";
+import { logAuditEvent } from "@/utils/auth/securityUtils";
 
-interface AuthStateManagerReturn {
-  currentUser: AppUser | null;
-  userRole: UserRole | null;
-  company: string | null;
-  refreshUserSession: () => Promise<boolean>;
-  handleAuthStateChange: (firebaseUser: FirebaseUser | null) => Promise<void>;
-}
-
-export function useAuthStateManager(firebaseUser: FirebaseUser | null): AuthStateManagerReturn {
+export function useAuthStateManager(firebaseUser: FirebaseUser | null) {
   const [currentUser, setCurrentUser] = useState<AppUser | null>(null);
   const [userRole, setUserRole] = useState<UserRole | null>(null);
   const [company, setCompany] = useState<string | null>(null);
 
-  const extractUserNames = (firebaseUser: FirebaseUser) => {
-    let firstName = "";
-    let lastName = "";
-
-    if (firebaseUser.displayName) {
-      const nameParts = firebaseUser.displayName.trim().split(' ');
-      firstName = nameParts[0] || "";
-      lastName = nameParts.length > 1 ? nameParts.slice(1).join(' ') : "";
-    } else if (firebaseUser.email) {
-      // Extract name from email and capitalize it
-      const emailName = firebaseUser.email.split('@')[0];
-      firstName = emailName.charAt(0).toUpperCase() + emailName.slice(1);
-      lastName = "";
-    }
-
-    return { firstName, lastName };
-  };
-
-  const fetchUserFromFirestore = useCallback(async (firebaseUser: FirebaseUser): Promise<AppUser | null> => {
+  const handleAuthStateChange = useCallback(async (firebaseUser: FirebaseUser) => {
     try {
-      console.log("🔍 Fetching user data from Firestore for:", firebaseUser.email);
-
-      // Try to get user by document ID (UID)
+      console.log("🔄 Processing auth state change for:", firebaseUser.email);
+      
+      // Step 1: Try to get user document by UID first (business users)
       const userDocRef = doc(db, "app_users_business", firebaseUser.uid);
-      const userDoc = await getDoc(userDocRef);
+      let userDoc = await getDoc(userDocRef);
+      let userData: AppUser | null = null;
       
       if (userDoc.exists()) {
-        const userData = userDoc.data() as AppUser;
-        console.log("✅ Found user by UID:", userData);
-        return {
-          ...userData,
-          id: userDoc.id,
-        };
+        userData = userDoc.data() as AppUser;
+        console.log("✅ Business user document found:", userData);
+      } else {
+        // Step 2: Try private users collection
+        const privateUserDocRef = doc(db, "app_users_privat", firebaseUser.uid);
+        const privateUserDoc = await getDoc(privateUserDocRef);
+        
+        if (privateUserDoc.exists()) {
+          userData = privateUserDoc.data() as AppUser;
+          console.log("✅ Private user document found:", userData);
+        } else {
+          // Step 3: Search by email in business collection (for migration)
+          console.log("🔍 Searching for user by email...");
+          const usersQuery = query(
+            collection(db, "app_users_business"),
+            where("email", "==", firebaseUser.email)
+          );
+          const querySnapshot = await getDocs(usersQuery);
+          
+          if (!querySnapshot.empty) {
+            // Migrate existing document to correct UID
+            console.log("📋 Migrating user document to correct UID...");
+            const existingData = querySnapshot.docs[0].data();
+            
+            userData = {
+              id: firebaseUser.uid,
+              email: firebaseUser.email || '',
+              first_name: existingData.first_name || '',
+              last_name: existingData.last_name || '',
+              role: existingData.role as UserRole || 'user',
+              company: existingData.company || 'mywater',
+              status: existingData.status || 'active',
+              created_at: existingData.created_at || new Date().toISOString(),
+              updated_at: new Date().toISOString()
+            };
+            
+            await setDoc(userDocRef, userData);
+            console.log("✅ User document migrated successfully");
+          } else {
+            console.log("❌ No user document found anywhere");
+            setCurrentUser(null);
+            setUserRole(null);
+            setCompany(null);
+            return;
+          }
+        }
       }
-
-      // Fallback: Query by email
-      console.log("🔄 User not found by UID, searching by email...");
-      const userQuery = query(
-        collection(db, "app_users_business"),
-        where("email", "==", firebaseUser.email)
-      );
       
-      const userSnapshot = await getDocs(userQuery);
+      // Step 4: Set user data
+      setCurrentUser({ id: firebaseUser.uid, ...userData });
+      setUserRole(userData.role as UserRole);
+      setCompany(userData.company || 'mywater');
       
-      if (!userSnapshot.empty) {
-        const userData = userSnapshot.docs[0].data() as AppUser;
-        console.log("✅ Found user by email:", userData);
-        return {
-          ...userData,
-          id: userSnapshot.docs[0].id,
-        };
-      }
-
-      console.log("❌ User not found in Firestore app_users_business collection");
-      return null;
+      // Step 5: Log successful authentication
+      logAuditEvent('user_authenticated', {
+        user_id: firebaseUser.uid,
+        email: firebaseUser.email,
+        role: userData.role,
+        company: userData.company,
+        source: 'auth_state_change'
+      });
+      
     } catch (error) {
-      console.error("❌ Error fetching user from Firestore:", error);
-      return null;
+      console.error("❌ Error processing auth state change:", error);
+      setCurrentUser(null);
+      setUserRole(null);
+      setCompany(null);
     }
   }, []);
 
   const refreshUserSession = useCallback(async (): Promise<boolean> => {
     try {
-      if (!firebaseUser) return false;
-      
-      console.log("🔄 Refreshing user session...");
-      
-      const firestoreUser = await fetchUserFromFirestore(firebaseUser);
-      
-      if (firestoreUser) {
-        setCurrentUser(firestoreUser);
-        setUserRole(firestoreUser.role);
-        setCompany(firestoreUser.company || null);
-        console.log("✅ Session refreshed with Firestore data:", {
-          email: firestoreUser.email,
-          role: firestoreUser.role,
-          company: firestoreUser.company
-        });
-        return true;
-      } else {
-        console.log("⚠️ User not found in Firestore, using Firebase auth data");
-        const { firstName, lastName } = extractUserNames(firebaseUser);
-        
-        const fallbackUser: AppUser = {
-          id: firebaseUser.uid,
-          email: firebaseUser.email || "",
-          first_name: firstName,
-          last_name: lastName,
-          role: 'user', // Default role when not found in Firestore
-          status: "active",
-          company: null
-        };
-        
-        setCurrentUser(fallbackUser);
-        setUserRole('user');
-        setCompany(null);
-        
-        console.log("⚠️ Using fallback user data:", fallbackUser);
+      if (!firebaseUser) {
+        console.log("❌ No firebase user to refresh");
         return false;
       }
+      
+      console.log("🔄 Refreshing user session for:", firebaseUser.email);
+      
+      // Force token refresh
+      await firebaseUser.getIdToken(true);
+      
+      // Re-process auth state
+      await handleAuthStateChange(firebaseUser);
+      return true;
+      
     } catch (error) {
       console.error("❌ Error refreshing user session:", error);
       return false;
     }
-  }, [firebaseUser, fetchUserFromFirestore]);
-
-  const handleAuthStateChange = useCallback(async (firebaseUser: FirebaseUser | null) => {
-    if (!firebaseUser) {
-      console.log("🚪 User signed out, clearing state");
-      setCurrentUser(null);
-      setUserRole(null);
-      setCompany(null);
-      return;
-    }
-
-    try {
-      console.log("🔄 Processing auth state change for:", firebaseUser.email);
-      
-      const firestoreUser = await fetchUserFromFirestore(firebaseUser);
-      
-      if (firestoreUser) {
-        setCurrentUser(firestoreUser);
-        setUserRole(firestoreUser.role);
-        setCompany(firestoreUser.company || null);
-        
-        console.log("✅ User authenticated with Firestore data:", {
-          id: firestoreUser.id,
-          email: firestoreUser.email,
-          name: `${firestoreUser.first_name} ${firestoreUser.last_name}`,
-          role: firestoreUser.role,
-          company: firestoreUser.company
-        });
-      } else {
-        console.log("⚠️ User authenticated but not found in Firestore");
-        const { firstName, lastName } = extractUserNames(firebaseUser);
-        
-        const fallbackUser: AppUser = {
-          id: firebaseUser.uid,
-          email: firebaseUser.email || "",
-          first_name: firstName,
-          last_name: lastName,
-          role: 'user',
-          status: "active",
-          company: null
-        };
-        
-        setCurrentUser(fallbackUser);
-        setUserRole('user');
-        setCompany(null);
-        
-        console.log("⚠️ Using fallback authentication data for:", firebaseUser.email);
-      }
-    } catch (error) {
-      console.error("❌ Error in auth state change handler:", error);
-      
-      // Fallback to basic Firebase user data
-      const { firstName, lastName } = extractUserNames(firebaseUser);
-      const fallbackUser: AppUser = {
-        id: firebaseUser.uid,
-        email: firebaseUser.email || "",
-        first_name: firstName,
-        last_name: lastName,
-        role: 'user',
-        status: "active",
-        company: null
-      };
-      
-      setCurrentUser(fallbackUser);
-      setUserRole('user');
-      setCompany(null);
-      
-      console.log("🚨 Error fallback - using basic Firebase data");
-    }
-  }, [fetchUserFromFirestore]);
+  }, [firebaseUser, handleAuthStateChange]);
 
   return {
     currentUser,
