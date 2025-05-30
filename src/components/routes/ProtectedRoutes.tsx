@@ -34,11 +34,15 @@ export const ProtectedRoute = ({ children }: { children: ReactNode }) => {
             setHasValidRoleClaims(refreshResult.hasValidClaims);
           }
           
-          logAuditEvent('route_access', {
-            path: location.pathname,
-            role: role,
-            hasValidClaims
-          });
+          try {
+            logAuditEvent('route_access', {
+              path: location.pathname,
+              role: role,
+              hasValidClaims
+            });
+          } catch (auditError) {
+            console.error("Audit logging error:", auditError);
+          }
         } catch (error) {
           console.error("Error verifying claims in protected route:", error);
           setHasValidRoleClaims(false);
@@ -134,13 +138,17 @@ const RoleBasedRouteGuard = ({ children }: { children: ReactNode }) => {
   
   // Check if user can view this route (skip for superadmin)
   if (requiredPermission && userRole !== 'superadmin' && !canViewNavItem(requiredPermission)) {
-    logAuditEvent('security_violation', {
-      type: 'unauthorized_route_access',
-      path: location.pathname,
-      role: userRole,
-      company,
-      requiredPermission
-    }, 'warning');
+    try {
+      logAuditEvent('security_violation', {
+        type: 'unauthorized_route_access',
+        path: location.pathname,
+        role: userRole,
+        company,
+        requiredPermission
+      }, 'warning');
+    } catch (auditError) {
+      console.error("Audit logging error:", auditError);
+    }
     
     return <Navigate to="/dashboard" />;
   }
@@ -157,10 +165,14 @@ export const PrivateProtectedRoute = ({ children }: { children: ReactNode }) => 
       setIsAuthenticated(!!user);
       
       if (user) {
-        logAuditEvent('private_route_access', {
-          path: location.pathname,
-          uid: user.uid
-        });
+        try {
+          logAuditEvent('private_route_access', {
+            path: location.pathname,
+            uid: user.uid
+          });
+        } catch (auditError) {
+          console.error("Audit logging error:", auditError);
+        }
       }
     });
     
