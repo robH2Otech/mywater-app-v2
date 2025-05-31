@@ -15,7 +15,64 @@ export function useAuthStateManager(firebaseUser: FirebaseUser | null) {
     try {
       console.log("🔄 Processing auth state change for:", firebaseUser.email);
       
-      // Step 1: Try to get user document by UID first (business users)
+      // First, try to get user claims from Firebase Auth token
+      const idTokenResult = await firebaseUser.getIdTokenResult();
+      const roleFromClaims = idTokenResult.claims.role as UserRole;
+      const companyFromClaims = idTokenResult.claims.company as string;
+      
+      console.log("Claims from token:", { role: roleFromClaims, company: companyFromClaims });
+      
+      // If we have valid claims, use them as fallback
+      if (roleFromClaims && companyFromClaims) {
+        const fallbackUser: AppUser = {
+          id: firebaseUser.uid,
+          email: firebaseUser.email || '',
+          first_name: firebaseUser.displayName?.split(' ')[0] || '',
+          last_name: firebaseUser.displayName?.split(' ')[1] || '',
+          role: roleFromClaims,
+          company: companyFromClaims,
+          status: 'active',
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        };
+        
+        setCurrentUser(fallbackUser);
+        setUserRole(roleFromClaims);
+        setCompany(companyFromClaims);
+        
+        console.log("✅ Using claims as fallback user data:", fallbackUser);
+        
+        // Try to fetch from Firestore, but don't fail if it doesn't work
+        try {
+          const userDocRef = doc(db, "app_users_business", firebaseUser.uid);
+          const userDoc = await getDoc(userDocRef);
+          
+          if (userDoc.exists()) {
+            const userData = userDoc.data() as AppUser;
+            console.log("✅ Firestore user document found, updating data:", userData);
+            
+            setCurrentUser({ id: firebaseUser.uid, ...userData });
+            setUserRole(userData.role as UserRole);
+            setCompany(userData.company || companyFromClaims);
+          }
+        } catch (firestoreError) {
+          console.warn("⚠️ Could not fetch from Firestore, using claims data:", firestoreError);
+          // Continue with claims data - don't fail
+        }
+        
+        // Log successful authentication
+        logAuditEvent('user_authenticated', {
+          user_id: firebaseUser.uid,
+          email: firebaseUser.email,
+          role: roleFromClaims,
+          company: companyFromClaims,
+          source: 'auth_state_change'
+        });
+        
+        return;
+      }
+      
+      // If no claims, try Firestore as before
       const userDocRef = doc(db, "app_users_business", firebaseUser.uid);
       let userDoc = await getDoc(userDocRef);
       let userData: AppUser | null = null;
@@ -24,7 +81,7 @@ export function useAuthStateManager(firebaseUser: FirebaseUser | null) {
         userData = userDoc.data() as AppUser;
         console.log("✅ Business user document found:", userData);
       } else {
-        // Step 2: Try private users collection
+        // Try private users collection
         const privateUserDocRef = doc(db, "app_users_privat", firebaseUser.uid);
         const privateUserDoc = await getDoc(privateUserDocRef);
         
@@ -32,49 +89,20 @@ export function useAuthStateManager(firebaseUser: FirebaseUser | null) {
           userData = privateUserDoc.data() as AppUser;
           console.log("✅ Private user document found:", userData);
         } else {
-          // Step 3: Search by email in business collection (for migration)
-          console.log("🔍 Searching for user by email...");
-          const usersQuery = query(
-            collection(db, "app_users_business"),
-            where("email", "==", firebaseUser.email)
-          );
-          const querySnapshot = await getDocs(usersQuery);
-          
-          if (!querySnapshot.empty) {
-            // Migrate existing document to correct UID
-            console.log("📋 Migrating user document to correct UID...");
-            const existingData = querySnapshot.docs[0].data();
-            
-            userData = {
-              id: firebaseUser.uid,
-              email: firebaseUser.email || '',
-              first_name: existingData.first_name || '',
-              last_name: existingData.last_name || '',
-              role: existingData.role as UserRole || 'user',
-              company: existingData.company || 'mywater',
-              status: existingData.status || 'active',
-              created_at: existingData.created_at || new Date().toISOString(),
-              updated_at: new Date().toISOString()
-            };
-            
-            await setDoc(userDocRef, userData);
-            console.log("✅ User document migrated successfully");
-          } else {
-            console.log("❌ No user document found anywhere");
-            setCurrentUser(null);
-            setUserRole(null);
-            setCompany(null);
-            return;
-          }
+          console.log("❌ No user document found in either collection");
+          setCurrentUser(null);
+          setUserRole(null);
+          setCompany(null);
+          return;
         }
       }
       
-      // Step 4: Set user data
+      // Set user data
       setCurrentUser({ id: firebaseUser.uid, ...userData });
       setUserRole(userData.role as UserRole);
       setCompany(userData.company || 'mywater');
       
-      // Step 5: Log successful authentication
+      // Log successful authentication
       logAuditEvent('user_authenticated', {
         user_id: firebaseUser.uid,
         email: firebaseUser.email,
@@ -85,9 +113,33 @@ export function useAuthStateManager(firebaseUser: FirebaseUser | null) {
       
     } catch (error) {
       console.error("❌ Error processing auth state change:", error);
-      setCurrentUser(null);
-      setUserRole(null);
-      setCompany(null);
+      
+      // Try to extract user data from Firebase user object as last resort
+      if (firebaseUser.email) {
+        console.log("🔄 Using Firebase user data as last resort");
+        
+        const emergencyUser: AppUser = {
+          id: firebaseUser.uid,
+          email: firebaseUser.email,
+          first_name: firebaseUser.displayName?.split(' ')[0] || 'User',
+          last_name: firebaseUser.displayName?.split(' ')[1] || '',
+          role: 'user' as UserRole,
+          company: 'mywater',
+          status: 'active',
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        };
+        
+        setCurrentUser(emergencyUser);
+        setUserRole('user');
+        setCompany('mywater');
+        
+        console.log("✅ Emergency user data set:", emergencyUser);
+      } else {
+        setCurrentUser(null);
+        setUserRole(null);
+        setCompany(null);
+      }
     }
   }, []);
 
