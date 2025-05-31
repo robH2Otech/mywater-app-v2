@@ -185,27 +185,27 @@ const Dashboard = () => {
         <StatCard
           title={t("dashboard.total.units")}
           value={units.length}
-          icon={Droplet}
+          icon={<Droplet />}
           link="/units"
         />
         <StatCard
           title={t("dashboard.filter.changes")}
           value={warningUnits}
-          icon={Calendar}
+          icon={<Calendar />}
           link="/filters"
           iconColor="text-yellow-500"
         />
         <StatCard
           title={t("dashboard.active.alerts")}
           value={alerts.length}
-          icon={Bell}
+          icon={<Bell />}
           link="/alerts"
           iconColor="text-red-500"
         />
         <StatCard
           title={t("dashboard.volume.today")}
           value={`${formatThousands(calculateTotalVolume(units))} m³`}
-          icon={Activity}
+          icon={<Activity />}
           link="/analytics"
           subValue={`${units.length > 0 ? '↑ 13.2%' : '-'}`}
         />

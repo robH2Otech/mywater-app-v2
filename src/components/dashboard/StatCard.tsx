@@ -1,4 +1,5 @@
 
+import React from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { useIsMobile } from "@/hooks/use-mobile";
 

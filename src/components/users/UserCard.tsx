@@ -32,8 +32,6 @@ export function UserCard({ user, onClick }: UserCardProps) {
             <UserAvatar 
               firstName={user.first_name} 
               lastName={user.last_name}
-              className="h-12 w-12 flex-shrink-0"
-              showMenu={false}
             />
             <div className="min-w-0 flex-1">
               <h3 className="text-lg font-medium text-white truncate">

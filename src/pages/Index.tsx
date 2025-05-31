@@ -1,4 +1,3 @@
-
 import { useQuery } from "@tanstack/react-query";
 import { Bell, Droplets, Filter, Lightbulb, TrendingUp } from "lucide-react";
 import { useUnits } from "@/hooks/useUnits";
@@ -81,7 +80,7 @@ const Index = () => {
         <StatCard
           title="Total Units"
           value={units.length.toString()}
-          icon={Droplets}
+          icon={<Droplets />}
           link="/units"
           iconColor="text-mywater-blue"
         />
@@ -89,7 +88,7 @@ const Index = () => {
         <StatCard
           title="Filter Changes Required"
           value={filtersNeedingChange.length.toString()}
-          icon={Filter}
+          icon={<Filter />}
           link="/filters"
           iconColor="text-yellow-500"
         />
@@ -97,7 +96,7 @@ const Index = () => {
         <StatCard
           title="Active Alerts"
           value={activeAlerts.length.toString()}
-          icon={Bell}
+          icon={<Bell />}
           link="/alerts"
           iconColor="text-red-500"
         />
@@ -105,10 +104,9 @@ const Index = () => {
         <StatCard
           title="Total Volume Today"
           value={formattedVolume}
-          icon={TrendingUp}
+          icon={<TrendingUp />}
           link="/analytics"
           iconColor="text-mywater-blue"
-          // Removed subValue prop to remove "+13.2%" text
         />
       </div>
       
