@@ -23,7 +23,7 @@ export function useIsMobile() {
     let timeoutId: number;
     const handleResize = () => {
       clearTimeout(timeoutId);
-      timeoutId = window.setTimeout(checkMobileSize, 100);
+      timeoutId = window.setTimeout(checkMobileSize, 150);
     };
     
     window.addEventListener("resize", handleResize)
@@ -60,7 +60,7 @@ export function useIsTablet() {
     let timeoutId: number;
     const handleResize = () => {
       clearTimeout(timeoutId);
-      timeoutId = window.setTimeout(checkTabletSize, 100);
+      timeoutId = window.setTimeout(checkTabletSize, 150);
     };
     
     window.addEventListener("resize", handleResize)
@@ -84,4 +84,41 @@ export function useDeviceType() {
     isTablet,
     isDesktop: !isMobile && !isTablet
   }
+}
+
+// Additional hook for responsive breakpoints
+export function useBreakpoint() {
+  const [breakpoint, setBreakpoint] = React.useState<'mobile' | 'tablet' | 'desktop'>('desktop')
+
+  React.useEffect(() => {
+    if (typeof window === "undefined") return
+
+    const checkBreakpoint = () => {
+      const width = window.innerWidth
+      if (width < MOBILE_BREAKPOINT) {
+        setBreakpoint('mobile')
+      } else if (width < TABLET_BREAKPOINT) {
+        setBreakpoint('tablet')
+      } else {
+        setBreakpoint('desktop')
+      }
+    }
+    
+    checkBreakpoint()
+    
+    let timeoutId: number;
+    const handleResize = () => {
+      clearTimeout(timeoutId);
+      timeoutId = window.setTimeout(checkBreakpoint, 150);
+    };
+    
+    window.addEventListener("resize", handleResize)
+    
+    return () => {
+      window.removeEventListener("resize", handleResize)
+      clearTimeout(timeoutId);
+    }
+  }, [])
+
+  return breakpoint
 }

@@ -6,6 +6,7 @@ import { NotificationsMenu } from "./NotificationsMenu";
 import { doc, getDoc } from "firebase/firestore";
 import { onAuthStateChanged } from "firebase/auth";
 import { db, auth } from "@/integrations/firebase/client";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface HeaderProps {
   children?: React.ReactNode;
@@ -14,6 +15,7 @@ interface HeaderProps {
 export const Header = ({ children }: HeaderProps) => {
   const [firstName, setFirstName] = useState<string>("");
   const [lastName, setLastName] = useState<string>("");
+  const isMobile = useIsMobile();
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
@@ -71,14 +73,16 @@ export const Header = ({ children }: HeaderProps) => {
   }, []);
 
   return (
-    <header className="h-16 bg-spotify-darker border-b border-white/10 flex items-center justify-between px-6">
-      <div className="flex items-center">
+    <header className={`${isMobile ? 'h-14' : 'h-16'} bg-spotify-darker/95 border-b border-white/10 flex items-center justify-between ${isMobile ? 'px-4' : 'px-6'} backdrop-blur-md`}>
+      <div className="flex items-center flex-1 min-w-0">
         {children}
-        <WelcomeMessage firstName={firstName} />
+        <div className="min-w-0 flex-1">
+          <WelcomeMessage firstName={firstName} isMobile={isMobile} />
+        </div>
       </div>
-      <div className="flex items-center gap-4">
-        <NotificationsMenu />
-        <UserAvatar firstName={firstName} lastName={lastName} />
+      <div className={`flex items-center ${isMobile ? 'gap-2' : 'gap-4'}`}>
+        <NotificationsMenu isMobile={isMobile} />
+        <UserAvatar firstName={firstName} lastName={lastName} isMobile={isMobile} />
       </div>
     </header>
   );
