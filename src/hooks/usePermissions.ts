@@ -27,13 +27,13 @@ export function usePermissions() {
   const apiPermissions = useAPIPermissions();
   const { secureRoleVerified } = useSecurityValidation();
 
-  // Explicitly type userRole to ensure superadmin is included and use the role permissions version
-  const userRole: UserRole | null = rolePermissions.userRole;
+  // Explicitly preserve the full UserRole type including superadmin
+  const userRole: UserRole | null = authUserRole as UserRole | null;
 
   return {
     // From auth context - ensure userRole is properly typed
     company,
-    userRole, // Use the properly typed version from rolePermissions
+    userRole, // Use the properly typed version
     hasPermission,
     canAccessAllCompanies,
     canAccessCompany,
