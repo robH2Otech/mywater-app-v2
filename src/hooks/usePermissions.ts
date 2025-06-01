@@ -27,8 +27,8 @@ export function usePermissions() {
   const apiPermissions = useAPIPermissions();
   const { secureRoleVerified } = useSecurityValidation();
 
-  // Ensure userRole maintains proper typing including superadmin
-  const userRole = authUserRole as UserRole | null;
+  // Explicitly type userRole to ensure superadmin is included
+  const userRole: UserRole | null = authUserRole;
 
   return {
     // From auth context - ensure userRole is properly typed
