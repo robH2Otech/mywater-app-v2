@@ -28,9 +28,9 @@ export function usePermissions() {
   const { secureRoleVerified } = useSecurityValidation();
 
   return {
-    // From auth context - ensure userRole is properly typed
+    // From auth context - userRole is already properly typed from AuthContext
     company,
-    userRole: userRole as UserRole | null,
+    userRole,
     hasPermission,
     canAccessAllCompanies,
     canAccessCompany,
