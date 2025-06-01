@@ -71,7 +71,7 @@ export function usePermissionsManager(userRole: UserRole | null, company: string
     // Superadmin can view everything
     if (userRole === "superadmin") return true;
     
-    const navPermissions: Record<string, string[]> = {
+    const navPermissions: Record<string, UserRole[]> = {
       'dashboard': ['superadmin', 'admin', 'technician', 'user'],
       'units': ['superadmin', 'admin', 'technician', 'user'],
       'locations': ['superadmin', 'admin', 'technician', 'user'],
