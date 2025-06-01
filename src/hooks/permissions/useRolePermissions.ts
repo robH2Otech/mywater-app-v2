@@ -3,7 +3,10 @@ import { useAuth } from "@/contexts/AuthContext";
 import { UserRole } from "@/types/users";
 
 export function useRolePermissions() {
-  const { userRole } = useAuth();
+  const { userRole: authUserRole } = useAuth();
+  
+  // Explicitly ensure userRole includes all UserRole values including superadmin
+  const userRole: UserRole | null = authUserRole;
 
   // Check if user has a specific role
   const hasRole = (role: UserRole | UserRole[]): boolean => {
@@ -37,7 +40,7 @@ export function useRolePermissions() {
   };
 
   return {
-    userRole: userRole as UserRole | null, // Ensure proper typing including superadmin
+    userRole, // Now properly typed to include superadmin
     hasRole,
     isSuperAdmin,
     isCompanyUser,
