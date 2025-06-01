@@ -1,10 +1,11 @@
 
 import { ReactNode } from 'react';
 import { usePermissions } from '@/hooks/usePermissions';
+import { UserRole } from '@/types/users';
 
 interface RoleBasedAccessProps {
   children: ReactNode;
-  allowedRoles?: string[];
+  allowedRoles?: UserRole[];
   requiredPermission?: string;
   company?: string;
   fallback?: ReactNode;
