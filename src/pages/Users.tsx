@@ -1,4 +1,3 @@
-
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
@@ -20,7 +19,7 @@ const Users = () => {
   const { toast } = useToast();
   const { hasPermission, userRole: originalUserRole, company, isSuperAdmin } = usePermissions();
   
-  // Explicitly type userRole to ensure superadmin is included
+  // Explicitly type userRole to ensure superadmin is included with force cast
   const userRole = originalUserRole as UserRole | null;
   
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
@@ -56,7 +55,7 @@ const Users = () => {
         console.error("Users: Detailed error:", errorMessage);
         
         // For superadmin, provide more helpful error information but still show the interface
-        if (userRole === "superadmin") {
+        if ((userRole as UserRole) === "superadmin") {
           console.log("Users: Superadmin detected, providing fallback");
           toast({
             title: "Warning: Users data access issue",
@@ -79,7 +78,7 @@ const Users = () => {
     enabled: !!userRole, // Simplified enablement condition
     retry: (failureCount, error) => {
       // For superadmin, retry more aggressively
-      if (userRole === "superadmin" && failureCount < 2) {
+      if ((userRole as UserRole) === "superadmin" && failureCount < 2) {
         return true;
       }
       return failureCount < 1;
@@ -91,7 +90,7 @@ const Users = () => {
   const canAddUsers = hasPermission("admin");
 
   // Enhanced error display
-  if (usersError && userRole !== "superadmin") {
+  if (usersError && (userRole as UserRole) !== "superadmin") {
     const errorMessage = usersError instanceof Error ? usersError.message : "Unknown error";
     const isPermissionError = errorMessage.includes("permission") || errorMessage.includes("insufficient");
     
