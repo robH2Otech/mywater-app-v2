@@ -5,6 +5,7 @@ import { useDataPermissions } from "./permissions/useDataPermissions";
 import { useNavigationPermissions } from "./permissions/useNavigationPermissions";
 import { useAPIPermissions } from "./permissions/useAPIPermissions";
 import { useSecurityValidation } from "./permissions/useSecurityValidation";
+import { UserRole } from "@/types/users";
 
 export function usePermissions() {
   const { 
@@ -16,7 +17,8 @@ export function usePermissions() {
     canDelete,
     canManageUsers,
     canComment,
-    refreshUserSession
+    refreshUserSession,
+    userRole
   } = useAuth();
 
   const rolePermissions = useRolePermissions();
@@ -26,8 +28,9 @@ export function usePermissions() {
   const { secureRoleVerified } = useSecurityValidation();
 
   return {
-    // From auth context
+    // From auth context - ensure userRole is properly typed
     company,
+    userRole: userRole as UserRole | null,
     hasPermission,
     canAccessAllCompanies,
     canAccessCompany,

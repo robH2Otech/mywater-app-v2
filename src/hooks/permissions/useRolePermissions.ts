@@ -1,11 +1,12 @@
 
 import { useAuth } from "@/contexts/AuthContext";
+import { UserRole } from "@/types/users";
 
 export function useRolePermissions() {
   const { userRole } = useAuth();
 
   // Check if user has a specific role
-  const hasRole = (role: string | string[]): boolean => {
+  const hasRole = (role: UserRole | UserRole[]): boolean => {
     if (!userRole) return false;
     
     if (Array.isArray(role)) {
@@ -36,7 +37,7 @@ export function useRolePermissions() {
   };
 
   return {
-    userRole,
+    userRole: userRole as UserRole | null,
     hasRole,
     isSuperAdmin,
     isCompanyUser,
