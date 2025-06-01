@@ -6,7 +6,7 @@ export function useRolePermissions() {
   const { userRole: authUserRole } = useAuth();
   
   // Explicitly ensure userRole includes all UserRole values including superadmin
-  const userRole: UserRole | null = authUserRole;
+  const userRole: UserRole | null = authUserRole as UserRole | null;
 
   // Check if user has a specific role
   const hasRole = (role: UserRole | UserRole[]): boolean => {
@@ -40,7 +40,7 @@ export function useRolePermissions() {
   };
 
   return {
-    userRole, // Now properly typed to include superadmin
+    userRole: userRole as UserRole | null, // Force the correct type
     hasRole,
     isSuperAdmin,
     isCompanyUser,
