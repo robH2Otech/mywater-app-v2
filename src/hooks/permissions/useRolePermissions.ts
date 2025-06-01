@@ -37,7 +37,7 @@ export function useRolePermissions() {
   };
 
   return {
-    userRole: userRole as UserRole | null,
+    userRole: userRole as UserRole | null, // Ensure proper typing including superadmin
     hasRole,
     isSuperAdmin,
     isCompanyUser,
