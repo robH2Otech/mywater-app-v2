@@ -12,13 +12,17 @@ import { collection, getDocs } from "firebase/firestore";
 import { db } from "@/integrations/firebase/client";
 import { Card } from "@/components/ui/card";
 import { Users as UsersIcon, Shield } from "lucide-react";
-import { User } from "@/types/users";
+import { User, UserRole } from "@/types/users";
 import { usePermissions } from "@/hooks/usePermissions";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const Users = () => {
   const { toast } = useToast();
-  const { hasPermission, userRole, company, isSuperAdmin } = usePermissions();
+  const { hasPermission, userRole: originalUserRole, company, isSuperAdmin } = usePermissions();
+  
+  // Explicitly type userRole to ensure superadmin is included
+  const userRole = originalUserRole as UserRole | null;
+  
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [isAddUserOpen, setIsAddUserOpen] = useState(false);
 
