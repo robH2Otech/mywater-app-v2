@@ -3,7 +3,7 @@ import { UserRole } from "@/types/users";
 import { PermissionLevel } from "@/contexts/AuthContext";
 
 export function usePermissionsManager(userRole: UserRole | null, company: string | null) {
-  // Define permission hierarchy - now includes superadmin
+  // Define permission hierarchy - includes superadmin
   const permissionHierarchy: Record<UserRole, PermissionLevel> = {
     superadmin: "full",
     admin: "admin", 
