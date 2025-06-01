@@ -72,7 +72,7 @@ const Users = () => {
         }
       }
     },
-    enabled: !!userRole && !usersLoading, // Only fetch when user role is available and not loading
+    enabled: !!userRole, // Simplified enablement condition
     retry: (failureCount, error) => {
       // For superadmin, retry more aggressively
       if (userRole === "superadmin" && failureCount < 2) {
