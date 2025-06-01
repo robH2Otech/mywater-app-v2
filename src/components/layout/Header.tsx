@@ -23,44 +23,87 @@ export const Header = ({ children }: HeaderProps) => {
         try {
           console.log("Fetching user profile for UID:", user.uid);
           
+          // Get user claims first to check if superadmin
+          const idTokenResult = await user.getIdTokenResult();
+          const userRole = idTokenResult.claims.role as string;
+          
+          console.log("User role from claims:", userRole);
+          
+          // Try to get profile from Firestore
+          let profileFound = false;
+          
           // First, check the app_users_business collection using the UID as document ID
-          const businessUserDocRef = doc(db, "app_users_business", user.uid);
-          const businessUserDoc = await getDoc(businessUserDocRef);
-          
-          if (businessUserDoc.exists()) {
-            const userData = businessUserDoc.data();
-            console.log("Business user profile found:", userData);
+          try {
+            const businessUserDocRef = doc(db, "app_users_business", user.uid);
+            const businessUserDoc = await getDoc(businessUserDocRef);
             
-            setFirstName(userData.first_name || "");
-            setLastName(userData.last_name || "");
-            return; // Exit early since we found the user
+            if (businessUserDoc.exists()) {
+              const userData = businessUserDoc.data();
+              console.log("Business user profile found:", userData);
+              
+              setFirstName(userData.first_name || "");
+              setLastName(userData.last_name || "");
+              profileFound = true;
+            }
+          } catch (error) {
+            console.log("Error fetching business user profile:", error);
           }
           
-          // Fallback to private users collection
-          const privateUserDocRef = doc(db, "app_users_privat", user.uid);
-          const privateUserDoc = await getDoc(privateUserDocRef);
-          
-          if (privateUserDoc.exists()) {
-            const userData = privateUserDoc.data();
-            console.log("Private user profile found:", userData);
-            
-            setFirstName(userData.first_name || "");
-            setLastName(userData.last_name || "");
-            return;
-          }
-          
-          // Final fallback - extract from email
-          if (user.email) {
-            console.log("No user profile found, extracting from email");
-            const emailName = user.email.split('@')[0] || "";
-            
-            if (emailName) {
-              const formattedName = emailName.charAt(0).toUpperCase() + emailName.slice(1);
-              setFirstName(formattedName);
+          // If no business profile found, try private users collection
+          if (!profileFound) {
+            try {
+              const privateUserDocRef = doc(db, "app_users_privat", user.uid);
+              const privateUserDoc = await getDoc(privateUserDocRef);
+              
+              if (privateUserDoc.exists()) {
+                const userData = privateUserDoc.data();
+                console.log("Private user profile found:", userData);
+                
+                setFirstName(userData.first_name || "");
+                setLastName(userData.last_name || "");
+                profileFound = true;
+              }
+            } catch (error) {
+              console.log("Error fetching private user profile:", error);
             }
           }
+          
+          // If no profile found, use Firebase Auth data or email as fallback
+          if (!profileFound) {
+            console.log("No Firestore profile found, using Firebase Auth data");
+            
+            if (user.displayName) {
+              const nameParts = user.displayName.split(' ');
+              setFirstName(nameParts[0] || "");
+              setLastName(nameParts.length > 1 ? nameParts.slice(1).join(' ') : "");
+            } else if (user.email) {
+              // Extract name from email for superadmin accounts
+              const emailName = user.email.split('@')[0] || "";
+              
+              if (userRole === 'superadmin') {
+                setFirstName("Super");
+                setLastName("Admin");
+              } else if (emailName) {
+                const formattedName = emailName.charAt(0).toUpperCase() + emailName.slice(1);
+                setFirstName(formattedName);
+                setLastName("");
+              }
+            }
+          }
+          
         } catch (error) {
           console.error("Error in fetchUserProfile:", error);
+          
+          // Final fallback - use email or default
+          if (user.email) {
+            const emailName = user.email.split('@')[0] || "";
+            const formattedName = emailName.charAt(0).toUpperCase() + emailName.slice(1);
+            setFirstName(formattedName);
+            setLastName("");
+          } else {
+            setFirstName("User");
+            setLastName("");
+          }
         }
       } else {
         // Clear user data when logged out

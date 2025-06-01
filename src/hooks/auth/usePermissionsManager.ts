@@ -23,6 +23,10 @@ export function usePermissionsManager(userRole: UserRole | null, company: string
   // Check if user has required permission based on role
   const hasPermission = (requiredLevel: PermissionLevel): boolean => {
     if (!userRole) return false;
+    
+    // Superadmin always has full access
+    if (userRole === "superadmin") return true;
+    
     const userPermission = permissionHierarchy[userRole];
     return comparePermissions(userPermission, requiredLevel);
   };
@@ -34,7 +38,8 @@ export function usePermissionsManager(userRole: UserRole | null, company: string
 
   // Check if user can access a specific company
   const canAccessCompany = (companyName: string): boolean => {
-    if (canAccessAllCompanies()) return true;
+    if (userRole === "superadmin") return true; // Superadmin can access any company
+    if (userRole === "admin") return true; // Admin can access any company
     return company === companyName;
   };
 
@@ -55,11 +60,17 @@ export function usePermissionsManager(userRole: UserRole | null, company: string
 
   // Check if user can comment (technicians and above)
   const canComment = (): boolean => {
+    if (!userRole) return false;
     return userRole !== "user";
   };
 
   // Check if user can view specific navigation items
   const canViewNavItem = (navItem: string): boolean => {
+    if (!userRole) return false;
+    
+    // Superadmin can view everything
+    if (userRole === "superadmin") return true;
+    
     const navPermissions: Record<string, string[]> = {
       'dashboard': ['superadmin', 'admin', 'technician', 'user'],
       'units': ['superadmin', 'admin', 'technician', 'user'],
@@ -76,7 +87,7 @@ export function usePermissionsManager(userRole: UserRole | null, company: string
     };
     
     const allowedRoles = navPermissions[navItem] || [];
-    return userRole ? allowedRoles.includes(userRole) : false;
+    return allowedRoles.includes(userRole);
   };
 
   return {

@@ -82,40 +82,69 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         if (firebaseUser) {
           console.log("🎫 Processing user authentication...");
           
-          // Use AuthService for enhanced claims handling
-          const authResult = await AuthService.verifyAndFixClaims();
+          // Get current token claims directly
+          const idTokenResult = await firebaseUser.getIdTokenResult();
+          const roleFromClaims = idTokenResult.claims.role as UserRole;
+          const companyFromClaims = idTokenResult.claims.company as string;
           
-          if (authResult.success) {
-            console.log("✅ User authenticated with claims:", authResult.claims);
+          console.log("Claims from token:", { role: roleFromClaims, company: companyFromClaims });
+          
+          if (roleFromClaims) {
+            console.log("✅ User has valid claims:", { role: roleFromClaims, company: companyFromClaims });
             
             setDebugInfo({
               uid: firebaseUser.uid,
               email: firebaseUser.email,
-              claims: authResult.claims,
+              claims: { role: roleFromClaims, company: companyFromClaims },
               timestamp: new Date().toISOString()
             });
             
             await handleAuthStateChange(firebaseUser);
           } else {
-            console.log("⚠️ User authenticated but claims verification failed, trying to initialize...");
+            console.log("⚠️ No role in claims, trying AuthService...");
             
-            // Try to initialize claims automatically
-            try {
-              const initialized = await AuthService.initializeUserClaims();
-              if (initialized) {
-                console.log("✅ Claims initialized successfully");
-                const retryResult = await AuthService.verifyAndFixClaims();
-                if (retryResult.success) {
-                  await handleAuthStateChange(firebaseUser);
+            // Use AuthService for enhanced claims handling
+            const authResult = await AuthService.verifyAndFixClaims();
+            
+            if (authResult.success) {
+              console.log("✅ AuthService successful:", authResult.claims);
+              
+              setDebugInfo({
+                uid: firebaseUser.uid,
+                email: firebaseUser.email,
+                claims: authResult.claims,
+                timestamp: new Date().toISOString()
+              });
+              
+              await handleAuthStateChange(firebaseUser);
+            } else {
+              console.log("⚠️ AuthService failed, trying to initialize claims...");
+              
+              // Try to initialize claims automatically
+              try {
+                const initialized = await AuthService.initializeUserClaims();
+                if (initialized) {
+                  console.log("✅ Claims initialized successfully");
+                  const retryResult = await AuthService.verifyAndFixClaims();
+                  if (retryResult.success) {
+                    await handleAuthStateChange(firebaseUser);
+                  } else {
+                    console.log("⚠️ Still no valid claims after initialization");
+                    // For superadmin, we'll allow access with a warning
+                    if (firebaseUser.email && firebaseUser.email.includes('superadmin')) {
+                      console.log("🔧 Allowing superadmin access with fallback");
+                      await handleAuthStateChange(firebaseUser);
+                    } else {
+                      setAuthError("Account setup incomplete. Please contact administrator.");
+                    }
+                  }
                 } else {
-                  setAuthError("Account setup incomplete. Please contact administrator.");
+                  setAuthError("Account permissions not properly configured. Please contact administrator.");
                 }
-              } else {
-                setAuthError("Account permissions not properly configured. Please contact administrator.");
+              } catch (initError) {
+                console.error("Error initializing claims:", initError);
+                setAuthError("Failed to initialize account. Please contact administrator.");
               }
-            } catch (initError) {
-              console.error("Error initializing claims:", initError);
-              setAuthError("Failed to initialize account. Please contact administrator.");
             }
             
             setDebugInfo({

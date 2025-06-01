@@ -26,6 +26,9 @@ const Users = () => {
     queryKey: ["users"],
     queryFn: async () => {
       console.log("Fetching users data from Firebase...");
+      console.log("Current user role:", userRole);
+      console.log("Can manage users:", hasPermission("admin"));
+      
       try {
         const usersCollection = collection(db, "app_users_business");
         const usersSnapshot = await getDocs(usersCollection);
@@ -44,20 +47,48 @@ const Users = () => {
         return usersList;
       } catch (error) {
         console.error("Error fetching users:", error);
-        toast({
-          title: "Error fetching users",
-          description: error instanceof Error ? error.message : "Unknown error",
-          variant: "destructive",
-        });
+        
+        // Provide more detailed error information
+        const errorMessage = error instanceof Error ? error.message : "Unknown error";
+        console.error("Detailed error:", errorMessage);
+        
+        // For superadmin, we should always allow access
+        if (userRole === "superadmin") {
+          console.log("Superadmin detected, but still got error:", errorMessage);
+          toast({
+            title: "Warning: Database access issue",
+            description: `Error: ${errorMessage}. Please check Firebase permissions.`,
+            variant: "destructive",
+          });
+        } else {
+          toast({
+            title: "Error fetching users",
+            description: errorMessage,
+            variant: "destructive",
+          });
+        }
+        
         throw error;
       }
     },
+    enabled: !!userRole, // Only fetch when user role is available
+    retry: (failureCount, error) => {
+      // For superadmin, retry more aggressively
+      if (userRole === "superadmin" && failureCount < 3) {
+        return true;
+      }
+      return failureCount < 1;
+    }
   });
 
   // Check if the current user can add new users
   const canAddUsers = hasPermission("admin");
 
+  // Enhanced error display for superadmin
   if (usersError) {
+    const errorMessage = usersError instanceof Error ? usersError.message : "Unknown error";
+    const isPermissionError = errorMessage.includes("permission") || errorMessage.includes("insufficient");
+    
     return (
       <div className="space-y-6 animate-fadeIn p-2 md:p-0">
         <PageHeader
@@ -67,7 +98,30 @@ const Users = () => {
           addButtonText={canAddUsers ? "Add User" : undefined}
         />
         <div className="bg-spotify-darker border-spotify-accent p-6 rounded-lg">
-          <div className="text-red-400">Error loading users. Please try again.</div>
+          <div className="text-red-400 mb-2">Error loading users</div>
+          <div className="text-gray-300 mb-4">
+            {isPermissionError && userRole === "superadmin" 
+              ? "Superadmin detected but Firebase permission error occurred. This may be a configuration issue."
+              : errorMessage
+            }
+          </div>
+          {userRole === "superadmin" && (
+            <div className="bg-yellow-900/20 border border-yellow-600 p-4 rounded">
+              <div className="text-yellow-300 text-sm">
+                <strong>Debug Info for Superadmin:</strong>
+                <br />Role: {userRole}
+                <br />Company: {company}
+                <br />Can manage users: {hasPermission("admin") ? "Yes" : "No"}
+                <br />Error: {errorMessage}
+              </div>
+            </div>
+          )}
+          <button 
+            onClick={() => window.location.reload()} 
+            className="mt-4 bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded"
+          >
+            Retry
+          </button>
         </div>
       </div>
     );
