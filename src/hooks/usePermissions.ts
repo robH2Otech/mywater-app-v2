@@ -18,7 +18,7 @@ export function usePermissions() {
     canManageUsers,
     canComment,
     refreshUserSession,
-    userRole
+    userRole: authUserRole
   } = useAuth();
 
   const rolePermissions = useRolePermissions();
@@ -27,8 +27,11 @@ export function usePermissions() {
   const apiPermissions = useAPIPermissions();
   const { secureRoleVerified } = useSecurityValidation();
 
+  // Ensure userRole maintains proper typing including superadmin
+  const userRole = authUserRole as UserRole | null;
+
   return {
-    // From auth context - userRole is already properly typed from AuthContext
+    // From auth context - ensure userRole is properly typed
     company,
     userRole,
     hasPermission,
