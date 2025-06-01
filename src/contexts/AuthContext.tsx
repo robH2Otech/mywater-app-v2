@@ -199,7 +199,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     currentUser,
     firebaseUser,
     isLoading,
-    userRole: userRole as UserRole | null,
+    userRole: userRole as UserRole | null, // Explicitly preserve full UserRole type
     company,
     refreshUserSession,
     authError,
