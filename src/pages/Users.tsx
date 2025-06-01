@@ -25,9 +25,9 @@ const Users = () => {
   const { data: users = [], isLoading: usersLoading, error: usersError } = useQuery({
     queryKey: ["users"],
     queryFn: async () => {
-      console.log("Fetching users data from Firebase...");
-      console.log("Current user role:", userRole);
-      console.log("Can manage users:", hasPermission("admin"));
+      console.log("Users: Fetching users data from Firebase...");
+      console.log("Users: Current user role:", userRole);
+      console.log("Users: Can manage users:", hasPermission("admin"));
       
       try {
         const usersCollection = collection(db, "app_users_business");
@@ -43,49 +43,51 @@ const Users = () => {
           ...doc.data()
         })) as User[];
         
-        console.log("Users data:", usersList);
+        console.log("Users: Users data:", usersList);
         return usersList;
       } catch (error) {
-        console.error("Error fetching users:", error);
+        console.error("Users: Error fetching users:", error);
         
-        // Provide more detailed error information
         const errorMessage = error instanceof Error ? error.message : "Unknown error";
-        console.error("Detailed error:", errorMessage);
+        console.error("Users: Detailed error:", errorMessage);
         
-        // For superadmin, we should always allow access
+        // For superadmin, provide more helpful error information but still show the interface
         if (userRole === "superadmin") {
-          console.log("Superadmin detected, but still got error:", errorMessage);
+          console.log("Users: Superadmin detected, providing fallback");
           toast({
-            title: "Warning: Database access issue",
-            description: `Error: ${errorMessage}. Please check Firebase permissions.`,
+            title: "Warning: Users data access issue",
+            description: `Database access issue detected. Error: ${errorMessage}`,
             variant: "destructive",
           });
+          
+          // Return empty array to allow interface to show
+          return [];
         } else {
           toast({
             title: "Error fetching users",
             description: errorMessage,
             variant: "destructive",
           });
+          throw error;
         }
-        
-        throw error;
       }
     },
-    enabled: !!userRole, // Only fetch when user role is available
+    enabled: !!userRole && !usersLoading, // Only fetch when user role is available and not loading
     retry: (failureCount, error) => {
       // For superadmin, retry more aggressively
-      if (userRole === "superadmin" && failureCount < 3) {
+      if (userRole === "superadmin" && failureCount < 2) {
         return true;
       }
       return failureCount < 1;
-    }
+    },
+    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
   });
 
   // Check if the current user can add new users
   const canAddUsers = hasPermission("admin");
 
-  // Enhanced error display for superadmin
-  if (usersError) {
+  // Enhanced error display
+  if (usersError && userRole !== "superadmin") {
     const errorMessage = usersError instanceof Error ? usersError.message : "Unknown error";
     const isPermissionError = errorMessage.includes("permission") || errorMessage.includes("insufficient");
     
@@ -105,17 +107,6 @@ const Users = () => {
               : errorMessage
             }
           </div>
-          {userRole === "superadmin" && (
-            <div className="bg-yellow-900/20 border border-yellow-600 p-4 rounded">
-              <div className="text-yellow-300 text-sm">
-                <strong>Debug Info for Superadmin:</strong>
-                <br />Role: {userRole}
-                <br />Company: {company}
-                <br />Can manage users: {hasPermission("admin") ? "Yes" : "No"}
-                <br />Error: {errorMessage}
-              </div>
-            </div>
-          )}
           <button 
             onClick={() => window.location.reload()} 
             className="mt-4 bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded"
@@ -173,6 +164,11 @@ const Users = () => {
               {users.length === 0 ? (
                 <div className="text-center text-gray-400 py-8">
                   No users found. {canAddUsers ? "Click \"Add User\" to create one." : ""}
+                  {usersError && (
+                    <div className="mt-2 text-yellow-400 text-sm">
+                      Note: There was an issue accessing the users database. You may need to configure Firebase permissions.
+                    </div>
+                  )}
                 </div>
               ) : (
                 <UsersList

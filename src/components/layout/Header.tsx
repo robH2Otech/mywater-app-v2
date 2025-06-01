@@ -21,32 +21,49 @@ export const Header = ({ children }: HeaderProps) => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       if (user) {
         try {
-          console.log("Fetching user profile for UID:", user.uid);
+          console.log("Header: Fetching user profile for UID:", user.uid);
           
-          // Get user claims first to check if superadmin
+          // Get user claims first to check role
           const idTokenResult = await user.getIdTokenResult();
           const userRole = idTokenResult.claims.role as string;
           
-          console.log("User role from claims:", userRole);
+          console.log("Header: User role from claims:", userRole);
           
-          // Try to get profile from Firestore
+          // Initialize with proper fallback from email
+          let extractedFirstName = "";
+          let extractedLastName = "";
+          
+          if (user.email) {
+            // Extract name from email for better fallback
+            const emailPart = user.email.split('@')[0];
+            if (emailPart.includes('.')) {
+              const nameParts = emailPart.split('.');
+              extractedFirstName = nameParts[0].charAt(0).toUpperCase() + nameParts[0].slice(1);
+              extractedLastName = nameParts[1] ? nameParts[1].charAt(0).toUpperCase() + nameParts[1].slice(1) : "";
+            } else {
+              extractedFirstName = emailPart.charAt(0).toUpperCase() + emailPart.slice(1);
+              extractedLastName = "";
+            }
+          }
+          
+          // Try to get profile from Firestore first
           let profileFound = false;
           
-          // First, check the app_users_business collection using the UID as document ID
+          // Check business users collection
           try {
             const businessUserDocRef = doc(db, "app_users_business", user.uid);
             const businessUserDoc = await getDoc(businessUserDocRef);
             
             if (businessUserDoc.exists()) {
               const userData = businessUserDoc.data();
-              console.log("Business user profile found:", userData);
+              console.log("Header: Business user profile found:", userData);
               
-              setFirstName(userData.first_name || "");
-              setLastName(userData.last_name || "");
+              setFirstName(userData.first_name || extractedFirstName || "User");
+              setLastName(userData.last_name || extractedLastName || "");
               profileFound = true;
             }
           } catch (error) {
-            console.log("Error fetching business user profile:", error);
+            console.log("Header: Error fetching business user profile:", error);
           }
           
           // If no business profile found, try private users collection
@@ -57,49 +74,46 @@ export const Header = ({ children }: HeaderProps) => {
               
               if (privateUserDoc.exists()) {
                 const userData = privateUserDoc.data();
-                console.log("Private user profile found:", userData);
+                console.log("Header: Private user profile found:", userData);
                 
-                setFirstName(userData.first_name || "");
-                setLastName(userData.last_name || "");
+                setFirstName(userData.first_name || extractedFirstName || "User");
+                setLastName(userData.last_name || extractedLastName || "");
                 profileFound = true;
               }
             } catch (error) {
-              console.log("Error fetching private user profile:", error);
+              console.log("Header: Error fetching private user profile:", error);
             }
           }
           
-          // If no profile found, use Firebase Auth data or email as fallback
+          // If no profile found, use extracted names from email or Firebase Auth data
           if (!profileFound) {
-            console.log("No Firestore profile found, using Firebase Auth data");
+            console.log("Header: No Firestore profile found, using extracted data");
             
             if (user.displayName) {
               const nameParts = user.displayName.split(' ');
-              setFirstName(nameParts[0] || "");
-              setLastName(nameParts.length > 1 ? nameParts.slice(1).join(' ') : "");
-            } else if (user.email) {
-              // Extract name from email for superadmin accounts
-              const emailName = user.email.split('@')[0] || "";
-              
-              if (userRole === 'superadmin') {
-                setFirstName("Super");
-                setLastName("Admin");
-              } else if (emailName) {
-                const formattedName = emailName.charAt(0).toUpperCase() + emailName.slice(1);
-                setFirstName(formattedName);
-                setLastName("");
-              }
+              setFirstName(nameParts[0] || extractedFirstName || "User");
+              setLastName(nameParts.length > 1 ? nameParts.slice(1).join(' ') : extractedLastName);
+            } else {
+              // Use extracted names from email
+              setFirstName(extractedFirstName || "User");
+              setLastName(extractedLastName || "");
             }
           }
           
         } catch (error) {
-          console.error("Error in fetchUserProfile:", error);
+          console.error("Header: Error in fetchUserProfile:", error);
           
           // Final fallback - use email or default
           if (user.email) {
-            const emailName = user.email.split('@')[0] || "";
-            const formattedName = emailName.charAt(0).toUpperCase() + emailName.slice(1);
-            setFirstName(formattedName);
-            setLastName("");
+            const emailPart = user.email.split('@')[0];
+            if (emailPart.includes('.')) {
+              const nameParts = emailPart.split('.');
+              setFirstName(nameParts[0].charAt(0).toUpperCase() + nameParts[0].slice(1));
+              setLastName(nameParts[1] ? nameParts[1].charAt(0).toUpperCase() + nameParts[1].slice(1) : "");
+            } else {
+              setFirstName(emailPart.charAt(0).toUpperCase() + emailPart.slice(1));
+              setLastName("");
+            }
           } else {
             setFirstName("User");
             setLastName("");

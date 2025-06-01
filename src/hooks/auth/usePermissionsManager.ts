@@ -50,7 +50,7 @@ export function usePermissionsManager(userRole: UserRole | null, company: string
 
   // Check if user can delete data
   const canDelete = (): boolean => {
-    return hasPermission("full");
+    return hasPermission("admin"); // Changed from "full" to "admin" for better access
   };
 
   // Check if user can manage users
