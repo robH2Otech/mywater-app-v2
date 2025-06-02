@@ -19,26 +19,17 @@ export function useAuthStateManager(firebaseUser: FirebaseUser | null) {
     }
 
     try {
-      // Get user claims with retry mechanism
-      let roleFromClaims: UserRole | null = null;
-      let companyFromClaims: string | null = null;
+      // Get user claims first
+      const idTokenResult = await user.getIdTokenResult();
+      const roleFromClaims = idTokenResult.claims.role as UserRole;
+      const companyFromClaims = idTokenResult.claims.company as string;
 
-      try {
-        const idTokenResult = await user.getIdTokenResult();
-        roleFromClaims = idTokenResult.claims.role as UserRole;
-        companyFromClaims = idTokenResult.claims.company as string;
-        
-        console.log("useAuthStateManager: Got claims from token:", { role: roleFromClaims, company: companyFromClaims });
-      } catch (claimsError) {
-        console.log("useAuthStateManager: Could not get claims:", claimsError);
-      }
+      if (roleFromClaims) {
+        // Set role and company from claims
+        setUserRole(roleFromClaims as UserRole); // Explicitly cast to preserve full type
+        setCompany(companyFromClaims);
 
-      // Set role and company (use fallback if needed)
-      setUserRole(roleFromClaims || 'user');
-      setCompany(companyFromClaims || 'X-WATER');
-
-      // Try to get user document from Firestore
-      try {
+        // Try to get user document
         const userDocRef = doc(db, "app_users_business", user.uid);
         const userDoc = await getDoc(userDocRef);
 
@@ -49,50 +40,26 @@ export function useAuthStateManager(firebaseUser: FirebaseUser | null) {
             email: user.email || '',
             first_name: userData.first_name || '',
             last_name: userData.last_name || '',
-            role: roleFromClaims || userData.role || 'user',
-            company: companyFromClaims || userData.company || 'X-WATER',
+            role: roleFromClaims as UserRole, // Preserve full type
+            company: companyFromClaims,
             status: userData.status || 'active',
             ...userData
           } as AppUser);
         } else {
-          // Create minimal user object
+          // Create minimal user object from Firebase user
           setCurrentUser({
             id: user.uid,
             email: user.email || '',
-            first_name: user.displayName?.split(' ')[0] || '',
-            last_name: user.displayName?.split(' ').slice(1).join(' ') || '',
-            role: roleFromClaims || 'user',
-            company: companyFromClaims || 'X-WATER',
+            first_name: '',
+            last_name: '',
+            role: roleFromClaims as UserRole, // Preserve full type
+            company: companyFromClaims,
             status: 'active'
           } as AppUser);
         }
-      } catch (docError) {
-        console.log("useAuthStateManager: Could not get user document:", docError);
-        // Create minimal user object as fallback
-        setCurrentUser({
-          id: user.uid,
-          email: user.email || '',
-          first_name: user.displayName?.split(' ')[0] || '',
-          last_name: user.displayName?.split(' ').slice(1).join(' ') || '',
-          role: roleFromClaims || 'user',
-          company: companyFromClaims || 'X-WATER',
-          status: 'active'
-        } as AppUser);
       }
     } catch (error) {
-      console.error("useAuthStateManager: Error in handleAuthStateChange:", error);
-      // Provide basic user info as last resort
-      setCurrentUser({
-        id: user.uid,
-        email: user.email || '',
-        first_name: '',
-        last_name: '',
-        role: 'user',
-        company: 'X-WATER',
-        status: 'active'
-      } as AppUser);
-      setUserRole('user');
-      setCompany('X-WATER');
+      console.error("Error in handleAuthStateChange:", error);
     }
   }, []);
 
@@ -112,7 +79,7 @@ export function useAuthStateManager(firebaseUser: FirebaseUser | null) {
 
   return {
     currentUser,
-    userRole: userRole as UserRole | null,
+    userRole: userRole as UserRole | null, // Explicitly preserve full UserRole type
     company,
     refreshUserSession,
     handleAuthStateChange

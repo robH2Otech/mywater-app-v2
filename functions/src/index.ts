@@ -1,21 +1,13 @@
 
-// Business Users
+// Export all Cloud Functions
+
+// Auth functions
 export { createBusinessUser } from './auth/createBusinessUser';
+export { setUserClaims, syncUserClaims, initializeUserClaims, migrateUserClaims } from './auth/claimsManager';
 
-// Claims Management - Legacy functions
-export { 
-  setUserClaims, 
-  syncUserClaims, 
-  initializeUserClaims as initializeUserClaimsLegacy, 
-  migrateUserClaims 
-} from './auth/claimsManager';
-
-// New Claims Functions - Main implementations
-export { 
-  initializeUserClaims as initializeUserClaimsNew, 
-  setUserCustomClaims as setUserCustomClaimsNew 
-} from './auth/initializeClaims';
-
-// Location functions - using correct export name
-export { updateAllLocations as updateLocations } from './locations/updateLocations';
+// Location tracking functions
+export { updateAllLocations, cleanupLocationHistory } from './locations/updateLocations';
 export { manualLocationUpdate } from './locations/manualLocationUpdate';
+
+// Order processing functions
+export { onOrderCreated } from './orders/orderWebhook';
