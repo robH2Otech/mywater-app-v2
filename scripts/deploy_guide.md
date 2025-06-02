@@ -16,7 +16,7 @@ npm run deploy
 ## Step 3: Run Superadmin Claims Script
 ```bash
 cd scripts
-node set_superadmin_claims_simple.js
+node set_superadmin_claims_safe.js
 ```
 
 ## Step 4: Test Authentication

@@ -1,5 +1,4 @@
 
-
 // Business Users
 export { createBusinessUser } from './auth/createBusinessUser';
 
@@ -13,8 +12,8 @@ export {
 
 // New Claims Functions - Main implementations
 export { 
-  initializeUserClaims, 
-  setUserCustomClaims 
+  initializeUserClaims as initializeUserClaimsNew, 
+  setUserCustomClaims as setUserCustomClaimsNew 
 } from './auth/initializeClaims';
 
 // Location functions
@@ -26,4 +25,3 @@ export { orderWebhook } from './orders/orderWebhook';
 
 // Referral webhook
 export { handleReferralWebhook } from './referrals/handleReferralWebhook';
-

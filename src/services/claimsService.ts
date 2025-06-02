@@ -7,9 +7,9 @@ import { functions } from "@/integrations/firebase/client";
  */
 export const initializeUserClaims = async (): Promise<boolean> => {
   try {
-    console.log('Calling initializeUserClaims function...');
+    console.log('Calling initializeUserClaimsNew function...');
     
-    const initializeFunction = httpsCallable(functions, 'initializeUserClaims');
+    const initializeFunction = httpsCallable(functions, 'initializeUserClaimsNew');
     const result = await initializeFunction({});
     
     console.log('Claims initialized:', result.data);
@@ -34,7 +34,7 @@ export const setUserClaims = async (userId: string, role: string, company: strin
   try {
     console.log('Setting user claims:', { userId, role, company });
     
-    const setClaimsFunction = httpsCallable(functions, 'setUserCustomClaims');
+    const setClaimsFunction = httpsCallable(functions, 'setUserCustomClaimsNew');
     const result = await setClaimsFunction({ userId, role, company });
     
     console.log('Claims set successfully:', result.data);
