@@ -1,8 +1,9 @@
 
+
 // Business Users
 export { createBusinessUser } from './auth/createBusinessUser';
 
-// Claims Management
+// Claims Management - Legacy functions
 export { 
   setUserClaims, 
   syncUserClaims, 
@@ -10,7 +11,7 @@ export {
   migrateUserClaims 
 } from './auth/claimsManager';
 
-// New Claims Functions
+// New Claims Functions - Main implementations
 export { 
   initializeUserClaims, 
   setUserCustomClaims 
@@ -25,3 +26,4 @@ export { orderWebhook } from './orders/orderWebhook';
 
 // Referral webhook
 export { handleReferralWebhook } from './referrals/handleReferralWebhook';
+
