@@ -28,5 +28,11 @@ node set_superadmin_claims_safe.js
 
 ## Expected Results
 - Functions should deploy successfully without deletions
+- Only 6 functions will be deployed (removed non-existent order and referral webhooks)
 - Superadmin users should have proper claims set
 - Authentication should work and pages should load without Firebase permission errors
+
+## Troubleshooting
+- If build fails, check that all imported files exist
+- If deployment fails, verify Firebase CLI is logged in
+- If claims script fails, ensure service account key is downloaded correctly

@@ -16,12 +16,6 @@ export {
   setUserCustomClaims as setUserCustomClaimsNew 
 } from './auth/initializeClaims';
 
-// Location functions
-export { updateLocations } from './locations/updateLocations';
+// Location functions - using correct export name
+export { updateAllLocations as updateLocations } from './locations/updateLocations';
 export { manualLocationUpdate } from './locations/manualLocationUpdate';
-
-// Order webhook
-export { orderWebhook } from './orders/orderWebhook';
-
-// Referral webhook
-export { handleReferralWebhook } from './referrals/handleReferralWebhook';
