@@ -1,13 +1,27 @@
 
-// Export all Cloud Functions
-
-// Auth functions
+// Business Users
 export { createBusinessUser } from './auth/createBusinessUser';
-export { setUserClaims, syncUserClaims, initializeUserClaims, migrateUserClaims } from './auth/claimsManager';
 
-// Location tracking functions
-export { updateAllLocations, cleanupLocationHistory } from './locations/updateLocations';
+// Claims Management
+export { 
+  setUserClaims, 
+  syncUserClaims, 
+  initializeUserClaims as initializeUserClaimsLegacy, 
+  migrateUserClaims 
+} from './auth/claimsManager';
+
+// New Claims Functions
+export { 
+  initializeUserClaims, 
+  setUserCustomClaims 
+} from './auth/initializeClaims';
+
+// Location functions
+export { updateLocations } from './locations/updateLocations';
 export { manualLocationUpdate } from './locations/manualLocationUpdate';
 
-// Order processing functions
-export { onOrderCreated } from './orders/orderWebhook';
+// Order webhook
+export { orderWebhook } from './orders/orderWebhook';
+
+// Referral webhook
+export { handleReferralWebhook } from './referrals/handleReferralWebhook';

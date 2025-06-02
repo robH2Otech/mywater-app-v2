@@ -19,36 +19,25 @@ export function useAuthStateManager(firebaseUser: FirebaseUser | null) {
     }
 
     try {
-      // Set default values first
+      // Get user claims with retry mechanism
       let roleFromClaims: UserRole | null = null;
       let companyFromClaims: string | null = null;
 
-      // Try to get user claims, but don't fail if they're missing
       try {
         const idTokenResult = await user.getIdTokenResult();
         roleFromClaims = idTokenResult.claims.role as UserRole;
         companyFromClaims = idTokenResult.claims.company as string;
+        
+        console.log("useAuthStateManager: Got claims from token:", { role: roleFromClaims, company: companyFromClaims });
       } catch (claimsError) {
-        console.log("Could not get claims, using fallback values:", claimsError);
+        console.log("useAuthStateManager: Could not get claims:", claimsError);
       }
 
-      // If no claims, provide fallback role based on email pattern
-      if (!roleFromClaims) {
-        if (user.email?.includes('admin') || user.email?.includes('superadmin')) {
-          roleFromClaims = 'admin';
-          companyFromClaims = 'MyWater';
-        } else {
-          roleFromClaims = 'user';
-          companyFromClaims = 'MyWater';
-        }
-        console.log("Using fallback role and company:", roleFromClaims, companyFromClaims);
-      }
+      // Set role and company (use fallback if needed)
+      setUserRole(roleFromClaims || 'user');
+      setCompany(companyFromClaims || 'X-WATER');
 
-      // Set role and company
-      setUserRole(roleFromClaims);
-      setCompany(companyFromClaims);
-
-      // Try to get user document, but don't fail if it doesn't exist
+      // Try to get user document from Firestore
       try {
         const userDocRef = doc(db, "app_users_business", user.uid);
         const userDoc = await getDoc(userDocRef);
@@ -60,50 +49,50 @@ export function useAuthStateManager(firebaseUser: FirebaseUser | null) {
             email: user.email || '',
             first_name: userData.first_name || '',
             last_name: userData.last_name || '',
-            role: roleFromClaims,
-            company: companyFromClaims,
+            role: roleFromClaims || userData.role || 'user',
+            company: companyFromClaims || userData.company || 'X-WATER',
             status: userData.status || 'active',
             ...userData
           } as AppUser);
         } else {
-          // Create minimal user object from Firebase user
+          // Create minimal user object
           setCurrentUser({
             id: user.uid,
             email: user.email || '',
             first_name: user.displayName?.split(' ')[0] || '',
             last_name: user.displayName?.split(' ').slice(1).join(' ') || '',
-            role: roleFromClaims,
-            company: companyFromClaims,
+            role: roleFromClaims || 'user',
+            company: companyFromClaims || 'X-WATER',
             status: 'active'
           } as AppUser);
         }
       } catch (docError) {
-        console.log("Could not get user document, using minimal user data:", docError);
-        // Create minimal user object
+        console.log("useAuthStateManager: Could not get user document:", docError);
+        // Create minimal user object as fallback
         setCurrentUser({
           id: user.uid,
           email: user.email || '',
           first_name: user.displayName?.split(' ')[0] || '',
           last_name: user.displayName?.split(' ').slice(1).join(' ') || '',
-          role: roleFromClaims,
-          company: companyFromClaims,
+          role: roleFromClaims || 'user',
+          company: companyFromClaims || 'X-WATER',
           status: 'active'
         } as AppUser);
       }
     } catch (error) {
-      console.error("Error in handleAuthStateChange:", error);
-      // Even if there's an error, provide basic user info
+      console.error("useAuthStateManager: Error in handleAuthStateChange:", error);
+      // Provide basic user info as last resort
       setCurrentUser({
         id: user.uid,
         email: user.email || '',
         first_name: '',
         last_name: '',
         role: 'user',
-        company: 'MyWater',
+        company: 'X-WATER',
         status: 'active'
       } as AppUser);
       setUserRole('user');
-      setCompany('MyWater');
+      setCompany('X-WATER');
     }
   }, []);
 

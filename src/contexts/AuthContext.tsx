@@ -5,6 +5,7 @@ import { AppUser, UserRole } from "@/types/users";
 import { useAuthStateManager } from "@/hooks/auth/useAuthStateManager";
 import { usePermissionsManager } from "@/hooks/auth/usePermissionsManager";
 import { AuthService } from "@/services/authService";
+import { initializeUserClaims } from "@/services/claimsService";
 
 export type PermissionLevel = "none" | "read" | "write" | "admin" | "full";
 
@@ -81,16 +82,32 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         if (firebaseUser) {
           console.log("🎫 AuthContext: Processing user authentication...");
           
-          // Always try to handle auth state change, even without perfect claims
+          // Check if user has claims, if not initialize them
+          try {
+            const idTokenResult = await firebaseUser.getIdTokenResult();
+            const roleFromClaims = idTokenResult.claims.role as UserRole;
+            
+            if (!roleFromClaims) {
+              console.log("🔧 AuthContext: No role claims found, initializing...");
+              await initializeUserClaims();
+              
+              // Force token refresh after claims initialization
+              await firebaseUser.getIdToken(true);
+            }
+          } catch (claimsError) {
+            console.log("⚠️ AuthContext: Claims initialization failed, but continuing:", claimsError);
+          }
+          
+          // Process auth state change
           await handleAuthStateChange(firebaseUser);
           
-          // Get current token claims
+          // Get updated token claims for debugging
           try {
             const idTokenResult = await firebaseUser.getIdTokenResult();
             const roleFromClaims = idTokenResult.claims.role as UserRole;
             const companyFromClaims = idTokenResult.claims.company as string;
             
-            console.log("AuthContext: Claims from token:", { role: roleFromClaims, company: companyFromClaims });
+            console.log("AuthContext: Final claims after processing:", { role: roleFromClaims, company: companyFromClaims });
             
             setDebugInfo({
               uid: firebaseUser.uid,
@@ -98,36 +115,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
               claims: { role: roleFromClaims, company: companyFromClaims },
               timestamp: new Date().toISOString()
             });
-            
-            // If no claims, that's okay - we'll provide fallback access
-            if (!roleFromClaims) {
-              console.log("⚠️ AuthContext: No role claims found, providing fallback access");
-            }
           } catch (tokenError) {
-            console.log("AuthContext: Token error, but continuing with basic auth:", tokenError);
-            setDebugInfo({
-              uid: firebaseUser.uid,
-              email: firebaseUser.email,
-              error: "Token retrieval failed",
-              timestamp: new Date().toISOString()
-            });
+            console.log("AuthContext: Token error after processing:", tokenError);
           }
         } else {
           setDebugInfo(null);
         }
       } catch (error) {
         console.error("❌ AuthContext: Error processing auth state change:", error);
-        
-        // Don't block authentication for claim errors
-        if (firebaseUser) {
-          console.log("🔧 AuthContext: Allowing access despite auth processing error");
-          try {
-            await handleAuthStateChange(firebaseUser);
-          } catch (handleError) {
-            console.error("AuthContext: Fallback handling also failed:", handleError);
-          }
-        }
-        
         setAuthError(`Auth processing error: ${error}`);
       } finally {
         setIsLoading(false);
