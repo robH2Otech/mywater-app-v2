@@ -28,7 +28,7 @@ export function useUsersData(userRole: UserRole | null) {
           ...doc.data()
         })) as User[];
         
-        console.log("Users: Users data:", usersList);
+        console.log("Users: Users data fetched successfully:", usersList.length, "users");
         return usersList;
       } catch (error) {
         console.error("Users: Error fetching users:", error);
@@ -36,35 +36,33 @@ export function useUsersData(userRole: UserRole | null) {
         const errorMessage = error instanceof Error ? error.message : "Unknown error";
         console.error("Users: Detailed error:", errorMessage);
         
-        // For superadmin, provide more helpful error information but still show the interface
-        if ((userRole as UserRole) === "superadmin") {
-          console.log("Users: Superadmin detected, providing fallback");
+        // More helpful error handling
+        if (errorMessage.includes("permission") || errorMessage.includes("Missing or insufficient permissions")) {
           toast({
-            title: "Warning: Users data access issue",
-            description: `Database access issue detected. Error: ${errorMessage}`,
+            title: "Authentication Issue",
+            description: "Please ensure you are logged in and have proper permissions. Try refreshing the page.",
             variant: "destructive",
           });
           
-          // Return empty array to allow interface to show
+          // Return empty array to prevent complete failure
           return [];
-        } else {
-          toast({
-            title: "Error fetching users",
-            description: errorMessage,
-            variant: "destructive",
-          });
-          throw error;
         }
+        
+        toast({
+          title: "Error fetching users",
+          description: errorMessage,
+          variant: "destructive",
+        });
+        
+        // Return empty array to prevent complete failure
+        return [];
       }
     },
-    enabled: !!userRole,
+    enabled: true, // Always enable, don't wait for userRole
     retry: (failureCount, error) => {
-      // For superadmin, retry more aggressively
-      if ((userRole as UserRole) === "superadmin" && failureCount < 2) {
-        return true;
-      }
-      return failureCount < 1;
+      console.log("Users: Retry attempt:", failureCount, "Error:", error);
+      return failureCount < 2;
     },
-    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
+    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 5000),
   });
 }

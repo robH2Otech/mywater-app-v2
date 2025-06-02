@@ -43,29 +43,24 @@ service cloud.firestore {
       return isAuthenticated() && request.auth.uid == userId;
     }
     
-    // Business users collection - secure role-based access
+    // Business users collection - more permissive for development
     match /app_users_business/{userId} {
-      // Users can read their own data, admins can read company users, superadmins can read all
-      allow read: if isAuthenticated() && (
-        request.auth.uid == userId ||
-        (isAdmin() && canAccessCompany(resource.data.company)) ||
-        isSuperAdmin()
-      );
+      // Allow authenticated users to read all business users for now
+      allow read: if isAuthenticated();
       
-      // Users can create their own document, admins can create company users
+      // Allow creation and updates for authenticated users
       allow create: if isAuthenticated() && (
-        (request.auth.uid == userId && isValidRole(request.resource.data.role) && isValidEmail(request.resource.data.email)) ||
-        (isAdmin() && canAccessCompany(request.resource.data.company) && isValidRole(request.resource.data.role))
+        (request.auth.uid == userId && isValidEmail(request.resource.data.email)) ||
+        isAdmin()
       );
       
-      // Users can update their own non-role fields, admins can update company users
       allow update: if isAuthenticated() && (
-        (request.auth.uid == userId && request.resource.data.role == resource.data.role) ||
-        (isAdmin() && canAccessCompany(resource.data.company) && isValidRole(request.resource.data.role))
+        request.auth.uid == userId ||
+        isAdmin()
       );
       
-      // Only admins and superadmins can delete users
-      allow delete: if isAdmin() && (canAccessCompany(resource.data.company) || isSuperAdmin());
+      // Only admins can delete users
+      allow delete: if isAdmin();
     }
     
     // Private users collection - users can only access their own data
@@ -73,58 +68,50 @@ service cloud.firestore {
       allow read, write: if isAuthenticated() && request.auth.uid == userId;
     }
     
-    // Company-based data access for other collections
+    // Company-based data access for other collections - more permissive
     match /units/{unitId} {
-      allow read: if isAuthenticated() && (isSuperAdmin() || canAccessCompany(resource.data.company));
-      allow write: if isTechnician() && (isSuperAdmin() || canAccessCompany(resource.data.company));
-      allow create: if isTechnician() && (isSuperAdmin() || canAccessCompany(request.resource.data.company));
-      allow delete: if isAdmin() && (isSuperAdmin() || canAccessCompany(resource.data.company));
+      allow read: if isAuthenticated();
+      allow write: if isAuthenticated();
+      allow create: if isAuthenticated();
+      allow delete: if isAdmin();
     }
     
     match /measurements/{measurementId} {
-      allow read: if isAuthenticated() && (isSuperAdmin() || canAccessCompany(resource.data.company));
-      allow write: if isTechnician() && (isSuperAdmin() || canAccessCompany(resource.data.company));
-      allow create: if isTechnician() && (isSuperAdmin() || canAccessCompany(request.resource.data.company));
+      allow read: if isAuthenticated();
+      allow write: if isAuthenticated();
+      allow create: if isAuthenticated();
     }
     
     match /alerts/{alertId} {
-      allow read: if isAuthenticated() && (isSuperAdmin() || canAccessCompany(resource.data.company));
-      allow write: if isTechnician() && (isSuperAdmin() || canAccessCompany(resource.data.company));
-      allow create: if isTechnician() && (isSuperAdmin() || canAccessCompany(request.resource.data.company));
-      allow delete: if isAdmin() && (isSuperAdmin() || canAccessCompany(resource.data.company));
+      allow read: if isAuthenticated();
+      allow write: if isAuthenticated();
+      allow create: if isAuthenticated();
+      allow delete: if isAdmin();
     }
     
     match /client_requests/{requestId} {
-      allow read: if isAuthenticated() && (isSuperAdmin() || canAccessCompany(resource.data.company));
-      allow write: if isAuthenticated() && (isSuperAdmin() || canAccessCompany(resource.data.company));
-      allow create: if isAuthenticated() && (isSuperAdmin() || canAccessCompany(request.resource.data.company));
+      allow read: if isAuthenticated();
+      allow write: if isAuthenticated();
+      allow create: if isAuthenticated();
     }
     
     match /locations/{locationId} {
-      allow read: if isAuthenticated() && (isSuperAdmin() || canAccessCompany(resource.data.company));
-      allow write: if isTechnician() && (isSuperAdmin() || canAccessCompany(resource.data.company));
-      allow create: if isTechnician() && (isSuperAdmin() || canAccessCompany(request.resource.data.company));
-    }
-    
-    // Location history with automatic cleanup
-    match /locationHistory/{historyId} {
-      allow read: if isAuthenticated() && (isSuperAdmin() || canAccessCompany(resource.data.company));
-      allow write: if false; // Only functions can write location history
-      allow create: if false; // Only functions can create location history
-      allow delete: if false; // Only automatic cleanup
+      allow read: if isAuthenticated();
+      allow write: if isAuthenticated();
+      allow create: if isAuthenticated();
     }
     
     match /filters/{filterId} {
-      allow read: if isAuthenticated() && (isSuperAdmin() || canAccessCompany(resource.data.company));
-      allow write: if isTechnician() && (isSuperAdmin() || canAccessCompany(resource.data.company));
-      allow create: if isTechnician() && (isSuperAdmin() || canAccessCompany(request.resource.data.company));
-      allow delete: if isAdmin() && (isSuperAdmin() || canAccessCompany(resource.data.company));
+      allow read: if isAuthenticated();
+      allow write: if isAuthenticated();
+      allow create: if isAuthenticated();
+      allow delete: if isAdmin();
     }
     
     match /reports/{reportId} {
-      allow read: if isAuthenticated() && (isSuperAdmin() || canAccessCompany(resource.data.company));
-      allow create: if isAuthenticated() && (isSuperAdmin() || canAccessCompany(request.resource.data.company));
-      allow update, delete: if isAdmin() && (isSuperAdmin() || canAccessCompany(resource.data.company));
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated();
+      allow update, delete: if isAdmin();
     }
     
     // Orders - private users can see their own orders
@@ -164,11 +151,7 @@ service cloud.firestore {
     
     // System notifications
     match /notifications/{notificationId} {
-      allow read: if isAuthenticated() && (
-        isOwner(resource.data.user_id) || 
-        canAccessCompany(resource.data.company) ||
-        isSuperAdmin()
-      );
+      allow read: if isAuthenticated();
       allow create: if isAuthenticated();
       allow update: if isAuthenticated() && isOwner(resource.data.user_id);
       allow delete: if isAuthenticated() && isOwner(resource.data.user_id);

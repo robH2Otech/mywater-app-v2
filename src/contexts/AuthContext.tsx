@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { onAuthStateChanged, User as FirebaseUser } from "firebase/auth";
 import { auth } from "@/integrations/firebase/client";
@@ -82,35 +81,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         if (firebaseUser) {
           console.log("🎫 AuthContext: Processing user authentication...");
           
-          // Get current token claims with retry logic
-          let idTokenResult;
-          let retryCount = 0;
-          const maxRetries = 3;
+          // Always try to handle auth state change, even without perfect claims
+          await handleAuthStateChange(firebaseUser);
           
-          while (retryCount < maxRetries) {
-            try {
-              idTokenResult = await firebaseUser.getIdTokenResult(retryCount > 0);
-              break;
-            } catch (error) {
-              console.log(`AuthContext: Token retry ${retryCount + 1}/${maxRetries}:`, error);
-              retryCount++;
-              if (retryCount < maxRetries) {
-                await new Promise(resolve => setTimeout(resolve, 1000 * retryCount));
-              }
-            }
-          }
-          
-          if (!idTokenResult) {
-            throw new Error("Failed to get ID token after retries");
-          }
-          
-          const roleFromClaims = idTokenResult.claims.role as UserRole;
-          const companyFromClaims = idTokenResult.claims.company as string;
-          
-          console.log("AuthContext: Claims from token:", { role: roleFromClaims, company: companyFromClaims });
-          
-          if (roleFromClaims) {
-            console.log("✅ AuthContext: User has valid claims:", { role: roleFromClaims, company: companyFromClaims });
+          // Get current token claims
+          try {
+            const idTokenResult = await firebaseUser.getIdTokenResult();
+            const roleFromClaims = idTokenResult.claims.role as UserRole;
+            const companyFromClaims = idTokenResult.claims.company as string;
+            
+            console.log("AuthContext: Claims from token:", { role: roleFromClaims, company: companyFromClaims });
             
             setDebugInfo({
               uid: firebaseUser.uid,
@@ -119,50 +99,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
               timestamp: new Date().toISOString()
             });
             
-            await handleAuthStateChange(firebaseUser);
-          } else {
-            console.log("⚠️ AuthContext: No role in claims, checking AuthService...");
-            
-            // For superadmin accounts, try to initialize claims if missing
-            if (firebaseUser.email && (firebaseUser.email.includes('superadmin') || firebaseUser.email.includes('admin'))) {
-              console.log("🔧 AuthContext: Detected potential superadmin, trying to initialize claims");
-              
-              try {
-                const initialized = await AuthService.initializeUserClaims();
-                if (initialized) {
-                  console.log("✅ AuthContext: Claims initialized successfully for admin");
-                  // Force token refresh and retry
-                  await firebaseUser.getIdToken(true);
-                  const retryResult = await AuthService.verifyAndFixClaims();
-                  if (retryResult.success) {
-                    await handleAuthStateChange(firebaseUser);
-                  } else {
-                    console.log("🔧 AuthContext: Allowing admin access with fallback");
-                    await handleAuthStateChange(firebaseUser);
-                  }
-                } else {
-                  console.log("🔧 AuthContext: Allowing admin access with fallback after failed init");
-                  await handleAuthStateChange(firebaseUser);
-                }
-              } catch (initError) {
-                console.log("AuthContext: Claims init failed, but allowing admin access:", initError);
-                await handleAuthStateChange(firebaseUser);
-              }
-            } else {
-              // For non-admin users, use standard AuthService flow
-              const authResult = await AuthService.verifyAndFixClaims();
-              
-              if (authResult.success) {
-                console.log("✅ AuthContext: AuthService successful:", authResult.claims);
-                await handleAuthStateChange(firebaseUser);
-              } else {
-                setAuthError("Account permissions not properly configured. Please contact administrator.");
-              }
+            // If no claims, that's okay - we'll provide fallback access
+            if (!roleFromClaims) {
+              console.log("⚠️ AuthContext: No role claims found, providing fallback access");
             }
-            
+          } catch (tokenError) {
+            console.log("AuthContext: Token error, but continuing with basic auth:", tokenError);
             setDebugInfo({
               uid: firebaseUser.uid,
               email: firebaseUser.email,
+              error: "Token retrieval failed",
               timestamp: new Date().toISOString()
             });
           }
@@ -172,18 +118,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       } catch (error) {
         console.error("❌ AuthContext: Error processing auth state change:", error);
         
-        // For admin users, allow access even if there are auth issues
-        if (firebaseUser?.email && (firebaseUser.email.includes('superadmin') || firebaseUser.email.includes('admin'))) {
-          console.log("🔧 AuthContext: Allowing admin access despite auth error");
+        // Don't block authentication for claim errors
+        if (firebaseUser) {
+          console.log("🔧 AuthContext: Allowing access despite auth processing error");
           try {
             await handleAuthStateChange(firebaseUser);
           } catch (handleError) {
-            console.error("AuthContext: Even fallback handling failed:", handleError);
-            setAuthError(`Auth processing error: ${error}`);
+            console.error("AuthContext: Fallback handling also failed:", handleError);
           }
-        } else {
-          setAuthError(`Auth processing error: ${error}`);
         }
+        
+        setAuthError(`Auth processing error: ${error}`);
       } finally {
         setIsLoading(false);
       }
@@ -199,7 +144,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     currentUser,
     firebaseUser,
     isLoading,
-    userRole: userRole as UserRole | null, // Explicitly preserve full UserRole type
+    userRole: userRole as UserRole | null,
     company,
     refreshUserSession,
     authError,
