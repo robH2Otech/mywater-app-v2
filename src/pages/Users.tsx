@@ -7,7 +7,7 @@ import { UserDetailsDialog } from "@/components/users/UserDetailsDialog";
 import { PageHeader } from "@/components/shared/PageHeader";
 import { LoadingSkeleton } from "@/components/shared/LoadingSkeleton";
 import { UsersList } from "@/components/users/UsersList";
-import { collection, getDocs, orderBy, query } from "firebase/firestore";
+import { collection, getDocs } from "firebase/firestore";
 import { db } from "@/integrations/firebase/client";
 import { User } from "@/types/users";
 
@@ -19,48 +19,26 @@ const Users = () => {
   const { data: users = [], isLoading, error } = useQuery({
     queryKey: ["users"],
     queryFn: async () => {
-      console.log("Users: Fetching users data from Firebase...");
-      
+      console.log("Users: Fetching users data...");
       try {
-        console.log("Users: Accessing collection 'app_users_business'");
         const usersCollection = collection(db, "app_users_business");
-        console.log("Users: Collection reference created successfully");
+        const usersSnapshot = await getDocs(usersCollection);
         
-        const usersQuery = query(usersCollection, orderBy("created_at", "desc"));
-        console.log("Users: Query created with orderBy");
-        
-        const usersSnapshot = await getDocs(usersQuery);
-        console.log("Users: Snapshot retrieved, docs count:", usersSnapshot.docs.length);
-        
-        const userData = usersSnapshot.docs.map(doc => {
-          console.log("Users: Processing document:", doc.id, doc.data());
-          return {
-            id: doc.id,
-            ...doc.data()
-          };
-        }) as User[];
-        
-        console.log("Users: Final user data:", userData);
-        return userData;
+        return usersSnapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data()
+        })) as User[];
       } catch (error) {
         console.error("Users: Error fetching users:", error);
-        console.error("Users: Error details:", {
-          message: error.message,
-          code: error.code,
-          stack: error.stack
-        });
-        
         toast({
           title: "Error",
-          description: "Failed to fetch users from database",
+          description: "Failed to fetch users",
           variant: "destructive",
         });
         throw error;
       }
     },
   });
-
-  console.log("Users: Component render - users:", users, "isLoading:", isLoading, "error:", error);
 
   if (isLoading) {
     return (
