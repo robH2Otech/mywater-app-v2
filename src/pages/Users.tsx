@@ -22,25 +22,45 @@ const Users = () => {
       console.log("Users: Fetching users data from Firebase...");
       
       try {
+        console.log("Users: Accessing collection 'app_users_business'");
         const usersCollection = collection(db, "app_users_business");
-        const usersQuery = query(usersCollection, orderBy("created_at", "desc"));
-        const usersSnapshot = await getDocs(usersQuery);
+        console.log("Users: Collection reference created successfully");
         
-        return usersSnapshot.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data()
-        })) as User[];
+        const usersQuery = query(usersCollection, orderBy("created_at", "desc"));
+        console.log("Users: Query created with orderBy");
+        
+        const usersSnapshot = await getDocs(usersQuery);
+        console.log("Users: Snapshot retrieved, docs count:", usersSnapshot.docs.length);
+        
+        const userData = usersSnapshot.docs.map(doc => {
+          console.log("Users: Processing document:", doc.id, doc.data());
+          return {
+            id: doc.id,
+            ...doc.data()
+          };
+        }) as User[];
+        
+        console.log("Users: Final user data:", userData);
+        return userData;
       } catch (error) {
         console.error("Users: Error fetching users:", error);
+        console.error("Users: Error details:", {
+          message: error.message,
+          code: error.code,
+          stack: error.stack
+        });
+        
         toast({
           title: "Error",
-          description: "Failed to fetch users",
+          description: "Failed to fetch users from database",
           variant: "destructive",
         });
         throw error;
       }
     },
   });
+
+  console.log("Users: Component render - users:", users, "isLoading:", isLoading, "error:", error);
 
   if (isLoading) {
     return (
