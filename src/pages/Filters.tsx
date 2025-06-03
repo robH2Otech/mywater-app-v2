@@ -11,7 +11,6 @@ import { collection, getDocs } from "firebase/firestore";
 import { db } from "@/integrations/firebase/client";
 import { UnitData, FilterData } from "@/types/analytics";
 import { determineUnitStatus } from "@/utils/unitStatusUtils";
-import { useAuth } from "@/contexts/AuthContext";
 
 interface UnitWithFilters extends UnitData {
   filters: FilterData[];
@@ -19,7 +18,6 @@ interface UnitWithFilters extends UnitData {
 
 const Filters = () => {
   const { toast } = useToast();
-  const { userRole, isLoading: authLoading } = useAuth();
   const [isAddFilterOpen, setIsAddFilterOpen] = useState(false);
   const [selectedFilter, setSelectedFilter] = useState<any>(null);
 
@@ -81,66 +79,17 @@ const Filters = () => {
         return unitsData;
       } catch (error) {
         console.error("Filters: Error fetching filter units:", error);
-        
-        const errorMessage = error instanceof Error ? error.message : "Unknown error";
-        
-        // For superadmin, provide more helpful error information but still show the interface
-        if (userRole === "superadmin") {
-          console.log("Filters: Superadmin detected, providing fallback");
-          toast({
-            title: "Warning: Filter data access issue",
-            description: `Database access issue detected. Error: ${errorMessage}`,
-            variant: "destructive",
-          });
-          
-          // Return empty array to allow interface to show
-          return [];
-        } else {
-          toast({
-            title: "Error fetching units",
-            description: "Failed to load filter units",
-            variant: "destructive",
-          });
-          throw error;
-        }
+        toast({
+          title: "Error",
+          description: "Failed to fetch water units",
+          variant: "destructive",
+        });
+        throw error;
       }
     },
-    enabled: !!userRole && !authLoading, // Only fetch when user role is available and auth is ready
-    retry: (failureCount, error) => {
-      // For superadmin, retry more aggressively
-      if (userRole === "superadmin" && failureCount < 2) {
-        return true;
-      }
-      return failureCount < 1;
-    },
-    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
   });
 
-  if (error && userRole !== "superadmin") {
-    const errorMessage = error instanceof Error ? error.message : "Unknown error";
-    return (
-      <div className="space-y-6 animate-fadeIn p-2 md:p-0">
-        <PageHeader
-          title="Filter Maintenance"
-          description="Track and manage filter maintenance schedules"
-          onAddClick={() => setIsAddFilterOpen(true)}
-          addButtonText="Add Filter"
-        />
-        <div className="bg-spotify-darker border-spotify-accent p-6 rounded-lg">
-          <div className="text-red-400 mb-2">Error loading filters</div>
-          <div className="text-gray-300 mb-4">{errorMessage}</div>
-          <button 
-            onClick={() => window.location.reload()} 
-            className="mt-4 bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded"
-          >
-            Retry
-          </button>
-        </div>
-      </div>
-    );
-  }
-
-  if (isLoading || authLoading) {
+  if (isLoading) {
     return (
       <div className="space-y-6 animate-fadeIn p-2 md:p-0">
         <PageHeader
@@ -167,11 +116,6 @@ const Filters = () => {
         <div className="bg-spotify-darker border-spotify-accent p-6 rounded-lg">
           <div className="text-center text-gray-400 py-8">
             No filter units found. Click "Add Filter" to create one.
-            {error && userRole === "superadmin" && (
-              <div className="mt-2 text-yellow-400 text-sm">
-                Note: There was an issue accessing the filters database. You may need to configure Firebase permissions.
-              </div>
-            )}
           </div>
         </div>
       ) : (
