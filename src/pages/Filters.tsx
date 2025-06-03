@@ -7,14 +7,9 @@ import { FilterDetailsDialog } from "@/components/filters/FilterDetailsDialog";
 import { PageHeader } from "@/components/shared/PageHeader";
 import { LoadingSkeleton } from "@/components/shared/LoadingSkeleton";
 import { FiltersList } from "@/components/filters/FiltersList";
-import { collection, getDocs } from "firebase/firestore";
+import { collection, getDocs, orderBy, query } from "firebase/firestore";
 import { db } from "@/integrations/firebase/client";
-import { UnitData, FilterData } from "@/types/analytics";
-import { determineUnitStatus } from "@/utils/unitStatusUtils";
-
-interface UnitWithFilters extends UnitData {
-  filters: FilterData[];
-}
+import { UnitData } from "@/types/analytics";
 
 const Filters = () => {
   const { toast } = useToast();
@@ -24,61 +19,18 @@ const Filters = () => {
   const { data: units = [], isLoading, error } = useQuery({
     queryKey: ["filter-units"],
     queryFn: async () => {
-      console.log("Filters: Fetching filter units data...");
+      console.log("Filters: Fetching units data...");
       try {
-        // Get units
         const unitsCollection = collection(db, "units");
-        const unitsSnapshot = await getDocs(unitsCollection);
-        const unitsData = unitsSnapshot.docs.map(doc => {
-          const data = doc.data();
-          
-          // Ensure total_volume is a number
-          let totalVolume = data.total_volume;
-          if (typeof totalVolume === 'string') {
-            totalVolume = parseFloat(totalVolume);
-          } else if (totalVolume === undefined || totalVolume === null) {
-            totalVolume = 0;
-          }
-          
-          // Ensure unit_type is set
-          const unitType = data.unit_type || 'uvc';
-          
-          // Calculate the correct status based on volume
-          const calculatedStatus = determineUnitStatus(totalVolume);
-          
-          return {
-            id: doc.id,
-            ...data,
-            // Use calculated status
-            status: calculatedStatus,
-            // Ensure total_volume is a number
-            total_volume: totalVolume,
-            // Ensure unit_type is set
-            unit_type: unitType,
-            filters: [] // Will be populated with filters below
-          };
-        }) as UnitWithFilters[];
+        const unitsQuery = query(unitsCollection, orderBy("created_at", "desc"));
+        const unitsSnapshot = await getDocs(unitsQuery);
         
-        // Get filters
-        const filtersCollection = collection(db, "filters");
-        const filtersSnapshot = await getDocs(filtersCollection);
-        const filtersData = filtersSnapshot.docs.map(doc => ({
+        return unitsSnapshot.docs.map(doc => ({
           id: doc.id,
           ...doc.data()
-        })) as FilterData[];
-        
-        // Associate filters with units
-        for (const filter of filtersData) {
-          const unitIndex = unitsData.findIndex(unit => unit.id === filter.unit_id);
-          if (unitIndex >= 0) {
-            unitsData[unitIndex].filters.push(filter);
-          }
-        }
-        
-        console.log("Filters: Filter units data:", unitsData);
-        return unitsData;
+        })) as UnitData[];
       } catch (error) {
-        console.error("Filters: Error fetching filter units:", error);
+        console.error("Filters: Error fetching units:", error);
         toast({
           title: "Error",
           description: "Failed to fetch water units",
