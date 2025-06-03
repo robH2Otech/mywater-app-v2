@@ -1,6 +1,6 @@
 
 import { useQuery } from "@tanstack/react-query";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { AddUserDialog } from "@/components/users/AddUserDialog";
 import { UserDetailsDialog } from "@/components/users/UserDetailsDialog";
@@ -37,14 +37,17 @@ const Users = () => {
     },
   });
 
-  if (error) {
-    console.error("Error fetching users:", error);
-    toast({
-      title: "Error fetching users",
-      description: error instanceof Error ? error.message : "Failed to fetch users",
-      variant: "destructive",
-    });
-  }
+  // Handle errors in useEffect to avoid infinite re-renders
+  useEffect(() => {
+    if (error) {
+      console.error("Error fetching users:", error);
+      toast({
+        title: "Error fetching users",
+        description: error instanceof Error ? error.message : "Failed to fetch users",
+        variant: "destructive",
+      });
+    }
+  }, [error, toast]);
 
   if (isLoading) {
     return (
