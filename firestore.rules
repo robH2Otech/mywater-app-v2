@@ -43,41 +43,37 @@ service cloud.firestore {
       return isAuthenticated() && request.auth.uid == userId;
     }
     
-    // GLOBAL SUPERADMIN OVERRIDE - SUPERADMIN CAN DO EVERYTHING EVERYWHERE
+    // GLOBAL SUPERADMIN RULE - SUPERADMIN CAN DO EVERYTHING EVERYWHERE
     match /{document=**} {
       allow read, write, create, update, delete: if isSuperAdmin();
     }
     
-    // Business users collection
+    // Business users collection - NON-SUPERADMIN rules only
     match /app_users_business/{userId} {
-      // Regular users can read their own data, admins can read company users
-      allow read: if isAuthenticated() && !isSuperAdmin() && (
+      allow read: if !isSuperAdmin() && isAuthenticated() && (
         request.auth.uid == userId ||
         (isAdmin() && canAccessCompany(resource.data.company))
       );
       
-      // Regular create rules for non-superadmins
       allow create: if !isSuperAdmin() && isAuthenticated() && (
         (request.auth.uid == userId && isValidRole(request.resource.data.role) && isValidEmail(request.resource.data.email)) ||
         (isAdmin() && canAccessCompany(request.resource.data.company) && isValidRole(request.resource.data.role))
       );
       
-      // Regular update rules for non-superadmins
       allow update: if !isSuperAdmin() && isAuthenticated() && (
         (request.auth.uid == userId && request.resource.data.role == resource.data.role) ||
         (isAdmin() && canAccessCompany(resource.data.company) && isValidRole(request.resource.data.role))
       );
       
-      // Regular delete rules for non-superadmins
       allow delete: if !isSuperAdmin() && isAdmin() && canAccessCompany(resource.data.company);
     }
     
-    // Private users collection - users can only access their own data
+    // Private users collection - NON-SUPERADMIN rules only
     match /app_users_privat/{userId} {
       allow read, write: if !isSuperAdmin() && isAuthenticated() && request.auth.uid == userId;
     }
     
-    // Company-based data access for other collections
+    // Company-based data access for other collections - NON-SUPERADMIN rules only
     match /units/{unitId} {
       allow read: if !isSuperAdmin() && isAuthenticated() && canAccessCompany(resource.data.company);
       allow write: if !isSuperAdmin() && isTechnician() && canAccessCompany(resource.data.company);
@@ -110,7 +106,7 @@ service cloud.firestore {
       allow create: if !isSuperAdmin() && isTechnician() && canAccessCompany(request.resource.data.company);
     }
     
-    // Location history with automatic cleanup
+    // Location history with automatic cleanup - NON-SUPERADMIN rules only
     match /locationHistory/{historyId} {
       allow read: if !isSuperAdmin() && isAuthenticated() && canAccessCompany(resource.data.company);
       allow write: if false; // Only functions can write location history
@@ -131,13 +127,13 @@ service cloud.firestore {
       allow update, delete: if !isSuperAdmin() && isAdmin() && canAccessCompany(resource.data.company);
     }
     
-    // Orders - private users can see their own orders
+    // Orders - private users can see their own orders - NON-SUPERADMIN rules only
     match /orders/{orderId} {
       allow read: if !isSuperAdmin() && isAuthenticated() && isOwner(resource.data.user_id);
       allow write: if false; // Only functions can write orders
     }
     
-    // Referral system
+    // Referral system - NON-SUPERADMIN rules only
     match /referral_codes/{codeId} {
       allow read: if !isSuperAdmin() && isAuthenticated() && isOwner(resource.data.user_id);
       allow create: if !isSuperAdmin() && isAuthenticated() && isOwner(request.resource.data.user_id);
@@ -150,14 +146,14 @@ service cloud.firestore {
       allow write: if false; // Only functions can write referrals
     }
     
-    // Audit logs - only superadmins can read, all authenticated users can create
+    // Audit logs - only superadmins can read, all authenticated users can create - NON-SUPERADMIN rules only
     match /audit_logs/{logId} {
       allow read: if false; // Superadmin access handled by global rule above
       allow create: if !isSuperAdmin() && isAuthenticated();
       allow update, delete: if false;
     }
     
-    // System notifications
+    // System notifications - NON-SUPERADMIN rules only
     match /notifications/{notificationId} {
       allow read: if !isSuperAdmin() && isAuthenticated() && (
         isOwner(resource.data.user_id) || 
