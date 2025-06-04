@@ -24,6 +24,7 @@ interface AddUserDialogContentProps {
   onCancel: () => void;
   canCreateSuperAdmin?: boolean;
   canCreateAdmin?: boolean;
+  isSubmitting: boolean;
 }
 
 export function AddUserDialogContent({ 
@@ -32,7 +33,8 @@ export function AddUserDialogContent({
   handleSubmit, 
   onCancel,
   canCreateSuperAdmin = false,
-  canCreateAdmin = false
+  canCreateAdmin = false,
+  isSubmitting
 }: AddUserDialogContentProps) {
   // Function to determine if a field can be edited
   const canEditField = (field: keyof UserFormData): boolean => {
@@ -63,14 +65,16 @@ export function AddUserDialogContent({
           variant="outline"
           onClick={onCancel}
           className="bg-spotify-accent hover:bg-spotify-accent-hover"
+          disabled={isSubmitting}
         >
           Cancel
         </Button>
         <Button 
           onClick={handleSubmit}
           className="bg-mywater-blue hover:bg-mywater-blue/90"
+          disabled={isSubmitting}
         >
-          Add User
+          {isSubmitting ? "Adding..." : "Add User"}
         </Button>
       </div>
     </>
