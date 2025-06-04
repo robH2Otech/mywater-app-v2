@@ -21,33 +21,27 @@ const Users = () => {
   const { data: users = [], isLoading, error } = useQuery({
     queryKey: ["users"],
     queryFn: async () => {
-      console.log("Fetching users from app_users_business collection...");
-      
-      const usersCollection = collection(db, "app_users_business");
-      const usersQuery = query(usersCollection, orderBy("first_name"));
-      const usersSnapshot = await getDocs(usersQuery);
-      
-      const usersList = usersSnapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      })) as User[];
-      
-      console.log("Users fetched successfully:", usersList.length, "users");
-      return usersList;
+      console.log("Fetching users data...");
+      try {
+        const usersCollection = collection(db, "app_users_business");
+        const usersQuery = query(usersCollection, orderBy("created_at", "desc"));
+        const usersSnapshot = await getDocs(usersQuery);
+        
+        return usersSnapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data()
+        })) as User[];
+      } catch (error) {
+        console.error("Users: Error fetching users:", error);
+        toast({
+          title: "Error",
+          description: "Failed to fetch users",
+          variant: "destructive",
+        });
+        throw error;
+      }
     },
   });
-
-  // Handle errors in useEffect to avoid infinite re-renders
-  useEffect(() => {
-    if (error) {
-      console.error("Error fetching users:", error);
-      toast({
-        title: "Error fetching users",
-        description: error instanceof Error ? error.message : "Failed to fetch users",
-        variant: "destructive",
-      });
-    }
-  }, [error, toast]);
 
   if (isLoading) {
     return (
@@ -72,23 +66,18 @@ const Users = () => {
         addButtonText="Add User"
       />
       
-      <Card className="p-6 bg-spotify-darker border-spotify-accent">
-        <div className="flex items-center mb-4">
-          <UsersIcon className="h-5 w-5 text-mywater-blue mr-2" />
-          <h2 className="text-xl font-semibold text-white">System Users</h2>
-        </div>
-        
-        {users.length === 0 ? (
+      {users.length === 0 ? (
+        <div className="bg-spotify-darker border-spotify-accent p-6 rounded-lg">
           <div className="text-center text-gray-400 py-8">
             No users found. Click "Add User" to create one.
           </div>
-        ) : (
-          <UsersList
-            users={users}
-            onUserClick={setSelectedUser}
-          />
-        )}
-      </Card>
+        </div>
+      ) : (
+        <UsersList
+          users={users}
+          onUserClick={setSelectedUser}
+        />
+      )}
 
       <AddUserDialog 
         open={isAddUserOpen}
