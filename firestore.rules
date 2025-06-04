@@ -43,9 +43,9 @@ service cloud.firestore {
       return isAuthenticated() && request.auth.uid == userId;
     }
     
-    // Business users collection - SIMPLIFIED RULES FOR SUPERADMIN
+    // Business users collection - SUPERADMIN HAS COMPLETE ACCESS
     match /app_users_business/{userId} {
-      // SUPERADMIN can do EVERYTHING - NO RESTRICTIONS
+      // SUPERADMIN can do EVERYTHING - NO RESTRICTIONS AT ALL
       allow read, write, create, update, delete: if isSuperAdmin();
       
       // Regular users can read their own data, admins can read company users
@@ -54,20 +54,29 @@ service cloud.firestore {
         (isAdmin() && canAccessCompany(resource.data.company))
       );
       
-      // Users can create their own document, admins can create company users
-      allow create: if isAuthenticated() && (
+      // SUPERADMIN can create ANY user without restrictions
+      allow create: if isSuperAdmin();
+      
+      // Regular create rules for non-superadmins
+      allow create: if !isSuperAdmin() && isAuthenticated() && (
         (request.auth.uid == userId && isValidRole(request.resource.data.role) && isValidEmail(request.resource.data.email)) ||
         (isAdmin() && canAccessCompany(request.resource.data.company) && isValidRole(request.resource.data.role))
       );
       
-      // Users can update their own non-role fields, admins can update company users
-      allow update: if isAuthenticated() && (
+      // SUPERADMIN can update ANY user without restrictions
+      allow update: if isSuperAdmin();
+      
+      // Regular update rules for non-superadmins
+      allow update: if !isSuperAdmin() && isAuthenticated() && (
         (request.auth.uid == userId && request.resource.data.role == resource.data.role) ||
         (isAdmin() && canAccessCompany(resource.data.company) && isValidRole(request.resource.data.role))
       );
       
-      // Only admins and superadmins can delete users
-      allow delete: if isAdmin() && (canAccessCompany(resource.data.company) || isSuperAdmin());
+      // SUPERADMIN can delete ANY user without restrictions
+      allow delete: if isSuperAdmin();
+      
+      // Regular delete rules for non-superadmins
+      allow delete: if !isSuperAdmin() && isAdmin() && canAccessCompany(resource.data.company);
     }
     
     // Private users collection - users can only access their own data
