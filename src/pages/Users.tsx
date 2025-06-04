@@ -1,6 +1,6 @@
 
 import { useQuery } from "@tanstack/react-query";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { AddUserDialog } from "@/components/users/AddUserDialog";
 import { UserDetailsDialog } from "@/components/users/UserDetailsDialog";
@@ -9,8 +9,6 @@ import { LoadingSkeleton } from "@/components/shared/LoadingSkeleton";
 import { UsersList } from "@/components/users/UsersList";
 import { collection, getDocs, orderBy, query } from "firebase/firestore";
 import { db } from "@/integrations/firebase/client";
-import { Card } from "@/components/ui/card";
-import { Users as UsersIcon } from "lucide-react";
 import { User } from "@/types/users";
 
 const Users = () => {
@@ -21,16 +19,19 @@ const Users = () => {
   const { data: users = [], isLoading, error } = useQuery({
     queryKey: ["users"],
     queryFn: async () => {
-      console.log("Fetching users data...");
+      console.log("Users: Fetching users data...");
       try {
         const usersCollection = collection(db, "app_users_business");
         const usersQuery = query(usersCollection, orderBy("created_at", "desc"));
         const usersSnapshot = await getDocs(usersQuery);
         
-        return usersSnapshot.docs.map(doc => ({
+        const usersList = usersSnapshot.docs.map(doc => ({
           id: doc.id,
           ...doc.data()
         })) as User[];
+        
+        console.log("Users: Successfully fetched", usersList.length, "users");
+        return usersList;
       } catch (error) {
         console.error("Users: Error fetching users:", error);
         toast({
