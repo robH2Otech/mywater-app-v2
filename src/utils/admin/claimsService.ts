@@ -1,6 +1,6 @@
-import { auth } from "@/integrations/firebase/client";
-import { httpsCallable } from "firebase/functions";
-import { functions } from "@/integrations/firebase/client";
+
+import { auth, db } from "@/integrations/firebase/client";
+import { doc, getDoc } from "firebase/firestore";
 
 export interface SetClaimsRequest {
   userId: string;
@@ -9,96 +9,7 @@ export interface SetClaimsRequest {
 }
 
 /**
- * Set custom claims for a user (superadmin only)
- */
-export const setUserClaims = async (request: SetClaimsRequest): Promise<boolean> => {
-  try {
-    console.log('Setting user claims:', request);
-    
-    const setClaimsFunction = httpsCallable(functions, 'setUserClaims');
-    const result = await setClaimsFunction(request);
-    
-    console.log('Claims set successfully:', result.data);
-    return true;
-  } catch (error: any) {
-    console.error('Error setting user claims:', error);
-    
-    // Provide more specific error messages
-    if (error.code === 'functions/unauthenticated') {
-      throw new Error('You must be authenticated to set user claims');
-    } else if (error.code === 'functions/permission-denied') {
-      throw new Error('Only superadmins can set user claims');
-    } else if (error.code === 'functions/invalid-argument') {
-      throw new Error('Invalid arguments provided for setting claims');
-    } else if (error.code === 'functions/not-found') {
-      throw new Error('Claims management function not found. Please ensure Firebase Functions are deployed.');
-    } else {
-      throw new Error(error.message || 'Failed to set user claims');
-    }
-  }
-};
-
-/**
- * Migrate all existing users to have proper claims (superadmin only)
- */
-export const migrateAllUserClaims = async (): Promise<{ migrated: number; skipped: number; errors: number }> => {
-  try {
-    console.log('Starting user claims migration...');
-    
-    const migrateFunction = httpsCallable(functions, 'migrateUserClaims');
-    const result = await migrateFunction({});
-    
-    console.log('Migration completed:', result.data);
-    return result.data as { migrated: number; skipped: number; errors: number };
-  } catch (error: any) {
-    console.error('Error migrating user claims:', error);
-    
-    // Provide more specific error messages
-    if (error.code === 'functions/unauthenticated') {
-      throw new Error('You must be authenticated to migrate user claims');
-    } else if (error.code === 'functions/permission-denied') {
-      throw new Error('Only superadmins can migrate user claims');
-    } else if (error.code === 'functions/not-found') {
-      throw new Error('Migration function not found. Please ensure Firebase Functions are deployed.');
-    } else {
-      throw new Error(error.message || 'Failed to migrate user claims');
-    }
-  }
-};
-
-/**
- * Force refresh the current user's token to get updated claims
- */
-export const refreshUserToken = async (): Promise<boolean> => {
-  try {
-    const user = auth.currentUser;
-    if (!user) {
-      console.log("No authenticated user to refresh token for");
-      return false;
-    }
-    
-    console.log("Refreshing token for user:", user.email);
-    
-    // Force token refresh to get updated custom claims
-    await user.getIdToken(true);
-    console.log("User token refreshed successfully");
-    
-    // Log the new claims for verification
-    const idTokenResult = await user.getIdTokenResult();
-    console.log("New token claims:", {
-      role: idTokenResult.claims.role,
-      company: idTokenResult.claims.company
-    });
-    
-    return true;
-  } catch (error) {
-    console.error("Error refreshing user token:", error);
-    return false;
-  }
-};
-
-/**
- * Get current user's claims
+ * Get current user's role and company from Firestore (fallback when JWT claims are missing)
  */
 export const getCurrentUserClaims = async (): Promise<{
   role: string | null;
@@ -110,11 +21,40 @@ export const getCurrentUserClaims = async (): Promise<{
       return { role: null, company: null };
     }
     
-    const idTokenResult = await user.getIdTokenResult();
-    const role = idTokenResult.claims.role as string || null;
-    const company = idTokenResult.claims.company as string || null;
+    // First try to get claims from JWT token
+    try {
+      const idTokenResult = await user.getIdTokenResult();
+      const role = idTokenResult.claims.role as string || null;
+      const company = idTokenResult.claims.company as string || null;
+      
+      if (role) {
+        return { role, company };
+      }
+    } catch (error) {
+      console.log("Could not get JWT claims, falling back to Firestore");
+    }
     
-    return { role, company };
+    // Fallback: Get user data from Firestore
+    const userDoc = await getDoc(doc(db, 'app_users_business', user.uid));
+    
+    if (userDoc.exists()) {
+      const userData = userDoc.data();
+      return {
+        role: userData.role || null,
+        company: userData.company || null
+      };
+    }
+    
+    // Check private users collection
+    const privateUserDoc = await getDoc(doc(db, 'app_users_privat', user.uid));
+    if (privateUserDoc.exists()) {
+      return {
+        role: 'user',
+        company: 'private'
+      };
+    }
+    
+    return { role: null, company: null };
   } catch (error) {
     console.error("Error getting user claims:", error);
     return { role: null, company: null };
@@ -122,30 +62,62 @@ export const getCurrentUserClaims = async (): Promise<{
 };
 
 /**
- * Initialize claims for the current user if they don't exist
+ * Force refresh the current user's token
+ */
+export const refreshUserToken = async (): Promise<boolean> => {
+  try {
+    const user = auth.currentUser;
+    if (!user) {
+      console.log("No authenticated user to refresh token for");
+      return false;
+    }
+    
+    console.log("Refreshing token for user:", user.email);
+    
+    // Force token refresh
+    await user.getIdToken(true);
+    console.log("User token refreshed successfully");
+    
+    return true;
+  } catch (error) {
+    console.error("Error refreshing user token:", error);
+    return false;
+  }
+};
+
+/**
+ * Initialize claims for the current user (simplified version without Cloud Functions)
  */
 export const initializeUserClaims = async (): Promise<boolean> => {
   try {
     const user = auth.currentUser;
     if (!user) return false;
     
-    // Check if user already has claims
+    // Check if user has data in Firestore
     const { role } = await getCurrentUserClaims();
+    
     if (role) {
-      console.log("User already has role claims:", role);
+      console.log("User already has role data:", role);
       return true;
     }
     
-    console.log("User missing role claims, attempting to initialize...");
-    
-    // For now, we'll just refresh the token and see if claims appear
-    // In a production system, you might want to call a function to assign default claims
-    await refreshUserToken();
-    
-    const { role: newRole } = await getCurrentUserClaims();
-    return !!newRole;
+    console.log("No user data found, user may need to be created by admin");
+    return false;
   } catch (error) {
     console.error("Error initializing user claims:", error);
     return false;
   }
+};
+
+/**
+ * Placeholder functions for compatibility (these would normally use Cloud Functions)
+ */
+export const setUserClaims = async (request: SetClaimsRequest): Promise<boolean> => {
+  console.log("setUserClaims: Cloud Functions not available, this would need to be implemented server-side");
+  return false;
+};
+
+export const migrateAllUserClaims = async (): Promise<{ migrated: number; skipped: number; errors: number }> => {
+  console.log("migrateAllUserClaims: Cloud Functions not available, this would need to be implemented server-side");
+  return { migrated: 0, skipped: 0, errors: 0 };
 };

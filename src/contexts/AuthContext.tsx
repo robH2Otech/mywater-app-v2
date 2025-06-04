@@ -1,11 +1,11 @@
 
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { onAuthStateChanged, User as FirebaseUser } from "firebase/auth";
-import { auth } from "@/integrations/firebase/client";
+import { doc, getDoc } from "firebase/firestore";
+import { auth, db } from "@/integrations/firebase/client";
 import { AppUser, UserRole } from "@/types/users";
 import { useAuthStateManager } from "@/hooks/auth/useAuthStateManager";
 import { usePermissionsManager } from "@/hooks/auth/usePermissionsManager";
-import { AuthService } from "@/services/authService";
 
 export type PermissionLevel = "none" | "read" | "write" | "admin" | "full";
 
@@ -54,16 +54,63 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [authError, setAuthError] = useState<string | null>(null);
   const [debugInfo, setDebugInfo] = useState<any>(null);
+  const [currentUser, setCurrentUser] = useState<AppUser | null>(null);
+  const [userRole, setUserRole] = useState<UserRole | null>(null);
+  const [company, setCompany] = useState<string | null>(null);
   
-  const {
-    currentUser,
-    userRole,
-    company,
-    refreshUserSession,
-    handleAuthStateChange
-  } = useAuthStateManager(firebaseUser);
-
   const permissions = usePermissionsManager(userRole, company);
+
+  // Fetch user data from Firestore
+  const fetchUserData = async (uid: string): Promise<{ role: UserRole | null; company: string | null; userData: AppUser | null }> => {
+    try {
+      const userDoc = await getDoc(doc(db, 'app_users_business', uid));
+      
+      if (userDoc.exists()) {
+        const userData = userDoc.data() as AppUser;
+        return {
+          role: userData.role || null,
+          company: userData.company || null,
+          userData
+        };
+      }
+      
+      // Check private users collection as fallback
+      const privateUserDoc = await getDoc(doc(db, 'app_users_privat', uid));
+      if (privateUserDoc.exists()) {
+        const userData = privateUserDoc.data() as AppUser;
+        return {
+          role: 'user' as UserRole,
+          company: 'private',
+          userData: {
+            ...userData,
+            role: 'user' as UserRole
+          }
+        };
+      }
+      
+      return { role: null, company: null, userData: null };
+    } catch (error) {
+      console.error('Error fetching user data:', error);
+      return { role: null, company: null, userData: null };
+    }
+  };
+
+  const refreshUserSession = async (): Promise<boolean> => {
+    try {
+      if (firebaseUser) {
+        await firebaseUser.getIdToken(true);
+        const { role, company, userData } = await fetchUserData(firebaseUser.uid);
+        setUserRole(role);
+        setCompany(company);
+        setCurrentUser(userData);
+        return true;
+      }
+      return false;
+    } catch (error) {
+      console.error('Error refreshing user session:', error);
+      return false;
+    }
+  };
 
   useEffect(() => {
     console.log("🔄 AuthContext: Setting up Firebase auth state listener");
@@ -82,108 +129,57 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         if (firebaseUser) {
           console.log("🎫 AuthContext: Processing user authentication...");
           
-          // Get current token claims with retry logic
-          let idTokenResult;
-          let retryCount = 0;
-          const maxRetries = 3;
+          // Fetch user data from Firestore instead of relying on JWT claims
+          const { role, company, userData } = await fetchUserData(firebaseUser.uid);
           
-          while (retryCount < maxRetries) {
-            try {
-              idTokenResult = await firebaseUser.getIdTokenResult(retryCount > 0);
-              break;
-            } catch (error) {
-              console.log(`AuthContext: Token retry ${retryCount + 1}/${maxRetries}:`, error);
-              retryCount++;
-              if (retryCount < maxRetries) {
-                await new Promise(resolve => setTimeout(resolve, 1000 * retryCount));
-              }
-            }
-          }
-          
-          if (!idTokenResult) {
-            throw new Error("Failed to get ID token after retries");
-          }
-          
-          const roleFromClaims = idTokenResult.claims.role as UserRole;
-          const companyFromClaims = idTokenResult.claims.company as string;
-          
-          console.log("AuthContext: Claims from token:", { role: roleFromClaims, company: companyFromClaims });
-          
-          if (roleFromClaims) {
-            console.log("✅ AuthContext: User has valid claims:", { role: roleFromClaims, company: companyFromClaims });
-            
-            setDebugInfo({
-              uid: firebaseUser.uid,
-              email: firebaseUser.email,
-              claims: { role: roleFromClaims, company: companyFromClaims },
-              timestamp: new Date().toISOString()
-            });
-            
-            await handleAuthStateChange(firebaseUser);
+          if (role && userData) {
+            console.log("✅ AuthContext: User data found:", { role, company, email: userData.email });
+            setCurrentUser(userData);
+            setUserRole(role);
+            setCompany(company);
           } else {
-            console.log("⚠️ AuthContext: No role in claims, checking AuthService...");
-            
-            // For superadmin accounts, try to initialize claims if missing
-            if (firebaseUser.email && (firebaseUser.email.includes('superadmin') || firebaseUser.email.includes('admin'))) {
-              console.log("🔧 AuthContext: Detected potential superadmin, trying to initialize claims");
-              
-              try {
-                const initialized = await AuthService.initializeUserClaims();
-                if (initialized) {
-                  console.log("✅ AuthContext: Claims initialized successfully for admin");
-                  // Force token refresh and retry
-                  await firebaseUser.getIdToken(true);
-                  const retryResult = await AuthService.verifyAndFixClaims();
-                  if (retryResult.success) {
-                    await handleAuthStateChange(firebaseUser);
-                  } else {
-                    console.log("🔧 AuthContext: Allowing admin access with fallback");
-                    await handleAuthStateChange(firebaseUser);
-                  }
-                } else {
-                  console.log("🔧 AuthContext: Allowing admin access with fallback after failed init");
-                  await handleAuthStateChange(firebaseUser);
-                }
-              } catch (initError) {
-                console.log("AuthContext: Claims init failed, but allowing admin access:", initError);
-                await handleAuthStateChange(firebaseUser);
-              }
+            console.log("⚠️ AuthContext: No user data found in Firestore");
+            // For admin emails, create a default superadmin entry
+            if (firebaseUser.email && (
+              firebaseUser.email.includes('superadmin') || 
+              firebaseUser.email === 'rob.istria@gmail.com' ||
+              firebaseUser.email === 'robert.slavec@gmail.com' ||
+              firebaseUser.email === 'aljaz.slavec@gmail.com'
+            )) {
+              console.log("🔧 AuthContext: Creating default superadmin entry");
+              setUserRole('superadmin');
+              setCompany('X-WATER');
+              setCurrentUser({
+                id: firebaseUser.uid,
+                email: firebaseUser.email,
+                first_name: firebaseUser.email.split('@')[0],
+                last_name: '',
+                role: 'superadmin',
+                company: 'X-WATER',
+                status: 'active'
+              });
             } else {
-              // For non-admin users, use standard AuthService flow
-              const authResult = await AuthService.verifyAndFixClaims();
-              
-              if (authResult.success) {
-                console.log("✅ AuthContext: AuthService successful:", authResult.claims);
-                await handleAuthStateChange(firebaseUser);
-              } else {
-                setAuthError("Account permissions not properly configured. Please contact administrator.");
-              }
+              setAuthError("Account not found in system. Please contact administrator.");
             }
-            
-            setDebugInfo({
-              uid: firebaseUser.uid,
-              email: firebaseUser.email,
-              timestamp: new Date().toISOString()
-            });
           }
+          
+          setDebugInfo({
+            uid: firebaseUser.uid,
+            email: firebaseUser.email,
+            role,
+            company,
+            timestamp: new Date().toISOString()
+          });
         } else {
+          // Reset state when logged out
+          setCurrentUser(null);
+          setUserRole(null);
+          setCompany(null);
           setDebugInfo(null);
         }
       } catch (error) {
         console.error("❌ AuthContext: Error processing auth state change:", error);
-        
-        // For admin users, allow access even if there are auth issues
-        if (firebaseUser?.email && (firebaseUser.email.includes('superadmin') || firebaseUser.email.includes('admin'))) {
-          console.log("🔧 AuthContext: Allowing admin access despite auth error");
-          try {
-            await handleAuthStateChange(firebaseUser);
-          } catch (handleError) {
-            console.error("AuthContext: Even fallback handling failed:", handleError);
-            setAuthError(`Auth processing error: ${error}`);
-          }
-        } else {
-          setAuthError(`Auth processing error: ${error}`);
-        }
+        setAuthError(`Auth processing error: ${error}`);
       } finally {
         setIsLoading(false);
       }
@@ -193,13 +189,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       console.log("🧹 AuthContext: Cleaning up auth state listener");
       unsubscribe();
     };
-  }, [handleAuthStateChange]);
+  }, []);
 
   const value: AuthContextType = {
     currentUser,
     firebaseUser,
     isLoading,
-    userRole: userRole as UserRole | null, // Explicitly preserve full UserRole type
+    userRole,
     company,
     refreshUserSession,
     authError,

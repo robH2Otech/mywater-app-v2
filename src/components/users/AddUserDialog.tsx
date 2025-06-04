@@ -29,6 +29,7 @@ export function AddUserDialog({ open, onOpenChange }: AddUserDialogProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { hasPermission, userRole, company: currentUserCompany } = usePermissions();
+  const [isSubmitting, setIsSubmitting] = useState(false);
   
   const [formData, setFormData] = useState<FormData>({
     first_name: "",
@@ -65,7 +66,11 @@ export function AddUserDialog({ open, onOpenChange }: AddUserDialogProps) {
   };
 
   const handleSubmit = async () => {
+    if (isSubmitting) return;
+    
     try {
+      setIsSubmitting(true);
+      
       console.log("Starting user creation process...");
       console.log("Current user role:", userRole);
       console.log("Form data:", { ...formData, password: "[HIDDEN]" });
@@ -138,6 +143,8 @@ export function AddUserDialog({ open, onOpenChange }: AddUserDialogProps) {
         description: error.message,
         variant: "destructive",
       });
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -151,6 +158,7 @@ export function AddUserDialog({ open, onOpenChange }: AddUserDialogProps) {
           onCancel={() => onOpenChange?.(false)}
           canCreateSuperAdmin={userRole === "superadmin"}
           canCreateAdmin={userRole === "superadmin"}
+          isSubmitting={isSubmitting}
         />
       </DialogContent>
     </Dialog>

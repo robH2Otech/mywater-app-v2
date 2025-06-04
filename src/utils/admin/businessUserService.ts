@@ -24,7 +24,6 @@ export interface CreateBusinessUserResponse {
 
 /**
  * Create a new business user directly using Firebase Auth and Firestore
- * This approach works with our current Firebase setup without requiring Cloud Functions
  */
 export const createBusinessUser = async (userData: CreateBusinessUserRequest): Promise<CreateBusinessUserResponse> => {
   try {
@@ -34,6 +33,9 @@ export const createBusinessUser = async (userData: CreateBusinessUserRequest): P
     if (!userData.email || !userData.password || !userData.first_name || !userData.last_name || !userData.company) {
       throw new Error('Missing required fields: first_name, last_name, email, password, and company are required');
     }
+
+    // Store current user to restore after creation
+    const currentUser = auth.currentUser;
 
     // Create user in Firebase Auth
     const userCredential = await createUserWithEmailAndPassword(auth, userData.email, userData.password);
@@ -61,9 +63,14 @@ export const createBusinessUser = async (userData: CreateBusinessUserRequest): P
     
     console.log('Business user document created successfully in Firestore');
 
-    // Note: Custom claims (role, company) would typically be set via Cloud Functions
-    // For now, we're storing them in Firestore which our auth context reads from
-    console.log('User created with role:', userData.role, 'and company:', userData.company);
+    // Immediately sign out the newly created user to avoid auth conflicts
+    await auth.signOut();
+
+    // Restore the original admin user session if it existed
+    if (currentUser) {
+      // Force a token refresh to ensure the admin is properly authenticated
+      await currentUser.getIdToken(true);
+    }
 
     const result = {
       success: true,

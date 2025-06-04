@@ -5,53 +5,29 @@ import { auth } from "@/integrations/firebase/client";
 import { onAuthStateChanged } from "firebase/auth";
 import { BusinessLayout } from "@/components/layout/BusinessLayout";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
-import { validateTokenClaims, logAuditEvent } from "@/utils/auth/securityUtils";
-import { verifyUserClaims, refreshUserClaims } from "@/utils/admin/adminClaimsManager";
+import { logAuditEvent } from "@/utils/auth/securityUtils";
 
 export const ProtectedRoute = ({ children }: { children: ReactNode }) => {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
-  const [isTempAccess, setIsTempAccess] = useState(false);
-  const [hasValidRoleClaims, setHasValidRoleClaims] = useState<boolean | null>(null);
   const location = useLocation();
 
   useEffect(() => {
-    const tempAccess = localStorage.getItem('tempAccess') === 'true';
-    setIsTempAccess(tempAccess);
-
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       setIsAuthenticated(!!user);
       
       if (user) {
-        try {
-          const { hasValidClaims, role } = await verifyUserClaims();
-          setHasValidRoleClaims(hasValidClaims);
-          
-          if (!hasValidClaims) {
-            console.log("No valid claims detected on protected route, attempting refresh");
-            await refreshUserClaims();
-            
-            const refreshResult = await verifyUserClaims();
-            setHasValidRoleClaims(refreshResult.hasValidClaims);
-          }
-          
-          logAuditEvent('route_access', {
-            path: location.pathname,
-            role: role,
-            hasValidClaims
-          });
-        } catch (error) {
-          console.error("Error verifying claims in protected route:", error);
-          setHasValidRoleClaims(false);
-        }
-      } else {
-        setHasValidRoleClaims(false);
+        logAuditEvent('route_access', {
+          path: location.pathname,
+          uid: user.uid,
+          email: user.email
+        });
       }
     });
 
     return () => unsubscribe();
   }, [location.pathname]);
 
-  if (isAuthenticated === null && !isTempAccess) {
+  if (isAuthenticated === null) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-spotify-dark">
         <div className="flex flex-col items-center">
@@ -62,25 +38,8 @@ export const ProtectedRoute = ({ children }: { children: ReactNode }) => {
     );
   }
 
-  if (!isAuthenticated && !isTempAccess) {
+  if (!isAuthenticated) {
     return <Navigate to="/auth" />;
-  }
-  
-  // Allow access if temp access is enabled or if the user has valid claims
-  if (isAuthenticated && hasValidRoleClaims === false && !isTempAccess) {
-    console.log("User authenticated but no valid claims, redirecting to auth");
-    
-    return (
-      <div className="flex items-center justify-center min-h-screen bg-spotify-dark">
-        <div className="flex flex-col items-center text-center max-w-md">
-          <div className="w-10 h-10 border-t-2 border-b-2 border-red-500 rounded-full animate-spin"></div>
-          <p className="text-red-400 mt-4">Account setup incomplete. Redirecting...</p>
-          <p className="text-gray-400 text-sm mt-2">
-            Your account needs to be configured by an administrator.
-          </p>
-        </div>
-      </div>
-    );
   }
 
   return (
@@ -95,7 +54,7 @@ export const ProtectedRoute = ({ children }: { children: ReactNode }) => {
 // Simplified role-based route guard
 const RoleBasedRouteGuard = ({ children }: { children: ReactNode }) => {
   const location = useLocation();
-  const { userRole, isLoading, company, canViewNavItem } = useAuth();
+  const { userRole, isLoading, company, canViewNavItem, authError } = useAuth();
   
   if (isLoading) {
     return (
@@ -108,8 +67,23 @@ const RoleBasedRouteGuard = ({ children }: { children: ReactNode }) => {
     );
   }
   
-  // Allow superadmin to access everything - using explicit string comparison to avoid TS issues
-  if (userRole === ('superadmin' as any)) {
+  // If there's an auth error but the user is authenticated, show the error
+  if (authError && !userRole) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-spotify-dark">
+        <div className="flex flex-col items-center text-center max-w-md">
+          <div className="w-10 h-10 border-t-2 border-b-2 border-red-500 rounded-full animate-spin"></div>
+          <p className="text-red-400 mt-4">{authError}</p>
+          <p className="text-gray-400 text-sm mt-2">
+            Please contact your administrator to set up your account.
+          </p>
+        </div>
+      </div>
+    );
+  }
+  
+  // Allow superadmin to access everything
+  if (userRole === 'superadmin') {
     return <>{children}</>;
   }
   
@@ -132,8 +106,8 @@ const RoleBasedRouteGuard = ({ children }: { children: ReactNode }) => {
   const basePath = location.pathname.split('/')[1] ? `/${location.pathname.split('/')[1]}` : location.pathname;
   const requiredPermission = routePermissions[basePath];
   
-  // Check if user can view this route (skip for superadmin)
-  if (requiredPermission && userRole !== ('superadmin' as any) && !canViewNavItem(requiredPermission)) {
+  // Check if user can view this route
+  if (requiredPermission && userRole && !canViewNavItem(requiredPermission)) {
     logAuditEvent('security_violation', {
       type: 'unauthorized_route_access',
       path: location.pathname,
