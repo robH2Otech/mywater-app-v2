@@ -2,6 +2,7 @@
 import { createUserWithEmailAndPassword } from "firebase/auth";
 import { doc, setDoc } from "firebase/firestore";
 import { auth, db } from "@/integrations/firebase/client";
+import { secondaryAuth } from "./secondaryAuth";
 import { UserRole, UserStatus } from "@/types/users";
 
 export interface CreateBusinessUserRequest {
@@ -23,25 +24,30 @@ export interface CreateBusinessUserResponse {
 }
 
 /**
- * Create a new business user directly using Firebase Auth and Firestore
+ * Create a new business user using secondary auth instance to preserve admin session
  */
 export const createBusinessUser = async (userData: CreateBusinessUserRequest): Promise<CreateBusinessUserResponse> => {
   try {
-    console.log('Creating business user directly via Firebase Auth:', userData.email);
+    console.log('Creating business user with secondary auth:', userData.email);
     
     // Validate required fields
     if (!userData.email || !userData.password || !userData.first_name || !userData.last_name || !userData.company) {
       throw new Error('Missing required fields: first_name, last_name, email, password, and company are required');
     }
 
-    // Store current user to restore after creation
+    // Store reference to current admin user for verification
     const currentUser = auth.currentUser;
+    if (!currentUser) {
+      throw new Error('Admin must be authenticated to create users');
+    }
+    
+    console.log('Current admin user preserved:', currentUser.email);
 
-    // Create user in Firebase Auth
-    const userCredential = await createUserWithEmailAndPassword(auth, userData.email, userData.password);
+    // Create user in Firebase Auth using secondary auth instance
+    const userCredential = await createUserWithEmailAndPassword(secondaryAuth, userData.email, userData.password);
     const newUser = userCredential.user;
     
-    console.log('Firebase user created successfully:', newUser.uid);
+    console.log('Firebase user created successfully with secondary auth:', newUser.uid);
 
     // Create user document in Firestore with proper structure
     const userDocData = {
@@ -58,18 +64,19 @@ export const createBusinessUser = async (userData: CreateBusinessUserRequest): P
       updated_at: new Date().toISOString()
     };
 
-    // Save to Firestore
+    // Save to Firestore using main database connection
     await setDoc(doc(db, 'app_users_business', newUser.uid), userDocData);
     
     console.log('Business user document created successfully in Firestore');
 
-    // Immediately sign out the newly created user to avoid auth conflicts
-    await auth.signOut();
-
-    // Restore the original admin user session if it existed
-    if (currentUser) {
-      // Force a token refresh to ensure the admin is properly authenticated
-      await currentUser.getIdToken(true);
+    // Sign out the newly created user from secondary auth to clean up
+    await secondaryAuth.signOut();
+    
+    // Verify admin session is still intact
+    if (auth.currentUser?.uid !== currentUser.uid) {
+      console.warn('Admin session may have been affected, but continuing...');
+    } else {
+      console.log('Admin session preserved successfully');
     }
 
     const result = {

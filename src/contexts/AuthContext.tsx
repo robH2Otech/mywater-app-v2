@@ -97,17 +97,34 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const refreshUserSession = async (): Promise<boolean> => {
     try {
+      console.log('Refreshing user session...');
+      
       if (firebaseUser) {
+        // Force token refresh to ensure session is valid
         await firebaseUser.getIdToken(true);
+        
+        // Re-fetch user data from Firestore
         const { role, company, userData } = await fetchUserData(firebaseUser.uid);
-        setUserRole(role);
-        setCompany(company);
-        setCurrentUser(userData);
-        return true;
+        
+        if (userData) {
+          setUserRole(role);
+          setCompany(company);
+          setCurrentUser(userData);
+          setAuthError(null);
+          
+          console.log('User session refreshed successfully:', { role, company, email: userData.email });
+          return true;
+        } else {
+          console.warn('No user data found during session refresh');
+          return false;
+        }
+      } else {
+        console.warn('No Firebase user available for session refresh');
+        return false;
       }
-      return false;
     } catch (error) {
       console.error('Error refreshing user session:', error);
+      setAuthError('Session refresh failed');
       return false;
     }
   };

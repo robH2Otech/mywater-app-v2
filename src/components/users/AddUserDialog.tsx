@@ -7,6 +7,7 @@ import { UserRole, UserStatus } from "@/types/users";
 import { AddUserDialogContent } from "./AddUserDialogContent";
 import { usePermissions } from "@/hooks/usePermissions";
 import { createBusinessUser } from "@/utils/admin/businessUserService";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface FormData {
   first_name: string;
@@ -29,6 +30,7 @@ export function AddUserDialog({ open, onOpenChange }: AddUserDialogProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { hasPermission, userRole, company: currentUserCompany } = usePermissions();
+  const { refreshUserSession } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
   
   const [formData, setFormData] = useState<FormData>({
@@ -95,7 +97,7 @@ export function AddUserDialog({ open, onOpenChange }: AddUserDialogProps) {
 
       console.log("Creating new business user:", formData.email);
 
-      // Use the direct creation service
+      // Use the direct creation service with secondary auth
       const result = await createBusinessUser({
         first_name: formData.first_name,
         last_name: formData.last_name,
@@ -110,9 +112,15 @@ export function AddUserDialog({ open, onOpenChange }: AddUserDialogProps) {
 
       console.log("Business user created successfully:", result);
 
+      // Refresh the user session to ensure admin stays authenticated
+      const sessionRefreshed = await refreshUserSession();
+      if (!sessionRefreshed) {
+        console.warn("Session refresh failed, but user was created successfully");
+      }
+
       toast({
         title: "Success",
-        description: "User has been created successfully",
+        description: "User has been created successfully. You remain signed in.",
       });
 
       // Reset form and close dialog
@@ -137,6 +145,11 @@ export function AddUserDialog({ open, onOpenChange }: AddUserDialogProps) {
 
     } catch (error: any) {
       console.error("Error creating user:", error);
+      
+      // Attempt to refresh session if there was an auth-related error
+      if (error.message.includes('auth') || error.message.includes('permission')) {
+        await refreshUserSession();
+      }
       
       toast({
         title: "Error",
