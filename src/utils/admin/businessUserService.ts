@@ -1,6 +1,7 @@
 
-import { httpsCallable } from "firebase/functions";
-import { functions } from "@/integrations/firebase/client";
+import { createUserWithEmailAndPassword } from "firebase/auth";
+import { doc, setDoc } from "firebase/firestore";
+import { auth, db } from "@/integrations/firebase/client";
 import { UserRole, UserStatus } from "@/types/users";
 
 export interface CreateBusinessUserRequest {
@@ -22,32 +23,75 @@ export interface CreateBusinessUserResponse {
 }
 
 /**
- * Create a new business user using Firebase Cloud Functions
- * This prevents the current user from being signed out
+ * Create a new business user directly using Firebase Auth and Firestore
+ * This approach works with our current Firebase setup without requiring Cloud Functions
  */
 export const createBusinessUser = async (userData: CreateBusinessUserRequest): Promise<CreateBusinessUserResponse> => {
   try {
-    console.log('Creating business user via cloud function:', userData.email);
+    console.log('Creating business user directly via Firebase Auth:', userData.email);
     
-    const createUserFunction = httpsCallable(functions, 'createBusinessUser');
-    const result = await createUserFunction(userData);
+    // Validate required fields
+    if (!userData.email || !userData.password || !userData.first_name || !userData.last_name || !userData.company) {
+      throw new Error('Missing required fields: first_name, last_name, email, password, and company are required');
+    }
+
+    // Create user in Firebase Auth
+    const userCredential = await createUserWithEmailAndPassword(auth, userData.email, userData.password);
+    const newUser = userCredential.user;
     
-    console.log('Business user created successfully:', result.data);
-    return result.data as CreateBusinessUserResponse;
+    console.log('Firebase user created successfully:', newUser.uid);
+
+    // Create user document in Firestore with proper structure
+    const userDocData = {
+      id: newUser.uid,
+      first_name: userData.first_name,
+      last_name: userData.last_name,
+      email: userData.email,
+      phone: userData.phone || '',
+      company: userData.company,
+      job_title: userData.job_title || '',
+      role: userData.role,
+      status: userData.status,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    };
+
+    // Save to Firestore
+    await setDoc(doc(db, 'app_users_business', newUser.uid), userDocData);
+    
+    console.log('Business user document created successfully in Firestore');
+
+    // Note: Custom claims (role, company) would typically be set via Cloud Functions
+    // For now, we're storing them in Firestore which our auth context reads from
+    console.log('User created with role:', userData.role, 'and company:', userData.company);
+
+    const result = {
+      success: true,
+      userId: newUser.uid,
+      message: 'Business user created successfully'
+    };
+    
+    console.log('Business user creation completed:', result);
+    return result;
+    
   } catch (error: any) {
     console.error('Error creating business user:', error);
     
-    // Provide more specific error messages
-    if (error.code === 'functions/unauthenticated') {
-      throw new Error('You must be authenticated to create users');
-    } else if (error.code === 'functions/permission-denied') {
-      throw new Error('You don\'t have permission to create users or this role');
-    } else if (error.code === 'functions/invalid-argument') {
-      throw new Error('Invalid user data provided');
-    } else if (error.code === 'functions/not-found') {
-      throw new Error('User creation function not found. Please ensure Firebase Functions are deployed.');
-    } else {
-      throw new Error(error.message || 'Failed to create user');
+    // Provide more specific error messages based on Firebase Auth errors
+    let errorMessage = 'Failed to create user';
+    
+    if (error.code === 'auth/email-already-in-use') {
+      errorMessage = 'An account with this email already exists';
+    } else if (error.code === 'auth/weak-password') {
+      errorMessage = 'Password should be at least 6 characters';
+    } else if (error.code === 'auth/invalid-email') {
+      errorMessage = 'Invalid email format';
+    } else if (error.code === 'auth/operation-not-allowed') {
+      errorMessage = 'Email/password authentication is not enabled';
+    } else if (error.message) {
+      errorMessage = error.message;
     }
+    
+    throw new Error(errorMessage);
   }
 };

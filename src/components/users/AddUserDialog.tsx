@@ -44,7 +44,9 @@ export function AddUserDialog({ open, onOpenChange }: AddUserDialogProps) {
 
   // Check if user can create users with specific role
   const canCreateWithRole = (role: UserRole): boolean => {
+    // Superadmin can create any role
     if (userRole === "superadmin") return true;
+    // Admin can create technician and user roles
     if (userRole === "admin" && ["technician", "user"].includes(role)) return true;
     return false;
   };
@@ -64,9 +66,21 @@ export function AddUserDialog({ open, onOpenChange }: AddUserDialogProps) {
 
   const handleSubmit = async () => {
     try {
-      // Only admins and above can create users
-      if (!hasPermission("admin")) {
-        throw new Error("You don't have permission to create users");
+      console.log("Starting user creation process...");
+      console.log("Current user role:", userRole);
+      console.log("Form data:", { ...formData, password: "[HIDDEN]" });
+
+      // Superadmin has unrestricted access to create any user
+      if (userRole !== "superadmin") {
+        // Only admins and above can create users (non-superadmin restrictions)
+        if (!hasPermission("admin")) {
+          throw new Error("You don't have permission to create users");
+        }
+
+        // Validate role permissions for non-superadmins
+        if (!canCreateWithRole(formData.role)) {
+          throw new Error(`You don't have permission to create ${formData.role} users`);
+        }
       }
       
       // Validate required fields
@@ -74,14 +88,9 @@ export function AddUserDialog({ open, onOpenChange }: AddUserDialogProps) {
         throw new Error("First name, last name, email, password and company are required");
       }
 
-      // Validate role permissions
-      if (!canCreateWithRole(formData.role)) {
-        throw new Error(`You don't have permission to create ${formData.role} users`);
-      }
-
       console.log("Creating new business user:", formData.email);
 
-      // Use the cloud function to create the user
+      // Use the direct creation service
       const result = await createBusinessUser({
         first_name: formData.first_name,
         last_name: formData.last_name,
@@ -98,7 +107,7 @@ export function AddUserDialog({ open, onOpenChange }: AddUserDialogProps) {
 
       toast({
         title: "Success",
-        description: "User has been created successfully with proper claims",
+        description: "User has been created successfully",
       });
 
       // Reset form and close dialog
