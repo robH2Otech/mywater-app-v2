@@ -1,10 +1,8 @@
 
-import { FormInput } from "@/components/shared/FormInput";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { User, UserRole, UserStatus } from "@/types/users";
-import { useIsMobile } from "@/hooks/use-mobile";
-import { usePermissions } from "@/hooks/usePermissions";
-import { Badge } from "@/components/ui/badge";
+import { UserRole, UserStatus } from "@/types/users";
 
 interface UserFormData {
   first_name: string;
@@ -15,165 +13,146 @@ interface UserFormData {
   job_title: string;
   role: UserRole;
   status: UserStatus;
-  password: string;
+  password?: string;
 }
 
 interface UserDetailsFormProps {
   formData: UserFormData;
   handleInputChange: (field: keyof UserFormData, value: string) => void;
   isEditable: boolean;
-  canEditField?: (field: keyof UserFormData) => boolean;
+  canEditField: (field: keyof UserFormData) => boolean;
+  showPasswordField?: boolean;
 }
 
 export function UserDetailsForm({ 
   formData, 
   handleInputChange, 
   isEditable,
-  canEditField = () => isEditable
+  canEditField,
+  showPasswordField = false
 }: UserDetailsFormProps) {
-  const isMobile = useIsMobile();
-  const { isSuperAdmin } = usePermissions();
-  
-  const getRoleBadgeColor = (role: UserRole) => {
-    switch(role) {
-      case "superadmin": return "bg-red-500/80 hover:bg-red-600";
-      case "admin": return "bg-blue-500/80 hover:bg-blue-600";
-      case "technician": return "bg-yellow-500/80 hover:bg-yellow-600";
-      case "user": 
-      default: return "bg-green-500/80 hover:bg-green-600";
-    }
-  };
-  
   return (
-    <div className={`grid ${isMobile ? 'grid-cols-1 gap-2' : 'grid-cols-2 gap-3'} py-1`}>
-      <FormInput
-        label="First Name"
-        labelClassName="text-xs"
-        value={formData.first_name}
-        onChange={(value) => handleInputChange("first_name", value)}
-        required
-        disabled={!canEditField("first_name")}
-        inputClassName="h-8 text-sm"
-      />
-      <FormInput
-        label="Last Name"
-        labelClassName="text-xs"
-        value={formData.last_name}
-        onChange={(value) => handleInputChange("last_name", value)}
-        required
-        disabled={!canEditField("last_name")}
-        inputClassName="h-8 text-sm"
-      />
-      <FormInput
-        label="Email"
-        labelClassName="text-xs"
-        type="email"
-        value={formData.email}
-        onChange={(value) => handleInputChange("email", value)}
-        required
-        disabled={!canEditField("email")}
-        className={isMobile ? "" : "col-span-2"}
-        inputClassName="h-8 text-sm"
-      />
-      
-      {canEditField("password") && (
-        <FormInput
-          label="Password"
-          labelClassName="text-xs"
-          type="password"
-          value={formData.password}
-          onChange={(value) => handleInputChange("password", value)}
-          required={false}
-          disabled={!canEditField("password")}
-          className={isMobile ? "" : "col-span-2"}
-          inputClassName="h-8 text-sm"
-          placeholder={formData.password ? "••••••••" : "Leave blank to keep unchanged"}
+    <div className="space-y-4">
+      <div className="grid grid-cols-2 gap-4">
+        <div>
+          <Label htmlFor="first_name" className="text-white">First Name *</Label>
+          <Input
+            id="first_name"
+            value={formData.first_name}
+            onChange={(e) => handleInputChange("first_name", e.target.value)}
+            className="bg-spotify-accent border-spotify-accent text-white"
+            disabled={!isEditable || !canEditField("first_name")}
+          />
+        </div>
+        <div>
+          <Label htmlFor="last_name" className="text-white">Last Name *</Label>
+          <Input
+            id="last_name"
+            value={formData.last_name}
+            onChange={(e) => handleInputChange("last_name", e.target.value)}
+            className="bg-spotify-accent border-spotify-accent text-white"
+            disabled={!isEditable || !canEditField("last_name")}
+          />
+        </div>
+      </div>
+
+      <div>
+        <Label htmlFor="email" className="text-white">Email *</Label>
+        <Input
+          id="email"
+          type="email"
+          value={formData.email}
+          onChange={(e) => handleInputChange("email", e.target.value)}
+          className="bg-spotify-accent border-spotify-accent text-white"
+          disabled={!isEditable || !canEditField("email")}
         />
-      )}
-      
-      <FormInput
-        label="Phone"
-        labelClassName="text-xs"
-        value={formData.phone}
-        onChange={(value) => handleInputChange("phone", value)}
-        disabled={!canEditField("phone")}
-        inputClassName="h-8 text-sm"
-      />
-      
-      <FormInput
-        label="Company"
-        labelClassName="text-xs"
-        value={formData.company}
-        onChange={(value) => handleInputChange("company", value)}
-        disabled={!canEditField("company")}
-        inputClassName="h-8 text-sm"
-        required
-      />
-      
-      <FormInput
-        label="Job Title"
-        labelClassName="text-xs"
-        value={formData.job_title}
-        onChange={(value) => handleInputChange("job_title", value)}
-        disabled={!canEditField("job_title")}
-        inputClassName="h-8 text-sm"
-      />
-      
-      <div className="space-y-1">
-        <label className="text-xs font-medium text-gray-400 block flex items-center justify-between">
-          <span>Role</span>
-          {!canEditField("role") && (
-            <Badge className={`${getRoleBadgeColor(formData.role)} text-[10px]`}>
-              {formData.role.toUpperCase()}
-            </Badge>
-          )}
-        </label>
-        {canEditField("role") ? (
+      </div>
+
+      <div>
+        <Label htmlFor="phone" className="text-white">Phone</Label>
+        <Input
+          id="phone"
+          value={formData.phone}
+          onChange={(e) => handleInputChange("phone", e.target.value)}
+          className="bg-spotify-accent border-spotify-accent text-white"
+          disabled={!isEditable || !canEditField("phone")}
+        />
+      </div>
+
+      <div>
+        <Label htmlFor="company" className="text-white">Company *</Label>
+        <Input
+          id="company"
+          value={formData.company}
+          onChange={(e) => handleInputChange("company", e.target.value)}
+          className="bg-spotify-accent border-spotify-accent text-white"
+          disabled={!isEditable || !canEditField("company")}
+        />
+      </div>
+
+      <div>
+        <Label htmlFor="job_title" className="text-white">Job Title</Label>
+        <Input
+          id="job_title"
+          value={formData.job_title}
+          onChange={(e) => handleInputChange("job_title", e.target.value)}
+          className="bg-spotify-accent border-spotify-accent text-white"
+          disabled={!isEditable || !canEditField("job_title")}
+        />
+      </div>
+
+      <div className="grid grid-cols-2 gap-4">
+        <div>
+          <Label htmlFor="role" className="text-white">Role</Label>
           <Select
             value={formData.role}
-            onValueChange={(value: UserRole) => handleInputChange("role", value)}
-            disabled={!canEditField("role")}
+            onValueChange={(value) => handleInputChange("role", value)}
+            disabled={!isEditable || !canEditField("role")}
           >
-            <SelectTrigger className="bg-spotify-accent border-spotify-accent-hover text-white h-8 text-sm">
-              <SelectValue placeholder="Select role" />
+            <SelectTrigger className="bg-spotify-accent border-spotify-accent text-white">
+              <SelectValue />
             </SelectTrigger>
-            <SelectContent className="bg-spotify-darker border-spotify-accent-hover">
-              {isSuperAdmin() && <SelectItem value="superadmin">Super Admin</SelectItem>}
-              <SelectItem value="admin">Admin</SelectItem>
-              <SelectItem value="technician">Technician</SelectItem>
+            <SelectContent>
               <SelectItem value="user">User</SelectItem>
+              <SelectItem value="technician">Technician</SelectItem>
+              <SelectItem value="admin">Admin</SelectItem>
+              <SelectItem value="superadmin">Superadmin</SelectItem>
             </SelectContent>
           </Select>
-        ) : (
-          <div className="h-8 flex items-center text-gray-400 text-sm">
-            {formData.role.charAt(0).toUpperCase() + formData.role.slice(1)}
-          </div>
-        )}
-      </div>
-      
-      <div className="space-y-1">
-        <label className="text-xs font-medium text-gray-400 block">Status</label>
-        {canEditField("status") ? (
+        </div>
+
+        <div>
+          <Label htmlFor="status" className="text-white">Status</Label>
           <Select
             value={formData.status}
-            onValueChange={(value: UserStatus) => handleInputChange("status", value)}
-            disabled={!canEditField("status")}
+            onValueChange={(value) => handleInputChange("status", value)}
+            disabled={!isEditable || !canEditField("status")}
           >
-            <SelectTrigger className="bg-spotify-accent border-spotify-accent-hover text-white h-8 text-sm">
-              <SelectValue placeholder="Select status" />
+            <SelectTrigger className="bg-spotify-accent border-spotify-accent text-white">
+              <SelectValue />
             </SelectTrigger>
-            <SelectContent className="bg-spotify-darker border-spotify-accent-hover">
+            <SelectContent>
               <SelectItem value="active">Active</SelectItem>
               <SelectItem value="inactive">Inactive</SelectItem>
               <SelectItem value="pending">Pending</SelectItem>
             </SelectContent>
           </Select>
-        ) : (
-          <div className="h-8 flex items-center text-gray-400 text-sm">
-            {formData.status.charAt(0).toUpperCase() + formData.status.slice(1)}
-          </div>
-        )}
+        </div>
       </div>
+
+      {showPasswordField && (
+        <div>
+          <Label htmlFor="password" className="text-white">Password *</Label>
+          <Input
+            id="password"
+            type="password"
+            value={formData.password || ""}
+            onChange={(e) => handleInputChange("password", e.target.value)}
+            className="bg-spotify-accent border-spotify-accent text-white"
+            disabled={!isEditable || !canEditField("password")}
+          />
+        </div>
+      )}
     </div>
   );
 }

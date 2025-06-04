@@ -14,7 +14,6 @@ interface UserFormData {
   job_title: string;
   role: UserRole;
   status: UserStatus;
-  password: string;
 }
 
 interface AddUserDialogContentProps {
@@ -48,7 +47,7 @@ export function AddUserDialogContent({
   return (
     <>
       <DialogHeader>
-        <DialogTitle className="text-xl font-semibold text-white">Add New User</DialogTitle>
+        <DialogTitle className="text-xl font-semibold text-white">Invite New User</DialogTitle>
       </DialogHeader>
       
       <ScrollableDialogContent maxHeight="65vh">
@@ -58,6 +57,11 @@ export function AddUserDialogContent({
           isEditable={true}
           canEditField={canEditField}
         />
+        <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-md">
+          <p className="text-sm text-blue-800">
+            <strong>Note:</strong> This will create a user invitation. The user will need to sign up with their email address to activate their account.
+          </p>
+        </div>
       </ScrollableDialogContent>
       
       <div className="flex justify-end gap-3 mt-6">
@@ -74,7 +78,7 @@ export function AddUserDialogContent({
           className="bg-mywater-blue hover:bg-mywater-blue/90"
           disabled={isSubmitting}
         >
-          {isSubmitting ? "Adding..." : "Add User"}
+          {isSubmitting ? "Inviting..." : "Invite User"}
         </Button>
       </div>
     </>
