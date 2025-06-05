@@ -30,7 +30,26 @@ const Units = () => {
           const data = doc.data() as Record<string, any>;
           return {
             id: doc.id,
-            ...data,
+            name: data.name,
+            status: data.status,
+            location: data.location,
+            total_volume: data.total_volume,
+            last_maintenance: data.last_maintenance,
+            next_maintenance: data.next_maintenance,
+            setup_date: data.setup_date,
+            uvc_hours: data.uvc_hours,
+            uvc_status: data.uvc_status,
+            uvc_installation_date: data.uvc_installation_date,
+            is_uvc_accumulated: data.is_uvc_accumulated,
+            contact_name: data.contact_name,
+            contact_email: data.contact_email,
+            contact_phone: data.contact_phone,
+            notes: data.notes,
+            created_at: data.created_at,
+            updated_at: data.updated_at,
+            eid: data.eid,
+            iccid: data.iccid,
+            unit_type: data.unit_type,
             company: data.company || company // Use user's company if unit has no company field
           } as UnitData;
         });

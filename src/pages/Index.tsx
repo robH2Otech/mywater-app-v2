@@ -12,6 +12,7 @@ import { formatThousands } from "@/utils/measurements/formatUtils";
 import { useEffect, useState } from "react";
 import { fetchUnitTotalVolumes } from "@/utils/measurements/unitVolumeUtils";
 import { useAuth } from "@/contexts/AuthContext";
+import { AlertData, FilterData } from "@/types/analytics";
 
 const Index = () => {
   const [totalVolume, setTotalVolume] = useState(0);
@@ -53,9 +54,13 @@ const Index = () => {
         const data = doc.data() as Record<string, any>;
         return {
           id: doc.id,
-          ...data,
+          unit_id: data.unit_id,
+          message: data.message,
+          status: data.status,
+          created_at: data.created_at,
+          updated_at: data.updated_at,
           company: data.company || company // Use user's company if alert has no company field
-        };
+        } as AlertData;
       });
       
       // Filter client-side for better compatibility
@@ -87,9 +92,20 @@ const Index = () => {
         const data = doc.data() as Record<string, any>;
         return {
           id: doc.id,
-          ...data,
+          unit_id: data.unit_id,
+          installation_date: data.installation_date,
+          last_change: data.last_change,
+          next_change: data.next_change,
+          volume_processed: data.volume_processed,
+          contact_name: data.contact_name,
+          email: data.email,
+          phone: data.phone,
+          notes: data.notes,
+          created_at: data.created_at,
+          updated_at: data.updated_at,
+          status: data.status,
           company: data.company || company // Use user's company if filter has no company field
-        };
+        } as FilterData & { status: string };
       });
       
       // Filter client-side for better compatibility
