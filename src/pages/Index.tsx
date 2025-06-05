@@ -6,7 +6,7 @@ import { Card } from "@/components/ui/card";
 import { RecentAlerts } from "@/components/dashboard/RecentAlerts";
 import { StatCard } from "@/components/dashboard/StatCard";
 import { WaterUsageChart } from "@/components/dashboard/WaterUsageChart";
-import { collection, getDocs, query, where } from "firebase/firestore";
+import { collection, getDocs, query } from "firebase/firestore";
 import { db } from "@/integrations/firebase/client";
 import { formatThousands } from "@/utils/measurements/formatUtils";
 import { useEffect, useState } from "react";
@@ -46,31 +46,32 @@ const Index = () => {
     queryKey: ["active-alerts-count", company, userRole],
     queryFn: async () => {
       const alertsCollection = collection(db, "alerts");
-      let alertsQuery;
-      
-      if (isSuperAdmin) {
-        // Superadmin sees all alerts
-        alertsQuery = query(
-          alertsCollection,
-          where("status", "in", ["warning", "urgent"])
-        );
-      } else {
-        // Filter by company for other roles
-        alertsQuery = query(
-          alertsCollection,
-          where("company", "==", company || ""),
-          where("status", "in", ["warning", "urgent"])
-        );
-      }
+      const alertsQuery = query(alertsCollection);
       
       const alertsSnapshot = await getDocs(alertsQuery);
-      return alertsSnapshot.docs.map(doc => {
+      const allAlerts = alertsSnapshot.docs.map(doc => {
         const data = doc.data() as Record<string, any>;
         return {
           id: doc.id,
-          ...data
+          ...data,
+          company: data.company || company // Use user's company if alert has no company field
         };
       });
+      
+      // Filter client-side for better compatibility
+      let filteredAlerts;
+      if (isSuperAdmin) {
+        filteredAlerts = allAlerts.filter(alert => 
+          alert.status === "warning" || alert.status === "urgent"
+        );
+      } else {
+        filteredAlerts = allAlerts.filter(alert => 
+          (alert.status === "warning" || alert.status === "urgent") &&
+          (!alert.company || alert.company === company)
+        );
+      }
+      
+      return filteredAlerts;
     },
     enabled: !!userRole && !!company,
   });
@@ -79,31 +80,32 @@ const Index = () => {
     queryKey: ["filters-needing-change", company, userRole],
     queryFn: async () => {
       const filtersCollection = collection(db, "filters");
-      let filtersQuery;
-      
-      if (isSuperAdmin) {
-        // Superadmin sees all filters
-        filtersQuery = query(
-          filtersCollection,
-          where("status", "in", ["warning", "critical"])
-        );
-      } else {
-        // Filter by company for other roles
-        filtersQuery = query(
-          filtersCollection,
-          where("company", "==", company || ""),
-          where("status", "in", ["warning", "critical"])
-        );
-      }
+      const filtersQuery = query(filtersCollection);
       
       const filtersSnapshot = await getDocs(filtersQuery);
-      return filtersSnapshot.docs.map(doc => {
+      const allFilters = filtersSnapshot.docs.map(doc => {
         const data = doc.data() as Record<string, any>;
         return {
           id: doc.id,
-          ...data
+          ...data,
+          company: data.company || company // Use user's company if filter has no company field
         };
       });
+      
+      // Filter client-side for better compatibility
+      let filteredFilters;
+      if (isSuperAdmin) {
+        filteredFilters = allFilters.filter(filter => 
+          filter.status === "warning" || filter.status === "critical"
+        );
+      } else {
+        filteredFilters = allFilters.filter(filter => 
+          (filter.status === "warning" || filter.status === "critical") &&
+          (!filter.company || filter.company === company)
+        );
+      }
+      
+      return filteredFilters;
     },
     enabled: !!userRole && !!company,
   });

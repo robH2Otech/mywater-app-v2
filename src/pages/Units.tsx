@@ -6,7 +6,7 @@ import { UnitCard } from "@/components/units/UnitCard";
 import { AddUnitDialog } from "@/components/units/AddUnitDialog";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
-import { collection, getDocs, orderBy, query, where } from "firebase/firestore";
+import { collection, getDocs, orderBy, query } from "firebase/firestore";
 import { db } from "@/integrations/firebase/client";
 import { UnitData } from "@/types/analytics";
 import { useAuth } from "@/contexts/AuthContext";
@@ -22,29 +22,32 @@ const Units = () => {
     queryFn: async () => {
       try {
         const unitsCollection = collection(db, "units");
-        let unitsQuery;
-        
-        if (isSuperAdmin) {
-          // Superadmin sees all units
-          unitsQuery = query(unitsCollection, orderBy("created_at", "desc"));
-        } else {
-          // Filter by company for other roles
-          unitsQuery = query(
-            unitsCollection,
-            where("company", "==", company || ""),
-            orderBy("created_at", "desc")
-          );
-        }
+        const unitsQuery = query(unitsCollection, orderBy("created_at", "desc"));
         
         const unitsSnapshot = await getDocs(unitsQuery);
         
-        return unitsSnapshot.docs.map(doc => {
+        const allUnits = unitsSnapshot.docs.map(doc => {
           const data = doc.data() as Record<string, any>;
           return {
             id: doc.id,
-            ...data
+            ...data,
+            company: data.company || company // Use user's company if unit has no company field
           } as UnitData;
         });
+        
+        // Filter client-side for better compatibility
+        let filteredUnits;
+        if (isSuperAdmin) {
+          // Superadmin sees all units
+          filteredUnits = allUnits;
+        } else {
+          // Filter by company for other roles - include units with no company field
+          filteredUnits = allUnits.filter(unit => 
+            !unit.company || unit.company === company
+          );
+        }
+        
+        return filteredUnits;
       } catch (error) {
         console.error("Error fetching units:", error);
         toast({

@@ -4,7 +4,7 @@ import { Droplet, Bell, Calendar, Activity } from "lucide-react";
 import { StatCard } from "@/components/dashboard/StatCard";
 import { WaterUsageChart } from "@/components/dashboard/WaterUsageChart";
 import { RecentAlerts } from "@/components/dashboard/RecentAlerts";
-import { collection, query, where, getDocs } from "firebase/firestore";
+import { collection, query, getDocs } from "firebase/firestore";
 import { db } from "@/integrations/firebase/client";
 import { UnitData } from "@/types/analytics";
 import { determineUnitStatus } from "@/utils/unitStatusUtils";
@@ -18,7 +18,7 @@ import { useDataFiltering } from "@/utils/auth/dataFiltering";
 const Dashboard = () => {
   const { t } = useLanguage();
   const { userRole, company, authError, isLoading: authLoading, debugInfo } = useAuth();
-  const { getCompanyFilter, isGlobalAccess } = useDataFiltering();
+  const { isGlobalAccess } = useDataFiltering();
 
   // Show loading state while auth is being processed
   if (authLoading) {
@@ -67,25 +67,17 @@ const Dashboard = () => {
     console.log("✅ Dashboard loading with user role:", userRole, "company:", company);
   }
 
-  // Fetch all units data with company filtering
+  // Fetch all units data with client-side filtering for better compatibility
   const { data: units = [], isLoading: isLoadingUnits, error: unitsError } = useQuery({
     queryKey: ["dashboard-units", company, userRole],
     queryFn: async () => {
       try {
         const unitsCollection = collection(db, "units");
-        let unitsQuery;
-        
-        if (isGlobalAccess) {
-          // Superadmin sees all units
-          unitsQuery = unitsCollection;
-        } else {
-          // Filter by company for other roles
-          unitsQuery = query(unitsCollection, where("company", "==", company || ""));
-        }
+        const unitsQuery = query(unitsCollection);
         
         const unitsSnapshot = await getDocs(unitsQuery);
         
-        const processedUnits = unitsSnapshot.docs.map(doc => {
+        const allUnits = unitsSnapshot.docs.map(doc => {
           const data = doc.data() as Record<string, any>;
           
           // Ensure total_volume is a number
@@ -103,12 +95,24 @@ const Dashboard = () => {
             id: doc.id,
             ...data,
             total_volume: totalVolume,
-            status: status // Override with calculated status
+            status: status, // Override with calculated status
+            company: data.company || company // Use user's company if unit has no company field
           } as UnitData;
         });
         
-        console.log(`📊 Dashboard: Fetched ${processedUnits.length} units for company: ${company}`);
-        return processedUnits;
+        let filteredUnits;
+        if (isGlobalAccess) {
+          // Superadmin sees all units
+          filteredUnits = allUnits;
+        } else {
+          // Filter by company for other roles - include units with no company field
+          filteredUnits = allUnits.filter(unit => 
+            !unit.company || unit.company === company
+          );
+        }
+        
+        console.log(`📊 Dashboard: Fetched ${filteredUnits.length} units for company: ${company}`);
+        return filteredUnits;
       } catch (error) {
         console.error("Error fetching units:", error);
         throw error;
@@ -117,41 +121,41 @@ const Dashboard = () => {
     enabled: !!userRole && !!company, // Only fetch when user role and company are available
   });
 
-  // Fetch alerts data with company filtering
+  // Fetch alerts data with client-side filtering
   const { data: alerts = [], isLoading: isLoadingAlerts, error: alertsError } = useQuery({
     queryKey: ["dashboard-alerts", company, userRole],
     queryFn: async () => {
       try {
         const alertsCollection = collection(db, "alerts");
-        let alertsQuery;
-        
-        if (isGlobalAccess) {
-          // Superadmin sees all alerts
-          alertsQuery = query(
-            alertsCollection,
-            where("status", "in", ["warning", "urgent"])
-          );
-        } else {
-          // Filter by company and status for other roles
-          alertsQuery = query(
-            alertsCollection,
-            where("company", "==", company || ""),
-            where("status", "in", ["warning", "urgent"])
-          );
-        }
+        const alertsQuery = query(alertsCollection);
         
         const alertsSnapshot = await getDocs(alertsQuery);
         
-        const alertsData = alertsSnapshot.docs.map(doc => {
+        const allAlerts = alertsSnapshot.docs.map(doc => {
           const data = doc.data() as Record<string, any>;
           return {
             id: doc.id,
-            ...data
+            ...data,
+            company: data.company || company // Use user's company if alert has no company field
           };
         });
         
-        console.log(`🚨 Dashboard: Fetched ${alertsData.length} alerts for company: ${company}`);
-        return alertsData;
+        let filteredAlerts;
+        if (isGlobalAccess) {
+          // Superadmin sees all alerts
+          filteredAlerts = allAlerts.filter(alert => 
+            alert.status === "warning" || alert.status === "urgent"
+          );
+        } else {
+          // Filter by company and status for other roles
+          filteredAlerts = allAlerts.filter(alert => 
+            (alert.status === "warning" || alert.status === "urgent") &&
+            (!alert.company || alert.company === company)
+          );
+        }
+        
+        console.log(`🚨 Dashboard: Fetched ${filteredAlerts.length} alerts for company: ${company}`);
+        return filteredAlerts;
       } catch (error) {
         console.error("Error fetching alerts:", error);
         throw error;
