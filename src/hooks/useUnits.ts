@@ -29,14 +29,16 @@ export function useUnits() {
       
       const unitsSnapshot = await getDocs(unitsQuery);
       
-      const units = unitsSnapshot.docs.map(doc => ({
-        id: doc.id,
-        name: doc.data().name,
-        // Include other basic fields that might be needed
-        status: doc.data().status,
-        location: doc.data().location,
-        company: doc.data().company
-      })) as UnitData[];
+      const units = unitsSnapshot.docs.map(doc => {
+        const data = doc.data();
+        return {
+          id: doc.id,
+          name: data.name,
+          status: data.status,
+          location: data.location,
+          company: data.company
+        } as UnitData;
+      });
       
       console.log(`📋 useUnits: Fetched ${units.length} units for company: ${company}, role: ${userRole}`);
       return units;

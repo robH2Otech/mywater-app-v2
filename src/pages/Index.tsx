@@ -64,10 +64,13 @@ const Index = () => {
       }
       
       const alertsSnapshot = await getDocs(alertsQuery);
-      return alertsSnapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      }));
+      return alertsSnapshot.docs.map(doc => {
+        const data = doc.data();
+        return {
+          id: doc.id,
+          ...data
+        };
+      });
     },
     enabled: !!userRole && !!company,
   });
@@ -94,10 +97,13 @@ const Index = () => {
       }
       
       const filtersSnapshot = await getDocs(filtersQuery);
-      return filtersSnapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      }));
+      return filtersSnapshot.docs.map(doc => {
+        const data = doc.data();
+        return {
+          id: doc.id,
+          ...data
+        };
+      });
     },
     enabled: !!userRole && !!company,
   });

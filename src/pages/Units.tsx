@@ -1,6 +1,6 @@
 
 import { useQuery } from "@tanstack/react-query";
-import { Plus } from "lucide-react";
+import { Plus, Droplets } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { UnitCard } from "@/components/units/UnitCard";
 import { AddUnitDialog } from "@/components/units/AddUnitDialog";
@@ -38,10 +38,13 @@ const Units = () => {
         
         const unitsSnapshot = await getDocs(unitsQuery);
         
-        return unitsSnapshot.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data()
-        })) as UnitData[];
+        return unitsSnapshot.docs.map(doc => {
+          const data = doc.data();
+          return {
+            id: doc.id,
+            ...data
+          } as UnitData;
+        });
       } catch (error) {
         console.error("Error fetching units:", error);
         toast({

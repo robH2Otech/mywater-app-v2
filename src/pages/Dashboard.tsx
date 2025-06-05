@@ -104,8 +104,8 @@ const Dashboard = () => {
             ...data,
             total_volume: totalVolume,
             status: status // Override with calculated status
-          };
-        }) as UnitData[];
+          } as UnitData;
+        });
         
         console.log(`📊 Dashboard: Fetched ${processedUnits.length} units for company: ${company}`);
         return processedUnits;
