@@ -65,7 +65,7 @@ const Index = () => {
       
       const alertsSnapshot = await getDocs(alertsQuery);
       return alertsSnapshot.docs.map(doc => {
-        const data = doc.data();
+        const data = doc.data() as Record<string, any>;
         return {
           id: doc.id,
           ...data
@@ -98,7 +98,7 @@ const Index = () => {
       
       const filtersSnapshot = await getDocs(filtersQuery);
       return filtersSnapshot.docs.map(doc => {
-        const data = doc.data();
+        const data = doc.data() as Record<string, any>;
         return {
           id: doc.id,
           ...data

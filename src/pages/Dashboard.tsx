@@ -86,7 +86,7 @@ const Dashboard = () => {
         const unitsSnapshot = await getDocs(unitsQuery);
         
         const processedUnits = unitsSnapshot.docs.map(doc => {
-          const data = doc.data();
+          const data = doc.data() as Record<string, any>;
           
           // Ensure total_volume is a number
           let totalVolume = data.total_volume;
@@ -142,10 +142,13 @@ const Dashboard = () => {
         
         const alertsSnapshot = await getDocs(alertsQuery);
         
-        const alertsData = alertsSnapshot.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data()
-        }));
+        const alertsData = alertsSnapshot.docs.map(doc => {
+          const data = doc.data() as Record<string, any>;
+          return {
+            id: doc.id,
+            ...data
+          };
+        });
         
         console.log(`🚨 Dashboard: Fetched ${alertsData.length} alerts for company: ${company}`);
         return alertsData;
