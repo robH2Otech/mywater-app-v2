@@ -1,3 +1,4 @@
+
 import { useQuery } from "@tanstack/react-query";
 import { Bell, Droplets, Filter, Lightbulb, TrendingUp } from "lucide-react";
 import { useUnits } from "@/hooks/useUnits";
@@ -10,10 +11,13 @@ import { db } from "@/integrations/firebase/client";
 import { formatThousands } from "@/utils/measurements/formatUtils";
 import { useEffect, useState } from "react";
 import { fetchUnitTotalVolumes } from "@/utils/measurements/unitVolumeUtils";
+import { useAuth } from "@/contexts/AuthContext";
 
 const Index = () => {
   const [totalVolume, setTotalVolume] = useState(0);
   const [isVolumeLoading, setIsVolumeLoading] = useState(true);
+  const { company, userRole } = useAuth();
+  const isSuperAdmin = userRole === 'superadmin';
   
   const { data: units = [], isLoading: unitsLoading } = useUnits();
   
@@ -39,12 +43,25 @@ const Index = () => {
   }, [units]);
   
   const { data: activeAlerts = [], isLoading: alertsLoading } = useQuery({
-    queryKey: ["active-alerts-count"],
+    queryKey: ["active-alerts-count", company, userRole],
     queryFn: async () => {
-      const alertsQuery = query(
-        collection(db, "alerts"),
-        where("status", "in", ["warning", "urgent"])
-      );
+      const alertsCollection = collection(db, "alerts");
+      let alertsQuery;
+      
+      if (isSuperAdmin) {
+        // Superadmin sees all alerts
+        alertsQuery = query(
+          alertsCollection,
+          where("status", "in", ["warning", "urgent"])
+        );
+      } else {
+        // Filter by company for other roles
+        alertsQuery = query(
+          alertsCollection,
+          where("company", "==", company || ""),
+          where("status", "in", ["warning", "urgent"])
+        );
+      }
       
       const alertsSnapshot = await getDocs(alertsQuery);
       return alertsSnapshot.docs.map(doc => ({
@@ -52,15 +69,29 @@ const Index = () => {
         ...doc.data()
       }));
     },
+    enabled: !!userRole && !!company,
   });
   
   const { data: filtersNeedingChange = [], isLoading: filtersLoading } = useQuery({
-    queryKey: ["filters-needing-change"],
+    queryKey: ["filters-needing-change", company, userRole],
     queryFn: async () => {
-      const filtersQuery = query(
-        collection(db, "filters"),
-        where("status", "in", ["warning", "critical"])
-      );
+      const filtersCollection = collection(db, "filters");
+      let filtersQuery;
+      
+      if (isSuperAdmin) {
+        // Superadmin sees all filters
+        filtersQuery = query(
+          filtersCollection,
+          where("status", "in", ["warning", "critical"])
+        );
+      } else {
+        // Filter by company for other roles
+        filtersQuery = query(
+          filtersCollection,
+          where("company", "==", company || ""),
+          where("status", "in", ["warning", "critical"])
+        );
+      }
       
       const filtersSnapshot = await getDocs(filtersQuery);
       return filtersSnapshot.docs.map(doc => ({
@@ -68,6 +99,7 @@ const Index = () => {
         ...doc.data()
       }));
     },
+    enabled: !!userRole && !!company,
   });
   
   const isLoading = unitsLoading || alertsLoading || filtersLoading || isVolumeLoading;

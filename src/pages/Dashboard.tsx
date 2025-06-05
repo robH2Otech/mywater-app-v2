@@ -13,10 +13,12 @@ import { formatThousands } from "@/utils/measurements/formatUtils";
 import { useAuth } from "@/contexts/AuthContext";
 import { Card } from "@/components/ui/card";
 import { AlertCircle, CheckCircle, Loader2 } from "lucide-react";
+import { useDataFiltering } from "@/utils/auth/dataFiltering";
 
 const Dashboard = () => {
   const { t } = useLanguage();
   const { userRole, company, authError, isLoading: authLoading, debugInfo } = useAuth();
+  const { getCompanyFilter, isGlobalAccess } = useDataFiltering();
 
   // Show loading state while auth is being processed
   if (authLoading) {
@@ -65,13 +67,23 @@ const Dashboard = () => {
     console.log("✅ Dashboard loading with user role:", userRole, "company:", company);
   }
 
-  // Fetch all units data
+  // Fetch all units data with company filtering
   const { data: units = [], isLoading: isLoadingUnits, error: unitsError } = useQuery({
-    queryKey: ["dashboard-units"],
+    queryKey: ["dashboard-units", company, userRole],
     queryFn: async () => {
       try {
         const unitsCollection = collection(db, "units");
-        const unitsSnapshot = await getDocs(unitsCollection);
+        let unitsQuery;
+        
+        if (isGlobalAccess) {
+          // Superadmin sees all units
+          unitsQuery = unitsCollection;
+        } else {
+          // Filter by company for other roles
+          unitsQuery = query(unitsCollection, where("company", "==", company || ""));
+        }
+        
+        const unitsSnapshot = await getDocs(unitsQuery);
         
         const processedUnits = unitsSnapshot.docs.map(doc => {
           const data = doc.data();
@@ -95,37 +107,54 @@ const Dashboard = () => {
           };
         }) as UnitData[];
         
+        console.log(`📊 Dashboard: Fetched ${processedUnits.length} units for company: ${company}`);
         return processedUnits;
       } catch (error) {
         console.error("Error fetching units:", error);
         throw error;
       }
     },
-    enabled: !!userRole, // Only fetch when user role is available
+    enabled: !!userRole && !!company, // Only fetch when user role and company are available
   });
 
-  // Fetch alerts data
+  // Fetch alerts data with company filtering
   const { data: alerts = [], isLoading: isLoadingAlerts, error: alertsError } = useQuery({
-    queryKey: ["dashboard-alerts"],
+    queryKey: ["dashboard-alerts", company, userRole],
     queryFn: async () => {
       try {
         const alertsCollection = collection(db, "alerts");
-        const alertsQuery = query(
-          alertsCollection,
-          where("status", "in", ["warning", "urgent"])
-        );
+        let alertsQuery;
+        
+        if (isGlobalAccess) {
+          // Superadmin sees all alerts
+          alertsQuery = query(
+            alertsCollection,
+            where("status", "in", ["warning", "urgent"])
+          );
+        } else {
+          // Filter by company and status for other roles
+          alertsQuery = query(
+            alertsCollection,
+            where("company", "==", company || ""),
+            where("status", "in", ["warning", "urgent"])
+          );
+        }
+        
         const alertsSnapshot = await getDocs(alertsQuery);
         
-        return alertsSnapshot.docs.map(doc => ({
+        const alertsData = alertsSnapshot.docs.map(doc => ({
           id: doc.id,
           ...doc.data()
         }));
+        
+        console.log(`🚨 Dashboard: Fetched ${alertsData.length} alerts for company: ${company}`);
+        return alertsData;
       } catch (error) {
         console.error("Error fetching alerts:", error);
         throw error;
       }
     },
-    enabled: !!userRole, // Only fetch when user role is available
+    enabled: !!userRole && !!company, // Only fetch when user role and company are available
   });
 
   // Show error state if data fetching failed
@@ -139,6 +168,9 @@ const Dashboard = () => {
           </div>
           <p className="text-gray-300 mb-4">
             {unitsError ? "Failed to load units data" : "Failed to load alerts data"}
+          </p>
+          <p className="text-sm text-gray-400 mb-4">
+            Company: {company || 'Not set'} | Role: {userRole || 'Not set'}
           </p>
           <button 
             onClick={() => window.location.reload()} 
@@ -175,7 +207,7 @@ const Dashboard = () => {
           <div className="flex items-center space-x-3">
             <CheckCircle className="h-5 w-5 text-green-500" />
             <p className="text-green-300">
-              Dashboard loaded successfully as {userRole} for {company}
+              Dashboard loaded successfully as {userRole} for {company} ({units.length} units found)
             </p>
           </div>
         </Card>
