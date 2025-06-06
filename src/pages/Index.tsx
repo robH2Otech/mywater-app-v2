@@ -5,7 +5,7 @@ import { IndexOverviewStats } from "@/components/dashboard/IndexOverviewStats";
 import { IndexLoadingState } from "@/components/dashboard/IndexLoadingState";
 import { IndexErrorState } from "@/components/dashboard/IndexErrorState";
 import { TechnicianDashboard } from "@/components/dashboard/TechnicianDashboard";
-import { useRefactoredIndexPageData } from "@/hooks/dashboard/useRefactoredIndexPageData";
+import { useSimpleDashboardData } from "@/hooks/dashboard/useSimpleDashboardData";
 
 const Index = () => {
   const {
@@ -17,7 +17,7 @@ const Index = () => {
     hasError,
     company,
     userRole,
-  } = useRefactoredIndexPageData();
+  } = useSimpleDashboardData();
 
   // Show loading state
   if (isLoading) {
