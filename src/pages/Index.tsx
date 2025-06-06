@@ -4,6 +4,7 @@ import { RecentAlerts } from "@/components/dashboard/RecentAlerts";
 import { IndexOverviewStats } from "@/components/dashboard/IndexOverviewStats";
 import { IndexLoadingState } from "@/components/dashboard/IndexLoadingState";
 import { IndexErrorState } from "@/components/dashboard/IndexErrorState";
+import { TechnicianDashboard } from "@/components/dashboard/TechnicianDashboard";
 import { useIndexPageData } from "@/hooks/dashboard/useIndexPageData";
 import { formatThousands } from "@/utils/measurements/formatUtils";
 
@@ -32,6 +33,20 @@ const Index = () => {
   // Format volume for display
   const displayVolume = formattedVolume ? formattedVolume : formatThousands(0) + "m³";
 
+  // Show simplified dashboard for technicians
+  if (userRole === 'technician') {
+    return (
+      <TechnicianDashboard
+        unitsCount={units.length}
+        filtersCount={filtersNeedingChange.length}
+        alertsCount={activeAlerts.length}
+        formattedVolume={displayVolume}
+        units={units}
+      />
+    );
+  }
+
+  // Standard dashboard for other roles
   return (
     <div className="space-y-6 animate-fadeIn">
       {/* Overview Statistics */}
