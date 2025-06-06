@@ -12,8 +12,8 @@ export function useUnits() {
   return useQuery({
     queryKey: ["units", company, userRole],
     queryFn: async () => {
+      console.log("📋 useUnits: Fetching units data...");
       const unitsCollection = collection(db, "units");
-      // Fetch all units and filter client-side for better compatibility
       const unitsQuery = query(unitsCollection, orderBy("name"));
       
       const unitsSnapshot = await getDocs(unitsQuery);
@@ -42,24 +42,25 @@ export function useUnits() {
           eid: data.eid,
           iccid: data.iccid,
           unit_type: data.unit_type,
-          company: data.company || company // Use user's company if unit has no company field
+          company: data.company || company
         } as UnitData;
       });
       
       let filteredUnits;
       if (isSuperAdmin) {
-        // Superadmin sees all units
         filteredUnits = allUnits;
       } else {
-        // Filter by company for other roles - include units with no company field
+        const filterCompany = company || 'X-WATER';
         filteredUnits = allUnits.filter(unit => 
-          !unit.company || unit.company === company
+          !unit.company || unit.company === filterCompany
         );
       }
       
       console.log(`📋 useUnits: Fetched ${filteredUnits.length} units for company: ${company}, role: ${userRole}`);
       return filteredUnits;
     },
-    enabled: !!userRole && !!company, // Only fetch when user role and company are available
+    enabled: !!userRole && !!company,
+    retry: 1,
+    staleTime: 30000,
   });
 }

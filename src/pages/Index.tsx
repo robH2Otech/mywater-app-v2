@@ -5,8 +5,7 @@ import { IndexOverviewStats } from "@/components/dashboard/IndexOverviewStats";
 import { IndexLoadingState } from "@/components/dashboard/IndexLoadingState";
 import { IndexErrorState } from "@/components/dashboard/IndexErrorState";
 import { TechnicianDashboard } from "@/components/dashboard/TechnicianDashboard";
-import { useIndexPageData } from "@/hooks/dashboard/useIndexPageData";
-import { formatThousands } from "@/utils/measurements/formatUtils";
+import { useSimpleDashboardData } from "@/hooks/dashboard/useSimpleDashboardData";
 
 const Index = () => {
   const {
@@ -18,20 +17,17 @@ const Index = () => {
     hasError,
     company,
     userRole,
-  } = useIndexPageData();
+  } = useSimpleDashboardData();
 
   // Show loading state
   if (isLoading) {
     return <IndexLoadingState />;
   }
 
-  // Show error state
+  // Show error state only if critical error
   if (hasError) {
     return <IndexErrorState company={company} userRole={userRole} />;
   }
-
-  // Format volume for display
-  const displayVolume = formattedVolume ? formattedVolume : formatThousands(0) + "m³";
 
   // Show simplified dashboard for technicians
   if (userRole === 'technician') {
@@ -40,7 +36,7 @@ const Index = () => {
         unitsCount={units.length}
         filtersCount={filtersNeedingChange.length}
         alertsCount={activeAlerts.length}
-        formattedVolume={displayVolume}
+        formattedVolume={formattedVolume}
         units={units}
       />
     );
@@ -54,7 +50,7 @@ const Index = () => {
         unitsCount={units.length}
         filtersCount={filtersNeedingChange.length}
         alertsCount={activeAlerts.length}
-        formattedVolume={displayVolume}
+        formattedVolume={formattedVolume}
       />
       
       {/* Charts and Alerts */}
