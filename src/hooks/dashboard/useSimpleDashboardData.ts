@@ -1,6 +1,6 @@
 
 import { useQuery } from "@tanstack/react-query";
-import { collection, getDocs, query, where } from "firebase/firestore";
+import { collection, getDocs, orderBy, query } from "firebase/firestore";
 import { db } from "@/integrations/firebase/client";
 import { AlertData, FilterData, UnitData } from "@/types/analytics";
 import { useAuth } from "@/contexts/AuthContext";
@@ -8,25 +8,17 @@ import { useAuth } from "@/contexts/AuthContext";
 export function useSimpleDashboardData() {
   const { company, userRole } = useAuth();
   const isSuperAdmin = userRole === 'superadmin';
+  const isTechnician = userRole === 'technician';
 
-  // Fetch units with company-filtered queries for security compliance
+  // Fetch units - technicians and superadmins can see all data
   const { data: units = [], isLoading: unitsLoading, error: unitsError } = useQuery({
     queryKey: ["dashboard-units", company, userRole],
     queryFn: async () => {
       console.log("📊 Dashboard: Fetching units data...");
       try {
         const unitsCollection = collection(db, "units");
-        
-        let unitsSnapshot;
-        if (isSuperAdmin) {
-          // Superadmins can fetch all data
-          unitsSnapshot = await getDocs(unitsCollection);
-        } else {
-          // Non-superadmins use company-filtered query for security compliance
-          const filterCompany = company || 'X-WATER';
-          const unitsQuery = query(unitsCollection, where("company", "==", filterCompany));
-          unitsSnapshot = await getDocs(unitsQuery);
-        }
+        const unitsQuery = query(unitsCollection, orderBy("name"));
+        const unitsSnapshot = await getDocs(unitsQuery);
         
         const allUnits = unitsSnapshot.docs.map(doc => {
           const data = doc.data() as Record<string, any>;
@@ -56,8 +48,19 @@ export function useSimpleDashboardData() {
           } as UnitData;
         });
         
-        console.log(`📊 Dashboard: Successfully fetched ${allUnits.length} units`);
-        return allUnits;
+        // Filter data based on role - technicians and superadmins see all
+        let filteredUnits;
+        if (isSuperAdmin || isTechnician) {
+          filteredUnits = allUnits;
+        } else {
+          const filterCompany = company || 'X-WATER';
+          filteredUnits = allUnits.filter(unit => 
+            !unit.company || unit.company === filterCompany
+          );
+        }
+        
+        console.log(`📊 Dashboard: Successfully fetched ${filteredUnits.length} units`);
+        return filteredUnits;
       } catch (error) {
         console.error("📊 Dashboard: Error fetching units:", error);
         return [];
@@ -68,24 +71,14 @@ export function useSimpleDashboardData() {
     staleTime: 30000,
   });
 
-  // Fetch alerts with company-filtered queries
+  // Fetch alerts - technicians and superadmins can see all data
   const { data: activeAlerts = [], isLoading: alertsLoading } = useQuery({
     queryKey: ["dashboard-alerts", company, userRole],
     queryFn: async () => {
       console.log("🚨 Dashboard: Fetching alerts data...");
       try {
         const alertsCollection = collection(db, "alerts");
-        
-        let alertsSnapshot;
-        if (isSuperAdmin) {
-          // Superadmins can fetch all data
-          alertsSnapshot = await getDocs(alertsCollection);
-        } else {
-          // Non-superadmins use company-filtered query
-          const filterCompany = company || 'X-WATER';
-          const alertsQuery = query(alertsCollection, where("company", "==", filterCompany));
-          alertsSnapshot = await getDocs(alertsQuery);
-        }
+        const alertsSnapshot = await getDocs(alertsCollection);
         
         const allAlerts = alertsSnapshot.docs.map(doc => {
           const data = doc.data() as Record<string, any>;
@@ -100,13 +93,24 @@ export function useSimpleDashboardData() {
           } as AlertData;
         });
         
+        // Filter data based on role - technicians and superadmins see all
+        let filteredAlerts;
+        if (isSuperAdmin || isTechnician) {
+          filteredAlerts = allAlerts;
+        } else {
+          const filterCompany = company || 'X-WATER';
+          filteredAlerts = allAlerts.filter(alert => 
+            !alert.company || alert.company === filterCompany
+          );
+        }
+        
         // Filter for active alerts
-        const filteredAlerts = allAlerts.filter(alert => 
+        const activeFilteredAlerts = filteredAlerts.filter(alert => 
           alert.status === "warning" || alert.status === "urgent"
         );
         
-        console.log(`🚨 Dashboard: Successfully fetched ${filteredAlerts.length} alerts`);
-        return filteredAlerts;
+        console.log(`🚨 Dashboard: Successfully fetched ${activeFilteredAlerts.length} alerts`);
+        return activeFilteredAlerts;
       } catch (error) {
         console.error("🚨 Dashboard: Error fetching alerts:", error);
         return [];
@@ -117,24 +121,14 @@ export function useSimpleDashboardData() {
     staleTime: 30000,
   });
 
-  // Fetch filters with company-filtered queries
+  // Fetch filters - technicians and superadmins can see all data
   const { data: filtersNeedingChange = [], isLoading: filtersLoading } = useQuery({
     queryKey: ["dashboard-filters", company, userRole],
     queryFn: async () => {
       console.log("🔧 Dashboard: Fetching filters data...");
       try {
         const filtersCollection = collection(db, "filters");
-        
-        let filtersSnapshot;
-        if (isSuperAdmin) {
-          // Superadmins can fetch all data
-          filtersSnapshot = await getDocs(filtersCollection);
-        } else {
-          // Non-superadmins use company-filtered query
-          const filterCompany = company || 'X-WATER';
-          const filtersQuery = query(filtersCollection, where("company", "==", filterCompany));
-          filtersSnapshot = await getDocs(filtersQuery);
-        }
+        const filtersSnapshot = await getDocs(filtersCollection);
         
         const allFilters = filtersSnapshot.docs.map(doc => {
           const data = doc.data() as Record<string, any>;
@@ -156,13 +150,24 @@ export function useSimpleDashboardData() {
           } as FilterData & { status: string };
         });
         
+        // Filter data based on role - technicians and superadmins see all
+        let filteredFilters;
+        if (isSuperAdmin || isTechnician) {
+          filteredFilters = allFilters;
+        } else {
+          const filterCompany = company || 'X-WATER';
+          filteredFilters = allFilters.filter(filter => 
+            !filter.company || filter.company === filterCompany
+          );
+        }
+        
         // Filter for filters needing attention
-        const filteredFilters = allFilters.filter(filter => 
+        const filtersNeedingAttention = filteredFilters.filter(filter => 
           filter.status === "warning" || filter.status === "critical"
         );
         
-        console.log(`🔧 Dashboard: Successfully fetched ${filteredFilters.length} filters needing change`);
-        return filteredFilters;
+        console.log(`🔧 Dashboard: Successfully fetched ${filtersNeedingAttention.length} filters needing change`);
+        return filtersNeedingAttention;
       } catch (error) {
         console.error("🔧 Dashboard: Error fetching filters:", error);
         return [];
