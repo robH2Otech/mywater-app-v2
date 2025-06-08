@@ -1,5 +1,6 @@
-
 import { useQuery } from "@tanstack/react-query";
+import { collection, getDocs, query, where } from "firebase/firestore";
+import { db } from "@/integrations/firebase/client";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { AddFilterDialog } from "@/components/filters/AddFilterDialog";
@@ -9,7 +10,6 @@ import { LoadingSkeleton } from "@/components/shared/LoadingSkeleton";
 import { FiltersList } from "@/components/filters/FiltersList";
 import { UnitData } from "@/types/analytics";
 import { useAuth } from "@/contexts/AuthContext";
-import { secureDataFetch } from "@/utils/firebase/secureDataFetcher";
 
 const Filters = () => {
   const { toast } = useToast();
@@ -20,13 +20,28 @@ const Filters = () => {
   const { data: units = [], isLoading, error } = useQuery({
     queryKey: ["filter-units", company, userRole],
     queryFn: async () => {
-      console.log("Filters: Fetching units data securely...");
+      console.log("Filters: Fetching units data directly from Firebase...");
+      
       try {
-        const units = await secureDataFetch<UnitData>({
-          userRole,
-          company,
-          collectionName: "units"
-        });
+        const unitsRef = collection(db, "units");
+        let queryRef;
+        
+        if (userRole === 'technician' || userRole === 'superadmin') {
+          // Technicians and superadmins can see all data
+          queryRef = unitsRef;
+          console.log("Filters: Fetching all units for", userRole);
+        } else {
+          // Other users filtered by company
+          const userCompany = company || 'X-WATER';
+          queryRef = query(unitsRef, where('company', '==', userCompany));
+          console.log("Filters: Fetching units for company:", userCompany);
+        }
+        
+        const snapshot = await getDocs(queryRef);
+        const units = snapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data()
+        })) as UnitData[];
         
         console.log(`Filters: Successfully fetched ${units.length} units`);
         return units;
