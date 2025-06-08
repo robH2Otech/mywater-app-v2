@@ -1,3 +1,4 @@
+
 import { useQuery } from "@tanstack/react-query";
 import { collection, getDocs, query, where, orderBy } from "firebase/firestore";
 import { db } from "@/integrations/firebase/client";
@@ -29,10 +30,13 @@ export function useSimpleDashboardData() {
         }
         
         const snapshot = await getDocs(queryRef);
-        const results = snapshot.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data()
-        })) as UnitData[];
+        const results = snapshot.docs.map(doc => {
+          const data = doc.data() as Record<string, any>;
+          return {
+            id: doc.id,
+            ...data
+          } as UnitData;
+        });
         
         console.log(`📊 Dashboard: Successfully fetched ${results.length} units`);
         return results;
@@ -68,10 +72,13 @@ export function useSimpleDashboardData() {
         }
         
         const snapshot = await getDocs(queryRef);
-        const allAlerts = snapshot.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data()
-        })) as AlertData[];
+        const allAlerts = snapshot.docs.map(doc => {
+          const data = doc.data() as Record<string, any>;
+          return {
+            id: doc.id,
+            ...data
+          } as AlertData;
+        });
         
         // Filter for active alerts
         const activeFilteredAlerts = allAlerts.filter(alert => 
@@ -112,10 +119,13 @@ export function useSimpleDashboardData() {
         }
         
         const snapshot = await getDocs(queryRef);
-        const allFilters = snapshot.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data()
-        })) as (FilterData & { status: string })[];
+        const allFilters = snapshot.docs.map(doc => {
+          const data = doc.data() as Record<string, any>;
+          return {
+            id: doc.id,
+            ...data
+          } as (FilterData & { status: string });
+        });
         
         // Filter for filters needing attention
         const filtersNeedingAttention = allFilters.filter(filter => 

@@ -1,3 +1,4 @@
+
 import { useQuery } from "@tanstack/react-query";
 import { collection, getDocs, query, where } from "firebase/firestore";
 import { db } from "@/integrations/firebase/client";
@@ -38,10 +39,13 @@ const Filters = () => {
         }
         
         const snapshot = await getDocs(queryRef);
-        const units = snapshot.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data()
-        })) as UnitData[];
+        const units = snapshot.docs.map(doc => {
+          const data = doc.data() as Record<string, any>;
+          return {
+            id: doc.id,
+            ...data
+          } as UnitData;
+        });
         
         console.log(`Filters: Successfully fetched ${units.length} units`);
         return units;

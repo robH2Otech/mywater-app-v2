@@ -1,3 +1,4 @@
+
 import { useQuery } from "@tanstack/react-query";
 import { collection, getDocs, query, where, orderBy } from "firebase/firestore";
 import { db } from "@/integrations/firebase/client";
@@ -28,10 +29,13 @@ export function useUnits() {
         }
         
         const snapshot = await getDocs(queryRef);
-        const units = snapshot.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data()
-        })) as UnitData[];
+        const units = snapshot.docs.map(doc => {
+          const data = doc.data() as Record<string, any>;
+          return {
+            id: doc.id,
+            ...data
+          } as UnitData;
+        });
         
         console.log(`📋 useUnits: Fetched ${units.length} units for company: ${company}, role: ${userRole}`);
         return units;
