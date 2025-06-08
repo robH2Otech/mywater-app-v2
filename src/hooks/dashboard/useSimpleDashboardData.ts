@@ -72,7 +72,10 @@ export function useSimpleDashboardData() {
     staleTime: 30000,
   });
 
-  const totalVolume = units.reduce((sum, unit) => sum + (unit.total_volume || 0), 0);
+  const totalVolume = units.reduce((sum, unit) => {
+    const volume = typeof unit.total_volume === 'string' ? parseFloat(unit.total_volume) || 0 : unit.total_volume || 0;
+    return sum + volume;
+  }, 0);
   const formattedVolume = `${totalVolume}m³`;
   
   const isLoading = unitsLoading || alertsLoading || filtersLoading;

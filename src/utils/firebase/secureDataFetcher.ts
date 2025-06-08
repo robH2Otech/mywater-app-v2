@@ -55,10 +55,13 @@ export async function secureDataFetch<T>({
     }
     
     const snapshot = await getDocs(queryRef);
-    const results = snapshot.docs.map(doc => ({
-      id: doc.id,
-      ...doc.data()
-    })) as T[];
+    const results = snapshot.docs.map(doc => {
+      const data = doc.data();
+      return {
+        id: doc.id,
+        ...data
+      } as T;
+    });
     
     console.log(`🔒 Successfully fetched ${results.length} records from ${collectionName}`);
     return results;
@@ -77,10 +80,13 @@ export async function secureDataFetch<T>({
           : collectionRef;
         
         const snapshot = await getDocs(queryRef);
-        const results = snapshot.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data()
-        })) as T[];
+        const results = snapshot.docs.map(doc => {
+          const data = doc.data();
+          return {
+            id: doc.id,
+            ...data
+          } as T;
+        });
         
         console.log(`🔒 Fallback successful: fetched ${results.length} records from ${collectionName}`);
         return results;
