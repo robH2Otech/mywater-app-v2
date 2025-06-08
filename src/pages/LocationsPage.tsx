@@ -34,7 +34,13 @@ const LocationsPage = () => {
         <LocationsHeader onRefresh={refreshUnits} isLoading={isLoading} />
         <Card className="bg-spotify-darker border-red-500/20">
           <CardContent className="p-6">
-            <div className="text-red-400">{error}</div>
+            <div className="text-red-400">
+              {error}
+              <br />
+              <span className="text-sm text-gray-500 mt-2">
+                This may be a permissions issue. Please contact your administrator if the problem persists.
+              </span>
+            </div>
             <Button 
               onClick={refreshUnits} 
               className="mt-4 bg-spotify-accent hover:bg-spotify-accent-hover"

@@ -51,7 +51,11 @@ const UVC = () => {
         />
         <div className="bg-red-900/20 border-red-800 p-6 rounded-lg">
           <div className="text-center text-red-400 py-8">
-            Error loading UVC data. Please try refreshing the page.
+            Error loading UVC data: {error instanceof Error ? error.message : 'Unknown error'}
+            <br />
+            <span className="text-sm text-gray-500 mt-2">
+              This may be a permissions issue. Please contact your administrator.
+            </span>
           </div>
         </div>
       </div>
