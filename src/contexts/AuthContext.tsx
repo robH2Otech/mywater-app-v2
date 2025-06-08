@@ -49,6 +49,13 @@ const AuthContext = createContext<AuthContextType>({
 
 export const useAuth = () => useContext(AuthContext);
 
+// Known superadmin emails for enhanced authentication
+const KNOWN_SUPERADMIN_EMAILS = [
+  'rob.istria@gmail.com',
+  'robert.slavec@gmail.com',
+  'aljaz.slavec@gmail.com'
+];
+
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [firebaseUser, setFirebaseUser] = useState<FirebaseUser | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
@@ -60,13 +67,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   
   const permissions = usePermissionsManager(userRole, company);
 
+  // Check if email is a known superadmin
+  const isKnownSuperadmin = (email: string | null): boolean => {
+    return email ? KNOWN_SUPERADMIN_EMAILS.includes(email.toLowerCase()) : false;
+  };
+
   // Fetch user data from Firestore
   const fetchUserData = async (uid: string): Promise<{ role: UserRole | null; company: string | null; userData: AppUser | null }> => {
     try {
+      console.log("🔍 AuthContext: Fetching user data for UID:", uid);
+      
       const userDoc = await getDoc(doc(db, 'app_users_business', uid));
       
       if (userDoc.exists()) {
         const userData = userDoc.data() as AppUser;
+        console.log("✅ AuthContext: Found business user data:", { role: userData.role, company: userData.company });
         return {
           role: userData.role || null,
           company: userData.company || null,
@@ -78,6 +93,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const privateUserDoc = await getDoc(doc(db, 'app_users_privat', uid));
       if (privateUserDoc.exists()) {
         const userData = privateUserDoc.data() as AppUser;
+        console.log("✅ AuthContext: Found private user data");
         return {
           role: 'user' as UserRole,
           company: 'private',
@@ -88,16 +104,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         };
       }
       
+      console.log("⚠️ AuthContext: No user data found in Firestore");
       return { role: null, company: null, userData: null };
     } catch (error) {
-      console.error('Error fetching user data:', error);
+      console.error('❌ AuthContext: Error fetching user data:', error);
       return { role: null, company: null, userData: null };
     }
   };
 
   const refreshUserSession = async (): Promise<boolean> => {
     try {
-      console.log('Refreshing user session...');
+      console.log('🔄 AuthContext: Refreshing user session...');
       
       if (firebaseUser) {
         // Force token refresh to ensure session is valid
@@ -112,18 +129,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           setCurrentUser(userData);
           setAuthError(null);
           
-          console.log('User session refreshed successfully:', { role, company, email: userData.email });
+          console.log('✅ AuthContext: User session refreshed successfully:', { role, company, email: userData.email });
           return true;
         } else {
-          console.warn('No user data found during session refresh');
+          console.warn('⚠️ AuthContext: No user data found during session refresh');
           return false;
         }
       } else {
-        console.warn('No Firebase user available for session refresh');
+        console.warn('⚠️ AuthContext: No Firebase user available for session refresh');
         return false;
       }
     } catch (error) {
-      console.error('Error refreshing user session:', error);
+      console.error('❌ AuthContext: Error refreshing user session:', error);
       setAuthError('Session refresh failed');
       return false;
     }
@@ -146,7 +163,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         if (firebaseUser) {
           console.log("🎫 AuthContext: Processing user authentication...");
           
-          // Fetch user data from Firestore instead of relying on JWT claims
+          // Check if this is a known superadmin email
+          const isSuperadmin = isKnownSuperadmin(firebaseUser.email);
+          console.log("🔍 AuthContext: Is known superadmin:", isSuperadmin);
+          
+          // Fetch user data from Firestore
           const { role, company, userData } = await fetchUserData(firebaseUser.uid);
           
           if (role && userData) {
@@ -154,30 +175,22 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             setCurrentUser(userData);
             setUserRole(role);
             setCompany(company);
+          } else if (isSuperadmin) {
+            console.log("🔧 AuthContext: Creating default superadmin entry for known admin");
+            setUserRole('superadmin');
+            setCompany('X-WATER');
+            setCurrentUser({
+              id: firebaseUser.uid,
+              email: firebaseUser.email!,
+              first_name: firebaseUser.email!.split('@')[0],
+              last_name: '',
+              role: 'superadmin',
+              company: 'X-WATER',
+              status: 'active'
+            });
           } else {
-            console.log("⚠️ AuthContext: No user data found in Firestore");
-            // For admin emails, create a default superadmin entry
-            if (firebaseUser.email && (
-              firebaseUser.email.includes('superadmin') || 
-              firebaseUser.email === 'rob.istria@gmail.com' ||
-              firebaseUser.email === 'robert.slavec@gmail.com' ||
-              firebaseUser.email === 'aljaz.slavec@gmail.com'
-            )) {
-              console.log("🔧 AuthContext: Creating default superadmin entry");
-              setUserRole('superadmin');
-              setCompany('X-WATER');
-              setCurrentUser({
-                id: firebaseUser.uid,
-                email: firebaseUser.email,
-                first_name: firebaseUser.email.split('@')[0],
-                last_name: '',
-                role: 'superadmin',
-                company: 'X-WATER',
-                status: 'active'
-              });
-            } else {
-              setAuthError("Account not found in system. Please contact administrator.");
-            }
+            console.error("❌ AuthContext: Account not found in system");
+            setAuthError("Account not found in system. Please contact administrator.");
           }
           
           setDebugInfo({
@@ -185,6 +198,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             email: firebaseUser.email,
             role,
             company,
+            isSuperadmin,
             timestamp: new Date().toISOString()
           });
         } else {

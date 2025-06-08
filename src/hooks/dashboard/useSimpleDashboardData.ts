@@ -6,24 +6,41 @@ import { AlertData, FilterData, UnitData } from "@/types/analytics";
 import { useAuth } from "@/contexts/AuthContext";
 
 export function useSimpleDashboardData() {
-  const { company, userRole } = useAuth();
+  const { company, userRole, firebaseUser, isLoading: authLoading } = useAuth();
 
   // Fetch units using direct Firebase calls
   const { data: units = [], isLoading: unitsLoading, error: unitsError } = useQuery({
-    queryKey: ["dashboard-units", company, userRole],
+    queryKey: ["dashboard-units", company, userRole, firebaseUser?.uid],
     queryFn: async () => {
-      console.log("📊 Dashboard: Fetching units data directly from Firebase...");
+      console.log("📊 Dashboard: Starting units fetch...");
+      console.log("📊 Dashboard: Auth state:", { 
+        userRole, 
+        company, 
+        userEmail: firebaseUser?.email,
+        uid: firebaseUser?.uid 
+      });
+      
+      if (!firebaseUser) {
+        throw new Error("No authenticated user found");
+      }
       
       try {
         const unitsRef = collection(db, "units");
         let queryRef;
         
-        if (userRole === 'technician' || userRole === 'superadmin') {
-          // Technicians and superadmins can see all data
+        // Enhanced superadmin detection
+        const isSuperadmin = userRole === 'superadmin' || 
+          firebaseUser.email === 'rob.istria@gmail.com' ||
+          firebaseUser.email === 'robert.slavec@gmail.com' ||
+          firebaseUser.email === 'aljaz.slavec@gmail.com';
+        
+        if (isSuperadmin) {
           queryRef = query(unitsRef, orderBy("name", "asc"));
-          console.log("📊 Dashboard: Fetching all units for", userRole);
+          console.log("📊 Dashboard: Fetching ALL units for superadmin");
+        } else if (userRole === 'technician') {
+          queryRef = query(unitsRef, orderBy("name", "asc"));
+          console.log("📊 Dashboard: Fetching all units for technician");
         } else {
-          // Other users filtered by company
           const userCompany = company || 'X-WATER';
           queryRef = query(unitsRef, where('company', '==', userCompany), orderBy("name", "asc"));
           console.log("📊 Dashboard: Fetching units for company:", userCompany);
@@ -38,34 +55,44 @@ export function useSimpleDashboardData() {
           } as UnitData;
         });
         
-        console.log(`📊 Dashboard: Successfully fetched ${results.length} units`);
+        console.log(`✅ Dashboard: Successfully fetched ${results.length} units`);
         return results;
-      } catch (error) {
-        console.error("📊 Dashboard: Error fetching units:", error);
+      } catch (error: any) {
+        console.error("❌ Dashboard: Units fetch failed:", error);
+        if (error.code === 'permission-denied') {
+          console.error("❌ Dashboard: Permission denied for units collection");
+        }
         throw error;
       }
     },
-    enabled: !!userRole && !!company,
+    enabled: !!firebaseUser && !authLoading,
     retry: 1,
     staleTime: 30000,
   });
 
   // Fetch alerts using direct Firebase calls
   const { data: activeAlerts = [], isLoading: alertsLoading } = useQuery({
-    queryKey: ["dashboard-alerts", company, userRole],
+    queryKey: ["dashboard-alerts", company, userRole, firebaseUser?.uid],
     queryFn: async () => {
-      console.log("🚨 Dashboard: Fetching alerts data directly from Firebase...");
+      console.log("🚨 Dashboard: Starting alerts fetch...");
+      
+      if (!firebaseUser) {
+        throw new Error("No authenticated user found");
+      }
       
       try {
         const alertsRef = collection(db, "alerts");
         let queryRef;
         
-        if (userRole === 'technician' || userRole === 'superadmin') {
-          // Technicians and superadmins can see all alerts
+        const isSuperadmin = userRole === 'superadmin' || 
+          firebaseUser.email === 'rob.istria@gmail.com' ||
+          firebaseUser.email === 'robert.slavec@gmail.com' ||
+          firebaseUser.email === 'aljaz.slavec@gmail.com';
+        
+        if (isSuperadmin || userRole === 'technician') {
           queryRef = alertsRef;
           console.log("🚨 Dashboard: Fetching all alerts for", userRole);
         } else {
-          // Other users filtered by company
           const userCompany = company || 'X-WATER';
           queryRef = query(alertsRef, where('company', '==', userCompany));
           console.log("🚨 Dashboard: Fetching alerts for company:", userCompany);
@@ -80,39 +107,45 @@ export function useSimpleDashboardData() {
           } as AlertData;
         });
         
-        // Filter for active alerts
         const activeFilteredAlerts = allAlerts.filter(alert => 
           alert.status === "warning" || alert.status === "urgent"
         );
         
-        console.log(`🚨 Dashboard: Successfully fetched ${activeFilteredAlerts.length} active alerts`);
+        console.log(`✅ Dashboard: Successfully fetched ${activeFilteredAlerts.length} active alerts`);
         return activeFilteredAlerts;
-      } catch (error) {
-        console.error("🚨 Dashboard: Error fetching alerts:", error);
+      } catch (error: any) {
+        console.error("❌ Dashboard: Alerts fetch failed:", error);
         throw error;
       }
     },
-    enabled: !!userRole && !!company,
+    enabled: !!firebaseUser && !authLoading,
     retry: 1,
     staleTime: 30000,
   });
 
   // Fetch filters using direct Firebase calls
   const { data: filtersNeedingChange = [], isLoading: filtersLoading } = useQuery({
-    queryKey: ["dashboard-filters", company, userRole],
+    queryKey: ["dashboard-filters", company, userRole, firebaseUser?.uid],
     queryFn: async () => {
-      console.log("🔧 Dashboard: Fetching filters data directly from Firebase...");
+      console.log("🔧 Dashboard: Starting filters fetch...");
+      
+      if (!firebaseUser) {
+        throw new Error("No authenticated user found");
+      }
       
       try {
         const filtersRef = collection(db, "filters");
         let queryRef;
         
-        if (userRole === 'technician' || userRole === 'superadmin') {
-          // Technicians and superadmins can see all filters
+        const isSuperadmin = userRole === 'superadmin' || 
+          firebaseUser.email === 'rob.istria@gmail.com' ||
+          firebaseUser.email === 'robert.slavec@gmail.com' ||
+          firebaseUser.email === 'aljaz.slavec@gmail.com';
+        
+        if (isSuperadmin || userRole === 'technician') {
           queryRef = filtersRef;
           console.log("🔧 Dashboard: Fetching all filters for", userRole);
         } else {
-          // Other users filtered by company
           const userCompany = company || 'X-WATER';
           queryRef = query(filtersRef, where('company', '==', userCompany));
           console.log("🔧 Dashboard: Fetching filters for company:", userCompany);
@@ -127,19 +160,18 @@ export function useSimpleDashboardData() {
           } as (FilterData & { status: string });
         });
         
-        // Filter for filters needing attention
         const filtersNeedingAttention = allFilters.filter(filter => 
           filter.status === "warning" || filter.status === "critical"
         );
         
-        console.log(`🔧 Dashboard: Successfully fetched ${filtersNeedingAttention.length} filters needing change`);
+        console.log(`✅ Dashboard: Successfully fetched ${filtersNeedingAttention.length} filters needing change`);
         return filtersNeedingAttention;
-      } catch (error) {
-        console.error("🔧 Dashboard: Error fetching filters:", error);
+      } catch (error: any) {
+        console.error("❌ Dashboard: Filters fetch failed:", error);
         throw error;
       }
     },
-    enabled: !!userRole && !!company,
+    enabled: !!firebaseUser && !authLoading,
     retry: 1,
     staleTime: 30000,
   });
@@ -150,8 +182,8 @@ export function useSimpleDashboardData() {
   }, 0);
   const formattedVolume = `${totalVolume}m³`;
   
-  const isLoading = unitsLoading || alertsLoading || filtersLoading;
-  const hasError = unitsError; // Only fail if units fail, since that's the most critical
+  const isLoading = unitsLoading || alertsLoading || filtersLoading || authLoading;
+  const hasError = unitsError;
 
   return {
     units,
