@@ -4,29 +4,20 @@ import { AlertCircle, CheckCircle, Loader2 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { DashboardStats } from "@/components/dashboard/DashboardStats";
 import { DashboardCharts } from "@/components/dashboard/DashboardCharts";
-import { useDataFiltering } from "@/utils/auth/dataFiltering";
-import { useDashboardData } from "@/hooks/dashboard/useDashboardData";
+import { useSimpleDashboard } from "@/hooks/useSimpleDashboard";
 
 const Dashboard = () => {
   const { userRole, company, authError, isLoading: authLoading, debugInfo } = useAuth();
-  const { isGlobalAccess } = useDataFiltering();
   
-  // Use our new custom hook to fetch dashboard data
   const { 
     units, 
-    alerts, 
-    isLoadingUnits, 
-    isLoadingAlerts, 
-    unitsError, 
-    alertsError,
-    activeUnits,
-    warningUnits,
-    errorUnits,
-    calculateTotalVolume
-  } = useDashboardData(company, userRole, isGlobalAccess);
+    activeAlerts, 
+    isLoading: dataLoading, 
+    hasError: dataError
+  } = useSimpleDashboard();
 
   // Show loading state while auth is being processed
-  if (authLoading) {
+  if (authLoading || dataLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="flex flex-col items-center space-y-4">
@@ -51,9 +42,7 @@ const Dashboard = () => {
             <div className="bg-gray-800 p-3 rounded text-xs text-gray-400">
               <p><strong>Email:</strong> {debugInfo.email}</p>
               <p><strong>UID:</strong> {debugInfo.uid}</p>
-              {debugInfo.claims && (
-                <p><strong>Role:</strong> {debugInfo.claims.role || 'None'}</p>
-              )}
+              <p><strong>Role:</strong> {debugInfo.role || 'None'}</p>
             </div>
           )}
           <button 
@@ -67,13 +56,8 @@ const Dashboard = () => {
     );
   }
 
-  // Show success message for successful auth
-  if (userRole) {
-    console.log("✅ Dashboard loading with user role:", userRole, "company:", company);
-  }
-
   // Show error state if data fetching failed
-  if (unitsError || alertsError) {
+  if (dataError) {
     return (
       <div className="flex items-center justify-center min-h-screen p-4">
         <Card className="p-6 max-w-md w-full">
@@ -81,9 +65,7 @@ const Dashboard = () => {
             <AlertCircle className="h-6 w-6 text-red-500" />
             <h2 className="text-lg font-semibold text-white">Data Loading Error</h2>
           </div>
-          <p className="text-gray-300 mb-4">
-            {unitsError ? "Failed to load units data" : "Failed to load alerts data"}
-          </p>
+          <p className="text-gray-300 mb-4">Failed to load dashboard data</p>
           <p className="text-sm text-gray-400 mb-4">
             Company: {company || 'Not set'} | Role: {userRole || 'Not set'}
           </p>
@@ -98,16 +80,10 @@ const Dashboard = () => {
     );
   }
 
-  if (isLoadingUnits || isLoadingAlerts) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="flex flex-col items-center space-y-4">
-          <Loader2 className="h-8 w-8 animate-spin text-blue-500" />
-          <p className="text-gray-400">Loading dashboard data...</p>
-        </div>
-      </div>
-    );
-  }
+  const totalVolume = units.reduce((sum, unit) => {
+    const volume = typeof unit.total_volume === 'string' ? parseFloat(unit.total_volume) || 0 : unit.total_volume || 0;
+    return sum + volume;
+  }, 0);
 
   return (
     <div className="space-y-6 animate-fadeIn">
@@ -125,9 +101,9 @@ const Dashboard = () => {
 
       <DashboardStats 
         unitsCount={units.length}
-        warningUnits={warningUnits}
-        alertsCount={alerts.length}
-        totalVolume={calculateTotalVolume(units)}
+        warningUnits={0}
+        alertsCount={activeAlerts.length}
+        totalVolume={totalVolume}
       />
 
       <DashboardCharts units={units} />

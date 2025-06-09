@@ -4,7 +4,6 @@ import { onAuthStateChanged, User as FirebaseUser } from "firebase/auth";
 import { doc, getDoc } from "firebase/firestore";
 import { auth, db } from "@/integrations/firebase/client";
 import { AppUser, UserRole } from "@/types/users";
-import { usePermissionsManager } from "@/hooks/auth/usePermissionsManager";
 
 export type PermissionLevel = "none" | "read" | "write" | "admin" | "full";
 
@@ -63,8 +62,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [currentUser, setCurrentUser] = useState<AppUser | null>(null);
   const [userRole, setUserRole] = useState<UserRole | null>(null);
   const [company, setCompany] = useState<string | null>(null);
-  
-  const permissions = usePermissionsManager(userRole, company);
 
   // Simplified check for superadmin
   const isKnownSuperadmin = (email: string | null): boolean => {
@@ -103,21 +100,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           role: userData.role || 'technician',
           company: userData.company || 'X-WATER',
           userData
-        };
-      }
-      
-      // Fallback to private users
-      const privateUserDoc = await getDoc(doc(db, 'app_users_privat', uid));
-      if (privateUserDoc.exists()) {
-        const userData = privateUserDoc.data() as AppUser;
-        console.log("✅ AuthContext: Found private user data");
-        return {
-          role: 'user' as UserRole,
-          company: 'private',
-          userData: {
-            ...userData,
-            role: 'user' as UserRole
-          }
         };
       }
       
@@ -216,6 +198,48 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return () => unsubscribe();
   }, []);
 
+  // Simplified permission functions
+  const hasPermission = (requiredLevel: PermissionLevel): boolean => {
+    if (userRole === 'superadmin') return true;
+    return false; // Simplified for now
+  };
+
+  const canAccessAllCompanies = (): boolean => {
+    return userRole === 'superadmin';
+  };
+
+  const canAccessCompany = (companyName: string): boolean => {
+    if (userRole === 'superadmin') return true;
+    return company === companyName;
+  };
+
+  const canEdit = (): boolean => {
+    return userRole === 'superadmin' || userRole === 'admin' || userRole === 'technician';
+  };
+
+  const canDelete = (): boolean => {
+    return userRole === 'superadmin' || userRole === 'admin';
+  };
+
+  const canManageUsers = (): boolean => {
+    return userRole === 'superadmin' || userRole === 'admin';
+  };
+
+  const canComment = (): boolean => {
+    return userRole !== 'user';
+  };
+
+  const canViewNavItem = (navItem: string): boolean => {
+    if (userRole === 'superadmin') return true;
+    
+    const restrictedItems = ['users', 'settings'];
+    if (restrictedItems.includes(navItem)) {
+      return userRole === 'admin' || userRole === 'superadmin';
+    }
+    
+    return true;
+  };
+
   const value: AuthContextType = {
     currentUser,
     firebaseUser,
@@ -225,7 +249,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     refreshUserSession,
     authError,
     debugInfo,
-    ...permissions
+    hasPermission,
+    canAccessAllCompanies,
+    canAccessCompany,
+    canEdit,
+    canDelete,
+    canManageUsers,
+    canComment,
+    canViewNavItem
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

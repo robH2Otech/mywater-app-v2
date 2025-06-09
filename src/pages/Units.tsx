@@ -1,15 +1,12 @@
 
-import { useQuery } from "@tanstack/react-query";
 import { Plus, Droplets } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { UnitCard } from "@/components/units/UnitCard";
 import { AddUnitDialog } from "@/components/units/AddUnitDialog";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
-import { collection, getDocs, orderBy, query } from "firebase/firestore";
-import { db } from "@/integrations/firebase/client";
-import { UnitData } from "@/types/analytics";
 import { useAuth } from "@/contexts/AuthContext";
+import { useSimpleUnits } from "@/hooks/useSimpleUnits";
 
 const Units = () => {
   const { toast } = useToast();
@@ -17,69 +14,16 @@ const Units = () => {
   const { company, userRole } = useAuth();
   const isSuperAdmin = userRole === 'superadmin';
   
-  const { data: units = [], isLoading } = useQuery({
-    queryKey: ["units", company, userRole],
-    queryFn: async () => {
-      try {
-        console.log("📋 Units: Fetching units for", isSuperAdmin ? "superadmin (ALL)" : `${userRole} (${company})`);
-        
-        const unitsCollection = collection(db, "units");
-        const unitsQuery = query(unitsCollection, orderBy("created_at", "desc"));
-        
-        const unitsSnapshot = await getDocs(unitsQuery);
-        
-        let allUnits = unitsSnapshot.docs.map(doc => {
-          const data = doc.data() as Record<string, any>;
-          return {
-            id: doc.id,
-            name: data.name,
-            status: data.status,
-            location: data.location,
-            total_volume: data.total_volume,
-            last_maintenance: data.last_maintenance,
-            next_maintenance: data.next_maintenance,
-            setup_date: data.setup_date,
-            uvc_hours: data.uvc_hours,
-            uvc_status: data.uvc_status,
-            uvc_installation_date: data.uvc_installation_date,
-            is_uvc_accumulated: data.is_uvc_accumulated,
-            contact_name: data.contact_name,
-            contact_email: data.contact_email,
-            contact_phone: data.contact_phone,
-            notes: data.notes,
-            created_at: data.created_at,
-            updated_at: data.updated_at,
-            eid: data.eid,
-            iccid: data.iccid,
-            unit_type: data.unit_type,
-            company: data.company || company
-          } as UnitData;
-        });
-        
-        // Simplified filtering logic
-        if (isSuperAdmin) {
-          console.log(`📋 Units: Superadmin sees ALL ${allUnits.length} units`);
-          return allUnits;
-        } else {
-          // Filter by company for other roles
-          const filteredUnits = allUnits.filter(unit => 
-            !unit.company || unit.company === company
-          );
-          console.log(`📋 Units: Filtered to ${filteredUnits.length} units for company: ${company}`);
-          return filteredUnits;
-        }
-      } catch (error) {
-        console.error("❌ Units: Error fetching units:", error);
-        toast({
-          title: "Error",
-          description: "Failed to fetch water units",
-          variant: "destructive",
-        });
-        throw error;
-      }
-    },
-    enabled: !!userRole,
-  });
+  const { data: units = [], isLoading, error } = useSimpleUnits();
+
+  if (error) {
+    console.error("❌ Units: Error loading units:", error);
+    toast({
+      title: "Error",
+      description: "Failed to fetch water units",
+      variant: "destructive",
+    });
+  }
 
   return (
     <div className="space-y-4 md:space-y-6 animate-fadeIn p-2 md:p-0">

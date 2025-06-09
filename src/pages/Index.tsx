@@ -5,19 +5,18 @@ import { IndexOverviewStats } from "@/components/dashboard/IndexOverviewStats";
 import { IndexLoadingState } from "@/components/dashboard/IndexLoadingState";
 import { IndexErrorState } from "@/components/dashboard/IndexErrorState";
 import { TechnicianDashboard } from "@/components/dashboard/TechnicianDashboard";
-import { useSimpleDashboardData } from "@/hooks/dashboard/useSimpleDashboardData";
+import { useSimpleDashboard } from "@/hooks/useSimpleDashboard";
 
 const Index = () => {
   const {
     units,
     activeAlerts,
-    filtersNeedingChange,
     formattedVolume,
     isLoading,
     hasError,
     company,
     userRole,
-  } = useSimpleDashboardData();
+  } = useSimpleDashboard();
 
   // Show loading state
   if (isLoading) {
@@ -34,7 +33,7 @@ const Index = () => {
     return (
       <TechnicianDashboard
         unitsCount={units.length}
-        filtersCount={filtersNeedingChange.length}
+        filtersCount={0}
         alertsCount={activeAlerts.length}
         formattedVolume={formattedVolume}
         units={units}
@@ -48,7 +47,7 @@ const Index = () => {
       {/* Overview Statistics */}
       <IndexOverviewStats
         unitsCount={units.length}
-        filtersCount={filtersNeedingChange.length}
+        filtersCount={0}
         alertsCount={activeAlerts.length}
         formattedVolume={formattedVolume}
       />
