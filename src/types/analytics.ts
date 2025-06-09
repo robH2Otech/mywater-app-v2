@@ -6,6 +6,7 @@ export interface UnitData {
   name?: string;
   location?: string;
   status?: string;
+  company?: string;
   total_volume?: number | string;
   last_maintenance?: string;
   next_maintenance?: string;

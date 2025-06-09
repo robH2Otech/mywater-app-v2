@@ -83,6 +83,48 @@ export const initializeUserClaims = async (): Promise<boolean> => {
 };
 
 /**
+ * Set custom claims for a specific user
+ */
+export const setUserClaims = async (params: {
+  userId: string;
+  role: string;
+  company: string;
+}): Promise<boolean> => {
+  try {
+    console.log("Setting claims for user:", params.userId, params.role, params.company);
+    
+    const setClaimsFunction = httpsCallable(functions, 'setUserClaims');
+    await setClaimsFunction(params);
+    
+    return true;
+  } catch (error) {
+    console.error("Error setting user claims:", error);
+    throw error;
+  }
+};
+
+/**
+ * Migrate all users to have proper claims
+ */
+export const migrateAllUserClaims = async (): Promise<{
+  migrated: number;
+  skipped: number;
+  errors: number;
+}> => {
+  try {
+    console.log("Starting user migration...");
+    
+    const migrateFunction = httpsCallable(functions, 'migrateAllUsers');
+    const result = await migrateFunction({});
+    
+    return result.data as any;
+  } catch (error) {
+    console.error("Error migrating users:", error);
+    throw error;
+  }
+};
+
+/**
  * Set custom claims for superadmin users
  */
 export const setSuperadminClaims = async (): Promise<boolean> => {
