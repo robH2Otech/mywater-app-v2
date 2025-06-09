@@ -1,10 +1,34 @@
 
 import { auth } from "@/integrations/firebase/client";
-import { httpsCallable } from "firebase/functions";
-import { functions } from "@/integrations/firebase/client";
+import { refreshUserToken, getCurrentUserClaims, initializeUserClaims } from "./claimsService";
+import { logAuditEvent } from "@/utils/auth/securityUtils";
 
 /**
- * Verify if user has valid claims in their JWT token
+ * Force refresh the current user's token to ensure latest claims are available
+ * This is crucial after claims have been updated on the server
+ */
+export const refreshUserClaims = async (): Promise<boolean> => {
+  try {
+    const refreshed = await refreshUserToken();
+    if (refreshed) {
+      console.log("User claims refreshed successfully");
+      
+      // Log this event for security audit
+      logAuditEvent('claims_refresh', {
+        action: 'manual_token_refresh',
+        timestamp: new Date().toISOString()
+      });
+    }
+    return refreshed;
+  } catch (error) {
+    console.error("Error refreshing user claims:", error);
+    return false;
+  }
+};
+
+/**
+ * Verify that a user has the expected claims and roles
+ * This should be called after login and token refresh
  */
 export const verifyUserClaims = async (): Promise<{
   hasValidClaims: boolean;
@@ -16,83 +40,96 @@ export const verifyUserClaims = async (): Promise<{
     if (!user) {
       return { hasValidClaims: false, role: null, company: null };
     }
-
-    const idTokenResult = await user.getIdTokenResult();
-    const role = idTokenResult.claims.role as string || null;
-    const company = idTokenResult.claims.company as string || null;
     
-    console.log("🔍 Token claims check:", { role, company, email: user.email });
+    // Get the latest claims
+    const { role, company } = await getCurrentUserClaims();
     
-    return { 
-      hasValidClaims: Boolean(role && company), 
-      role, 
-      company 
+    console.log("Current user claims verification:", {
+      uid: user.uid,
+      email: user.email,
+      role,
+      company,
+      hasValidClaims: !!role
+    });
+    
+    return {
+      hasValidClaims: !!role, // Must have at least a role to be valid
+      role,
+      company
     };
   } catch (error) {
-    console.error("❌ Error verifying user claims:", error);
+    console.error("Error verifying user claims:", error);
     return { hasValidClaims: false, role: null, company: null };
   }
 };
 
 /**
- * Refresh user claims by forcing token refresh
+ * Check if token refresh is needed and then refresh
+ * Called when authentication state seems incomplete
  */
-export const refreshUserClaims = async (): Promise<boolean> => {
-  try {
-    const user = auth.currentUser;
-    if (!user) {
-      console.log("⚠️ No authenticated user to refresh claims for");
-      return false;
+export const checkAndRefreshUserClaims = async () => {
+  const { hasValidClaims, role, company } = await verifyUserClaims();
+  
+  if (!hasValidClaims) {
+    console.log("Missing or invalid claims detected, attempting refresh...");
+    
+    // First try to refresh token
+    const refreshed = await refreshUserClaims();
+    
+    if (refreshed) {
+      // Verify again after refresh
+      const refreshResult = await verifyUserClaims();
+      
+      if (!refreshResult.hasValidClaims) {
+        console.log("Still no valid claims after refresh, attempting initialization...");
+        await initializeUserClaims();
+        
+        // Final verification
+        return await verifyUserClaims();
+      }
+      
+      return refreshResult;
     }
-    
-    console.log("🔄 Refreshing user token...");
-    await user.getIdToken(true);
-    console.log("✅ User token refreshed successfully");
-    
-    return true;
-  } catch (error) {
-    console.error("❌ Error refreshing user claims:", error);
-    return false;
   }
+  
+  return { hasValidClaims, role, company };
 };
 
 /**
- * Initialize claims for users who don't have them
- * This function tries to call the cloud function or sets default values
+ * Complete user setup with proper claims
+ * This function should be called when a user needs to be fully initialized
  */
-export const initializeUserClaims = async (): Promise<boolean> => {
+export const completeUserSetup = async (): Promise<boolean> => {
   try {
     const user = auth.currentUser;
-    if (!user) return false;
-    
-    console.log("🔧 Initializing claims for user:", user.email);
-    
-    // Try to call the cloud function
-    try {
-      const initClaimsFunction = httpsCallable(functions, 'initializeUserClaims');
-      const result = await initClaimsFunction({});
-      console.log("✅ Claims initialized via cloud function:", result.data);
-      return true;
-    } catch (cloudFunctionError) {
-      console.log("⚠️ Cloud function not available, using fallback approach");
-      
-      // Fallback: For specific known emails, we assume they are technicians for X-WATER
-      const knownTechnicianEmails = [
-        'sara.kovac@gmail.com',
-        'technician@x-water.com'
-      ];
-      
-      if (user.email && knownTechnicianEmails.includes(user.email.toLowerCase())) {
-        console.log("🔧 Applying fallback technician role for:", user.email);
-        // Note: We can't actually set custom claims from the client
-        // But we can proceed with the assumption that this user is a technician
-        return true;
-      }
-      
+    if (!user) {
+      console.log("No authenticated user for setup");
       return false;
     }
+    
+    console.log("Starting complete user setup for:", user.email);
+    
+    // Step 1: Verify current claims
+    const { hasValidClaims } = await verifyUserClaims();
+    
+    if (hasValidClaims) {
+      console.log("User already has valid claims");
+      return true;
+    }
+    
+    // Step 2: Initialize claims if missing
+    const initialized = await initializeUserClaims();
+    
+    if (initialized) {
+      console.log("User claims initialized successfully");
+      return true;
+    }
+    
+    console.log("Failed to initialize user claims");
+    return false;
+    
   } catch (error) {
-    console.error("❌ Error initializing user claims:", error);
+    console.error("Error in complete user setup:", error);
     return false;
   }
 };

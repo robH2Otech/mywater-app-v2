@@ -1,58 +1,115 @@
-
-import { WaterUsageChart } from "@/components/dashboard/WaterUsageChart";
+import { useQuery } from "@tanstack/react-query";
+import { Bell, Droplets, Filter, Lightbulb, TrendingUp } from "lucide-react";
+import { useUnits } from "@/hooks/useUnits";
+import { Card } from "@/components/ui/card";
 import { RecentAlerts } from "@/components/dashboard/RecentAlerts";
-import { IndexOverviewStats } from "@/components/dashboard/IndexOverviewStats";
-import { IndexLoadingState } from "@/components/dashboard/IndexLoadingState";
-import { IndexErrorState } from "@/components/dashboard/IndexErrorState";
-import { TechnicianDashboard } from "@/components/dashboard/TechnicianDashboard";
-import { useSimpleDashboard } from "@/hooks/useSimpleDashboard";
+import { StatCard } from "@/components/dashboard/StatCard";
+import { WaterUsageChart } from "@/components/dashboard/WaterUsageChart";
+import { collection, getDocs, query, where } from "firebase/firestore";
+import { db } from "@/integrations/firebase/client";
+import { formatThousands } from "@/utils/measurements/formatUtils";
+import { useEffect, useState } from "react";
+import { fetchUnitTotalVolumes } from "@/utils/measurements/unitVolumeUtils";
 
 const Index = () => {
-  const {
-    units,
-    activeAlerts,
-    formattedVolume,
-    isLoading,
-    hasError,
-    company,
-    userRole,
-  } = useSimpleDashboard();
-
-  // Show loading state
-  if (isLoading) {
-    return <IndexLoadingState />;
-  }
-
-  // Show error state only if critical error
-  if (hasError) {
-    return <IndexErrorState company={company} userRole={userRole} />;
-  }
-
-  // Show simplified dashboard for technicians
-  if (userRole === 'technician') {
-    return (
-      <TechnicianDashboard
-        unitsCount={units.length}
-        filtersCount={0}
-        alertsCount={activeAlerts.length}
-        formattedVolume={formattedVolume}
-        units={units}
-      />
-    );
-  }
-
-  // Standard dashboard for other roles
-  return (
-    <div className="space-y-6 animate-fadeIn">
-      {/* Overview Statistics */}
-      <IndexOverviewStats
-        unitsCount={units.length}
-        filtersCount={0}
-        alertsCount={activeAlerts.length}
-        formattedVolume={formattedVolume}
-      />
+  const [totalVolume, setTotalVolume] = useState(0);
+  const [isVolumeLoading, setIsVolumeLoading] = useState(true);
+  
+  const { data: units = [], isLoading: unitsLoading } = useUnits();
+  
+  useEffect(() => {
+    const loadTotalVolumes = async () => {
+      if (units && units.length > 0) {
+        setIsVolumeLoading(true);
+        try {
+          const totalVol = await fetchUnitTotalVolumes(units.map(unit => unit.id));
+          setTotalVolume(totalVol);
+        } catch (error) {
+          console.error("Error fetching total volumes:", error);
+        } finally {
+          setIsVolumeLoading(false);
+        }
+      } else {
+        setTotalVolume(0);
+        setIsVolumeLoading(false);
+      }
+    };
+    
+    loadTotalVolumes();
+  }, [units]);
+  
+  const { data: activeAlerts = [], isLoading: alertsLoading } = useQuery({
+    queryKey: ["active-alerts-count"],
+    queryFn: async () => {
+      const alertsQuery = query(
+        collection(db, "alerts"),
+        where("status", "in", ["warning", "urgent"])
+      );
       
-      {/* Charts and Alerts */}
+      const alertsSnapshot = await getDocs(alertsQuery);
+      return alertsSnapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      }));
+    },
+  });
+  
+  const { data: filtersNeedingChange = [], isLoading: filtersLoading } = useQuery({
+    queryKey: ["filters-needing-change"],
+    queryFn: async () => {
+      const filtersQuery = query(
+        collection(db, "filters"),
+        where("status", "in", ["warning", "critical"])
+      );
+      
+      const filtersSnapshot = await getDocs(filtersQuery);
+      return filtersSnapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      }));
+    },
+  });
+  
+  const isLoading = unitsLoading || alertsLoading || filtersLoading || isVolumeLoading;
+  
+  const formattedVolume = totalVolume ? `${formatThousands(totalVolume)}m³` : "0m³";
+
+  return (
+    <div className="space-y-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <StatCard
+          title="Total Units"
+          value={units.length.toString()}
+          icon={<Droplets />}
+          link="/units"
+          iconColor="text-mywater-blue"
+        />
+        
+        <StatCard
+          title="Filter Changes Required"
+          value={filtersNeedingChange.length.toString()}
+          icon={<Filter />}
+          link="/filters"
+          iconColor="text-yellow-500"
+        />
+        
+        <StatCard
+          title="Active Alerts"
+          value={activeAlerts.length.toString()}
+          icon={<Bell />}
+          link="/alerts"
+          iconColor="text-red-500"
+        />
+        
+        <StatCard
+          title="Total Volume Today"
+          value={formattedVolume}
+          icon={<TrendingUp />}
+          link="/analytics"
+          iconColor="text-mywater-blue"
+        />
+      </div>
+      
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <WaterUsageChart units={units} />
         <RecentAlerts />

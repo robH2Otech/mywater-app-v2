@@ -23,7 +23,6 @@ export interface UnitData {
   eid?: string;
   iccid?: string;
   unit_type?: string;
-  company?: string; // Added company property
 }
 
 export interface FilterData {
@@ -39,7 +38,6 @@ export interface FilterData {
   notes?: string;
   created_at?: string;
   updated_at?: string;
-  company?: string; // Added company property
 }
 
 export interface AlertData {
@@ -49,7 +47,6 @@ export interface AlertData {
   status?: string;
   created_at?: string;
   updated_at?: string;
-  company?: string; // Added company property
 }
 
 export interface ReportData {
@@ -60,7 +57,6 @@ export interface ReportData {
   measurements?: any[];
   generated_by: string;
   created_at: string;
-  company?: string; // Added company property
   [key: string]: any;
 }
 
@@ -71,5 +67,4 @@ export interface MeasurementData {
   temperature: number;
   cumulative_volume?: number;
   uvc_hours?: number;
-  company?: string; // Added company property
 }

@@ -1,5 +1,5 @@
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { PageHeader } from "@/components/shared/PageHeader";
 import { LoadingSkeleton } from "@/components/shared/LoadingSkeleton";
 import { UVCList } from "@/components/uvc/UVCList";
@@ -19,15 +19,26 @@ const UVC = () => {
   const { toast } = useToast();
   const { syncAllUnits, isSyncing } = useSyncUVCData();
 
+  // Function to manually refresh UVC data with improved sync
   const handleRefresh = useCallback(async () => {
     setIsRefreshing(true);
     try {
+      // Invalidate queries to ensure fresh data
       await queryClient.invalidateQueries({ queryKey: ["uvc-units"] });
+      await queryClient.invalidateQueries({ queryKey: ["units"] });
+      await queryClient.invalidateQueries({ queryKey: ["measurements"] });
+      
+      // First sync all units to update unit records with latest measurement data
+      if (units.length > 0) {
+        await syncAllUnits(units);
+      }
+      
+      // Explicitly refetch UVC data
       await refetch();
       
       toast({
         title: "Data refreshed",
-        description: "UVC data has been refreshed successfully",
+        description: "UVC data has been synchronized with latest measurements",
       });
     } catch (error) {
       console.error("Error refreshing UVC data:", error);
@@ -39,40 +50,27 @@ const UVC = () => {
     } finally {
       setIsRefreshing(false);
     }
-  }, [queryClient, refetch, toast]);
+  }, [queryClient, refetch, toast, syncAllUnits, units]);
+
+  // Auto-sync when component mounts
+  useEffect(() => {
+    const initialSync = async () => {
+      if (!isLoading && units.length > 0 && !isRefreshing && !isSyncing) {
+        console.log("Performing initial UVC data sync...");
+        await handleRefresh();
+      }
+    };
+    
+    initialSync();
+  }, [isLoading, units.length]); // Run when loading completes and units are available
 
   if (error) {
-    return (
-      <div className="space-y-6">
-        <PageHeader
-          title="UVC Maintenance"
-          description="Track and manage UVC bulb lifetime and maintenance schedules"
-          icon={Lightbulb}
-        />
-        <div className="bg-red-900/20 border-red-800 p-6 rounded-lg">
-          <div className="text-center text-red-400 py-8">
-            Error loading UVC data: {error instanceof Error ? error.message : 'Unknown error'}
-            <br />
-            <span className="text-sm text-gray-500 mt-2">
-              This may be a permissions issue. Please contact your administrator.
-            </span>
-          </div>
-        </div>
-      </div>
-    );
+    console.error("Error in UVC component:", error);
+    return <div>Error loading UVC data. Please try again.</div>;
   }
 
   if (isLoading) {
-    return (
-      <div className="space-y-6">
-        <PageHeader
-          title="UVC Maintenance"
-          description="Track and manage UVC bulb lifetime and maintenance schedules"
-          icon={Lightbulb}
-        />
-        <LoadingSkeleton />
-      </div>
-    );
+    return <LoadingSkeleton />;
   }
 
   return (
@@ -89,7 +87,7 @@ const UVC = () => {
           className="bg-mywater-blue hover:bg-mywater-blue/90 text-white flex items-center gap-2"
         >
           <RefreshCw className={`h-4 w-4 ${isRefreshing || isSyncing ? 'animate-spin' : ''}`} />
-          {isRefreshing || isSyncing ? "Refreshing..." : "Refresh Data"}
+          {isRefreshing || isSyncing ? "Syncing..." : "Refresh Data"}
         </Button>
       </div>
       
