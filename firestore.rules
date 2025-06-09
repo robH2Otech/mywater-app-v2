@@ -7,66 +7,16 @@ service cloud.firestore {
       return request.auth != null;
     }
     
-    function getUserRole() {
-      return request.auth != null && 'role' in request.auth.token ? request.auth.token.role : '';
-    }
-    
-    function getUserCompany() {
-      return request.auth != null && 'company' in request.auth.token ? request.auth.token.company : '';
-    }
-    
     function getUserEmail() {
       return request.auth != null ? request.auth.token.email : '';
     }
     
     function isSuperAdmin() {
-      return isAuthenticated() && (
-        getUserRole() == 'superadmin' ||
-        // Fallback for known superadmin emails when JWT claims are missing
-        getUserEmail() in [
-          'rob.istria@gmail.com',
-          'robert.slavec@gmail.com', 
-          'aljaz.slavec@gmail.com'
-        ]
-      );
-    }
-    
-    function isAdmin() {
-      return isAuthenticated() && (getUserRole() == 'admin' || isSuperAdmin());
-    }
-    
-    function isTechnician() {
-      return isAuthenticated() && (getUserRole() == 'technician' || isAdmin());
-    }
-    
-    function canAccessCompany(companyId) {
-      return isSuperAdmin() || getUserCompany() == companyId;
-    }
-    
-    // Enhanced function to check access when JWT claims might be missing
-    function canAccessData(resourceCompany) {
-      // Always allow superadmin (including email-based fallback)
-      if (isSuperAdmin()) return true;
-      
-      // If user has JWT claims, use them
-      if (getUserRole() != '' && getUserCompany() != '') {
-        return getUserCompany() == resourceCompany;
-      }
-      
-      // Fallback: allow access for authenticated users when resource has no company or matches known companies
-      return isAuthenticated() && (resourceCompany == null || resourceCompany == '' || resourceCompany == 'X-WATER');
-    }
-    
-    function isValidRole(role) {
-      return role in ['superadmin', 'admin', 'technician', 'user'];
-    }
-    
-    function isValidEmail(email) {
-      return email.matches('.*@.*\\..*');
-    }
-    
-    function isOwner(userId) {
-      return isAuthenticated() && request.auth.uid == userId;
+      return isAuthenticated() && getUserEmail() in [
+        'rob.istria@gmail.com',
+        'robert.slavec@gmail.com', 
+        'aljaz.slavec@gmail.com'
+      ];
     }
     
     // GLOBAL SUPERADMIN RULE - SUPERADMIN CAN DO EVERYTHING EVERYWHERE
@@ -74,24 +24,38 @@ service cloud.firestore {
       allow read, write, create, update, delete: if isSuperAdmin();
     }
     
+    // Simple authenticated access for all other users
+    match /units/{unitId} {
+      allow read, write, create, update, delete: if isAuthenticated();
+    }
+    
+    match /measurements/{measurementId} {
+      allow read, write, create, update, delete: if isAuthenticated();
+    }
+    
+    match /alerts/{alertId} {
+      allow read, write, create, update, delete: if isAuthenticated();
+    }
+    
+    match /filters/{filterId} {
+      allow read, write, create, update, delete: if isAuthenticated();
+    }
+    
+    match /client_requests/{requestId} {
+      allow read, write, create, update, delete: if isAuthenticated();
+    }
+    
+    match /locations/{locationId} {
+      allow read, write, create, update, delete: if isAuthenticated();
+    }
+    
+    match /reports/{reportId} {
+      allow read, write, create, update, delete: if isAuthenticated();
+    }
+    
     // Business users collection
     match /app_users_business/{userId} {
-      allow read: if isAuthenticated() && (
-        request.auth.uid == userId ||
-        isAdmin() && canAccessCompany(resource.data.company)
-      );
-      
-      allow create: if isAuthenticated() && (
-        (request.auth.uid == userId && isValidRole(request.resource.data.role) && isValidEmail(request.resource.data.email)) ||
-        (isAdmin() && canAccessCompany(request.resource.data.company) && isValidRole(request.resource.data.role))
-      );
-      
-      allow update: if isAuthenticated() && (
-        (request.auth.uid == userId && request.resource.data.role == resource.data.role) ||
-        (isAdmin() && canAccessCompany(resource.data.company) && isValidRole(request.resource.data.role))
-      );
-      
-      allow delete: if isAdmin() && canAccessCompany(resource.data.company);
+      allow read, write, create, update, delete: if isAuthenticated();
     }
     
     // Private users collection
@@ -99,82 +63,19 @@ service cloud.firestore {
       allow read, write: if isAuthenticated() && request.auth.uid == userId;
     }
     
-    // Company-based data access
-    match /units/{unitId} {
-      allow read: if isAuthenticated() && canAccessData(resource.data.company);
-      allow write: if isTechnician() && canAccessCompany(resource.data.company);
-      allow create: if isTechnician() && canAccessCompany(request.resource.data.company);
-      allow delete: if isAdmin() && canAccessCompany(resource.data.company);
-    }
-    
-    // IoT data collection - allow unauthenticated writes for testing
-    match /units/{unitId}/data/{docId} {
-      allow read: if false;
-      allow write: if request.auth == null;
-    }
-    
-    match /measurements/{measurementId} {
-      allow read: if isAuthenticated() && canAccessData(resource.data.company);
-      allow write: if isTechnician() && canAccessCompany(resource.data.company);
-      allow create: if isTechnician() && canAccessCompany(request.resource.data.company);
-    }
-    
-    match /alerts/{alertId} {
-      allow read: if isAuthenticated() && canAccessData(resource.data.company);
-      allow write: if isTechnician() && canAccessCompany(resource.data.company);
-      allow create: if isTechnician() && canAccessCompany(request.resource.data.company);
-      allow delete: if isAdmin() && canAccessCompany(resource.data.company);
-    }
-    
-    match /filters/{filterId} {
-      allow read: if isAuthenticated() && canAccessData(resource.data.company);
-      allow write: if isTechnician() && canAccessCompany(resource.data.company);
-      allow create: if isTechnician() && canAccessCompany(request.resource.data.company);
-      allow delete: if isAdmin() && canAccessCompany(resource.data.company);
-    }
-    
-    match /client_requests/{requestId} {
-      allow read: if isAuthenticated() && canAccessData(resource.data.company);
-      allow write: if isAuthenticated() && canAccessData(resource.data.company);
-      allow create: if isAuthenticated() && canAccessData(request.resource.data.company);
-    }
-    
-    match /locations/{locationId} {
-      allow read: if isAuthenticated() && canAccessData(resource.data.company);
-      allow write: if isTechnician() && canAccessCompany(resource.data.company);
-      allow create: if isTechnician() && canAccessCompany(request.resource.data.company);
-    }
-    
-    // Location history with automatic cleanup
-    match /locationHistory/{historyId} {
-      allow read: if isAuthenticated() && canAccessData(resource.data.company);
-      allow write: if false; // Only functions can write location history
-      allow create: if false; // Only functions can create location history
-      allow delete: if false; // Only automatic cleanup
-    }
-    
-    match /reports/{reportId} {
-      allow read: if isAuthenticated() && canAccessData(resource.data.company);
-      allow create: if isAuthenticated() && canAccessData(request.resource.data.company);
-      allow update, delete: if isAdmin() && canAccessCompany(resource.data.company);
-    }
-    
     // Orders - private users can see their own orders
     match /orders/{orderId} {
-      allow read: if isAuthenticated() && isOwner(resource.data.user_id);
+      allow read: if isAuthenticated() && isAuthenticated() && request.auth.uid == resource.data.user_id;
       allow write: if false; // Only functions can write orders
     }
     
     // Referral system
     match /referral_codes/{codeId} {
-      allow read: if isAuthenticated() && isOwner(resource.data.user_id);
-      allow create: if isAuthenticated() && isOwner(request.resource.data.user_id);
-      allow update: if isAuthenticated() && isOwner(resource.data.user_id);
-      allow delete: if isAuthenticated() && isOwner(resource.data.user_id);
+      allow read, write, create, update, delete: if isAuthenticated() && request.auth.uid == resource.data.user_id;
     }
     
     match /referrals/{referralId} {
-      allow read: if isAuthenticated() && isOwner(resource.data.referrer_id);
+      allow read: if isAuthenticated() && request.auth.uid == resource.data.referrer_id;
       allow write: if false; // Only functions can write referrals
     }
     
@@ -187,13 +88,21 @@ service cloud.firestore {
     
     // System notifications
     match /notifications/{notificationId} {
-      allow read: if isAuthenticated() && (
-        isOwner(resource.data.user_id) || 
-        canAccessData(resource.data.company)
-      );
-      allow create: if isAuthenticated();
-      allow update: if isAuthenticated() && isOwner(resource.data.user_id);
-      allow delete: if isAuthenticated() && isOwner(resource.data.user_id);
+      allow read, write, create, update, delete: if isAuthenticated();
+    }
+    
+    // IoT data collection - allow unauthenticated writes for testing
+    match /units/{unitId}/data/{docId} {
+      allow read: if false;
+      allow write: if request.auth == null;
+    }
+    
+    // Location history with automatic cleanup
+    match /locationHistory/{historyId} {
+      allow read: if isAuthenticated();
+      allow write: if false; // Only functions can write location history
+      allow create: if false; // Only functions can create location history
+      allow delete: if false; // Only automatic cleanup
     }
   }
 }

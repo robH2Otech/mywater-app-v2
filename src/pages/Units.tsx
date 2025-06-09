@@ -21,12 +21,14 @@ const Units = () => {
     queryKey: ["units", company, userRole],
     queryFn: async () => {
       try {
+        console.log("📋 Units: Fetching units for", isSuperAdmin ? "superadmin (ALL)" : `${userRole} (${company})`);
+        
         const unitsCollection = collection(db, "units");
         const unitsQuery = query(unitsCollection, orderBy("created_at", "desc"));
         
         const unitsSnapshot = await getDocs(unitsQuery);
         
-        const allUnits = unitsSnapshot.docs.map(doc => {
+        let allUnits = unitsSnapshot.docs.map(doc => {
           const data = doc.data() as Record<string, any>;
           return {
             id: doc.id,
@@ -50,25 +52,24 @@ const Units = () => {
             eid: data.eid,
             iccid: data.iccid,
             unit_type: data.unit_type,
-            company: data.company || company // Use user's company if unit has no company field
+            company: data.company || company
           } as UnitData;
         });
         
-        // Filter client-side for better compatibility
-        let filteredUnits;
+        // Simplified filtering logic
         if (isSuperAdmin) {
-          // Superadmin sees all units
-          filteredUnits = allUnits;
+          console.log(`📋 Units: Superadmin sees ALL ${allUnits.length} units`);
+          return allUnits;
         } else {
-          // Filter by company for other roles - include units with no company field
-          filteredUnits = allUnits.filter(unit => 
+          // Filter by company for other roles
+          const filteredUnits = allUnits.filter(unit => 
             !unit.company || unit.company === company
           );
+          console.log(`📋 Units: Filtered to ${filteredUnits.length} units for company: ${company}`);
+          return filteredUnits;
         }
-        
-        return filteredUnits;
       } catch (error) {
-        console.error("Error fetching units:", error);
+        console.error("❌ Units: Error fetching units:", error);
         toast({
           title: "Error",
           description: "Failed to fetch water units",
@@ -77,7 +78,7 @@ const Units = () => {
         throw error;
       }
     },
-    enabled: !!userRole && !!company,
+    enabled: !!userRole,
   });
 
   return (
@@ -87,7 +88,7 @@ const Units = () => {
           <h1 className="text-xl md:text-2xl font-bold text-white">Water Units</h1>
           <p className="text-sm md:text-base text-gray-400">
             Manage and monitor your water treatment units
-            {company && ` for ${company}`}
+            {isSuperAdmin ? ' (ALL COMPANIES)' : (company && ` for ${company}`)}
           </p>
         </div>
         <Button 
@@ -110,7 +111,8 @@ const Units = () => {
           <Droplets className="h-12 w-12 text-gray-400 mx-auto mb-4" />
           <h3 className="text-lg font-medium text-white mb-2">No Units Found</h3>
           <p className="text-gray-400 mb-4">
-            {company ? `No water units found for ${company}` : 'No water units found'}
+            {isSuperAdmin ? 'No water units found in the system' : 
+             (company ? `No water units found for ${company}` : 'No water units found')}
           </p>
           <Button 
             onClick={() => setIsAddUnitOpen(true)}

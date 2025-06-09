@@ -1,6 +1,6 @@
 
 import { useQuery } from "@tanstack/react-query";
-import { collection, getDocs, query, where, orderBy } from "firebase/firestore";
+import { collection, getDocs, query, orderBy } from "firebase/firestore";
 import { db } from "@/integrations/firebase/client";
 import { UnitData } from "@/types/analytics";
 import { useAuth } from "@/contexts/AuthContext";
@@ -25,35 +25,25 @@ export function useUnits() {
       
       try {
         const unitsRef = collection(db, "units");
-        let queryRef;
         
-        // Enhanced logging for superadmin detection
-        const isSuperadmin = userRole === 'superadmin' || 
-          firebaseUser.email === 'rob.istria@gmail.com' ||
-          firebaseUser.email === 'robert.slavec@gmail.com' ||
-          firebaseUser.email === 'aljaz.slavec@gmail.com';
+        // Simplified logic: superadmins get ALL data, others get filtered data
+        const isSuperadmin = userRole === 'superadmin';
         
         console.log("📋 useUnits: Is superadmin?", isSuperadmin);
         
+        // Always use simple orderBy query - no company filtering in Firestore
+        const queryRef = query(unitsRef, orderBy("name", "asc"));
+        
         if (isSuperadmin) {
-          // Superadmins can see all data
-          queryRef = query(unitsRef, orderBy("name", "asc"));
           console.log("📋 useUnits: Fetching ALL units for superadmin");
-        } else if (userRole === 'technician') {
-          // Technicians can see all data but query with order
-          queryRef = query(unitsRef, orderBy("name", "asc"));
-          console.log("📋 useUnits: Fetching all units for technician");
         } else {
-          // Other users filtered by company
-          const userCompany = company || 'X-WATER';
-          queryRef = query(unitsRef, where('company', '==', userCompany), orderBy("name", "asc"));
-          console.log("📋 useUnits: Fetching units for company:", userCompany);
+          console.log("📋 useUnits: Fetching units (will filter client-side if needed)");
         }
         
         console.log("📋 useUnits: Executing Firestore query...");
         const snapshot = await getDocs(queryRef);
         
-        const units = snapshot.docs.map(doc => {
+        let units = snapshot.docs.map(doc => {
           const data = doc.data() as Record<string, any>;
           return {
             id: doc.id,
@@ -61,23 +51,19 @@ export function useUnits() {
           } as UnitData;
         });
         
+        // Client-side filtering for non-superadmins (if needed)
+        if (!isSuperadmin && company) {
+          const originalLength = units.length;
+          units = units.filter(unit => !unit.company || unit.company === company);
+          console.log(`📋 useUnits: Filtered from ${originalLength} to ${units.length} units for company: ${company}`);
+        }
+        
         console.log(`✅ useUnits: Successfully fetched ${units.length} units`);
         console.log("📋 useUnits: Sample unit data:", units[0] || "No units found");
         
         return units;
       } catch (error: any) {
         console.error("❌ useUnits: Firestore query failed:", error);
-        console.error("❌ useUnits: Error details:", {
-          code: error.code,
-          message: error.message,
-          stack: error.stack
-        });
-        
-        // Enhanced error reporting
-        if (error.code === 'permission-denied') {
-          console.error("❌ useUnits: Permission denied - check Firestore rules and user authentication");
-        }
-        
         throw error;
       }
     },

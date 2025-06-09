@@ -1,6 +1,6 @@
 
 import { useQuery } from "@tanstack/react-query";
-import { collection, getDocs, query, where, orderBy } from "firebase/firestore";
+import { collection, getDocs, query, orderBy } from "firebase/firestore";
 import { db } from "@/integrations/firebase/client";
 import { AlertData, FilterData, UnitData } from "@/types/analytics";
 import { useAuth } from "@/contexts/AuthContext";
@@ -8,7 +8,7 @@ import { useAuth } from "@/contexts/AuthContext";
 export function useSimpleDashboardData() {
   const { company, userRole, firebaseUser, isLoading: authLoading } = useAuth();
 
-  // Fetch units using direct Firebase calls
+  // Fetch units
   const { data: units = [], isLoading: unitsLoading, error: unitsError } = useQuery({
     queryKey: ["dashboard-units", company, userRole, firebaseUser?.uid],
     queryFn: async () => {
@@ -26,28 +26,15 @@ export function useSimpleDashboardData() {
       
       try {
         const unitsRef = collection(db, "units");
-        let queryRef;
+        const isSuperadmin = userRole === 'superadmin';
         
-        // Enhanced superadmin detection
-        const isSuperadmin = userRole === 'superadmin' || 
-          firebaseUser.email === 'rob.istria@gmail.com' ||
-          firebaseUser.email === 'robert.slavec@gmail.com' ||
-          firebaseUser.email === 'aljaz.slavec@gmail.com';
+        // Simple query without any Firestore filtering
+        const queryRef = query(unitsRef, orderBy("name", "asc"));
         
-        if (isSuperadmin) {
-          queryRef = query(unitsRef, orderBy("name", "asc"));
-          console.log("📊 Dashboard: Fetching ALL units for superadmin");
-        } else if (userRole === 'technician') {
-          queryRef = query(unitsRef, orderBy("name", "asc"));
-          console.log("📊 Dashboard: Fetching all units for technician");
-        } else {
-          const userCompany = company || 'X-WATER';
-          queryRef = query(unitsRef, where('company', '==', userCompany), orderBy("name", "asc"));
-          console.log("📊 Dashboard: Fetching units for company:", userCompany);
-        }
+        console.log("📊 Dashboard: Fetching units for", isSuperadmin ? "superadmin (ALL)" : `${userRole} (${company})`);
         
         const snapshot = await getDocs(queryRef);
-        const results = snapshot.docs.map(doc => {
+        let results = snapshot.docs.map(doc => {
           const data = doc.data() as Record<string, any>;
           return {
             id: doc.id,
@@ -55,13 +42,17 @@ export function useSimpleDashboardData() {
           } as UnitData;
         });
         
+        // Client-side filtering for non-superadmins
+        if (!isSuperadmin && company) {
+          const originalLength = results.length;
+          results = results.filter(unit => !unit.company || unit.company === company);
+          console.log(`📊 Dashboard: Filtered from ${originalLength} to ${results.length} units`);
+        }
+        
         console.log(`✅ Dashboard: Successfully fetched ${results.length} units`);
         return results;
       } catch (error: any) {
         console.error("❌ Dashboard: Units fetch failed:", error);
-        if (error.code === 'permission-denied') {
-          console.error("❌ Dashboard: Permission denied for units collection");
-        }
         throw error;
       }
     },
@@ -70,7 +61,7 @@ export function useSimpleDashboardData() {
     staleTime: 30000,
   });
 
-  // Fetch alerts using direct Firebase calls
+  // Fetch alerts
   const { data: activeAlerts = [], isLoading: alertsLoading } = useQuery({
     queryKey: ["dashboard-alerts", company, userRole, firebaseUser?.uid],
     queryFn: async () => {
@@ -82,30 +73,26 @@ export function useSimpleDashboardData() {
       
       try {
         const alertsRef = collection(db, "alerts");
-        let queryRef;
+        const isSuperadmin = userRole === 'superadmin';
         
-        const isSuperadmin = userRole === 'superadmin' || 
-          firebaseUser.email === 'rob.istria@gmail.com' ||
-          firebaseUser.email === 'robert.slavec@gmail.com' ||
-          firebaseUser.email === 'aljaz.slavec@gmail.com';
+        // Simple query without Firestore filtering
+        const queryRef = alertsRef;
         
-        if (isSuperadmin || userRole === 'technician') {
-          queryRef = alertsRef;
-          console.log("🚨 Dashboard: Fetching all alerts for", userRole);
-        } else {
-          const userCompany = company || 'X-WATER';
-          queryRef = query(alertsRef, where('company', '==', userCompany));
-          console.log("🚨 Dashboard: Fetching alerts for company:", userCompany);
-        }
+        console.log("🚨 Dashboard: Fetching alerts for", isSuperadmin ? "superadmin (ALL)" : `${userRole} (${company})`);
         
         const snapshot = await getDocs(queryRef);
-        const allAlerts = snapshot.docs.map(doc => {
+        let allAlerts = snapshot.docs.map(doc => {
           const data = doc.data() as Record<string, any>;
           return {
             id: doc.id,
             ...data
           } as AlertData;
         });
+        
+        // Client-side filtering for non-superadmins
+        if (!isSuperadmin && company) {
+          allAlerts = allAlerts.filter(alert => !alert.company || alert.company === company);
+        }
         
         const activeFilteredAlerts = allAlerts.filter(alert => 
           alert.status === "warning" || alert.status === "urgent"
@@ -123,7 +110,7 @@ export function useSimpleDashboardData() {
     staleTime: 30000,
   });
 
-  // Fetch filters using direct Firebase calls
+  // Fetch filters
   const { data: filtersNeedingChange = [], isLoading: filtersLoading } = useQuery({
     queryKey: ["dashboard-filters", company, userRole, firebaseUser?.uid],
     queryFn: async () => {
@@ -135,30 +122,26 @@ export function useSimpleDashboardData() {
       
       try {
         const filtersRef = collection(db, "filters");
-        let queryRef;
+        const isSuperadmin = userRole === 'superadmin';
         
-        const isSuperadmin = userRole === 'superadmin' || 
-          firebaseUser.email === 'rob.istria@gmail.com' ||
-          firebaseUser.email === 'robert.slavec@gmail.com' ||
-          firebaseUser.email === 'aljaz.slavec@gmail.com';
+        // Simple query without Firestore filtering
+        const queryRef = filtersRef;
         
-        if (isSuperadmin || userRole === 'technician') {
-          queryRef = filtersRef;
-          console.log("🔧 Dashboard: Fetching all filters for", userRole);
-        } else {
-          const userCompany = company || 'X-WATER';
-          queryRef = query(filtersRef, where('company', '==', userCompany));
-          console.log("🔧 Dashboard: Fetching filters for company:", userCompany);
-        }
+        console.log("🔧 Dashboard: Fetching filters for", isSuperadmin ? "superadmin (ALL)" : `${userRole} (${company})`);
         
         const snapshot = await getDocs(queryRef);
-        const allFilters = snapshot.docs.map(doc => {
+        let allFilters = snapshot.docs.map(doc => {
           const data = doc.data() as Record<string, any>;
           return {
             id: doc.id,
             ...data
           } as (FilterData & { status: string });
         });
+        
+        // Client-side filtering for non-superadmins
+        if (!isSuperadmin && company) {
+          allFilters = allFilters.filter(filter => !filter.company || filter.company === company);
+        }
         
         const filtersNeedingAttention = allFilters.filter(filter => 
           filter.status === "warning" || filter.status === "critical"

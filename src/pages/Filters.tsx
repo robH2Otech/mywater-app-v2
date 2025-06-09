@@ -1,6 +1,6 @@
 
 import { useQuery } from "@tanstack/react-query";
-import { collection, getDocs, query, where } from "firebase/firestore";
+import { collection, getDocs } from "firebase/firestore";
 import { db } from "@/integrations/firebase/client";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
@@ -17,29 +17,19 @@ const Filters = () => {
   const { company, userRole } = useAuth();
   const [isAddFilterOpen, setIsAddFilterOpen] = useState(false);
   const [selectedFilter, setSelectedFilter] = useState<any>(null);
+  const isSuperAdmin = userRole === 'superadmin';
 
   const { data: units = [], isLoading, error } = useQuery({
     queryKey: ["filter-units", company, userRole],
     queryFn: async () => {
-      console.log("Filters: Fetching units data directly from Firebase...");
+      console.log("🔧 Filters: Fetching units data...");
       
       try {
         const unitsRef = collection(db, "units");
-        let queryRef;
         
-        if (userRole === 'technician' || userRole === 'superadmin') {
-          // Technicians and superadmins can see all data
-          queryRef = unitsRef;
-          console.log("Filters: Fetching all units for", userRole);
-        } else {
-          // Other users filtered by company
-          const userCompany = company || 'X-WATER';
-          queryRef = query(unitsRef, where('company', '==', userCompany));
-          console.log("Filters: Fetching units for company:", userCompany);
-        }
-        
-        const snapshot = await getDocs(queryRef);
-        const units = snapshot.docs.map(doc => {
+        // Simple query without Firestore filtering
+        const snapshot = await getDocs(unitsRef);
+        let units = snapshot.docs.map(doc => {
           const data = doc.data() as Record<string, any>;
           return {
             id: doc.id,
@@ -47,10 +37,19 @@ const Filters = () => {
           } as UnitData;
         });
         
-        console.log(`Filters: Successfully fetched ${units.length} units`);
+        // Client-side filtering for non-superadmins
+        if (!isSuperAdmin && company) {
+          const originalLength = units.length;
+          units = units.filter(unit => !unit.company || unit.company === company);
+          console.log(`🔧 Filters: Filtered from ${originalLength} to ${units.length} units for ${company}`);
+        } else if (isSuperAdmin) {
+          console.log(`🔧 Filters: Superadmin sees ALL ${units.length} units`);
+        }
+        
+        console.log(`✅ Filters: Successfully fetched ${units.length} units`);
         return units;
       } catch (error) {
-        console.error("Filters: Error fetching units:", error);
+        console.error("❌ Filters: Error fetching units:", error);
         toast({
           title: "Error",
           description: "Failed to fetch water units",
@@ -59,7 +58,7 @@ const Filters = () => {
         throw error;
       }
     },
-    enabled: !!userRole && !!company,
+    enabled: !!userRole,
     retry: 1,
   });
 
@@ -68,7 +67,7 @@ const Filters = () => {
       <div className="space-y-6 animate-fadeIn p-2 md:p-0">
         <PageHeader
           title="Filter Maintenance"
-          description="Track and manage filter maintenance schedules"
+          description={`Track and manage filter maintenance schedules${isSuperAdmin ? ' (ALL COMPANIES)' : (company ? ` for ${company}` : '')}`}
           onAddClick={() => setIsAddFilterOpen(true)}
           addButtonText="Add Filter"
         />
@@ -82,7 +81,7 @@ const Filters = () => {
       <div className="space-y-6 animate-fadeIn p-2 md:p-0">
         <PageHeader
           title="Filter Maintenance"
-          description="Track and manage filter maintenance schedules"
+          description={`Track and manage filter maintenance schedules${isSuperAdmin ? ' (ALL COMPANIES)' : (company ? ` for ${company}` : '')}`}
           onAddClick={() => setIsAddFilterOpen(true)}
           addButtonText="Add Filter"
         />
@@ -99,7 +98,7 @@ const Filters = () => {
     <div className="space-y-6 animate-fadeIn p-2 md:p-0">
       <PageHeader
         title="Filter Maintenance"
-        description="Track and manage filter maintenance schedules"
+        description={`Track and manage filter maintenance schedules${isSuperAdmin ? ' (ALL COMPANIES)' : (company ? ` for ${company}` : '')}`}
         onAddClick={() => setIsAddFilterOpen(true)}
         addButtonText="Add Filter"
       />
@@ -107,7 +106,7 @@ const Filters = () => {
       {units.length === 0 ? (
         <div className="bg-spotify-darker border-spotify-accent p-6 rounded-lg">
           <div className="text-center text-gray-400 py-8">
-            No filter units found. Click "Add Filter" to create one.
+            {isSuperAdmin ? 'No filter units found in the system.' : 'No filter units found. Click "Add Filter" to create one.'}
           </div>
         </div>
       ) : (
