@@ -1,5 +1,4 @@
 
-import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { AddFilterDialog } from "@/components/filters/AddFilterDialog";
@@ -7,39 +6,27 @@ import { FilterDetailsDialog } from "@/components/filters/FilterDetailsDialog";
 import { PageHeader } from "@/components/shared/PageHeader";
 import { LoadingSkeleton } from "@/components/shared/LoadingSkeleton";
 import { FiltersList } from "@/components/filters/FiltersList";
-import { collection, getDocs, orderBy, query } from "firebase/firestore";
-import { db } from "@/integrations/firebase/client";
-import { UnitData } from "@/types/analytics";
+import { useUnits } from "@/hooks/useUnits";
+import { useAuth } from "@/contexts/AuthContext";
 
 const Filters = () => {
   const { toast } = useToast();
+  const { userRole } = useAuth();
   const [isAddFilterOpen, setIsAddFilterOpen] = useState(false);
   const [selectedFilter, setSelectedFilter] = useState<any>(null);
 
-  const { data: units = [], isLoading, error } = useQuery({
-    queryKey: ["filter-units"],
-    queryFn: async () => {
-      console.log("Filters: Fetching units data...");
-      try {
-        const unitsCollection = collection(db, "units");
-        const unitsQuery = query(unitsCollection, orderBy("created_at", "desc"));
-        const unitsSnapshot = await getDocs(unitsQuery);
-        
-        return unitsSnapshot.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data()
-        })) as UnitData[];
-      } catch (error) {
-        console.error("Filters: Error fetching units:", error);
-        toast({
-          title: "Error",
-          description: "Failed to fetch water units",
-          variant: "destructive",
-        });
-        throw error;
-      }
-    },
-  });
+  const { data: units = [], isLoading, error } = useUnits();
+
+  console.log("Filters page - User role:", userRole, "Units count:", units.length);
+
+  if (error) {
+    console.error("Filters: Error fetching units:", error);
+    toast({
+      title: "Error",
+      description: "Failed to fetch water units",
+      variant: "destructive",
+    });
+  }
 
   if (isLoading) {
     return (
@@ -59,7 +46,7 @@ const Filters = () => {
     <div className="space-y-6 animate-fadeIn p-2 md:p-0">
       <PageHeader
         title="Filter Maintenance"
-        description="Track and manage filter maintenance schedules"
+        description={`Track and manage filter maintenance schedules${userRole === 'superadmin' ? ' (All Companies)' : ''}`}
         onAddClick={() => setIsAddFilterOpen(true)}
         addButtonText="Add Filter"
       />

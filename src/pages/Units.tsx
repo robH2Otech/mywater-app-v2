@@ -1,49 +1,40 @@
 
-import { useQuery } from "@tanstack/react-query";
 import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { UnitCard } from "@/components/units/UnitCard";
 import { AddUnitDialog } from "@/components/units/AddUnitDialog";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
-import { collection, getDocs, orderBy, query } from "firebase/firestore";
-import { db } from "@/integrations/firebase/client";
-import { UnitData } from "@/types/analytics";
+import { useUnits } from "@/hooks/useUnits";
+import { useAuth } from "@/contexts/AuthContext";
 
 const Units = () => {
   const { toast } = useToast();
+  const { userRole, company } = useAuth();
   const [isAddUnitOpen, setIsAddUnitOpen] = useState(false);
   
-  const { data: units = [], isLoading } = useQuery({
-    queryKey: ["units"],
-    queryFn: async () => {
-      try {
-        const unitsCollection = collection(db, "units");
-        const unitsQuery = query(unitsCollection, orderBy("created_at", "desc"));
-        const unitsSnapshot = await getDocs(unitsQuery);
-        
-        return unitsSnapshot.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data()
-        })) as UnitData[];
-      } catch (error) {
-        console.error("Error fetching units:", error);
-        toast({
-          title: "Error",
-          description: "Failed to fetch water units",
-          variant: "destructive",
-        });
-        throw error;
-      }
-    },
-  });
+  const { data: units = [], isLoading, error } = useUnits();
+
+  console.log("Units page - User role:", userRole, "Company:", company, "Units count:", units.length);
+
+  if (error) {
+    console.error("Error loading units:", error);
+    toast({
+      title: "Error",
+      description: "Failed to fetch water units",
+      variant: "destructive",
+    });
+  }
 
   return (
     <div className="space-y-4 md:space-y-6 animate-fadeIn p-2 md:p-0">
       <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-3">
         <div>
           <h1 className="text-xl md:text-2xl font-bold text-white">Water Units</h1>
-          <p className="text-sm md:text-base text-gray-400">Manage and monitor your water treatment units</p>
+          <p className="text-sm md:text-base text-gray-400">
+            Manage and monitor your water treatment units
+            {userRole === 'superadmin' && <span className="text-green-400 ml-2">(All Companies)</span>}
+          </p>
         </div>
         <Button 
           onClick={() => setIsAddUnitOpen(true)}
@@ -74,6 +65,12 @@ const Units = () => {
               unit_type={unit.unit_type}
             />
           ))}
+        </div>
+      )}
+
+      {units.length === 0 && !isLoading && (
+        <div className="text-center text-gray-400 py-8">
+          No units found. Click "Add Unit" to create one.
         </div>
       )}
 

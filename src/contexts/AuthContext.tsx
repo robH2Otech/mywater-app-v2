@@ -6,6 +6,7 @@ import { auth, db } from "@/integrations/firebase/client";
 import { AppUser, UserRole } from "@/types/users";
 import { useAuthStateManager } from "@/hooks/auth/useAuthStateManager";
 import { usePermissionsManager } from "@/hooks/auth/usePermissionsManager";
+import { isSuperadminEmail, initializeUserClaims, getCurrentUserClaims } from "@/utils/admin/claimsService";
 
 export type PermissionLevel = "none" | "read" | "write" | "admin" | "full";
 
@@ -146,36 +147,44 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         if (firebaseUser) {
           console.log("🎫 AuthContext: Processing user authentication...");
           
-          // Fetch user data from Firestore instead of relying on JWT claims
-          const { role, company, userData } = await fetchUserData(firebaseUser.uid);
-          
-          if (role && userData) {
-            console.log("✅ AuthContext: User data found:", { role, company, email: userData.email });
-            setCurrentUser(userData);
-            setUserRole(role);
-            setCompany(company);
-          } else {
-            console.log("⚠️ AuthContext: No user data found in Firestore");
-            // For admin emails, create a default superadmin entry
-            if (firebaseUser.email && (
-              firebaseUser.email.includes('superadmin') || 
-              firebaseUser.email === 'rob.istria@gmail.com' ||
-              firebaseUser.email === 'robert.slavec@gmail.com' ||
-              firebaseUser.email === 'aljaz.slavec@gmail.com'
-            )) {
-              console.log("🔧 AuthContext: Creating default superadmin entry");
+          // Check if this is a known superadmin email
+          if (firebaseUser.email && isSuperadminEmail(firebaseUser.email)) {
+            console.log("🔧 AuthContext: Detected superadmin email, initializing claims...");
+            
+            // Initialize claims for superadmin
+            await initializeUserClaims();
+            
+            // Get updated claims
+            const { role: claimsRole } = await getCurrentUserClaims();
+            
+            if (claimsRole === 'superadmin') {
+              console.log("✅ AuthContext: Superadmin claims confirmed");
               setUserRole('superadmin');
-              setCompany('X-WATER');
+              setCompany(null); // Superadmin has no company restrictions
               setCurrentUser({
                 id: firebaseUser.uid,
                 email: firebaseUser.email,
                 first_name: firebaseUser.email.split('@')[0],
                 last_name: '',
                 role: 'superadmin',
-                company: 'X-WATER',
+                company: 'X-WATER', // For identification only
                 status: 'active'
               });
             } else {
+              console.log("⚠️ AuthContext: Claims not yet set, will retry...");
+              setAuthError("Setting up superadmin access...");
+            }
+          } else {
+            // Regular user flow - fetch from Firestore
+            const { role, company, userData } = await fetchUserData(firebaseUser.uid);
+            
+            if (role && userData) {
+              console.log("✅ AuthContext: User data found:", { role, company, email: userData.email });
+              setCurrentUser(userData);
+              setUserRole(role);
+              setCompany(company);
+            } else {
+              console.log("⚠️ AuthContext: No user data found in Firestore");
               setAuthError("Account not found in system. Please contact administrator.");
             }
           }
@@ -183,8 +192,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           setDebugInfo({
             uid: firebaseUser.uid,
             email: firebaseUser.email,
-            role,
-            company,
             timestamp: new Date().toISOString()
           });
         } else {

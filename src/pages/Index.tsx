@@ -1,21 +1,25 @@
-import { useQuery } from "@tanstack/react-query";
-import { Bell, Droplets, Filter, Lightbulb, TrendingUp } from "lucide-react";
+
+import { Bell, Droplets, Filter, TrendingUp } from "lucide-react";
 import { useUnits } from "@/hooks/useUnits";
-import { Card } from "@/components/ui/card";
 import { RecentAlerts } from "@/components/dashboard/RecentAlerts";
 import { StatCard } from "@/components/dashboard/StatCard";
 import { WaterUsageChart } from "@/components/dashboard/WaterUsageChart";
-import { collection, getDocs, query, where } from "firebase/firestore";
-import { db } from "@/integrations/firebase/client";
 import { formatThousands } from "@/utils/measurements/formatUtils";
 import { useEffect, useState } from "react";
 import { fetchUnitTotalVolumes } from "@/utils/measurements/unitVolumeUtils";
+import { useAuth } from "@/contexts/AuthContext";
+import { useQuery } from "@tanstack/react-query";
+import { collection, getDocs, query, where } from "firebase/firestore";
+import { db } from "@/integrations/firebase/client";
 
 const Index = () => {
+  const { userRole, company } = useAuth();
   const [totalVolume, setTotalVolume] = useState(0);
   const [isVolumeLoading, setIsVolumeLoading] = useState(true);
   
   const { data: units = [], isLoading: unitsLoading } = useUnits();
+  
+  console.log("Dashboard - User role:", userRole, "Company:", company, "Units count:", units.length);
   
   useEffect(() => {
     const loadTotalVolumes = async () => {
@@ -39,35 +43,47 @@ const Index = () => {
   }, [units]);
   
   const { data: activeAlerts = [], isLoading: alertsLoading } = useQuery({
-    queryKey: ["active-alerts-count"],
+    queryKey: ["active-alerts-count", userRole],
     queryFn: async () => {
+      console.log("Fetching alerts for role:", userRole);
+      
       const alertsQuery = query(
         collection(db, "alerts"),
         where("status", "in", ["warning", "urgent"])
       );
       
       const alertsSnapshot = await getDocs(alertsQuery);
-      return alertsSnapshot.docs.map(doc => ({
+      const alerts = alertsSnapshot.docs.map(doc => ({
         id: doc.id,
         ...doc.data()
       }));
+      
+      console.log(`Fetched ${alerts.length} alerts`);
+      return alerts;
     },
+    enabled: !!userRole,
   });
   
   const { data: filtersNeedingChange = [], isLoading: filtersLoading } = useQuery({
-    queryKey: ["filters-needing-change"],
+    queryKey: ["filters-needing-change", userRole],
     queryFn: async () => {
+      console.log("Fetching filters for role:", userRole);
+      
       const filtersQuery = query(
         collection(db, "filters"),
         where("status", "in", ["warning", "critical"])
       );
       
       const filtersSnapshot = await getDocs(filtersQuery);
-      return filtersSnapshot.docs.map(doc => ({
+      const filters = filtersSnapshot.docs.map(doc => ({
         id: doc.id,
         ...doc.data()
       }));
+      
+      console.log(`Fetched ${filters.length} filters needing change`);
+      return filters;
     },
+    enabled: !!userRole,
   });
   
   const isLoading = unitsLoading || alertsLoading || filtersLoading || isVolumeLoading;
@@ -76,6 +92,14 @@ const Index = () => {
 
   return (
     <div className="space-y-6">
+      {userRole === 'superadmin' && (
+        <div className="bg-green-900/20 border border-green-800 rounded-lg p-4">
+          <p className="text-green-300 text-sm">
+            ✅ Superadmin Access: Viewing data from ALL companies ({units.length} total units)
+          </p>
+        </div>
+      )}
+      
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard
           title="Total Units"
