@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { onAuthStateChanged, User as FirebaseUser } from "firebase/auth";
 import { doc, getDoc } from "firebase/firestore";
@@ -77,14 +76,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (isKnownSuperadmin(email)) {
         console.log("✅ AuthContext: Recognized superadmin email");
         return {
-          role: 'superadmin',
+          role: 'superadmin' as UserRole,
           company: 'X-WATER',
           userData: {
             id: uid,
             email: email,
             first_name: email.split('@')[0],
             last_name: '',
-            role: 'superadmin',
+            role: 'superadmin' as UserRole,
             company: 'X-WATER',
             status: 'active'
           }
@@ -106,14 +105,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       // Default fallback for authenticated users
       console.log("⚠️ AuthContext: No user data found, using defaults");
       return {
-        role: 'technician',
+        role: 'technician' as UserRole,
         company: 'X-WATER',
         userData: {
           id: uid,
           email: email,
           first_name: email.split('@')[0],
           last_name: '',
-          role: 'technician',
+          role: 'technician' as UserRole,
           company: 'X-WATER',
           status: 'active'
         }
@@ -230,11 +229,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const canViewNavItem = (navItem: string): boolean => {
+    // Early return for superadmin
     if (userRole === 'superadmin') return true;
     
+    // For non-superadmin roles, check restrictions
     const restrictedItems = ['users', 'settings'];
     if (restrictedItems.includes(navItem)) {
-      return userRole === 'admin' || userRole === 'superadmin';
+      return userRole === 'admin';
     }
     
     return true;
