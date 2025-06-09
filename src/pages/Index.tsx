@@ -1,6 +1,6 @@
 
 import { Bell, Droplets, Filter, TrendingUp } from "lucide-react";
-import { useUnits } from "@/hooks/useUnits";
+import { useAllUnits, useAllAlerts, useAllFilters } from "@/hooks/useAllData";
 import { RecentAlerts } from "@/components/dashboard/RecentAlerts";
 import { StatCard } from "@/components/dashboard/StatCard";
 import { WaterUsageChart } from "@/components/dashboard/WaterUsageChart";
@@ -8,18 +8,25 @@ import { formatThousands } from "@/utils/measurements/formatUtils";
 import { useEffect, useState } from "react";
 import { fetchUnitTotalVolumes } from "@/utils/measurements/unitVolumeUtils";
 import { useAuth } from "@/contexts/AuthContext";
-import { useQuery } from "@tanstack/react-query";
-import { collection, getDocs, query, where } from "firebase/firestore";
-import { db } from "@/integrations/firebase/client";
 
 const Index = () => {
   const { userRole, company } = useAuth();
   const [totalVolume, setTotalVolume] = useState(0);
   const [isVolumeLoading, setIsVolumeLoading] = useState(true);
   
-  const { data: units = [], isLoading: unitsLoading } = useUnits();
+  // Use simple data fetching - NO FILTERING, NO COMPLEX LOGIC
+  const { data: units = [], isLoading: unitsLoading } = useAllUnits();
+  const { data: alerts = [], isLoading: alertsLoading } = useAllAlerts();
+  const { data: filters = [], isLoading: filtersLoading } = useAllFilters();
   
-  console.log("Dashboard - User role:", userRole, "Company:", company, "Units count:", units.length);
+  console.log("Index page - Simple data fetch:", {
+    userRole,
+    company,
+    unitsCount: units.length,
+    alertsCount: alerts.length,
+    filtersCount: filters.length,
+    allUnits: units.map(u => ({ id: u.id, name: u.name, company: u.company }))
+  });
   
   useEffect(() => {
     const loadTotalVolumes = async () => {
@@ -42,63 +49,18 @@ const Index = () => {
     loadTotalVolumes();
   }, [units]);
   
-  const { data: activeAlerts = [], isLoading: alertsLoading } = useQuery({
-    queryKey: ["active-alerts-count", userRole],
-    queryFn: async () => {
-      console.log("Fetching alerts for role:", userRole);
-      
-      const alertsQuery = query(
-        collection(db, "alerts"),
-        where("status", "in", ["warning", "urgent"])
-      );
-      
-      const alertsSnapshot = await getDocs(alertsQuery);
-      const alerts = alertsSnapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      }));
-      
-      console.log(`Fetched ${alerts.length} alerts`);
-      return alerts;
-    },
-    enabled: !!userRole,
-  });
-  
-  const { data: filtersNeedingChange = [], isLoading: filtersLoading } = useQuery({
-    queryKey: ["filters-needing-change", userRole],
-    queryFn: async () => {
-      console.log("Fetching filters for role:", userRole);
-      
-      const filtersQuery = query(
-        collection(db, "filters"),
-        where("status", "in", ["warning", "critical"])
-      );
-      
-      const filtersSnapshot = await getDocs(filtersQuery);
-      const filters = filtersSnapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      }));
-      
-      console.log(`Fetched ${filters.length} filters needing change`);
-      return filters;
-    },
-    enabled: !!userRole,
-  });
-  
   const isLoading = unitsLoading || alertsLoading || filtersLoading || isVolumeLoading;
   
   const formattedVolume = totalVolume ? `${formatThousands(totalVolume)}m³` : "0m³";
 
   return (
     <div className="space-y-6">
-      {userRole === 'superadmin' && (
-        <div className="bg-green-900/20 border border-green-800 rounded-lg p-4">
-          <p className="text-green-300 text-sm">
-            ✅ Superadmin Access: Viewing data from ALL companies ({units.length} total units)
-          </p>
-        </div>
-      )}
+      <div className="bg-green-900/20 border border-green-800 rounded-lg p-4">
+        <p className="text-green-300 text-sm">
+          ✅ ALL DATA LOADED: {units.length} units, {alerts.length} alerts, {filters.length} filters 
+          {userRole === 'superadmin' ? ' (Superadmin - All Companies)' : ` (${company})`}
+        </p>
+      </div>
       
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard
@@ -111,7 +73,7 @@ const Index = () => {
         
         <StatCard
           title="Filter Changes Required"
-          value={filtersNeedingChange.length.toString()}
+          value={filters.length.toString()}
           icon={<Filter />}
           link="/filters"
           iconColor="text-yellow-500"
@@ -119,7 +81,7 @@ const Index = () => {
         
         <StatCard
           title="Active Alerts"
-          value={activeAlerts.length.toString()}
+          value={alerts.length.toString()}
           icon={<Bell />}
           link="/alerts"
           iconColor="text-red-500"

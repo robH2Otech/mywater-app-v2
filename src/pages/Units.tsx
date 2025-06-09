@@ -5,7 +5,7 @@ import { UnitCard } from "@/components/units/UnitCard";
 import { AddUnitDialog } from "@/components/units/AddUnitDialog";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
-import { useUnits } from "@/hooks/useUnits";
+import { useAllUnits } from "@/hooks/useAllData";
 import { useAuth } from "@/contexts/AuthContext";
 
 const Units = () => {
@@ -13,9 +13,15 @@ const Units = () => {
   const { userRole, company } = useAuth();
   const [isAddUnitOpen, setIsAddUnitOpen] = useState(false);
   
-  const { data: units = [], isLoading, error } = useUnits();
+  // Use simple data fetching - NO FILTERING, NO COMPLEX LOGIC
+  const { data: units = [], isLoading, error } = useAllUnits();
 
-  console.log("Units page - User role:", userRole, "Company:", company, "Units count:", units.length);
+  console.log("Units page - Simple data fetch:", {
+    userRole,
+    company,
+    unitsCount: units.length,
+    allUnits: units.map(u => ({ id: u.id, name: u.name, company: u.company }))
+  });
 
   if (error) {
     console.error("Error loading units:", error);
@@ -32,8 +38,8 @@ const Units = () => {
         <div>
           <h1 className="text-xl md:text-2xl font-bold text-white">Water Units</h1>
           <p className="text-sm md:text-base text-gray-400">
-            Manage and monitor your water treatment units
-            {userRole === 'superadmin' && <span className="text-green-400 ml-2">(All Companies)</span>}
+            ✅ ALL UNITS FROM ALL COMPANIES ({units.length} total units)
+            {userRole === 'superadmin' && <span className="text-green-400 ml-2">(Superadmin Access)</span>}
           </p>
         </div>
         <Button 

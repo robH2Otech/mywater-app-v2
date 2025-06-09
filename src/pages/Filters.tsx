@@ -6,7 +6,7 @@ import { FilterDetailsDialog } from "@/components/filters/FilterDetailsDialog";
 import { PageHeader } from "@/components/shared/PageHeader";
 import { LoadingSkeleton } from "@/components/shared/LoadingSkeleton";
 import { FiltersList } from "@/components/filters/FiltersList";
-import { useUnits } from "@/hooks/useUnits";
+import { useAllUnits } from "@/hooks/useAllData";
 import { useAuth } from "@/contexts/AuthContext";
 
 const Filters = () => {
@@ -15,9 +15,14 @@ const Filters = () => {
   const [isAddFilterOpen, setIsAddFilterOpen] = useState(false);
   const [selectedFilter, setSelectedFilter] = useState<any>(null);
 
-  const { data: units = [], isLoading, error } = useUnits();
+  // Use simple data fetching - NO FILTERING, NO COMPLEX LOGIC
+  const { data: units = [], isLoading, error } = useAllUnits();
 
-  console.log("Filters page - User role:", userRole, "Units count:", units.length);
+  console.log("Filters page - Simple data fetch:", {
+    userRole,
+    unitsCount: units.length,
+    allUnits: units.map(u => ({ id: u.id, name: u.name, company: u.company }))
+  });
 
   if (error) {
     console.error("Filters: Error fetching units:", error);
@@ -46,7 +51,7 @@ const Filters = () => {
     <div className="space-y-6 animate-fadeIn p-2 md:p-0">
       <PageHeader
         title="Filter Maintenance"
-        description={`Track and manage filter maintenance schedules${userRole === 'superadmin' ? ' (All Companies)' : ''}`}
+        description={`✅ ALL UNITS FROM ALL COMPANIES (${units.length} total units)${userRole === 'superadmin' ? ' - Superadmin Access' : ''}`}
         onAddClick={() => setIsAddFilterOpen(true)}
         addButtonText="Add Filter"
       />
