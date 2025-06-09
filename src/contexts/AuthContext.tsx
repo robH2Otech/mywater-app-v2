@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { onAuthStateChanged, User as FirebaseUser } from "firebase/auth";
 import { doc, getDoc } from "firebase/firestore";
@@ -74,17 +75,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       
       // Check if superadmin first
       if (isKnownSuperadmin(email)) {
-        console.log("✅ AuthContext: Recognized superadmin email");
+        console.log("✅ AuthContext: Recognized superadmin email - SUPERADMIN CAN ACCESS ALL DATA");
         return {
           role: 'superadmin' as UserRole,
-          company: 'X-WATER',
+          company: null, // IMPORTANT: Superadmin has NO company restriction
           userData: {
             id: uid,
             email: email,
             first_name: email.split('@')[0],
             last_name: '',
             role: 'superadmin' as UserRole,
-            company: 'X-WATER',
+            company: null, // IMPORTANT: No company for superadmin
             status: 'active'
           }
         };
@@ -163,7 +164,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           const { role, company, userData } = await fetchUserData(firebaseUser.uid, firebaseUser.email);
           
           if (userData) {
-            console.log("✅ AuthContext: User authenticated:", { role, company, email: userData.email });
+            console.log("✅ AuthContext: User authenticated:", { 
+              role, 
+              company: company || 'NO COMPANY (SUPERADMIN)', 
+              email: userData.email 
+            });
             setCurrentUser(userData);
             setUserRole(role);
             setCompany(company);
@@ -176,7 +181,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             uid: firebaseUser.uid,
             email: firebaseUser.email,
             role,
-            company,
+            company: company || 'NO COMPANY (SUPERADMIN)',
             timestamp: new Date().toISOString()
           });
         } else {

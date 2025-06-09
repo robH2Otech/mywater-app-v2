@@ -66,9 +66,14 @@ const Dashboard = () => {
             <h2 className="text-lg font-semibold text-white">Data Loading Error</h2>
           </div>
           <p className="text-gray-300 mb-4">Failed to load dashboard data</p>
-          <p className="text-sm text-gray-400 mb-4">
-            Company: {company || 'Not set'} | Role: {userRole || 'Not set'}
-          </p>
+          <div className="text-sm text-gray-400 mb-4">
+            <p><strong>Role:</strong> {userRole || 'Not set'}</p>
+            <p><strong>Company:</strong> {company || 'Not set'}</p>
+            <p><strong>Is Superadmin:</strong> {userRole === 'superadmin' ? 'YES - Should see ALL data' : 'NO'}</p>
+          </div>
+          <div className="bg-gray-800 p-3 rounded text-xs text-gray-400 mb-4">
+            <p><strong>Error Details:</strong> {dataError?.message || 'Unknown error'}</p>
+          </div>
           <button 
             onClick={() => window.location.reload()} 
             className="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded"
@@ -85,6 +90,10 @@ const Dashboard = () => {
     return sum + volume;
   }, 0);
 
+  const displayText = userRole === 'superadmin' 
+    ? `Dashboard loaded successfully as SUPERADMIN (ALL DATA - ${units.length} units found)`
+    : `Dashboard loaded successfully as ${userRole} for ${company} (${units.length} units found)`;
+
   return (
     <div className="space-y-6 animate-fadeIn">
       {/* Success indicator */}
@@ -92,9 +101,7 @@ const Dashboard = () => {
         <Card className="p-4 bg-green-900/20 border-green-800">
           <div className="flex items-center space-x-3">
             <CheckCircle className="h-5 w-5 text-green-500" />
-            <p className="text-green-300">
-              Dashboard loaded successfully as {userRole} for {company} ({units.length} units found)
-            </p>
+            <p className="text-green-300">{displayText}</p>
           </div>
         </Card>
       )}

@@ -13,6 +13,12 @@ export function useSimpleDashboard() {
     queryKey: ["simple-dashboard-units", userRole, firebaseUser?.uid],
     queryFn: async () => {
       console.log("📊 SimpleDashboard: Starting units fetch...");
+      console.log("📊 SimpleDashboard: Auth state:", { 
+        userRole, 
+        company, 
+        userEmail: firebaseUser?.email,
+        uid: firebaseUser?.uid 
+      });
       
       if (!firebaseUser) {
         console.log("❌ SimpleDashboard: No authenticated user");
@@ -31,16 +37,21 @@ export function useSimpleDashboard() {
           } as UnitData;
         });
         
-        // For superadmin: return ALL units
+        console.log(`📊 SimpleDashboard: Fetched ${results.length} total units from Firebase`);
+        
+        // SUPERADMIN GETS ALL DATA - NO FILTERING AT ALL
         if (userRole === 'superadmin') {
-          console.log(`📊 SimpleDashboard: Superadmin fetched ${results.length} units (ALL)`);
+          console.log(`✅ SimpleDashboard: SUPERADMIN - Returning ALL ${results.length} units (NO FILTERING)`);
           return results;
         }
         
-        // For other users: filter by company
+        // For non-superadmin users: apply company filtering
         if (company) {
+          const originalLength = results.length;
           results = results.filter(unit => !unit.company || unit.company === company);
-          console.log(`📊 SimpleDashboard: Filtered to ${results.length} units for company: ${company}`);
+          console.log(`📊 SimpleDashboard: Non-superadmin filtered from ${originalLength} to ${results.length} units for company: ${company}`);
+        } else {
+          console.log("⚠️ SimpleDashboard: No company set for non-superadmin user");
         }
         
         return results;
@@ -55,7 +66,7 @@ export function useSimpleDashboard() {
   });
 
   // Fetch alerts
-  const { data: activeAlerts = [], isLoading: alertsLoading } = useQuery({
+  const { data: activeAlerts = [], isLoading: alertsLoading, error: alertsError } = useQuery({
     queryKey: ["simple-dashboard-alerts", userRole, firebaseUser?.uid],
     queryFn: async () => {
       console.log("🚨 SimpleDashboard: Starting alerts fetch...");
@@ -77,25 +88,29 @@ export function useSimpleDashboard() {
           } as AlertData;
         });
         
-        // For superadmin: return ALL alerts
+        console.log(`🚨 SimpleDashboard: Fetched ${allAlerts.length} total alerts from Firebase`);
+        
+        // SUPERADMIN GETS ALL ALERTS - NO FILTERING
         if (userRole === 'superadmin') {
           const activeFilteredAlerts = allAlerts.filter(alert => 
             alert.status === "warning" || alert.status === "urgent"
           );
-          console.log(`🚨 SimpleDashboard: Superadmin fetched ${activeFilteredAlerts.length} alerts (ALL)`);
+          console.log(`✅ SimpleDashboard: SUPERADMIN - Returning ${activeFilteredAlerts.length} active alerts (NO COMPANY FILTERING)`);
           return activeFilteredAlerts;
         }
         
-        // For other users: filter by company
+        // For non-superadmin users: apply company filtering
         if (company) {
+          const originalLength = allAlerts.length;
           allAlerts = allAlerts.filter(alert => !alert.company || alert.company === company);
+          console.log(`🚨 SimpleDashboard: Non-superadmin filtered from ${originalLength} to ${allAlerts.length} alerts for company: ${company}`);
         }
         
         const activeFilteredAlerts = allAlerts.filter(alert => 
           alert.status === "warning" || alert.status === "urgent"
         );
         
-        console.log(`🚨 SimpleDashboard: Fetched ${activeFilteredAlerts.length} active alerts`);
+        console.log(`🚨 SimpleDashboard: Returning ${activeFilteredAlerts.length} active alerts`);
         return activeFilteredAlerts;
       } catch (error: any) {
         console.error("❌ SimpleDashboard: Alerts fetch failed:", error);
@@ -114,7 +129,7 @@ export function useSimpleDashboard() {
   const formattedVolume = `${totalVolume}m³`;
   
   const isLoading = unitsLoading || alertsLoading;
-  const hasError = unitsError;
+  const hasError = unitsError || alertsError;
 
   return {
     units,

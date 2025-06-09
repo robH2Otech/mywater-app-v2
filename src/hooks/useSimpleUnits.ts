@@ -15,7 +15,8 @@ export function useSimpleUnits() {
       console.log("📋 SimpleUnits: Auth state:", { 
         userRole, 
         userEmail: firebaseUser?.email,
-        uid: firebaseUser?.uid 
+        uid: firebaseUser?.uid,
+        company
       });
       
       if (!firebaseUser) {
@@ -38,16 +39,21 @@ export function useSimpleUnits() {
           } as UnitData;
         });
         
-        // For superadmin: return ALL units
+        console.log(`📋 SimpleUnits: Fetched ${units.length} total units from Firebase`);
+        
+        // SUPERADMIN GETS ALL UNITS - NO FILTERING AT ALL
         if (userRole === 'superadmin') {
-          console.log(`✅ SimpleUnits: Superadmin fetched ${units.length} units (ALL)`);
+          console.log(`✅ SimpleUnits: SUPERADMIN - Returning ALL ${units.length} units (NO FILTERING)`);
           return units;
         }
         
-        // For other users: filter by company
+        // For non-superadmin users: apply company filtering  
         if (company) {
+          const originalLength = units.length;
           units = units.filter(unit => !unit.company || unit.company === company);
-          console.log(`✅ SimpleUnits: Filtered to ${units.length} units for company: ${company}`);
+          console.log(`📋 SimpleUnits: Non-superadmin filtered from ${originalLength} to ${units.length} units for company: ${company}`);
+        } else {
+          console.log("⚠️ SimpleUnits: No company set for non-superadmin user");
         }
         
         return units;
