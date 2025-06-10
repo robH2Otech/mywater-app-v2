@@ -1,5 +1,5 @@
 
-import React, { createContext, useContext, useState, useEffect } from "react";
+import React, { createContext, useContext, useState, useEffect, useMemo } from "react";
 import { onAuthStateChanged, User as FirebaseUser } from "firebase/auth";
 import { doc, getDoc } from "firebase/firestore";
 import { auth, db } from "@/integrations/firebase/client";
@@ -240,7 +240,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     };
   }, []);
 
-  const value: AuthContextType = {
+  // Memoize the context value to prevent infinite re-renders
+  const value = useMemo<AuthContextType>(() => ({
     currentUser,
     firebaseUser,
     isLoading,
@@ -249,8 +250,32 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     refreshUserSession,
     authError,
     debugInfo,
-    ...permissions
-  };
+    hasPermission: permissions.hasPermission,
+    canAccessAllCompanies: permissions.canAccessAllCompanies,
+    canAccessCompany: permissions.canAccessCompany,
+    canEdit: permissions.canEdit,
+    canDelete: permissions.canDelete,
+    canManageUsers: permissions.canManageUsers,
+    canComment: permissions.canComment,
+    canViewNavItem: permissions.canViewNavItem,
+  }), [
+    currentUser,
+    firebaseUser,
+    isLoading,
+    userRole,
+    company,
+    refreshUserSession,
+    authError,
+    debugInfo,
+    permissions.hasPermission,
+    permissions.canAccessAllCompanies,
+    permissions.canAccessCompany,
+    permissions.canEdit,
+    permissions.canDelete,
+    permissions.canManageUsers,
+    permissions.canComment,
+    permissions.canViewNavItem,
+  ]);
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
