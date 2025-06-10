@@ -1,10 +1,9 @@
 
-import React, { createContext, useContext, useState, useEffect, useMemo } from "react";
+import React, { createContext, useContext, useState, useEffect, useMemo, useCallback } from "react";
 import { onAuthStateChanged, User as FirebaseUser } from "firebase/auth";
 import { doc, getDoc } from "firebase/firestore";
 import { auth, db } from "@/integrations/firebase/client";
 import { AppUser, UserRole } from "@/types/users";
-import { useAuthStateManager } from "@/hooks/auth/useAuthStateManager";
 import { usePermissionsManager } from "@/hooks/auth/usePermissionsManager";
 
 export type PermissionLevel = "none" | "read" | "write" | "admin" | "full";
@@ -72,7 +71,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const permissions = usePermissionsManager(userRole, company);
 
   // Fetch user data from Firestore
-  const fetchUserData = async (uid: string): Promise<{ role: UserRole | null; company: string | null; userData: AppUser | null }> => {
+  const fetchUserData = useCallback(async (uid: string): Promise<{ role: UserRole | null; company: string | null; userData: AppUser | null }> => {
     try {
       console.log("🔍 Fetching user data from Firebase for UID:", uid);
       
@@ -109,9 +108,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       console.error('❌ Error fetching user data from Firebase:', error);
       return { role: null, company: null, userData: null };
     }
-  };
+  }, []);
 
-  const refreshUserSession = async (): Promise<boolean> => {
+  const refreshUserSession = useCallback(async (): Promise<boolean> => {
     try {
       console.log('🔄 Refreshing user session...');
       
@@ -162,7 +161,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setAuthError(`Session refresh failed: ${error}`);
       return false;
     }
-  };
+  }, [firebaseUser, fetchUserData]);
 
   useEffect(() => {
     console.log("🔄 AuthContext: Setting up Firebase auth state listener");
@@ -238,7 +237,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       console.log("🧹 AuthContext: Cleaning up auth state listener");
       unsubscribe();
     };
-  }, []);
+  }, [fetchUserData]);
 
   // Memoize the context value to prevent infinite re-renders
   const value = useMemo<AuthContextType>(() => ({
