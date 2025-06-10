@@ -74,9 +74,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   // Fetch user data from Firestore
   const fetchUserData = async (uid: string): Promise<{ role: UserRole | null; company: string | null; userData: AppUser | null }> => {
     try {
+      console.log("🔍 Fetching user data from Firebase for UID:", uid);
+      
       const userDoc = await getDoc(doc(db, 'app_users_business', uid));
       
       if (userDoc.exists()) {
+        console.log("✅ User found in app_users_business collection");
         const userData = userDoc.data() as AppUser;
         return {
           role: userData.role || null,
@@ -88,6 +91,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       // Check private users collection as fallback
       const privateUserDoc = await getDoc(doc(db, 'app_users_privat', uid));
       if (privateUserDoc.exists()) {
+        console.log("✅ User found in app_users_privat collection");
         const userData = privateUserDoc.data() as AppUser;
         return {
           role: 'user' as UserRole,
@@ -99,16 +103,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         };
       }
       
+      console.log("⚠️ No user data found in any collection for UID:", uid);
       return { role: null, company: null, userData: null };
     } catch (error) {
-      console.error('Error fetching user data:', error);
+      console.error('❌ Error fetching user data from Firebase:', error);
       return { role: null, company: null, userData: null };
     }
   };
 
   const refreshUserSession = async (): Promise<boolean> => {
     try {
-      console.log('Refreshing user session...');
+      console.log('🔄 Refreshing user session...');
       
       if (firebaseUser) {
         // Force token refresh to ensure session is valid
@@ -128,6 +133,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             status: 'active'
           });
           setAuthError(null);
+          console.log('✅ Superadmin session refreshed successfully');
           return true;
         }
         
@@ -140,19 +146,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           setCurrentUser(userData);
           setAuthError(null);
           
-          console.log('User session refreshed successfully:', { role, company, email: userData.email });
+          console.log('✅ User session refreshed successfully:', { role, company, email: userData.email });
           return true;
         } else {
-          console.warn('No user data found during session refresh');
+          console.warn('⚠️ No user data found during session refresh');
+          setAuthError("User data not found in system");
           return false;
         }
       } else {
-        console.warn('No Firebase user available for session refresh');
+        console.warn('⚠️ No Firebase user available for session refresh');
         return false;
       }
     } catch (error) {
-      console.error('Error refreshing user session:', error);
-      setAuthError('Session refresh failed');
+      console.error('❌ Error refreshing user session:', error);
+      setAuthError(`Session refresh failed: ${error}`);
       return false;
     }
   };
@@ -209,7 +216,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           setDebugInfo({
             uid: firebaseUser.uid,
             email: firebaseUser.email,
-            timestamp: new Date().toISOString()
+            timestamp: new Date().toISOString(),
+            backend: 'Firebase'
           });
         } else {
           // Reset state when logged out

@@ -1,3 +1,4 @@
+
 import { initializeApp } from "firebase/app";
 import { getAuth, connectAuthEmulator, setPersistence, browserSessionPersistence } from "firebase/auth";
 import { getFirestore, connectFirestoreEmulator } from "firebase/firestore";
@@ -29,22 +30,24 @@ auth.useDeviceLanguage();
 
 // Current domain for debugging and authorization checks
 export const currentDomain = window.location.hostname;
-console.log("Current domain:", currentDomain);
+console.log("🌐 Current domain:", currentDomain);
+console.log("🔥 Firebase initialized successfully");
+console.log("📊 Firebase project ID:", firebaseConfig.projectId);
 
 // Immediately set to session persistence to prevent issues with iframe previews
 (async () => {
   try {
     await setPersistence(auth, browserSessionPersistence);
-    console.log("Auth persistence set to SESSION");
+    console.log("✅ Auth persistence set to SESSION");
   } catch (err) {
-    console.error("Error setting auth persistence:", err);
+    console.error("❌ Error setting auth persistence:", err);
   }
 })();
 
 // Handle development domains
 const isDevelopment = currentDomain === 'localhost' || currentDomain === '127.0.0.1';
 if (isDevelopment) {
-  console.log("Development environment detected:", currentDomain);
+  console.log("🔧 Development environment detected:", currentDomain);
 }
 
 // Enable local emulator if in development environment and explicitly enabled
@@ -56,6 +59,8 @@ if (import.meta.env.DEV) {
     connectFirestoreEmulator(db, "localhost", 8080);
     connectStorageEmulator(storage, "localhost", 9199);
     connectFunctionsEmulator(functions, "localhost", 5001);
-    console.log("Using Firebase emulator suite");
+    console.log("🔧 Using Firebase emulator suite");
+  } else {
+    console.log("☁️ Using Firebase production services");
   }
 }

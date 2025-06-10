@@ -4,6 +4,7 @@ import { Droplet, Bell, Calendar, Activity } from "lucide-react";
 import { StatCard } from "@/components/dashboard/StatCard";
 import { WaterUsageChart } from "@/components/dashboard/WaterUsageChart";
 import { RecentAlerts } from "@/components/dashboard/RecentAlerts";
+import { FirebaseDebugPanel } from "@/components/debug/FirebaseDebugPanel";
 import { useAllUnits, useAllAlerts, useAllFilters } from "@/hooks/useAllData";
 import { UnitData } from "@/types/analytics";
 import { determineUnitStatus } from "@/utils/unitStatusUtils";
@@ -15,19 +16,20 @@ import { AlertCircle, CheckCircle, Loader2 } from "lucide-react";
 
 const Dashboard = () => {
   const { t } = useLanguage();
-  const { userRole, company, authError, isLoading: authLoading } = useAuth();
+  const { userRole, company, authError, isLoading: authLoading, debugInfo } = useAuth();
 
   // Use simple data fetching - NO FILTERING, NO COMPLEX LOGIC
   const { data: units = [], isLoading: unitsLoading, error: unitsError } = useAllUnits();
   const { data: alerts = [], isLoading: alertsLoading, error: alertsError } = useAllAlerts();
   const { data: filters = [], isLoading: filtersLoading, error: filtersError } = useAllFilters();
 
-  console.log("Dashboard - Simple data fetch:", {
+  console.log("🏠 Dashboard - Firebase data fetch:", {
     userRole,
     company,
     unitsCount: units.length,
     alertsCount: alerts.length,
-    filtersCount: filters.length
+    filtersCount: filters.length,
+    debugInfo
   });
 
   // Show loading state while auth is being processed
@@ -66,22 +68,27 @@ const Dashboard = () => {
   // Show error state if data fetching failed
   if (unitsError || alertsError || filtersError) {
     return (
-      <div className="flex items-center justify-center min-h-screen p-4">
-        <Card className="p-6 max-w-md w-full">
+      <div className="space-y-6 animate-fadeIn p-4">
+        <Card className="p-6 bg-red-900/20 border-red-800">
           <div className="flex items-center space-x-3 mb-4">
             <AlertCircle className="h-6 w-6 text-red-500" />
-            <h2 className="text-lg font-semibold text-white">Data Loading Error</h2>
+            <h2 className="text-lg font-semibold text-white">Firebase Data Loading Error</h2>
           </div>
+          <p className="text-red-300 mb-4">
+            Failed to load data from Firebase: {unitsError?.message || alertsError?.message || filtersError?.message}
+          </p>
           <p className="text-gray-300 mb-4">
-            Failed to load data: {unitsError?.message || alertsError?.message || filtersError?.message}
+            This suggests a Firebase configuration or permission issue. Use the debug panel below to investigate.
           </p>
           <button 
             onClick={() => window.location.reload()} 
-            className="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded"
+            className="w-full bg-red-600 hover:bg-red-700 text-white py-2 px-4 rounded mb-4"
           >
             Retry
           </button>
         </Card>
+        
+        <FirebaseDebugPanel />
       </div>
     );
   }
@@ -93,7 +100,7 @@ const Dashboard = () => {
       <div className="flex items-center justify-center min-h-screen">
         <div className="flex flex-col items-center space-y-4">
           <Loader2 className="h-8 w-8 animate-spin text-blue-500" />
-          <p className="text-gray-400">Loading dashboard data...</p>
+          <p className="text-gray-400">Loading Firebase data...</p>
         </div>
       </div>
     );
@@ -111,10 +118,19 @@ const Dashboard = () => {
         <div className="flex items-center space-x-3">
           <CheckCircle className="h-5 w-5 text-green-500" />
           <p className="text-green-300">
-            ✅ ALL DATA LOADED: {units.length} units, {alerts.length} alerts, {filters.length} filters (Role: {userRole}, Company: {company})
+            ✅ FIREBASE DATA LOADED: {units.length} units, {alerts.length} alerts, {filters.length} filters 
+            (Role: {userRole}, Company: {company})
           </p>
         </div>
       </Card>
+
+      {/* Debug panel for troubleshooting */}
+      {(units.length === 0 && alerts.length === 0 && filters.length === 0) && (
+        <div>
+          <h3 className="text-lg font-semibold text-white mb-4">🔧 No Data Found - Debug Panel</h3>
+          <FirebaseDebugPanel />
+        </div>
+      )}
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard
