@@ -4,14 +4,16 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ArrowRight, Droplet, Shield, Users, Globe } from "lucide-react";
+import { ArrowRight, Droplet, Shield, Users, Globe, Settings } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import MatrixRain from "@/components/ui/matrix-rain";
+import { useAuth } from "@/contexts/AuthContext";
 
 const LandingPage = () => {
   const navigate = useNavigate();
   const [selectedOption, setSelectedOption] = useState<string>("private");
   const { language, setLanguage, t } = useLanguage();
+  const { firebaseUser, userRole } = useAuth();
   
   // Set default language to English when the component mounts
   useEffect(() => {
@@ -24,6 +26,11 @@ const LandingPage = () => {
     } else {
       navigate("/private-auth");
     }
+  };
+
+  // Debug function to go directly to dashboard for testing
+  const goToDashboard = () => {
+    navigate("/dashboard");
   };
 
   return (
@@ -60,6 +67,28 @@ const LandingPage = () => {
           </div>
         </div>
       </div>
+
+      {/* Debug Panel for Authenticated Users */}
+      {firebaseUser && (
+        <div className="absolute top-4 left-4 z-20">
+          <div className="bg-green-900/80 border border-green-700 p-3 rounded-md">
+            <p className="text-green-300 text-sm mb-2">
+              ✅ Authenticated as: {firebaseUser.email}
+            </p>
+            <p className="text-green-300 text-sm mb-3">
+              Role: {userRole || 'Loading...'}
+            </p>
+            <Button 
+              onClick={goToDashboard}
+              size="sm"
+              className="bg-green-600 hover:bg-green-700 text-white"
+            >
+              <Settings className="h-4 w-4 mr-2" />
+              Go to Dashboard
+            </Button>
+          </div>
+        </div>
+      )}
 
       <div className="max-w-3xl w-full space-y-8 z-10">
         {/* Hero Section */}

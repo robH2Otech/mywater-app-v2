@@ -12,16 +12,17 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { formatThousands } from "@/utils/measurements/formatUtils";
 import { useAuth } from "@/contexts/AuthContext";
 import { Card } from "@/components/ui/card";
-import { AlertCircle, CheckCircle, Loader2 } from "lucide-react";
+import { AlertCircle, CheckCircle, Loader2, RefreshCw } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 const Dashboard = () => {
   const { t } = useLanguage();
-  const { userRole, company, authError, isLoading: authLoading, debugInfo } = useAuth();
+  const { userRole, company, authError, isLoading: authLoading, debugInfo, firebaseUser } = useAuth();
 
   // Use simple data fetching - NO FILTERING, NO COMPLEX LOGIC
-  const { data: units = [], isLoading: unitsLoading, error: unitsError } = useAllUnits();
-  const { data: alerts = [], isLoading: alertsLoading, error: alertsError } = useAllAlerts();
-  const { data: filters = [], isLoading: filtersLoading, error: filtersError } = useAllFilters();
+  const { data: units = [], isLoading: unitsLoading, error: unitsError, refetch: refetchUnits } = useAllUnits();
+  const { data: alerts = [], isLoading: alertsLoading, error: alertsError, refetch: refetchAlerts } = useAllAlerts();
+  const { data: filters = [], isLoading: filtersLoading, error: filtersError, refetch: refetchFilters } = useAllFilters();
 
   console.log("🏠 Dashboard - Firebase data fetch:", {
     userRole,
@@ -29,8 +30,16 @@ const Dashboard = () => {
     unitsCount: units.length,
     alertsCount: alerts.length,
     filtersCount: filters.length,
-    debugInfo
+    debugInfo,
+    firebaseUser: firebaseUser ? { uid: firebaseUser.uid, email: firebaseUser.email } : null
   });
+
+  const handleRefreshAll = () => {
+    console.log("🔄 Manually refreshing all data...");
+    refetchUnits();
+    refetchAlerts();
+    refetchFilters();
+  };
 
   // Show loading state while auth is being processed
   if (authLoading) {
@@ -80,12 +89,18 @@ const Dashboard = () => {
           <p className="text-gray-300 mb-4">
             This suggests a Firebase configuration or permission issue. Use the debug panel below to investigate.
           </p>
-          <button 
-            onClick={() => window.location.reload()} 
-            className="w-full bg-red-600 hover:bg-red-700 text-white py-2 px-4 rounded mb-4"
-          >
-            Retry
-          </button>
+          <div className="flex gap-2">
+            <button 
+              onClick={() => window.location.reload()} 
+              className="bg-red-600 hover:bg-red-700 text-white py-2 px-4 rounded"
+            >
+              Retry
+            </button>
+            <Button onClick={handleRefreshAll} variant="outline">
+              <RefreshCw className="h-4 w-4 mr-2" />
+              Refresh Data
+            </Button>
+          </div>
         </Card>
         
         <FirebaseDebugPanel />
@@ -101,6 +116,9 @@ const Dashboard = () => {
         <div className="flex flex-col items-center space-y-4">
           <Loader2 className="h-8 w-8 animate-spin text-blue-500" />
           <p className="text-gray-400">Loading Firebase data...</p>
+          <p className="text-gray-500 text-sm">
+            User: {firebaseUser?.email} | Role: {userRole} | Company: {company}
+          </p>
         </div>
       </div>
     );
@@ -113,14 +131,24 @@ const Dashboard = () => {
 
   return (
     <div className="space-y-6 animate-fadeIn">
-      {/* Success indicator */}
+      {/* Enhanced Success indicator */}
       <Card className="p-4 bg-green-900/20 border-green-800">
-        <div className="flex items-center space-x-3">
-          <CheckCircle className="h-5 w-5 text-green-500" />
-          <p className="text-green-300">
-            ✅ FIREBASE DATA LOADED: {units.length} units, {alerts.length} alerts, {filters.length} filters 
-            (Role: {userRole}, Company: {company})
-          </p>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-3">
+            <CheckCircle className="h-5 w-5 text-green-500" />
+            <div>
+              <p className="text-green-300">
+                ✅ FIREBASE DATA LOADED: {units.length} units, {alerts.length} alerts, {filters.length} filters 
+              </p>
+              <p className="text-green-400 text-sm">
+                User: {firebaseUser?.email} | Role: {userRole} | Company: {company}
+              </p>
+            </div>
+          </div>
+          <Button onClick={handleRefreshAll} variant="outline" size="sm">
+            <RefreshCw className="h-4 w-4 mr-2" />
+            Refresh
+          </Button>
         </div>
       </Card>
 
@@ -131,6 +159,12 @@ const Dashboard = () => {
           <FirebaseDebugPanel />
         </div>
       )}
+
+      {/* Always show debug panel for testing */}
+      <div>
+        <h3 className="text-lg font-semibold text-white mb-4">🔧 Firebase Debug Panel</h3>
+        <FirebaseDebugPanel />
+      </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard
