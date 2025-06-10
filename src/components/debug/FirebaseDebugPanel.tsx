@@ -1,7 +1,7 @@
 
 import React, { useState } from "react";
 import { collection, getDocs, addDoc } from "firebase/firestore";
-import { db } from "@/integrations/firebase/client";
+import { db, auth } from "@/integrations/firebase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useAuth } from "@/contexts/AuthContext";
@@ -23,12 +23,26 @@ export const FirebaseDebugPanel: React.FC = () => {
     try {
       addLog("🔍 Testing Firebase connection...");
       
-      // Test auth
+      // Test auth and token details
       addLog(`👤 Auth user: ${firebaseUser?.email || 'Not logged in'}`);
       addLog(`🎫 User role: ${userRole || 'No role'}`);
       addLog(`❌ Auth error: ${authError || 'None'}`);
+      addLog(`🔑 User UID: ${firebaseUser?.uid || 'No UID'}`);
       
-      // Test Firestore collections
+      // Get and display token information
+      if (firebaseUser) {
+        try {
+          const token = await firebaseUser.getIdToken();
+          const tokenResult = await firebaseUser.getIdTokenResult();
+          addLog(`🎟️ Token exists: ${token ? 'Yes' : 'No'}`);
+          addLog(`📋 Token claims: ${JSON.stringify(tokenResult.claims)}`);
+          addLog(`🔐 Email verified: ${firebaseUser.emailVerified}`);
+        } catch (tokenError) {
+          addLog(`❌ Token error: ${tokenError.message}`);
+        }
+      }
+      
+      // Test Firestore collections with detailed error reporting
       const collections = ['units', 'alerts', 'filters'];
       
       for (const collectionName of collections) {
@@ -39,16 +53,27 @@ export const FirebaseDebugPanel: React.FC = () => {
           
           if (snapshot.size > 0) {
             snapshot.docs.slice(0, 2).forEach((doc, index) => {
-              addLog(`  📄 Doc ${index + 1}: ${JSON.stringify(doc.data()).substring(0, 100)}...`);
+              const data = doc.data();
+              addLog(`  📄 Doc ${index + 1} ID: ${doc.id}`);
+              addLog(`  📄 Doc ${index + 1} data: ${JSON.stringify(data).substring(0, 100)}...`);
             });
+          } else {
+            addLog(`  ⚠️ ${collectionName} collection is empty - this is expected for new projects`);
           }
         } catch (error) {
           addLog(`❌ ${collectionName} error: ${error.message}`);
+          addLog(`❌ Error code: ${error.code}`);
+          addLog(`❌ Full error: ${JSON.stringify(error, null, 2)}`);
         }
       }
       
+      // Test project configuration
+      addLog(`🏗️ Firebase project: ${db.app.options.projectId}`);
+      addLog(`🌐 Auth domain: ${auth.app.options.authDomain}`);
+      
     } catch (error) {
       addLog(`❌ General error: ${error.message}`);
+      addLog(`❌ Error details: ${JSON.stringify(error, null, 2)}`);
     } finally {
       setIsLoading(false);
     }
@@ -60,42 +85,96 @@ export const FirebaseDebugPanel: React.FC = () => {
     try {
       addLog("🏗️ Creating test data...");
       
+      if (!firebaseUser) {
+        addLog("❌ No authenticated user - cannot create test data");
+        return;
+      }
+      
+      // Test token before creating data
+      try {
+        const token = await firebaseUser.getIdToken(true); // Force refresh
+        addLog(`🔄 Token refreshed successfully`);
+      } catch (tokenError) {
+        addLog(`❌ Token refresh failed: ${tokenError.message}`);
+        return;
+      }
+      
       // Create test unit
-      const unitRef = await addDoc(collection(db, "units"), {
-        name: "Test Unit 1",
+      const testUnit = {
+        name: "Test Unit " + Date.now(),
         status: "active",
         location: "Test Location",
         company: "X-WATER",
         total_volume: 1000,
         last_maintenance: new Date().toISOString(),
         unit_type: "filter",
-        created_at: new Date()
-      });
+        created_at: new Date(),
+        created_by: firebaseUser.uid
+      };
+      
+      const unitRef = await addDoc(collection(db, "units"), testUnit);
       addLog(`✅ Created test unit: ${unitRef.id}`);
       
       // Create test alert
-      const alertRef = await addDoc(collection(db, "alerts"), {
+      const testAlert = {
         unit_id: unitRef.id,
         message: "Test alert message",
         status: "active",
-        created_at: new Date()
-      });
+        severity: "medium",
+        created_at: new Date(),
+        created_by: firebaseUser.uid
+      };
+      
+      const alertRef = await addDoc(collection(db, "alerts"), testAlert);
       addLog(`✅ Created test alert: ${alertRef.id}`);
       
       // Create test filter
-      const filterRef = await addDoc(collection(db, "filters"), {
+      const testFilter = {
         unit_id: unitRef.id,
         installation_date: new Date().toISOString(),
         last_change: new Date().toISOString(),
         volume_processed: 500,
-        created_at: new Date()
-      });
+        status: "active",
+        created_at: new Date(),
+        created_by: firebaseUser.uid
+      };
+      
+      const filterRef = await addDoc(collection(db, "filters"), testFilter);
       addLog(`✅ Created test filter: ${filterRef.id}`);
       
       addLog("🎉 Test data creation complete!");
+      addLog("🔄 Try running 'Test Connection' again to see the new data");
       
     } catch (error) {
       addLog(`❌ Error creating test data: ${error.message}`);
+      addLog(`❌ Error code: ${error.code}`);
+      addLog(`❌ Full error details: ${JSON.stringify(error, null, 2)}`);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const testSimpleRead = async () => {
+    setIsLoading(true);
+    
+    try {
+      addLog("🧪 Testing simple read operation...");
+      
+      if (!firebaseUser) {
+        addLog("❌ No authenticated user");
+        return;
+      }
+      
+      // Test a simple collection read
+      const testCollection = collection(db, "units");
+      addLog("📡 Attempting to read units collection...");
+      
+      const snapshot = await getDocs(testCollection);
+      addLog(`✅ Simple read successful: ${snapshot.size} documents`);
+      
+    } catch (error) {
+      addLog(`❌ Simple read failed: ${error.message}`);
+      addLog(`❌ This suggests a permissions or configuration issue`);
     } finally {
       setIsLoading(false);
     }
@@ -104,10 +183,10 @@ export const FirebaseDebugPanel: React.FC = () => {
   return (
     <Card className="w-full max-w-4xl">
       <CardHeader>
-        <CardTitle>🔧 Firebase Debug Panel</CardTitle>
+        <CardTitle>🔧 Enhanced Firebase Debug Panel</CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
-        <div className="flex gap-2">
+        <div className="flex gap-2 flex-wrap">
           <Button 
             onClick={testFirebaseConnection}
             disabled={isLoading}
@@ -123,6 +202,13 @@ export const FirebaseDebugPanel: React.FC = () => {
             {isLoading ? "Creating..." : "Create Test Data"}
           </Button>
           <Button 
+            onClick={testSimpleRead}
+            disabled={isLoading}
+            variant="outline"
+          >
+            {isLoading ? "Testing..." : "Simple Read Test"}
+          </Button>
+          <Button 
             onClick={() => setTestResults([])}
             variant="outline"
           >
@@ -135,11 +221,22 @@ export const FirebaseDebugPanel: React.FC = () => {
             <div className="text-gray-400">Click "Test Connection" to start debugging...</div>
           ) : (
             testResults.map((result, index) => (
-              <div key={index} className="text-green-400 mb-1">
+              <div key={index} className="text-green-400 mb-1 whitespace-pre-wrap">
                 {result}
               </div>
             ))
           )}
+        </div>
+        
+        <div className="text-sm text-gray-600 bg-gray-50 p-3 rounded">
+          <strong>Debug Instructions:</strong>
+          <ol className="list-decimal list-inside mt-2 space-y-1">
+            <li>Click "Test Connection" to check authentication and permissions</li>
+            <li>Review token and claims information</li>
+            <li>If permissions fail, check Firestore rules deployment</li>
+            <li>Use "Simple Read Test" for basic connectivity</li>
+            <li>Create test data only after connection test passes</li>
+          </ol>
         </div>
       </CardContent>
     </Card>
