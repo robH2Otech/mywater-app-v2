@@ -8,7 +8,7 @@ interface UnitFormActionsProps {
 
 export function UnitFormActions({ onCancel, isSubmitting }: UnitFormActionsProps) {
   return (
-    <div className="flex justify-end gap-3 pt-4 border-t border-spotify-accent bg-spotify-darker px-6 py-4 mt-6">
+    <div className="flex justify-end gap-3 pt-4 px-6 py-4 border-t border-spotify-accent bg-spotify-darker">
       <Button
         type="button"
         variant="outline"
