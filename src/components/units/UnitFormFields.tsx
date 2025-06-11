@@ -2,7 +2,6 @@
 import { FormInput } from "@/components/shared/FormInput";
 import { FormDatePicker } from "@/components/shared/FormDatePicker";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ScrollableDialogContent } from "@/components/shared/ScrollableDialogContent";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
@@ -54,8 +53,8 @@ export function UnitFormFields({ formData, setFormData }: UnitFormFieldsProps) {
   };
   
   return (
-    <ScrollableDialogContent maxHeight="65vh">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-5 p-1">
+    <div className="p-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
         {/* Name Selection Mode */}
         <div className="col-span-1 md:col-span-2 flex items-center justify-between bg-spotify-accent/20 p-3 rounded-md">
           <div className="space-y-1">
@@ -220,6 +219,6 @@ export function UnitFormFields({ formData, setFormData }: UnitFormFieldsProps) {
           onChange={(date) => setFormData({ ...formData, next_maintenance: date })}
         />
       </div>
-    </ScrollableDialogContent>
+    </div>
   );
 }
