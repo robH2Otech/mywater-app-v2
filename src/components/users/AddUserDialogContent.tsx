@@ -2,6 +2,7 @@
 import { DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { UserDetailsForm } from "./UserDetailsForm";
+import { ScrollableDialogContent } from "@/components/shared/ScrollableDialogContent";
 import { UserRole, UserStatus } from "@/types/users";
 
 interface UserFormData {
@@ -63,11 +64,11 @@ export function AddUserDialogContent({
         </div>
       </div>
       
-      <div className="flex justify-end gap-3 px-6 py-4 border-t border-spotify-accent bg-spotify-darker mt-auto">
+      <div className="flex justify-end gap-3 px-6 py-4 border-t border-spotify-accent bg-spotify-darker">
         <Button
           variant="outline"
           onClick={onCancel}
-          className="bg-spotify-accent hover:bg-spotify-accent-hover text-white border-none"
+          className="bg-spotify-accent hover:bg-spotify-accent-hover"
           disabled={isSubmitting}
         >
           Cancel

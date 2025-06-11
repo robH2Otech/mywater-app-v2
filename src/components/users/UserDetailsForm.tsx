@@ -1,5 +1,6 @@
 
-import { FormInput } from "@/components/shared/FormInput";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { UserRole, UserStatus } from "@/types/users";
 
@@ -12,108 +13,125 @@ interface UserFormData {
   job_title: string;
   role: UserRole;
   status: UserStatus;
+  password?: string;
 }
 
 interface UserDetailsFormProps {
   formData: UserFormData;
   handleInputChange: (field: keyof UserFormData, value: string) => void;
-  isEditable?: boolean;
-  canEditField?: (field: keyof UserFormData) => boolean;
+  isEditable: boolean;
+  canEditField: (field: keyof UserFormData) => boolean;
+  showPasswordField?: boolean;
 }
 
 export function UserDetailsForm({ 
   formData, 
   handleInputChange, 
-  isEditable = true,
-  canEditField = () => true
+  isEditable,
+  canEditField,
+  showPasswordField = false
 }: UserDetailsFormProps) {
   return (
     <div className="space-y-4">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <FormInput
-          label="First Name"
-          value={formData.first_name}
-          onChange={(value) => handleInputChange("first_name", value)}
-          placeholder="Enter first name"
-          required
-          disabled={!isEditable || !canEditField("first_name")}
-        />
-        
-        <FormInput
-          label="Last Name"
-          value={formData.last_name}
-          onChange={(value) => handleInputChange("last_name", value)}
-          placeholder="Enter last name"
-          required
-          disabled={!isEditable || !canEditField("last_name")}
-        />
-        
-        <FormInput
-          label="Email"
+      <div className="grid grid-cols-2 gap-4">
+        <div>
+          <Label htmlFor="first_name" className="text-white">First Name *</Label>
+          <Input
+            id="first_name"
+            value={formData.first_name}
+            onChange={(e) => handleInputChange("first_name", e.target.value)}
+            className="bg-spotify-accent border-spotify-accent text-white"
+            disabled={!isEditable || !canEditField("first_name")}
+          />
+        </div>
+        <div>
+          <Label htmlFor="last_name" className="text-white">Last Name *</Label>
+          <Input
+            id="last_name"
+            value={formData.last_name}
+            onChange={(e) => handleInputChange("last_name", e.target.value)}
+            className="bg-spotify-accent border-spotify-accent text-white"
+            disabled={!isEditable || !canEditField("last_name")}
+          />
+        </div>
+      </div>
+
+      <div>
+        <Label htmlFor="email" className="text-white">Email *</Label>
+        <Input
+          id="email"
           type="email"
           value={formData.email}
-          onChange={(value) => handleInputChange("email", value)}
-          placeholder="Enter email address"
-          required
+          onChange={(e) => handleInputChange("email", e.target.value)}
+          className="bg-spotify-accent border-spotify-accent text-white"
           disabled={!isEditable || !canEditField("email")}
-          className="col-span-1 md:col-span-2"
         />
-        
-        <FormInput
-          label="Phone"
-          type="tel"
+      </div>
+
+      <div>
+        <Label htmlFor="phone" className="text-white">Phone</Label>
+        <Input
+          id="phone"
           value={formData.phone}
-          onChange={(value) => handleInputChange("phone", value)}
-          placeholder="Enter phone number"
+          onChange={(e) => handleInputChange("phone", e.target.value)}
+          className="bg-spotify-accent border-spotify-accent text-white"
           disabled={!isEditable || !canEditField("phone")}
         />
-        
-        <FormInput
-          label="Company"
+      </div>
+
+      <div>
+        <Label htmlFor="company" className="text-white">Company *</Label>
+        <Input
+          id="company"
           value={formData.company}
-          onChange={(value) => handleInputChange("company", value)}
-          placeholder="Enter company name"
-          required
+          onChange={(e) => handleInputChange("company", e.target.value)}
+          className="bg-spotify-accent border-spotify-accent text-white"
           disabled={!isEditable || !canEditField("company")}
         />
-        
-        <FormInput
-          label="Job Title"
+      </div>
+
+      <div>
+        <Label htmlFor="job_title" className="text-white">Job Title</Label>
+        <Input
+          id="job_title"
           value={formData.job_title}
-          onChange={(value) => handleInputChange("job_title", value)}
-          placeholder="Enter job title"
+          onChange={(e) => handleInputChange("job_title", e.target.value)}
+          className="bg-spotify-accent border-spotify-accent text-white"
           disabled={!isEditable || !canEditField("job_title")}
         />
-        
-        <div className="space-y-1.5">
-          <label className="text-xs font-medium text-gray-400">Role</label>
+      </div>
+
+      <div className="grid grid-cols-2 gap-4">
+        <div>
+          <Label htmlFor="role" className="text-white">Role</Label>
           <Select
             value={formData.role}
-            onValueChange={(value) => handleInputChange("role", value as UserRole)}
+            onValueChange={(value) => handleInputChange("role", value)}
             disabled={!isEditable || !canEditField("role")}
           >
-            <SelectTrigger className="bg-spotify-accent border-spotify-accent-hover text-white h-9">
-              <SelectValue placeholder="Select role" />
+            <SelectTrigger className="bg-spotify-accent border-spotify-accent text-white">
+              <SelectValue />
             </SelectTrigger>
-            <SelectContent className="bg-spotify-darker border-spotify-accent">
+            <SelectContent>
               <SelectItem value="user">User</SelectItem>
+              <SelectItem value="technician">Technician</SelectItem>
               <SelectItem value="admin">Admin</SelectItem>
-              <SelectItem value="superadmin">Super Admin</SelectItem>
+              <SelectItem value="superadmin">Superadmin</SelectItem>
             </SelectContent>
           </Select>
         </div>
-        
-        <div className="space-y-1.5">
-          <label className="text-xs font-medium text-gray-400">Status</label>
+
+        <div>
+          <Label htmlFor="status" className="text-white">Status</Label>
           <Select
             value={formData.status}
-            onValueChange={(value) => handleInputChange("status", value as UserStatus)}
+            onValueChange={(value) => handleInputChange("status", value)}
             disabled={!isEditable || !canEditField("status")}
           >
-            <SelectTrigger className="bg-spotify-accent border-spotify-accent-hover text-white h-9">
-              <SelectValue placeholder="Select status" />
+            <SelectTrigger className="bg-spotify-accent border-spotify-accent text-white">
+              <SelectValue />
             </SelectTrigger>
-            <SelectContent className="bg-spotify-darker border-spotify-accent">
+            <SelectContent>
               <SelectItem value="active">Active</SelectItem>
               <SelectItem value="inactive">Inactive</SelectItem>
               <SelectItem value="pending">Pending</SelectItem>
@@ -121,6 +139,20 @@ export function UserDetailsForm({
           </Select>
         </div>
       </div>
+
+      {showPasswordField && (
+        <div>
+          <Label htmlFor="password" className="text-white">Password *</Label>
+          <Input
+            id="password"
+            type="password"
+            value={formData.password || ""}
+            onChange={(e) => handleInputChange("password", e.target.value)}
+            className="bg-spotify-accent border-spotify-accent text-white"
+            disabled={!isEditable || !canEditField("password")}
+          />
+        </div>
+      )}
     </div>
   );
 }

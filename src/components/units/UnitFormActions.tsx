@@ -8,12 +8,12 @@ interface UnitFormActionsProps {
 
 export function UnitFormActions({ onCancel, isSubmitting }: UnitFormActionsProps) {
   return (
-    <div className="flex justify-end gap-3 p-6 border-t border-spotify-accent bg-spotify-darker">
+    <div className="flex justify-end gap-3 pt-4 border-t border-spotify-accent bg-spotify-darker px-6 py-4 mt-6">
       <Button
         type="button"
         variant="outline"
         onClick={onCancel}
-        className="bg-spotify-accent hover:bg-spotify-accent-hover text-white border-none min-w-[80px]"
+        className="bg-spotify-accent hover:bg-spotify-accent-hover text-white border-none"
         disabled={isSubmitting}
       >
         Cancel
@@ -21,7 +21,7 @@ export function UnitFormActions({ onCancel, isSubmitting }: UnitFormActionsProps
       <Button
         type="submit"
         disabled={isSubmitting}
-        className="bg-mywater-blue hover:bg-mywater-blue/90 min-w-[100px]"
+        className="bg-mywater-blue hover:bg-mywater-blue/90"
       >
         {isSubmitting ? "Saving..." : "Save Unit"}
       </Button>
