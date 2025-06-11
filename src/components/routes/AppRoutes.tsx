@@ -1,9 +1,10 @@
+
 import React, { Suspense } from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
 import { ProtectedRoute, PrivateProtectedRoute } from "./ProtectedRoutes";
 import { AuthProvider } from "@/contexts/AuthContext";
 
-// Lazy-loaded components
+// Lazy-loaded components - ensuring proper imports
 const Dashboard = React.lazy(() => import("@/pages/Dashboard"));
 const Units = React.lazy(() => import("@/pages/Units"));
 const UnitDetails = React.lazy(() => import("@/pages/UnitDetails"));
@@ -16,13 +17,15 @@ const Filters = React.lazy(() => import("@/pages/Filters"));
 const Users = React.lazy(() => import("@/pages/Users"));
 const ClientRequests = React.lazy(() => import("@/pages/ClientRequests"));
 const Settings = React.lazy(() => import("@/pages/Settings"));
-const Auth = React.lazy(() => import("@/pages/Auth"));
 const PrivateAuth = React.lazy(() => import("@/pages/PrivateAuth"));
 const PrivateDashboard = React.lazy(() => import("@/pages/PrivateDashboard"));
 const LandingPage = React.lazy(() => import("@/pages/LandingPage"));
 const NotFound = React.lazy(() => import("@/pages/NotFound"));
 const MigrationPage = React.lazy(() => import("@/pages/MigrationPage"));
 const ImpactOverview = React.lazy(() => import("@/pages/ImpactOverview"));
+
+// Import Auth directly instead of lazy loading to avoid module fetch issues
+import Auth from "@/pages/Auth";
 
 // Loader component for suspense fallback
 const LoadingFallback = () => (
@@ -45,7 +48,7 @@ export function AppRoutes() {
           {/* Migration page - publicly accessible */}
           <Route path="/migration" element={<MigrationPage />} />
           
-          {/* Authentication */}
+          {/* Authentication - using direct import instead of lazy */}
           <Route path="/auth" element={<Auth />} />
           <Route path="/private-auth" element={<PrivateAuth />} />
           

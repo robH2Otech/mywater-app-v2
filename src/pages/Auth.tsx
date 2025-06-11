@@ -76,4 +76,5 @@ const Auth = () => {
   );
 };
 
+// Ensure proper default export
 export default Auth;
