@@ -4,9 +4,10 @@ import { Button } from "@/components/ui/button";
 interface UnitFormActionsProps {
   onCancel: () => void;
   isSubmitting: boolean;
+  isEdit?: boolean;
 }
 
-export function UnitFormActions({ onCancel, isSubmitting }: UnitFormActionsProps) {
+export function UnitFormActions({ onCancel, isSubmitting, isEdit = false }: UnitFormActionsProps) {
   return (
     <div className="flex justify-end gap-3 pt-4 px-6 py-4 border-t border-spotify-accent bg-spotify-darker">
       <Button
@@ -23,7 +24,10 @@ export function UnitFormActions({ onCancel, isSubmitting }: UnitFormActionsProps
         disabled={isSubmitting}
         className="bg-mywater-blue hover:bg-mywater-blue/90"
       >
-        {isSubmitting ? "Saving..." : "Save Unit"}
+        {isSubmitting 
+          ? (isEdit ? "Updating..." : "Saving...") 
+          : (isEdit ? "Update Unit" : "Save Unit")
+        }
       </Button>
     </div>
   );

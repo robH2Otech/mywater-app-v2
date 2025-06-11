@@ -25,6 +25,7 @@ interface AddUnitDialogContentProps {
   onSubmit: (e: React.FormEvent) => Promise<void>;
   onCancel: () => void;
   isSubmitting: boolean;
+  isEdit?: boolean;
 }
 
 export function AddUnitDialogContent({
@@ -32,14 +33,17 @@ export function AddUnitDialogContent({
   setFormData,
   onSubmit,
   onCancel,
-  isSubmitting
+  isSubmitting,
+  isEdit = false
 }: AddUnitDialogContentProps) {
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
   return (
     <div className="flex flex-col h-full max-h-[90vh]">
       <DialogHeader className="px-6 py-4 border-b border-spotify-accent shrink-0">
-        <DialogTitle className="text-xl font-semibold text-white">Add New Water Unit</DialogTitle>
+        <DialogTitle className="text-xl font-semibold text-white">
+          {isEdit ? "Edit Water Unit" : "Add New Water Unit"}
+        </DialogTitle>
       </DialogHeader>
       
       <form onSubmit={onSubmit} className="flex flex-col h-full min-h-0">
@@ -55,7 +59,11 @@ export function AddUnitDialogContent({
         </div>
         
         <div className="shrink-0 border-t border-spotify-accent">
-          <UnitFormActions onCancel={onCancel} isSubmitting={isSubmitting} />
+          <UnitFormActions 
+            onCancel={onCancel} 
+            isSubmitting={isSubmitting} 
+            isEdit={isEdit}
+          />
         </div>
       </form>
     </div>

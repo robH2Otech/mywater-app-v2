@@ -1,10 +1,8 @@
 
-import { useState, useRef } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { useState } from "react";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
-import { UnitFormFields } from "./UnitFormFields";
-import { UnitFormActions } from "./UnitFormActions";
-import { FormSlider } from "@/components/shared/FormSlider";
+import { AddUnitDialogContent } from "./AddUnitDialogContent";
 import { useQueryClient } from "@tanstack/react-query";
 import { doc, updateDoc, collection, addDoc } from "firebase/firestore";
 import { db } from "@/integrations/firebase/client";
@@ -39,7 +37,6 @@ export function EditUnitDialog({ unit, open, onOpenChange }: EditUnitDialogProps
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [formData, setFormData] = useState({
     name: unit.name,
     location: unit.location || "",
@@ -173,28 +170,14 @@ export function EditUnitDialog({ unit, open, onOpenChange }: EditUnitDialogProps
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[600px] h-[90vh] bg-spotify-darker border-spotify-accent p-0 overflow-hidden">
-        <div className="flex flex-col h-full">
-          <DialogHeader className="px-6 py-4 border-b border-spotify-accent shrink-0">
-            <DialogTitle className="text-xl font-semibold text-white">Edit Water Unit</DialogTitle>
-          </DialogHeader>
-          
-          <form onSubmit={handleSubmit} className="flex flex-col h-full min-h-0">
-            <div 
-              ref={scrollContainerRef}
-              className="flex-1 overflow-y-auto px-6 py-4 min-h-0"
-            >
-              <UnitFormFields formData={formData} setFormData={setFormData} />
-            </div>
-            
-            <div className="px-6">
-              <FormSlider containerRef={scrollContainerRef} />
-            </div>
-            
-            <div className="shrink-0 border-t border-spotify-accent">
-              <UnitFormActions onCancel={() => onOpenChange(false)} isSubmitting={isSubmitting} />
-            </div>
-          </form>
-        </div>
+        <AddUnitDialogContent
+          formData={formData}
+          setFormData={setFormData}
+          onSubmit={handleSubmit}
+          onCancel={() => onOpenChange(false)}
+          isSubmitting={isSubmitting}
+          isEdit={true}
+        />
       </DialogContent>
     </Dialog>
   );

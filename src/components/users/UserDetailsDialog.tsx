@@ -1,14 +1,15 @@
+
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
 import { doc, updateDoc } from "firebase/firestore";
 import { db } from "@/integrations/firebase/client";
 import { User, UserRole, UserStatus } from "@/types/users";
-import { ScrollableDialogContent } from "@/components/shared/ScrollableDialogContent";
 import { UserDetailsForm } from "./UserDetailsForm";
 import { UserActionButtons } from "./UserActionButtons";
+import { FormSlider } from "@/components/shared/FormSlider";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { usePermissions } from "@/hooks/usePermissions";
 import { Shield, ShieldAlert, ShieldCheck } from "lucide-react";
@@ -36,6 +37,8 @@ export function UserDetailsDialog({ user, open, onOpenChange }: UserDetailsDialo
   const queryClient = useQueryClient();
   const isMobile = useIsMobile();
   const { hasPermission, userRole, company: currentUserCompany } = usePermissions();
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
   
   const [formData, setFormData] = useState<UserFormData>({
     first_name: "",
@@ -110,6 +113,8 @@ export function UserDetailsDialog({ user, open, onOpenChange }: UserDetailsDialo
         throw new Error("You don't have permission to edit this user");
       }
 
+      setIsSubmitting(true);
+
       const userDocRef = doc(db, "app_users_business", user.id);
       await updateDoc(userDocRef, {
         ...formData,
@@ -129,6 +134,8 @@ export function UserDetailsDialog({ user, open, onOpenChange }: UserDetailsDialo
         description: error.message,
         variant: "destructive",
       });
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -191,47 +198,60 @@ export function UserDetailsDialog({ user, open, onOpenChange }: UserDetailsDialo
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className={`${isMobile ? 'w-[95vw] max-w-[95vw]' : 'w-full max-w-[800px]'} bg-spotify-darker border-spotify-accent overflow-hidden ${isMobile ? 'p-3' : 'p-5'}`}>
-        <DialogHeader className="mb-1 flex items-center">
-          <div className="flex items-center gap-2">
-            {getRoleIcon(user.role)}
-            <DialogTitle className="text-lg font-semibold text-white">
-              User Details {user.company && `(${user.company})`}
-            </DialogTitle>
-          </div>
-        </DialogHeader>
+      <DialogContent className="sm:max-w-[600px] h-[90vh] bg-spotify-darker border-spotify-accent p-0 overflow-hidden">
+        <div className="flex flex-col h-full max-h-[90vh]">
+          <DialogHeader className="px-6 py-4 border-b border-spotify-accent shrink-0">
+            <div className="flex items-center gap-2">
+              {getRoleIcon(user.role)}
+              <DialogTitle className="text-xl font-semibold text-white">
+                User Details {user.company && `(${user.company})`}
+              </DialogTitle>
+            </div>
+          </DialogHeader>
 
-        <ScrollableDialogContent maxHeight={isMobile ? "60vh" : "65vh"}>
-          <UserDetailsForm 
-            formData={formData}
-            handleInputChange={handleInputChange}
-            isEditable={isEditable}
-            canEditField={canEditField}
-          />
-        </ScrollableDialogContent>
-
-        <div className={`flex ${isMobile ? 'flex-col gap-3' : 'justify-between items-center'} mt-4 pt-3 border-t border-gray-700`}>
-          <div className={`${isMobile ? 'order-2' : ''}`}>
-            {hasPermission("write") && (
-              <UserActionButtons onAction={handleAction} />
-            )}
+          <div 
+            ref={scrollContainerRef}
+            className="flex-1 overflow-y-auto px-6 py-4 min-h-0"
+          >
+            <UserDetailsForm 
+              formData={formData}
+              handleInputChange={handleInputChange}
+              isEditable={isEditable}
+              canEditField={canEditField}
+            />
           </div>
-          <div className={`flex gap-2 ${isMobile ? 'order-1 justify-center' : ''}`}>
-            <Button
-              variant="outline"
-              onClick={() => onOpenChange(false)}
-              className="bg-spotify-accent hover:bg-spotify-accent-hover h-8 text-sm px-3"
-            >
-              Close
-            </Button>
-            {isEditable && (
-              <Button
-                onClick={handleSubmit}
-                className="bg-spotify-green hover:bg-spotify-green/90 h-8 text-sm px-3"
-              >
-                Save Changes
-              </Button>
-            )}
+
+          <div className="px-6">
+            <FormSlider containerRef={scrollContainerRef} />
+          </div>
+
+          <div className="shrink-0 border-t border-spotify-accent bg-spotify-darker">
+            <div className={`flex ${isMobile ? 'flex-col gap-3' : 'justify-between items-center'} px-6 py-4`}>
+              <div className={`${isMobile ? 'order-2' : ''}`}>
+                {hasPermission("write") && (
+                  <UserActionButtons onAction={handleAction} />
+                )}
+              </div>
+              <div className={`flex gap-2 ${isMobile ? 'order-1 justify-center' : ''}`}>
+                <Button
+                  variant="outline"
+                  onClick={() => onOpenChange(false)}
+                  className="bg-spotify-accent hover:bg-spotify-accent-hover text-white border-none"
+                  disabled={isSubmitting}
+                >
+                  Close
+                </Button>
+                {isEditable && (
+                  <Button
+                    onClick={handleSubmit}
+                    disabled={isSubmitting}
+                    className="bg-mywater-blue hover:bg-mywater-blue/90"
+                  >
+                    {isSubmitting ? "Updating..." : "Update User"}
+                  </Button>
+                )}
+              </div>
+            </div>
           </div>
         </div>
       </DialogContent>
