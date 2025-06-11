@@ -2,7 +2,9 @@
 import { DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { UserDetailsForm } from "./UserDetailsForm";
+import { FormSlider } from "@/components/shared/FormSlider";
 import { UserRole, UserStatus } from "@/types/users";
+import { useRef } from "react";
 
 interface UserFormData {
   first_name: string;
@@ -34,7 +36,8 @@ export function AddUserDialogContent({
   canCreateAdmin = false,
   isSubmitting
 }: AddUserDialogContentProps) {
-  // Function to determine if a field can be edited
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+  
   const canEditField = (field: keyof UserFormData): boolean => {
     if (field === "role") {
       if (formData.role === "superadmin" && !canCreateSuperAdmin) return false;
@@ -44,12 +47,15 @@ export function AddUserDialogContent({
   };
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col h-full max-h-[90vh]">
       <DialogHeader className="px-6 py-4 border-b border-spotify-accent shrink-0">
         <DialogTitle className="text-xl font-semibold text-white">Invite New User</DialogTitle>
       </DialogHeader>
       
-      <div className="flex-1 overflow-y-auto px-6 py-4">
+      <div 
+        ref={scrollContainerRef}
+        className="flex-1 overflow-y-auto px-6 py-4 min-h-0"
+      >
         <UserDetailsForm
           formData={formData}
           handleInputChange={handleInputChange}
@@ -61,6 +67,10 @@ export function AddUserDialogContent({
             <strong>Note:</strong> This will create a user invitation. The user will need to sign up with their email address to activate their account.
           </p>
         </div>
+      </div>
+      
+      <div className="px-6">
+        <FormSlider containerRef={scrollContainerRef} />
       </div>
       
       <div className="flex justify-end gap-3 px-6 py-4 border-t border-spotify-accent bg-spotify-darker shrink-0">

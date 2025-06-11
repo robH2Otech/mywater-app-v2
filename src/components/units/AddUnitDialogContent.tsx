@@ -2,6 +2,8 @@
 import { DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { UnitFormFields } from "./UnitFormFields";
 import { UnitFormActions } from "./UnitFormActions";
+import { FormSlider } from "@/components/shared/FormSlider";
+import { useRef } from "react";
 
 interface AddUnitDialogContentProps {
   formData: {
@@ -32,17 +34,27 @@ export function AddUnitDialogContent({
   onCancel,
   isSubmitting
 }: AddUnitDialogContentProps) {
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col h-full max-h-[90vh]">
       <DialogHeader className="px-6 py-4 border-b border-spotify-accent shrink-0">
         <DialogTitle className="text-xl font-semibold text-white">Add New Water Unit</DialogTitle>
       </DialogHeader>
       
-      <form onSubmit={onSubmit} className="flex flex-col h-full">
-        <div className="flex-1 overflow-y-auto">
+      <form onSubmit={onSubmit} className="flex flex-col h-full min-h-0">
+        <div 
+          ref={scrollContainerRef}
+          className="flex-1 overflow-y-auto px-6 py-4 min-h-0"
+        >
           <UnitFormFields formData={formData} setFormData={setFormData} />
         </div>
-        <div className="shrink-0">
+        
+        <div className="px-6">
+          <FormSlider containerRef={scrollContainerRef} />
+        </div>
+        
+        <div className="shrink-0 border-t border-spotify-accent">
           <UnitFormActions onCancel={onCancel} isSubmitting={isSubmitting} />
         </div>
       </form>

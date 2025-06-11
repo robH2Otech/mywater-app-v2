@@ -1,9 +1,10 @@
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { UnitFormFields } from "./UnitFormFields";
 import { UnitFormActions } from "./UnitFormActions";
+import { FormSlider } from "@/components/shared/FormSlider";
 import { useQueryClient } from "@tanstack/react-query";
 import { doc, updateDoc, collection, addDoc } from "firebase/firestore";
 import { db } from "@/integrations/firebase/client";
@@ -38,6 +39,7 @@ export function EditUnitDialog({ unit, open, onOpenChange }: EditUnitDialogProps
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [formData, setFormData] = useState({
     name: unit.name,
     location: unit.location || "",
@@ -51,7 +53,7 @@ export function EditUnitDialog({ unit, open, onOpenChange }: EditUnitDialogProps
     uvc_hours: unit.uvc_hours ? formatDecimal(unit.uvc_hours) : "0.00",
     eid: unit.eid || "",
     iccid: unit.iccid || "",
-    unit_type: unit.unit_type || "uvc", // Default to "uvc" if not specified
+    unit_type: unit.unit_type || "uvc",
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -98,14 +100,13 @@ export function EditUnitDialog({ unit, open, onOpenChange }: EditUnitDialogProps
         updated_at: new Date().toISOString(),
         eid: formData.eid || null,
         iccid: formData.iccid || null,
-        unit_type: formData.unit_type, // Include unit_type in the update
+        unit_type: formData.unit_type,
       };
       
       // Add UVC fields if hours are provided and unit is UVC type
       if (formData.unit_type === 'uvc' && uvcHours !== null) {
         updateData.uvc_hours = uvcHours;
         updateData.uvc_status = uvcStatus;
-        // Use setup_date as UVC installation date if no specific installation date exists
         if (!unit.uvc_installation_date) {
           updateData.uvc_installation_date = formData.setup_date?.toISOString() || null;
         }
@@ -117,11 +118,9 @@ export function EditUnitDialog({ unit, open, onOpenChange }: EditUnitDialogProps
 
       // Check if the new status requires an alert
       if (newStatus === 'warning' || newStatus === 'urgent') {
-        // Only create alert if status changed or was already warning/urgent
         if (unit.status !== newStatus || newStatus === 'urgent') {
           const alertMessage = createAlertMessage(formData.name, numericVolume, newStatus);
           
-          // Add a new alert to the alerts collection
           const alertsCollection = collection(db, "alerts");
           await addDoc(alertsCollection, {
             unit_id: unit.id,
@@ -135,11 +134,9 @@ export function EditUnitDialog({ unit, open, onOpenChange }: EditUnitDialogProps
       
       // Check if UVC status requires an alert (only for UVC units)
       if (formData.unit_type === 'uvc' && uvcHours !== null && uvcStatus && (uvcStatus === 'warning' || uvcStatus === 'urgent')) {
-        // Only create alert if status changed or was already warning/urgent
         if (unit.uvc_status !== uvcStatus || uvcStatus === 'urgent') {
           const uvcAlertMessage = createUVCAlertMessage(formData.name, uvcHours, uvcStatus);
           
-          // Add a new alert to the alerts collection
           const alertsCollection = collection(db, "alerts");
           await addDoc(alertsCollection, {
             unit_id: unit.id,
@@ -181,11 +178,19 @@ export function EditUnitDialog({ unit, open, onOpenChange }: EditUnitDialogProps
             <DialogTitle className="text-xl font-semibold text-white">Edit Water Unit</DialogTitle>
           </DialogHeader>
           
-          <form onSubmit={handleSubmit} className="flex flex-col h-full">
-            <div className="flex-1 overflow-y-auto">
+          <form onSubmit={handleSubmit} className="flex flex-col h-full min-h-0">
+            <div 
+              ref={scrollContainerRef}
+              className="flex-1 overflow-y-auto px-6 py-4 min-h-0"
+            >
               <UnitFormFields formData={formData} setFormData={setFormData} />
             </div>
-            <div className="shrink-0">
+            
+            <div className="px-6">
+              <FormSlider containerRef={scrollContainerRef} />
+            </div>
+            
+            <div className="shrink-0 border-t border-spotify-accent">
               <UnitFormActions onCancel={() => onOpenChange(false)} isSubmitting={isSubmitting} />
             </div>
           </form>
