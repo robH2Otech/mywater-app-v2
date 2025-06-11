@@ -45,12 +45,12 @@ export function AddUserDialogContent({
   };
 
   return (
-    <>
-      <DialogHeader>
+    <div className="flex flex-col h-full">
+      <DialogHeader className="px-6 py-4 border-b border-spotify-accent">
         <DialogTitle className="text-xl font-semibold text-white">Invite New User</DialogTitle>
       </DialogHeader>
       
-      <ScrollableDialogContent maxHeight="65vh">
+      <div className="flex-1 overflow-y-auto px-6 py-4">
         <UserDetailsForm
           formData={formData}
           handleInputChange={handleInputChange}
@@ -62,9 +62,9 @@ export function AddUserDialogContent({
             <strong>Note:</strong> This will create a user invitation. The user will need to sign up with their email address to activate their account.
           </p>
         </div>
-      </ScrollableDialogContent>
+      </div>
       
-      <div className="flex justify-end gap-3 mt-6">
+      <div className="flex justify-end gap-3 px-6 py-4 border-t border-spotify-accent bg-spotify-darker">
         <Button
           variant="outline"
           onClick={onCancel}
@@ -81,6 +81,6 @@ export function AddUserDialogContent({
           {isSubmitting ? "Inviting..." : "Invite User"}
         </Button>
       </div>
-    </>
+    </div>
   );
 }

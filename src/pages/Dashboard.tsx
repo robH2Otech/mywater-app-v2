@@ -1,23 +1,25 @@
 
 import { useQuery } from "@tanstack/react-query";
-import { Droplet, Bell, Calendar, Activity } from "lucide-react";
+import { Droplet, Bell, Calendar, Activity, Settings } from "lucide-react";
 import { StatCard } from "@/components/dashboard/StatCard";
 import { WaterUsageChart } from "@/components/dashboard/WaterUsageChart";
 import { RecentAlerts } from "@/components/dashboard/RecentAlerts";
 import { FirebaseDebugPanel } from "@/components/debug/FirebaseDebugPanel";
 import { useAllUnits, useAllAlerts, useAllFilters } from "@/hooks/useAllData";
 import { UnitData } from "@/types/analytics";
-import { determineUnitStatus } from "@/utils/unitStatusUtils";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { formatThousands } from "@/utils/measurements/formatUtils";
 import { useAuth } from "@/contexts/AuthContext";
 import { Card } from "@/components/ui/card";
-import { AlertCircle, CheckCircle, Loader2, RefreshCw } from "lucide-react";
+import { AlertCircle, CheckCircle, Loader2, RefreshCw, ChevronDown, ChevronUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useState } from "react";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 
 const Dashboard = () => {
   const { t } = useLanguage();
   const { userRole, company, authError, isLoading: authLoading, debugInfo, firebaseUser } = useAuth();
+  const [showDebugMode, setShowDebugMode] = useState(false);
 
   // Use simple data fetching - NO FILTERING, NO COMPLEX LOGIC
   const { data: units = [], isLoading: unitsLoading, error: unitsError, refetch: refetchUnits } = useAllUnits();
@@ -29,9 +31,7 @@ const Dashboard = () => {
     company,
     unitsCount: units.length,
     alertsCount: alerts.length,
-    filtersCount: filters.length,
-    debugInfo,
-    firebaseUser: firebaseUser ? { uid: firebaseUser.uid, email: firebaseUser.email } : null
+    filtersCount: filters.length
   });
 
   const handleRefreshAll = () => {
@@ -81,13 +81,10 @@ const Dashboard = () => {
         <Card className="p-6 bg-red-900/20 border-red-800">
           <div className="flex items-center space-x-3 mb-4">
             <AlertCircle className="h-6 w-6 text-red-500" />
-            <h2 className="text-lg font-semibold text-white">Firebase Data Loading Error</h2>
+            <h2 className="text-lg font-semibold text-white">Data Loading Error</h2>
           </div>
           <p className="text-red-300 mb-4">
-            Failed to load data from Firebase: {unitsError?.message || alertsError?.message || filtersError?.message}
-          </p>
-          <p className="text-gray-300 mb-4">
-            This suggests a Firebase configuration or permission issue. Use the debug panel below to investigate.
+            Failed to load data: {unitsError?.message || alertsError?.message || filtersError?.message}
           </p>
           <div className="flex gap-2">
             <button 
@@ -102,8 +99,6 @@ const Dashboard = () => {
             </Button>
           </div>
         </Card>
-        
-        <FirebaseDebugPanel />
       </div>
     );
   }
@@ -115,10 +110,7 @@ const Dashboard = () => {
       <div className="flex items-center justify-center min-h-screen">
         <div className="flex flex-col items-center space-y-4">
           <Loader2 className="h-8 w-8 animate-spin text-blue-500" />
-          <p className="text-gray-400">Loading Firebase data...</p>
-          <p className="text-gray-500 text-sm">
-            User: {firebaseUser?.email} | Role: {userRole} | Company: {company}
-          </p>
+          <p className="text-gray-400">Loading data...</p>
         </div>
       </div>
     );
@@ -131,40 +123,51 @@ const Dashboard = () => {
 
   return (
     <div className="space-y-6 animate-fadeIn">
-      {/* Enhanced Success indicator */}
-      <Card className="p-4 bg-green-900/20 border-green-800">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-3">
-            <CheckCircle className="h-5 w-5 text-green-500" />
-            <div>
-              <p className="text-green-300">
-                ✅ FIREBASE DATA LOADED: {units.length} units, {alerts.length} alerts, {filters.length} filters 
-              </p>
-              <p className="text-green-400 text-sm">
-                User: {firebaseUser?.email} | Role: {userRole} | Company: {company}
-              </p>
-            </div>
+      {/* Clean Status Bar */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center space-x-3">
+          <CheckCircle className="h-5 w-5 text-green-500" />
+          <div>
+            <p className="text-green-300 text-sm">
+              Data loaded: {units.length} units, {alerts.length} alerts, {filters.length} filters
+            </p>
+            <p className="text-gray-400 text-xs">
+              {userRole === 'superadmin' ? 'Superadmin Access' : `Company: ${company}`}
+            </p>
           </div>
+        </div>
+        <div className="flex items-center gap-2">
           <Button onClick={handleRefreshAll} variant="outline" size="sm">
             <RefreshCw className="h-4 w-4 mr-2" />
             Refresh
           </Button>
+          {userRole === 'superadmin' && (
+            <Button 
+              onClick={() => setShowDebugMode(!showDebugMode)} 
+              variant="outline" 
+              size="sm"
+            >
+              <Settings className="h-4 w-4 mr-2" />
+              Debug
+            </Button>
+          )}
         </div>
-      </Card>
-
-      {/* Debug panel for troubleshooting */}
-      {(units.length === 0 && alerts.length === 0 && filters.length === 0) && (
-        <div>
-          <h3 className="text-lg font-semibold text-white mb-4">🔧 No Data Found - Debug Panel</h3>
-          <FirebaseDebugPanel />
-        </div>
-      )}
-
-      {/* Always show debug panel for testing */}
-      <div>
-        <h3 className="text-lg font-semibold text-white mb-4">🔧 Firebase Debug Panel</h3>
-        <FirebaseDebugPanel />
       </div>
+
+      {/* Collapsible Debug Panel - Only for Superadmin */}
+      {userRole === 'superadmin' && (
+        <Collapsible open={showDebugMode} onOpenChange={setShowDebugMode}>
+          <CollapsibleContent>
+            <div className="bg-spotify-darker border border-spotify-accent rounded-lg p-4">
+              <h3 className="text-lg font-semibold text-white mb-4 flex items-center">
+                <Settings className="h-5 w-5 mr-2" />
+                Debug Panel
+              </h3>
+              <FirebaseDebugPanel />
+            </div>
+          </CollapsibleContent>
+        </Collapsible>
+      )}
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard

@@ -8,7 +8,7 @@ export function AddUnitDialog({ open, onOpenChange }: { open: boolean; onOpenCha
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[600px] bg-spotify-darker border-spotify-accent overflow-hidden">
+      <DialogContent className="sm:max-w-[600px] h-[90vh] bg-spotify-darker border-spotify-accent p-0 overflow-hidden">
         <AddUnitDialogContent
           formData={formData}
           setFormData={setFormData}
