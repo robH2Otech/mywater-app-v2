@@ -177,15 +177,17 @@ export function EditUnitDialog({ unit, open, onOpenChange }: EditUnitDialogProps
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[600px] h-[90vh] bg-spotify-darker border-spotify-accent p-0 overflow-hidden">
         <div className="flex flex-col h-full">
-          <DialogHeader className="px-6 py-4 border-b border-spotify-accent">
+          <DialogHeader className="px-6 py-4 border-b border-spotify-accent flex-shrink-0">
             <DialogTitle className="text-xl font-semibold text-white">Edit Water Unit</DialogTitle>
           </DialogHeader>
           
-          <form onSubmit={handleSubmit} className="flex flex-col flex-1">
-            <div className="flex-1 overflow-y-auto">
+          <form onSubmit={handleSubmit} className="flex flex-col flex-1 min-h-0">
+            <div className="flex-1 overflow-y-auto p-6">
               <UnitFormFields formData={formData} setFormData={setFormData} />
             </div>
-            <UnitFormActions onCancel={() => onOpenChange(false)} isSubmitting={isSubmitting} />
+            <div className="flex-shrink-0">
+              <UnitFormActions onCancel={() => onOpenChange(false)} isSubmitting={isSubmitting} />
+            </div>
           </form>
         </div>
       </DialogContent>
