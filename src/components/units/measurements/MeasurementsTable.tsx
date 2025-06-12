@@ -38,6 +38,29 @@ export function MeasurementsTable({ measurements, isUVCUnit }: MeasurementsTable
     return value.toFixed(2);
   };
 
+  const calculateHourlyFlow = (currentMeasurement: RawMeasurement, index: number) => {
+    if (index === 0) return "N/A"; // First measurement has no previous data
+    
+    const previousMeasurement = measurements[index - 1];
+    
+    const currentVolume = currentMeasurement.volume || currentMeasurement.total_volume || 0;
+    const previousVolume = previousMeasurement.volume || previousMeasurement.total_volume || 0;
+    
+    if (typeof currentVolume !== 'number' || typeof previousVolume !== 'number') {
+      return "N/A";
+    }
+    
+    const volumeDifference = currentVolume - previousVolume;
+    
+    if (volumeDifference <= 0) return "0.00";
+    
+    // Convert to m³ if needed and format for hourly rate
+    // Assuming measurements are roughly hourly, so the difference is already per hour
+    const flowRate = volumeDifference / 1000; // Convert L to m³
+    
+    return flowRate.toFixed(3);
+  };
+
   return (
     <Table>
       <TableHeader>
@@ -46,9 +69,9 @@ export function MeasurementsTable({ measurements, isUVCUnit }: MeasurementsTable
           {isUVCUnit ? (
             <>
               <TableHead>UVC Hours</TableHead>
-              <TableHead>Flow Rate (L/min)</TableHead>
+              <TableHead>Total Volume (L)</TableHead>
+              <TableHead>Flow (m³/hour)</TableHead>
               <TableHead>Temperature (°C)</TableHead>
-              <TableHead>Humidity (%)</TableHead>
             </>
           ) : (
             <>
@@ -68,9 +91,9 @@ export function MeasurementsTable({ measurements, isUVCUnit }: MeasurementsTable
             {isUVCUnit ? (
               <>
                 <TableCell>{formatValue(measurement.uvc_hours)}</TableCell>
-                <TableCell>{formatValue(measurement.value || measurement.flow_rate)}</TableCell>
+                <TableCell>{formatValue(measurement.volume || measurement.total_volume)}</TableCell>
+                <TableCell>{calculateHourlyFlow(measurement, index)}</TableCell>
                 <TableCell>{formatValue(measurement.temp || measurement.temperature)}</TableCell>
-                <TableCell>{formatValue(measurement.humidity)}</TableCell>
               </>
             ) : (
               <>
