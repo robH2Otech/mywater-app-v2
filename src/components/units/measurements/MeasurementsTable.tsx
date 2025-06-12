@@ -54,11 +54,9 @@ export function MeasurementsTable({ measurements, isUVCUnit }: MeasurementsTable
     
     if (volumeDifference <= 0) return "0.00";
     
-    // Convert to m³ if needed and format for hourly rate
-    // Assuming measurements are roughly hourly, so the difference is already per hour
-    const flowRate = volumeDifference / 1000; // Convert L to m³
-    
-    return flowRate.toFixed(3);
+    // Direct volume difference for hourly flow
+    // UVC units: m³/hour, DROP/Office units: L/hour
+    return volumeDifference.toFixed(2);
   };
 
   return (
@@ -69,14 +67,14 @@ export function MeasurementsTable({ measurements, isUVCUnit }: MeasurementsTable
           {isUVCUnit ? (
             <>
               <TableHead>UVC Hours</TableHead>
-              <TableHead>Total Volume (L)</TableHead>
+              <TableHead>Total Volume (m³)</TableHead>
               <TableHead>Flow (m³/hour)</TableHead>
               <TableHead>Temperature (°C)</TableHead>
             </>
           ) : (
             <>
               <TableHead>Volume (L)</TableHead>
-              <TableHead>Flow Rate (L/min)</TableHead>
+              <TableHead>Flow (L/hour)</TableHead>
               <TableHead>Temperature (°C)</TableHead>
             </>
           )}
@@ -98,7 +96,7 @@ export function MeasurementsTable({ measurements, isUVCUnit }: MeasurementsTable
             ) : (
               <>
                 <TableCell>{formatValue(measurement.volume)}</TableCell>
-                <TableCell>{formatValue(measurement.value || measurement.flow_rate)}</TableCell>
+                <TableCell>{calculateHourlyFlow(measurement, index)}</TableCell>
                 <TableCell>{formatValue(measurement.temp || measurement.temperature)}</TableCell>
               </>
             )}
