@@ -39,17 +39,22 @@ export function MeasurementsTable({ measurements, isUVCUnit }: MeasurementsTable
   };
 
   const calculateHourlyFlow = (currentMeasurement: RawMeasurement, index: number) => {
-    if (index === 0) return "N/A"; // First measurement has no previous data
+    // Since measurements are ordered newest to oldest, the last measurement has no previous data
+    if (index === measurements.length - 1) return "N/A";
     
-    const previousMeasurement = measurements[index - 1];
+    // The previous (older) measurement is at index + 1
+    const previousMeasurement = measurements[index + 1];
     
     const currentVolume = currentMeasurement.volume || currentMeasurement.total_volume || 0;
     const previousVolume = previousMeasurement.volume || previousMeasurement.total_volume || 0;
+    
+    console.log(`Flow calculation - Index: ${index}, Current: ${currentVolume}, Previous: ${previousVolume}`);
     
     if (typeof currentVolume !== 'number' || typeof previousVolume !== 'number') {
       return "N/A";
     }
     
+    // Calculate the volume difference (current - previous)
     const volumeDifference = currentVolume - previousVolume;
     
     if (volumeDifference <= 0) return "0.00";
