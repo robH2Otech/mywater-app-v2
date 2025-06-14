@@ -45,7 +45,7 @@ export function useUVCData() {
           const unitDoc = await getDoc(doc(db, "units", unitId));
           if (!unitDoc.exists()) {
             console.log(`📝 Creating special unit entry for ${unitId}`);
-            // Create a document-like object for the special unit
+            // Create a document-like object for the special unit with all required UVC properties
             return {
               id: unitId,
               data: () => ({
@@ -54,6 +54,10 @@ export function useUVCData() {
                 unit_type: "uvc",
                 status: "active",
                 location: "Main Office",
+                uvc_hours: 0,
+                uvc_status: 'active' as const,
+                is_uvc_accumulated: false,
+                total_volume: 0
               }),
               exists: () => true
             };
