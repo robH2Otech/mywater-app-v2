@@ -1,11 +1,12 @@
 import emailjs from 'emailjs-com';
 
-// EmailJS configuration - Updated for X-WATER
+// EmailJS configuration - Simplified for X-WATER
 export const EMAILJS_CONFIG = {
-  SERVICE_ID: 'service_xwater', // Update this with your new service ID
-  TEMPLATE_ID: 'template_referral', // Keep the same template or create a new one
-  USER_ID: '20lKGYgYsf1DIICqM',  // Keep this or update with your new user ID
-  PUBLIC_KEY: '20lKGYgYsf1DIICqM'  // Keep this or update with your new public key
+  SERVICE_ID: 'service_mywater', // Use the working service ID
+  TEMPLATE_ID_REFERRAL: 'template_referral',
+  TEMPLATE_ID_INVITATION: 'template_invitation', // New template for invitations
+  USER_ID: '20lKGYgYsf1DIICqM',
+  PUBLIC_KEY: '20lKGYgYsf1DIICqM'
 };
 
 // Keep track of initialization status
@@ -19,34 +20,57 @@ export const initEmailJS = () => {
     console.log("Initializing EmailJS...");
     
     try {
-      // Modern EmailJS SDK initialization (v3)
       emailjs.init(EMAILJS_CONFIG.PUBLIC_KEY);
-      console.log("EmailJS initialized successfully with PUBLIC_KEY");
+      console.log("EmailJS initialized successfully");
       emailJSInitialized = true;
       
-      // Test if emailjs is properly initialized
       if (typeof emailjs.send !== 'function') {
         throw new Error("EmailJS send function not available after initialization");
       }
       
     } catch (err) {
       console.error("Error initializing EmailJS:", err);
-      
-      // Try another method (fallback for older versions or configurations)
-      try {
-        // @ts-ignore - For older versions of emailjs-com
-        if (typeof emailjs.init !== 'function' && typeof emailjs.initialize === 'function') {
-          // @ts-ignore - Some versions use initialize instead of init
-          emailjs.initialize(EMAILJS_CONFIG.USER_ID);
-          console.log("EmailJS initialized with alternate method");
-          emailJSInitialized = true;
-        }
-      } catch (altErr) {
-        console.error("Alternative EmailJS initialization also failed:", altErr);
-      }
     }
   }
   return emailJSInitialized;
+};
+
+/**
+ * Send email with simplified parameters for invitations
+ */
+export const sendInvitationEmailDirect = async (
+  toEmail: string,
+  toName: string,
+  companyName: string,
+  senderName: string
+) => {
+  try {
+    initEmailJS();
+    
+    const templateParams = {
+      to_email: toEmail,
+      to_name: toName,
+      company_name: companyName,
+      sender_name: senderName,
+      login_url: "https://x-water.com/auth",
+      reply_to: "noreply@x-watertechnologies.com"
+    };
+    
+    console.log("Sending invitation email with params:", templateParams);
+    
+    const response = await emailjs.send(
+      EMAILJS_CONFIG.SERVICE_ID,
+      EMAILJS_CONFIG.TEMPLATE_ID_INVITATION,
+      templateParams,
+      EMAILJS_CONFIG.PUBLIC_KEY
+    );
+    
+    console.log("Invitation email sent successfully:", response);
+    return response;
+  } catch (error) {
+    console.error("Error sending invitation email:", error);
+    throw error;
+  }
 };
 
 /**
@@ -86,7 +110,7 @@ export const sendEmailWithEmailJS = async (
       // This works because the actual emailjs library accepts these parameters
       response = await emailjs.send(
         EMAILJS_CONFIG.SERVICE_ID,
-        EMAILJS_CONFIG.TEMPLATE_ID,
+        EMAILJS_CONFIG.TEMPLATE_ID_REFERRAL,
         minimalParams as any, // Type cast to bypass TypeScript error
         EMAILJS_CONFIG.PUBLIC_KEY
       );
@@ -97,7 +121,7 @@ export const sendEmailWithEmailJS = async (
       // @ts-ignore - For older versions
       response = await emailjs.sendForm(
         EMAILJS_CONFIG.SERVICE_ID,
-        EMAILJS_CONFIG.TEMPLATE_ID,
+        EMAILJS_CONFIG.TEMPLATE_ID_REFERRAL,
         minimalParams as any, // Type cast here as well
         EMAILJS_CONFIG.USER_ID
       );

@@ -1,6 +1,5 @@
 
-import { sendEmailDirect } from './directEmail';
-import { initEmailJS } from './config';
+import { sendInvitationEmailDirect } from './config';
 
 /**
  * Generates an invitation email template for new business users
@@ -34,7 +33,7 @@ X-WATER Team`;
 };
 
 /**
- * Sends an invitation email to a newly created business user
+ * Sends an invitation email to a newly created business user - Simplified version
  */
 export const sendInvitationEmail = async (
   userEmail: string,
@@ -45,26 +44,12 @@ export const sendInvitationEmail = async (
   try {
     console.log(`Sending invitation email to ${userEmail} for ${userName}`);
     
-    // Initialize EmailJS
-    initEmailJS();
-    
-    // Generate email content
-    const emailContent = generateInvitationEmailTemplate(
-      userName,
+    // Send the invitation email using the simplified direct method
+    await sendInvitationEmailDirect(
       userEmail,
+      userName,
       companyName,
       senderName
-    );
-    
-    const subject = `Welcome to X-WATER - You've been invited to join ${companyName}`;
-    
-    // Send the invitation email
-    await sendEmailDirect(
-      userEmail,
-      userName,
-      senderName,
-      subject,
-      emailContent
     );
     
     console.log(`Invitation email sent successfully to ${userEmail}`);
@@ -77,9 +62,43 @@ export const sendInvitationEmail = async (
   } catch (error) {
     console.error("Error sending invitation email:", error);
     
-    return {
-      success: false,
-      message: `Failed to send invitation email: ${error instanceof Error ? error.message : 'Unknown error'}`
-    };
+    // If the dedicated invitation template fails, try the referral template as fallback
+    try {
+      console.log("Trying fallback with referral template...");
+      
+      const { sendEmailWithEmailJS } = await import('./config');
+      
+      const emailContent = generateInvitationEmailTemplate(
+        userName,
+        userEmail,
+        companyName,
+        senderName
+      );
+      
+      const subject = `Welcome to X-WATER - You've been invited to join ${companyName}`;
+      
+      await sendEmailWithEmailJS(
+        userEmail,
+        userName,
+        senderName,
+        subject,
+        emailContent
+      );
+      
+      console.log(`Fallback invitation email sent successfully to ${userEmail}`);
+      
+      return {
+        success: true,
+        message: `Invitation email sent successfully to ${userEmail} (via fallback)`
+      };
+      
+    } catch (fallbackError) {
+      console.error("Fallback email also failed:", fallbackError);
+      
+      return {
+        success: false,
+        message: `Failed to send invitation email: ${error instanceof Error ? error.message : 'Email service unavailable'}`
+      };
+    }
   }
 };
