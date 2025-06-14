@@ -5,23 +5,25 @@ export const MEASUREMENT_PATHS = [
   "units/{unitId}/data",
   "units/{unitId}/measurements",
   
-  // MYWATER specific paths
+  // MYWATER and X-WATER specific paths
   "measurements/{unitId}/hourly",
+  "measurements/{unitId}/data",
   
-  // Fallback paths
-  "measurements/{unitId}/data"
+  // Alternative naming patterns
+  "units/{unitId}/sensor_data",
+  "units/{unitId}/readings"
 ];
 
 export function getMeasurementsCollectionPath(unitId: string, isMyWaterUnit?: boolean): string {
   // If isMyWaterUnit wasn't explicitly passed, check based on the ID
   if (isMyWaterUnit === undefined) {
-    isMyWaterUnit = unitId.startsWith("MYWATER_");
+    isMyWaterUnit = unitId.startsWith("MYWATER_") || unitId.startsWith("X-WATER");
   }
   
-  // For MYWATER units, we prioritize specific paths
+  // For MYWATER and X-WATER units, we prioritize specific paths
   if (isMyWaterUnit) {
-    console.log(`Using MYWATER paths for unit ${unitId}`);
-    // For MYWATER units, this is always the correct path
+    console.log(`Using MYWATER/X-WATER paths for unit ${unitId}`);
+    // For these units, this is always the correct path
     return `units/${unitId}/data`;
   }
   
@@ -50,7 +52,7 @@ export async function tryCollectionPath(path: string, count: number = 24) {
     return await getDocs(measurementsQuery);
   } catch (error) {
     console.warn(`Error fetching from path ${path}:`, error);
-    return null; // Return null instead of throwing to continue with other paths
+    return null;
   }
 }
 
@@ -58,20 +60,20 @@ export async function tryCollectionPath(path: string, count: number = 24) {
 export async function tryAllMeasurementPaths(unitId: string, count: number = 24) {
   const attemptedPaths = [];
   
-  // For MYWATER units, prioritize these paths
-  const isMyWaterUnit = unitId.startsWith("MYWATER_");
+  // For MYWATER and X-WATER units, prioritize these paths
+  const isSpecialUnit = unitId.startsWith("MYWATER_") || unitId.startsWith("X-WATER");
   
-  // Always try units/{unitId}/data first for MYWATER units
-  if (isMyWaterUnit) {
-    const myWaterPath = `units/${unitId}/data`;
-    console.log(`Trying primary MYWATER path first: ${myWaterPath}`);
+  // Always try units/{unitId}/data first for special units
+  if (isSpecialUnit) {
+    const specialPath = `units/${unitId}/data`;
+    console.log(`Trying primary path first for ${unitId}: ${specialPath}`);
     
     try {
       const { collection, query, orderBy, limit, getDocs } = require("firebase/firestore");
       const { db } = require("@/integrations/firebase/client");
       
       const measurementsQuery = query(
-        collection(db, myWaterPath),
+        collection(db, specialPath),
         orderBy("timestamp", "desc"),
         limit(count)
       );
@@ -79,18 +81,18 @@ export async function tryAllMeasurementPaths(unitId: string, count: number = 24)
       const snapshot = await getDocs(measurementsQuery);
       
       if (!snapshot.empty) {
-        console.log(`✅ Found data at MYWATER path: ${myWaterPath}, count: ${snapshot.docs.length}`);
+        console.log(`✅ Found data at special unit path: ${specialPath}, count: ${snapshot.docs.length}`);
         return snapshot;
       }
     } catch (err) {
-      console.warn(`Error checking MYWATER path: ${myWaterPath}`, err);
+      console.warn(`Error checking special unit path: ${specialPath}`, err);
     }
   }
   
   // Continue with other paths if needed
   let prioritizedPaths = [...MEASUREMENT_PATHS];
   
-  if (isMyWaterUnit) {
+  if (isSpecialUnit) {
     // Already tried units/{unitId}/data, so remove it
     const preferredPath = "units/{unitId}/data";
     const index = prioritizedPaths.indexOf(preferredPath);

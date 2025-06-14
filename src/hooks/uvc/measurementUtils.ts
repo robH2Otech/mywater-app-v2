@@ -4,7 +4,7 @@ import { db } from "@/integrations/firebase/client";
 import { MEASUREMENT_PATHS, tryAllMeasurementPaths } from "@/hooks/measurements/utils/collectionPaths";
 
 /**
- * Fetches the latest measurement data for a unit with improved reliability
+ * Fetches the latest measurement data for a unit with improved reliability for all unit types
  */
 export async function fetchLatestMeasurement(unitId: string): Promise<{
   latestMeasurementUvcHours: number;
@@ -13,14 +13,25 @@ export async function fetchLatestMeasurement(unitId: string): Promise<{
   volume?: number;
 }> {
   try {
-    console.log(`Fetching latest measurement for unit ${unitId}`);
+    console.log(`🔍 Fetching latest measurement for unit ${unitId}`);
+    
+    // Special handling for X-WATER and MYWATER units
+    const isSpecialUnit = unitId.startsWith("MYWATER_") || unitId.startsWith("X-WATER");
+    
+    if (isSpecialUnit) {
+      console.log(`📊 ${unitId} is a special unit (MYWATER/X-WATER), using priority path`);
+    }
     
     // Try all paths to find data
     const snapshot = await tryAllMeasurementPaths(unitId, 1);
     
     if (snapshot && !snapshot.empty) {
       const latestMeasurement = snapshot.docs[0].data();
-      console.log(`Latest measurement for unit ${unitId} found:`, latestMeasurement);
+      console.log(`📊 Latest measurement for unit ${unitId} found:`, {
+        uvc_hours: latestMeasurement.uvc_hours,
+        volume: latestMeasurement.volume || latestMeasurement.cumulative_volume,
+        timestamp: latestMeasurement.timestamp
+      });
       
       // Extract UVC hours from the measurement
       let uvcHours = 0;
@@ -29,7 +40,9 @@ export async function fetchLatestMeasurement(unitId: string): Promise<{
           ? parseFloat(latestMeasurement.uvc_hours) 
           : (latestMeasurement.uvc_hours || 0);
           
-        console.log(`Latest UVC hours for unit ${unitId}: ${uvcHours}`);
+        console.log(`📊 Extracted UVC hours for unit ${unitId}: ${uvcHours}`);
+      } else {
+        console.log(`⚠️ No UVC hours field found in measurement for unit ${unitId}`);
       }
       
       // Extract volume if available
@@ -69,13 +82,13 @@ export async function fetchLatestMeasurement(unitId: string): Promise<{
       };
     }
     
-    console.log(`No measurement data found for unit ${unitId} after trying all paths`);
+    console.log(`❌ No measurement data found for unit ${unitId} after trying all paths`);
     return {
       latestMeasurementUvcHours: 0,
       hasMeasurementData: false
     };
   } catch (error) {
-    console.error(`Error fetching latest measurement for unit ${unitId}:`, error);
+    console.error(`❌ Error fetching latest measurement for unit ${unitId}:`, error);
     return {
       latestMeasurementUvcHours: 0,
       hasMeasurementData: false

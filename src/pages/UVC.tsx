@@ -23,25 +23,29 @@ const UVC = () => {
   const handleRefresh = useCallback(async () => {
     setIsRefreshing(true);
     try {
-      // Invalidate queries to ensure fresh data
+      console.log("🔄 Manual refresh triggered for UVC data");
+      
+      // Invalidate all related queries first
       await queryClient.invalidateQueries({ queryKey: ["uvc-units"] });
       await queryClient.invalidateQueries({ queryKey: ["units"] });
       await queryClient.invalidateQueries({ queryKey: ["measurements"] });
       
-      // First sync all units to update unit records with latest measurement data
-      if (units.length > 0) {
-        await syncAllUnits(units);
-      }
+      // Explicitly refetch UVC data to get latest unit list
+      const freshData = await refetch();
+      const freshUnits = freshData.data || [];
       
-      // Explicitly refetch UVC data
-      await refetch();
+      // Force sync all units (especially those showing 0 hours)
+      if (freshUnits.length > 0) {
+        console.log(`🎯 Forcing sync for ${freshUnits.length} UVC units`);
+        await syncAllUnits(freshUnits);
+      }
       
       toast({
         title: "Data refreshed",
         description: "UVC data has been synchronized with latest measurements",
       });
     } catch (error) {
-      console.error("Error refreshing UVC data:", error);
+      console.error("❌ Error refreshing UVC data:", error);
       toast({
         title: "Refresh failed",
         description: "Could not refresh UVC data",
@@ -50,22 +54,36 @@ const UVC = () => {
     } finally {
       setIsRefreshing(false);
     }
-  }, [queryClient, refetch, toast, syncAllUnits, units]);
+  }, [queryClient, refetch, toast, syncAllUnits]);
 
-  // Auto-sync when component mounts
+  // Auto-sync when component mounts and when units data changes
   useEffect(() => {
-    const initialSync = async () => {
+    const performInitialSync = async () => {
       if (!isLoading && units.length > 0 && !isRefreshing && !isSyncing) {
-        console.log("Performing initial UVC data sync...");
-        await handleRefresh();
+        // Check if any units need syncing (showing 0 hours when they shouldn't)
+        const unitsNeedingSync = units.filter(unit => {
+          const isSpecialUnit = unit.id?.startsWith("MYWATER_") || unit.id?.startsWith("X-WATER");
+          const hasZeroHours = !unit.uvc_hours || unit.uvc_hours === 0;
+          const notAccumulated = !unit.is_uvc_accumulated;
+          return (isSpecialUnit || unit.unit_type === 'uvc') && (hasZeroHours || notAccumulated);
+        });
+        
+        if (unitsNeedingSync.length > 0) {
+          console.log(`🎯 Found ${unitsNeedingSync.length} units needing sync:`, unitsNeedingSync.map(u => u.id));
+          await syncAllUnits(units);
+        } else {
+          console.log("✅ All UVC units appear to be synced");
+        }
       }
     };
     
-    initialSync();
-  }, [isLoading, units.length]); // Run when loading completes and units are available
+    // Delay initial sync slightly to allow component to mount
+    const timer = setTimeout(performInitialSync, 1000);
+    return () => clearTimeout(timer);
+  }, [isLoading, units, isRefreshing, isSyncing, syncAllUnits]);
 
   if (error) {
-    console.error("Error in UVC component:", error);
+    console.error("❌ Error in UVC component:", error);
     return <div>Error loading UVC data. Please try again.</div>;
   }
 
