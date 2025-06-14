@@ -1,6 +1,6 @@
-
 import { createUser } from './simpleUserService';
 import { sendInvitationEmail } from '../email/invitationEmail';
+import { UserRole, UserStatus } from '@/types/users';
 
 interface InviteUserData {
   first_name: string;
@@ -9,8 +9,8 @@ interface InviteUserData {
   phone: string;
   company: string;
   job_title: string;
-  role: 'superadmin' | 'admin' | 'technician' | 'user';
-  status: 'active' | 'inactive' | 'suspended';
+  role: UserRole;
+  status: UserStatus;
 }
 
 interface InvitationResult {
