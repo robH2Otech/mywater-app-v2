@@ -31,10 +31,10 @@ export const sendEmailDirect = async (
     
     console.log("Sending direct email with parameters:", simpleParams);
     
-    // Try with default service/template
+    // Try with default service/template - use TEMPLATE_ID_REFERRAL
     const response = await emailjs.send(
       EMAILJS_CONFIG.SERVICE_ID,
-      EMAILJS_CONFIG.TEMPLATE_ID,
+      EMAILJS_CONFIG.TEMPLATE_ID_REFERRAL,
       simpleParams,
       EMAILJS_CONFIG.PUBLIC_KEY
     );
@@ -59,7 +59,7 @@ export const sendEmailDirect = async (
       
       const response = await emailjs.send(
         EMAILJS_CONFIG.SERVICE_ID,
-        EMAILJS_CONFIG.TEMPLATE_ID,
+        EMAILJS_CONFIG.TEMPLATE_ID_REFERRAL,
         ultraSimpleParams,
         EMAILJS_CONFIG.PUBLIC_KEY
       );

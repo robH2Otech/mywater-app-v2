@@ -69,7 +69,7 @@ export const sendDirectEmail = async (
     
     const response = await emailjs.send(
       EMAILJS_CONFIG.SERVICE_ID,
-      EMAILJS_CONFIG.TEMPLATE_ID, 
+      EMAILJS_CONFIG.TEMPLATE_ID_REFERRAL, 
       templateParams as any,
       EMAILJS_CONFIG.PUBLIC_KEY
     );
@@ -117,7 +117,7 @@ export const sendFallbackEmail = async (
     
     const fallbackResponse = await emailjs.send(
       EMAILJS_CONFIG.SERVICE_ID,
-      EMAILJS_CONFIG.TEMPLATE_ID,
+      EMAILJS_CONFIG.TEMPLATE_ID_REFERRAL,
       minimalParams as any,
       EMAILJS_CONFIG.PUBLIC_KEY
     );

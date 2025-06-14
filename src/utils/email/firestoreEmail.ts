@@ -1,4 +1,3 @@
-
 import { collection, addDoc, getDocs, query, where, updateDoc, doc } from "firebase/firestore";
 import { db } from "@/integrations/firebase/client";
 import { sendEmailWithEmailJS, EMAILJS_CONFIG, initEmailJS } from './config';
@@ -78,7 +77,7 @@ export const processPendingEmails = async () => {
             
             await emailjs.send(
               EMAILJS_CONFIG.SERVICE_ID,
-              EMAILJS_CONFIG.TEMPLATE_ID,
+              EMAILJS_CONFIG.TEMPLATE_ID_REFERRAL,
               simpleParams,
               EMAILJS_CONFIG.PUBLIC_KEY
             );
