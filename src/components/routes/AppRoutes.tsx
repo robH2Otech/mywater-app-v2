@@ -1,4 +1,3 @@
-
 import React, { Suspense } from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
 import { ProtectedRoute, PrivateProtectedRoute } from "./ProtectedRoutes";
@@ -57,7 +56,7 @@ export function AppRoutes() {
           <Route path="/units" element={<ProtectedRoute><Units /></ProtectedRoute>} />
           <Route path="/units/:id" element={<ProtectedRoute><UnitDetails /></ProtectedRoute>} />
           <Route path="/locations" element={<ProtectedRoute><LocationsPage /></ProtectedRoute>} />
-          <Route path="/locations/:id" element={<ProtectedRoute><UnitLocationPage /></ProtectedRoute>} />
+          <Route path="/locations/:iccid" element={<ProtectedRoute><UnitLocationPage /></ProtectedRoute>} />
           <Route path="/uvc" element={<ProtectedRoute><UVC /></ProtectedRoute>} />
           <Route path="/analytics" element={<ProtectedRoute><Analytics /></ProtectedRoute>} />
           <Route path="/impact" element={<ProtectedRoute><ImpactOverview /></ProtectedRoute>} />
