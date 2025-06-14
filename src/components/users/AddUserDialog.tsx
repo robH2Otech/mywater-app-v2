@@ -6,7 +6,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { UserRole, UserStatus } from "@/types/users";
 import { AddUserDialogContent } from "./AddUserDialogContent";
 import { usePermissions } from "@/hooks/usePermissions";
-import { createUser } from "@/utils/admin/simpleUserService";
+import { inviteUser } from "@/utils/admin/userInvitationService";
 
 interface FormData {
   first_name: string;
@@ -51,7 +51,7 @@ export function AddUserDialog({ open, onOpenChange }: AddUserDialogProps) {
     try {
       setIsSubmitting(true);
       
-      console.log("Creating user...");
+      console.log("Starting user invitation process...");
 
       // Simple permission check - only superadmins can create any role
       if (userRole !== "superadmin") {
@@ -63,50 +63,62 @@ export function AddUserDialog({ open, onOpenChange }: AddUserDialogProps) {
         throw new Error("First name, last name, email, and company are required");
       }
 
-      // Create user document
-      const result = await createUser({
-        first_name: formData.first_name,
-        last_name: formData.last_name,
-        email: formData.email,
-        phone: formData.phone,
-        company: formData.company,
-        job_title: formData.job_title,
-        role: formData.role,
-        status: formData.status
-      });
+      // Send invitation using the comprehensive service
+      const result = await inviteUser(formData, "X-WATER Admin");
 
-      console.log("User created successfully:", result);
+      if (result.success) {
+        console.log("User invitation completed successfully:", result);
 
-      toast({
-        title: "Success",
-        description: result.message,
-      });
-
-      // Reset form and close dialog
-      setFormData({
-        first_name: "",
-        last_name: "",
-        email: "",
-        phone: "",
-        company: currentUserCompany || "",
-        job_title: "",
-        role: "user",
-        status: "active"
-      });
-      
-      if (onOpenChange) {
-        onOpenChange(false);
+        toast({
+          title: "Success",
+          description: result.message,
+        });
+      } else {
+        console.warn("User invitation had issues:", result);
+        
+        // Show different messages based on what succeeded/failed
+        if (result.userCreated && !result.emailSent) {
+          toast({
+            title: "Partial Success",
+            description: result.message,
+            variant: "default", // Not destructive since user was created
+          });
+        } else {
+          toast({
+            title: "Error",
+            description: result.message,
+            variant: "destructive",
+          });
+        }
       }
 
-      // Refresh users list
-      queryClient.invalidateQueries({ queryKey: ["users"] });
+      // Reset form and close dialog if user was created (regardless of email status)
+      if (result.userCreated) {
+        setFormData({
+          first_name: "",
+          last_name: "",
+          email: "",
+          phone: "",
+          company: currentUserCompany || "",
+          job_title: "",
+          role: "user",
+          status: "active"
+        });
+        
+        if (onOpenChange) {
+          onOpenChange(false);
+        }
+
+        // Refresh users list
+        queryClient.invalidateQueries({ queryKey: ["users"] });
+      }
 
     } catch (error: any) {
-      console.error("Error creating user:", error);
+      console.error("Error in user invitation process:", error);
       
       toast({
         title: "Error",
-        description: error.message,
+        description: error.message || "Failed to create user and send invitation",
         variant: "destructive",
       });
     } finally {

@@ -5,3 +5,4 @@ export { generateReferralEmailTemplate } from './templates';
 export { sendEmailDirect } from './directEmail';
 export { processPendingEmails } from './firestoreEmail';
 export { sendReferralEmail, processPendingEmailsForUI } from './referralEmail';
+export { sendInvitationEmail, generateInvitationEmailTemplate } from './invitationEmail';
