@@ -1,5 +1,6 @@
 
-import { sendEmailWithEmailJS, EMAILJS_CONFIG, initEmailJS } from '../email';
+import emailjs from 'emailjs-com';
+import { EMAILJS_CONFIG, initEmailJS } from '../email';
 
 /**
  * Generate invitation email content for new business users
@@ -45,6 +46,7 @@ export const sendInvitationEmail = async (
   senderName: string = "X-WATER Admin"
 ): Promise<{ success: boolean; message: string }> => {
   try {
+    // Prepare content
     const { subject, message } = generateInvitationEmailContent(
       userName,
       userEmail,
@@ -52,31 +54,66 @@ export const sendInvitationEmail = async (
       senderName
     );
 
-    // Try sending with the most reliable code path.
-    await sendEmailWithEmailJS(
-      userEmail,
-      userName,
-      senderName,
+    // Log parameters for debugging
+    console.log("[Invitation] Preparing to send invite email with params:", {
+      to_email: userEmail,
+      to_name: userName,
+      from_name: senderName,
       subject,
       message,
-      {
-        referral_code: "BUSINESS_INVITE", // Template param, always filled for compatibility
-        html_body: message.replace(/\n/g, "<br>")
-      }
+      reply_to: "noreply@mywatertechnologies.com",
+      html_body: message.replace(/\n/g, "<br>"),
+      referral_code: "BUSINESS_INVITE"
+    });
+
+    // Initialize EmailJS
+    initEmailJS();
+
+    // Compose minimal parameters tested for deliverability
+    const inviteParams = {
+      to_email: userEmail,
+      to_name: userName,
+      from_name: senderName,
+      subject,
+      message, // plaintext for template body
+      reply_to: "noreply@mywatertechnologies.com",
+      html_body: message.replace(/\n/g, "<br>"),
+      referral_code: "BUSINESS_INVITE"
+    };
+
+    // Use modern emailjs.send only!
+    const response = await emailjs.send(
+      EMAILJS_CONFIG.SERVICE_ID,
+      EMAILJS_CONFIG.TEMPLATE_ID,
+      inviteParams as any,
+      EMAILJS_CONFIG.PUBLIC_KEY
     );
+
+    console.log("[Invitation] Invitation email sent successfully. EmailJS response:", response);
 
     return {
       success: true,
       message: `Invitation email sent successfully to ${userEmail}.`
     };
   } catch (error: any) {
-    console.error("Critical: Invitation email failed:", error);
-    // Return detailed error to user for fast troubleshooting.
+    let errorDetails = "";
+    if (error?.message) {
+      errorDetails = error.message;
+    } else if (typeof error === "string") {
+      errorDetails = error;
+    } else {
+      try {
+        errorDetails = JSON.stringify(error);
+      } catch {
+        errorDetails = String(error);
+      }
+    }
+    console.error("[Invitation] Critical: Invitation email failed:", errorDetails, error);
     return {
       success: false,
       message:
         "Failed to send invitation email. " +
-        (error && error.message ? error.message : String(error))
+        (errorDetails ? errorDetails : "Unknown error.")
     };
   }
 };
