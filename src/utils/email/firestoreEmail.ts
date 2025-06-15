@@ -1,6 +1,7 @@
+
 import { collection, addDoc, getDocs, query, where, updateDoc, doc } from "firebase/firestore";
 import { db } from "@/integrations/firebase/client";
-import { sendEmailWithEmailJS, EMAILJS_CONFIG, initEmailJS } from './config';
+import { sendEmail, EMAIL_CONFIG, initEmailJS } from './emailConfig';
 import { sendEmailDirect } from './directEmail';
 import emailjs from 'emailjs-com';
 
@@ -27,18 +28,14 @@ export const processPendingEmails = async () => {
         console.log(`Processing email ${emailDoc.id} to ${emailData.to}`);
         
         // Try multiple methods to send the email
-        // Method 1: Using sendEmailWithEmailJS helper function
+        // Method 1: Using sendEmail helper function
         try {
-          await sendEmailWithEmailJS(
+          await sendEmail(
             emailData.to,
             emailData.to_name || emailData.to,
-            emailData.from_name,
             emailData.subject,
             emailData.body,
-            { 
-              referral_code: emailData.referral_code,
-              html_body: emailData.html_body || emailData.body
-            }
+            emailData.from_name
           );
           
           // Mark as sent
@@ -70,16 +67,16 @@ export const processPendingEmails = async () => {
               to_email: emailData.to,
               to_name: emailData.to_name || emailData.to,
               from_name: emailData.from_name,
-              message: `${emailData.from_name} has invited you to try MYWATER with a 20% discount! Use code ${emailData.referral_code} when you purchase at https://mywater.com/products`,
-              subject: emailData.subject || `${emailData.from_name} invited you to try MYWATER (20% discount!)`,
-              reply_to: "noreply@mywatertechnologies.com"
+              message: `${emailData.from_name} has invited you to try X-WATER with a 20% discount! Use code ${emailData.referral_code} when you purchase at https://x-water.com/products`,
+              subject: emailData.subject || `${emailData.from_name} invited you to try X-WATER (20% discount!)`,
+              reply_to: "noreply@x-watertechnologies.com"
             };
             
             await emailjs.send(
-              EMAILJS_CONFIG.SERVICE_ID,
-              EMAILJS_CONFIG.TEMPLATE_ID_REFERRAL,
+              EMAIL_CONFIG.SERVICE_ID,
+              EMAIL_CONFIG.TEMPLATE_ID,
               simpleParams,
-              EMAILJS_CONFIG.PUBLIC_KEY
+              EMAIL_CONFIG.PUBLIC_KEY
             );
             
             await updateDoc(doc(db, "emails_to_send", emailDoc.id), {

@@ -1,6 +1,6 @@
 
 import emailjs from 'emailjs-com';
-import { EMAILJS_CONFIG, initEmailJS } from './config';
+import { EMAIL_CONFIG, initEmailJS } from './emailConfig';
 
 /**
  * Sends an email directly to the recipient using minimal parameters
@@ -31,12 +31,12 @@ export const sendEmailDirect = async (
     
     console.log("Sending direct email with parameters:", simpleParams);
     
-    // Try with default service/template - use TEMPLATE_ID_REFERRAL
+    // Try with default service/template - use TEMPLATE_ID
     const response = await emailjs.send(
-      EMAILJS_CONFIG.SERVICE_ID,
-      EMAILJS_CONFIG.TEMPLATE_ID_REFERRAL,
+      EMAIL_CONFIG.SERVICE_ID,
+      EMAIL_CONFIG.TEMPLATE_ID,
       simpleParams,
-      EMAILJS_CONFIG.PUBLIC_KEY
+      EMAIL_CONFIG.PUBLIC_KEY
     );
     
     console.log("Direct email sent successfully:", response);
@@ -58,10 +58,10 @@ export const sendEmailDirect = async (
       console.log("Trying ultra-simple email parameters:", ultraSimpleParams);
       
       const response = await emailjs.send(
-        EMAILJS_CONFIG.SERVICE_ID,
-        EMAILJS_CONFIG.TEMPLATE_ID_REFERRAL,
+        EMAIL_CONFIG.SERVICE_ID,
+        EMAIL_CONFIG.TEMPLATE_ID,
         ultraSimpleParams,
-        EMAILJS_CONFIG.PUBLIC_KEY
+        EMAIL_CONFIG.PUBLIC_KEY
       );
       
       console.log("Ultra-simple email sent successfully:", response);

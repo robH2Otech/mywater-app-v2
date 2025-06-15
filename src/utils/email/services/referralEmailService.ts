@@ -1,7 +1,7 @@
 
 import { addDoc, updateDoc, doc, collection } from "firebase/firestore";
 import { db } from "@/integrations/firebase/client";
-import { initEmailJS, EMAILJS_CONFIG } from '../config';
+import { initEmailJS, EMAIL_CONFIG } from '../emailConfig';
 import emailjs from 'emailjs-com';
 
 /**
@@ -19,7 +19,7 @@ export const storeEmailInFirestore = async (
     const emailDocRef = await addDoc(collection(db, "emails_to_send"), {
       to: toEmail,
       to_name: toName,
-      from: "noreply@mywatertechnologies.com",
+      from: "noreply@x-watertechnologies.com",
       from_name: fromName,
       subject: subject,
       body: emailContent,
@@ -61,17 +61,17 @@ export const sendDirectEmail = async (
       from_name: fromName,
       subject: subject,
       message: message,
-      reply_to: "noreply@mywatertechnologies.com",
+      reply_to: "noreply@x-watertechnologies.com",
       referral_code: referralCode
     };
     
     console.log("Sending email with EmailJS direct implementation");
     
     const response = await emailjs.send(
-      EMAILJS_CONFIG.SERVICE_ID,
-      EMAILJS_CONFIG.TEMPLATE_ID_REFERRAL, 
+      EMAIL_CONFIG.SERVICE_ID,
+      EMAIL_CONFIG.TEMPLATE_ID, 
       templateParams as any,
-      EMAILJS_CONFIG.PUBLIC_KEY
+      EMAIL_CONFIG.PUBLIC_KEY
     );
     
     console.log("Email sent successfully:", response);
@@ -109,17 +109,17 @@ export const sendFallbackEmail = async (
       to_email: toEmail,
       to_name: toName,
       from_name: fromName,
-      subject: `${fromName} invited you to try MYWATER!`,
-      message: `Use code ${referralCode} for 20% off at mywater.com/products`,
+      subject: `${fromName} invited you to try X-WATER!`,
+      message: `Use code ${referralCode} for 20% off at x-water.com/products`,
     };
     
     console.log("Trying fallback email with minimal parameters");
     
     const fallbackResponse = await emailjs.send(
-      EMAILJS_CONFIG.SERVICE_ID,
-      EMAILJS_CONFIG.TEMPLATE_ID_REFERRAL,
+      EMAIL_CONFIG.SERVICE_ID,
+      EMAIL_CONFIG.TEMPLATE_ID,
       minimalParams as any,
-      EMAILJS_CONFIG.PUBLIC_KEY
+      EMAIL_CONFIG.PUBLIC_KEY
     );
     
     console.log("Fallback email sent successfully:", fallbackResponse);
