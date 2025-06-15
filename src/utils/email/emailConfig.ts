@@ -1,9 +1,10 @@
+
 import emailjs from 'emailjs-com';
 
-// Consolidated EmailJS configuration for X-WATER
+// Consolidated EmailJS configuration - using the WORKING configuration
 export const EMAIL_CONFIG = {
-  SERVICE_ID: 'service_mywater', // Use the working service ID
-  TEMPLATE_ID: 'template_referral', // Use the existing working template for all emails
+  SERVICE_ID: 'service_mywater', // This is the working service ID
+  TEMPLATE_ID: 'template_referral', // Use the working template for all emails
   PUBLIC_KEY: '20lKGYgYsf1DIICqM'
 };
 
@@ -11,11 +12,11 @@ export const EMAIL_CONFIG = {
 let emailJSInitialized = false;
 
 /**
- * Initialize EmailJS with proper configuration
+ * Initialize EmailJS with the working configuration
  */
 export const initEmailJS = () => {
   if (!emailJSInitialized) {
-    console.log("Initializing EmailJS with consolidated config...");
+    console.log("Initializing EmailJS with working config...");
     
     try {
       emailjs.init(EMAIL_CONFIG.PUBLIC_KEY);
@@ -34,7 +35,7 @@ export const initEmailJS = () => {
 };
 
 /**
- * Send email using the consolidated configuration
+ * Send email using the working configuration and template
  */
 export const sendEmail = async (
   toEmail: string,
@@ -49,7 +50,7 @@ export const sendEmail = async (
     // Initialize EmailJS
     initEmailJS();
     
-    // Create email parameters
+    // Use the EXACT parameter names that the working template expects
     const emailParams = {
       to_email: toEmail,
       to_name: toName,
@@ -61,7 +62,7 @@ export const sendEmail = async (
     
     console.log("Email parameters:", emailParams);
     
-    // Send email
+    // Send email using the working template
     const response = await emailjs.send(
       EMAIL_CONFIG.SERVICE_ID,
       EMAIL_CONFIG.TEMPLATE_ID,

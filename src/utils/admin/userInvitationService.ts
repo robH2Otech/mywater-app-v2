@@ -53,7 +53,7 @@ export const inviteUser = async (
     result.userCreated = true;
     console.log("User created successfully, now sending invitation email...");
     
-    // Step 2: Send invitation email
+    // Step 2: Send invitation email using the working configuration
     const emailResult = await sendInvitationEmail(
       userData.email,
       `${userData.first_name} ${userData.last_name}`,
@@ -68,7 +68,7 @@ export const inviteUser = async (
       console.log("Invitation process completed successfully");
     } else {
       result.errors.push(`Email sending failed: ${emailResult.message}`);
-      result.message = `User created successfully, but invitation email failed to send. Please manually inform ${userData.email} about their account. Email error: ${emailResult.message}`;
+      result.message = `User created successfully, but invitation email failed to send: ${emailResult.message}`;
       console.warn("User created but email failed:", emailResult.message);
     }
     

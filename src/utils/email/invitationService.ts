@@ -37,7 +37,7 @@ X-WATER Team`;
 };
 
 /**
- * Send invitation email to a newly created business user
+ * Send invitation email using the working email configuration
  */
 export const sendInvitationEmail = async (
   userEmail: string,
@@ -56,7 +56,7 @@ export const sendInvitationEmail = async (
       senderName
     );
     
-    // Send the email
+    // Send the email using the working configuration
     const result = await sendEmail(
       userEmail,
       userName,
