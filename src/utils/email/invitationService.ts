@@ -1,5 +1,5 @@
 
-import { sendReferralEmail } from '../email/referralEmail';
+import { sendEmailWithEmailJS, EMAILJS_CONFIG, initEmailJS } from '../email';
 
 /**
  * Generate invitation email content for new business users
@@ -11,7 +11,7 @@ export const generateInvitationEmailContent = (
   senderName: string = "X-WATER Admin"
 ): { subject: string; message: string } => {
   const subject = `Welcome to X-WATER - You've been invited to join ${companyName}`;
-  
+
   const message = `Hi ${userName},
 
 You've been invited to join ${companyName} on the X-WATER business platform!
@@ -32,12 +32,11 @@ Welcome to X-WATER!
 Best regards,
 ${senderName}
 X-WATER Team`;
-
   return { subject, message };
 };
 
 /**
- * Send invitation email using the same reliable logic as referral emails
+ * Send invitation email using the proven working email configuration and template.
  */
 export const sendInvitationEmail = async (
   userEmail: string,
@@ -53,32 +52,31 @@ export const sendInvitationEmail = async (
       senderName
     );
 
-    // Use invite code 'WELCOME' for clarity!
-    const referralResult = await sendReferralEmail(
+    // Try sending with the most reliable code path.
+    await sendEmailWithEmailJS(
       userEmail,
       userName,
       senderName,
-      "WELCOME", // fake/placeholder code for invites
-      message
+      subject,
+      message,
+      {
+        referral_code: "BUSINESS_INVITE", // Template param, always filled for compatibility
+        html_body: message.replace(/\n/g, "<br>")
+      }
     );
 
-    if (referralResult && referralResult.success) {
-      return {
-        success: true,
-        message: "Invitation sent successfully."
-      };
-    } else {
-      const errorMsg = referralResult && referralResult.message ? referralResult.message : "Unknown failure in sending invite.";
-      return {
-        success: false,
-        message: `Failed to send invitation: ${errorMsg}`
-      };
-    }
+    return {
+      success: true,
+      message: `Invitation email sent successfully to ${userEmail}.`
+    };
   } catch (error: any) {
-    console.error("sendInvitationEmail error:", error);
+    console.error("Critical: Invitation email failed:", error);
+    // Return detailed error to user for fast troubleshooting.
     return {
       success: false,
-      message: `Failed to send invitation: ${error?.message ?? String(error)}`
+      message:
+        "Failed to send invitation email. " +
+        (error && error.message ? error.message : String(error))
     };
   }
 };
