@@ -1,7 +1,7 @@
 
 // EmailJS configuration for the referral program
 export const EMAILJS_CONFIG = {
-  SERVICE_ID: 'service_mywater',
+  SERVICE_ID: 'service_g41yi1m',
   TEMPLATE_ID: 'template_referral',
   USER_ID: '20lKGYgYsf1DIICqM',
   PUBLIC_KEY: '20lKGYgYsf1DIICqM'
