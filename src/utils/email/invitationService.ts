@@ -1,5 +1,5 @@
 
-import { sendEmail } from './emailConfig';
+import { sendEmailWithEmailJS, generateReferralEmailTemplate } from '../email';
 
 /**
  * Generate invitation email content for new business users
@@ -56,22 +56,25 @@ export const sendInvitationEmail = async (
       senderName
     );
     
-    // Send the email using the working configuration
-    const result = await sendEmail(
+    // Use the proven working email function with the same parameters as referral emails
+    await sendEmailWithEmailJS(
       userEmail,
       userName,
+      senderName,
       subject,
       message,
-      senderName
+      {
+        referral_code: "WELCOME", // Add a referral code for template compatibility
+        html_body: message.replace(/\n/g, "<br>")
+      }
     );
     
-    if (result.success) {
-      console.log(`Invitation email sent successfully to ${userEmail}`);
-    } else {
-      console.error(`Failed to send invitation email to ${userEmail}:`, result.message);
-    }
+    console.log(`Invitation email sent successfully to ${userEmail}`);
     
-    return result;
+    return {
+      success: true,
+      message: `Invitation email sent successfully to ${userEmail}`
+    };
     
   } catch (error) {
     console.error("Error in sendInvitationEmail:", error);

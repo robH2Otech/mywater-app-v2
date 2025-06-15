@@ -1,7 +1,7 @@
 
 import { addDoc, updateDoc, doc, collection } from "firebase/firestore";
 import { db } from "@/integrations/firebase/client";
-import { initEmailJS, EMAIL_CONFIG } from '../emailConfig';
+import { initEmailJS, EMAILJS_CONFIG } from '../../email';
 import emailjs from 'emailjs-com';
 
 /**
@@ -68,10 +68,10 @@ export const sendDirectEmail = async (
     console.log("Sending email with EmailJS direct implementation");
     
     const response = await emailjs.send(
-      EMAIL_CONFIG.SERVICE_ID,
-      EMAIL_CONFIG.TEMPLATE_ID, 
+      EMAILJS_CONFIG.SERVICE_ID,
+      EMAILJS_CONFIG.TEMPLATE_ID, 
       templateParams as any,
-      EMAIL_CONFIG.PUBLIC_KEY
+      EMAILJS_CONFIG.PUBLIC_KEY
     );
     
     console.log("Email sent successfully:", response);
@@ -116,10 +116,10 @@ export const sendFallbackEmail = async (
     console.log("Trying fallback email with minimal parameters");
     
     const fallbackResponse = await emailjs.send(
-      EMAIL_CONFIG.SERVICE_ID,
-      EMAIL_CONFIG.TEMPLATE_ID,
+      EMAILJS_CONFIG.SERVICE_ID,
+      EMAILJS_CONFIG.TEMPLATE_ID,
       minimalParams as any,
-      EMAIL_CONFIG.PUBLIC_KEY
+      EMAILJS_CONFIG.PUBLIC_KEY
     );
     
     console.log("Fallback email sent successfully:", fallbackResponse);

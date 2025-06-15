@@ -1,7 +1,7 @@
 
 import { collection, addDoc, getDocs, query, where, updateDoc, doc } from "firebase/firestore";
 import { db } from "@/integrations/firebase/client";
-import { sendEmail, EMAIL_CONFIG, initEmailJS } from './emailConfig';
+import { sendEmailWithEmailJS, EMAILJS_CONFIG, initEmailJS } from '../email';
 import { sendEmailDirect } from './directEmail';
 import emailjs from 'emailjs-com';
 
@@ -28,14 +28,18 @@ export const processPendingEmails = async () => {
         console.log(`Processing email ${emailDoc.id} to ${emailData.to}`);
         
         // Try multiple methods to send the email
-        // Method 1: Using sendEmail helper function
+        // Method 1: Using sendEmailWithEmailJS helper function
         try {
-          await sendEmail(
+          await sendEmailWithEmailJS(
             emailData.to,
             emailData.to_name || emailData.to,
+            emailData.from_name,
             emailData.subject,
             emailData.body,
-            emailData.from_name
+            { 
+              referral_code: emailData.referral_code,
+              html_body: emailData.html_body || emailData.body
+            }
           );
           
           // Mark as sent
@@ -73,10 +77,10 @@ export const processPendingEmails = async () => {
             };
             
             await emailjs.send(
-              EMAIL_CONFIG.SERVICE_ID,
-              EMAIL_CONFIG.TEMPLATE_ID,
+              EMAILJS_CONFIG.SERVICE_ID,
+              EMAILJS_CONFIG.TEMPLATE_ID,
               simpleParams,
-              EMAIL_CONFIG.PUBLIC_KEY
+              EMAILJS_CONFIG.PUBLIC_KEY
             );
             
             await updateDoc(doc(db, "emails_to_send", emailDoc.id), {

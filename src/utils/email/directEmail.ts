@@ -1,6 +1,6 @@
 
 import emailjs from 'emailjs-com';
-import { EMAIL_CONFIG, initEmailJS } from './emailConfig';
+import { EMAILJS_CONFIG, initEmailJS } from '../email';
 
 /**
  * Sends an email directly to the recipient using minimal parameters
@@ -26,17 +26,17 @@ export const sendEmailDirect = async (
       from_name: fromName,
       subject: subject,
       message: message.replace(/<br>/g, '\n').replace(/<[^>]*>/g, ''),
-      reply_to: "noreply@x-watertechnologies.com" // Updated for X-WATER
+      reply_to: "noreply@x-watertechnologies.com"
     };
     
     console.log("Sending direct email with parameters:", simpleParams);
     
     // Try with default service/template - use TEMPLATE_ID
     const response = await emailjs.send(
-      EMAIL_CONFIG.SERVICE_ID,
-      EMAIL_CONFIG.TEMPLATE_ID,
+      EMAILJS_CONFIG.SERVICE_ID,
+      EMAILJS_CONFIG.TEMPLATE_ID,
       simpleParams,
-      EMAIL_CONFIG.PUBLIC_KEY
+      EMAILJS_CONFIG.PUBLIC_KEY
     );
     
     console.log("Direct email sent successfully:", response);
@@ -50,18 +50,18 @@ export const sendEmailDirect = async (
         to_email: toEmail,
         to_name: toName,
         from_name: fromName,
-        subject: `${fromName} invited you to try X-WATER with a discount!`, // Updated for X-WATER
-        message: `${fromName} has invited you to try X-WATER with a 20% discount! Visit https://x-water.com/products and use code XWATER20`, // Updated for X-WATER
-        reply_to: "noreply@x-watertechnologies.com" // Updated for X-WATER
+        subject: `${fromName} invited you to try X-WATER with a discount!`,
+        message: `${fromName} has invited you to try X-WATER with a 20% discount! Visit https://x-water.com/products and use code XWATER20`,
+        reply_to: "noreply@x-watertechnologies.com"
       };
       
       console.log("Trying ultra-simple email parameters:", ultraSimpleParams);
       
       const response = await emailjs.send(
-        EMAIL_CONFIG.SERVICE_ID,
-        EMAIL_CONFIG.TEMPLATE_ID,
+        EMAILJS_CONFIG.SERVICE_ID,
+        EMAILJS_CONFIG.TEMPLATE_ID,
         ultraSimpleParams,
-        EMAIL_CONFIG.PUBLIC_KEY
+        EMAILJS_CONFIG.PUBLIC_KEY
       );
       
       console.log("Ultra-simple email sent successfully:", response);
