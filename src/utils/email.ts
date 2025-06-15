@@ -52,7 +52,7 @@ export const initEmailJS = () => {
 };
 
 /**
- * Helper function to send emails using EmailJS
+ * Helper function to send emails using EmailJS (reliable approach)
  */
 export const sendEmailWithEmailJS = async (
   toEmail: string,
@@ -66,7 +66,7 @@ export const sendEmailWithEmailJS = async (
     // Initialize EmailJS
     initEmailJS();
     
-    // For maximum deliverability with EmailJS, use a minimal params set
+    // Use minimal param set only
     const minimalParams = {
       to_email: toEmail,
       to_name: toName,
@@ -78,31 +78,15 @@ export const sendEmailWithEmailJS = async (
     };
     
     console.log("Sending email with EmailJS using minimal params", minimalParams);
-    
-    // Make sure we're calling send correctly based on the library version
-    let response;
-    
-    try {
-      // First try the modern approach (v3)
-      response = await emailjs.send(
-        EMAILJS_CONFIG.SERVICE_ID,
-        EMAILJS_CONFIG.TEMPLATE_ID,
-        minimalParams as any,
-        EMAILJS_CONFIG.PUBLIC_KEY
-      );
-    } catch (err) {
-      console.error("Modern EmailJS send failed, trying alternative method:", err);
-      
-      // Try alternative send method (v2)
-      // @ts-ignore - For older versions
-      response = await emailjs.sendForm(
-        EMAILJS_CONFIG.SERVICE_ID,
-        EMAILJS_CONFIG.TEMPLATE_ID,
-        minimalParams as any,
-        EMAILJS_CONFIG.USER_ID
-      );
-    }
-    
+
+    // Use only emailjs.send, do NOT attempt sendForm fallback!
+    const response = await emailjs.send(
+      EMAILJS_CONFIG.SERVICE_ID,
+      EMAILJS_CONFIG.TEMPLATE_ID,
+      minimalParams as any,
+      EMAILJS_CONFIG.PUBLIC_KEY
+    );
+
     console.log("Email sent successfully:", response);
     return response;
   } catch (error) {
