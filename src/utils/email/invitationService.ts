@@ -1,5 +1,5 @@
 
-import { sendEmailWithEmailJS, generateReferralEmailTemplate } from '../email';
+import { sendReferralEmail } from '../email/referralEmail';
 
 /**
  * Generate invitation email content for new business users
@@ -37,7 +37,7 @@ X-WATER Team`;
 };
 
 /**
- * Send invitation email using the working email configuration
+ * Send invitation email using the same reliable logic as referral emails
  */
 export const sendInvitationEmail = async (
   userEmail: string,
@@ -46,42 +46,39 @@ export const sendInvitationEmail = async (
   senderName: string = "X-WATER Admin"
 ): Promise<{ success: boolean; message: string }> => {
   try {
-    console.log(`Sending invitation email to ${userEmail} for ${userName} at ${companyName}`);
-    
-    // Generate email content
     const { subject, message } = generateInvitationEmailContent(
       userName,
       userEmail,
       companyName,
       senderName
     );
-    
-    // Use the proven working email function with the same parameters as referral emails
-    await sendEmailWithEmailJS(
+
+    // Use invite code 'WELCOME' for clarity!
+    const referralResult = await sendReferralEmail(
       userEmail,
       userName,
       senderName,
-      subject,
-      message,
-      {
-        referral_code: "WELCOME", // Add a referral code for template compatibility
-        html_body: message.replace(/\n/g, "<br>")
-      }
+      "WELCOME", // fake/placeholder code for invites
+      message
     );
-    
-    console.log(`Invitation email sent successfully to ${userEmail}`);
-    
-    return {
-      success: true,
-      message: `Invitation email sent successfully to ${userEmail}`
-    };
-    
-  } catch (error) {
-    console.error("Error in sendInvitationEmail:", error);
-    
+
+    if (referralResult && referralResult.success) {
+      return {
+        success: true,
+        message: "Invitation sent successfully."
+      };
+    } else {
+      const errorMsg = referralResult && referralResult.message ? referralResult.message : "Unknown failure in sending invite.";
+      return {
+        success: false,
+        message: `Failed to send invitation: ${errorMsg}`
+      };
+    }
+  } catch (error: any) {
+    console.error("sendInvitationEmail error:", error);
     return {
       success: false,
-      message: `Failed to send invitation email: ${error instanceof Error ? error.message : 'Unknown error'}`
+      message: `Failed to send invitation: ${error?.message ?? String(error)}`
     };
   }
 };
