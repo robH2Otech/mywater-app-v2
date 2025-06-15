@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
@@ -63,33 +62,31 @@ export function AddUserDialog({ open, onOpenChange }: AddUserDialogProps) {
         throw new Error("First name, last name, email, and company are required");
       }
 
-      // Send invitation using the comprehensive service
+      // Send invitation using the simplified service
       const result = await inviteUser(formData, "X-WATER Admin");
 
-      if (result.success) {
-        console.log("User invitation completed successfully:", result);
+      console.log("Invitation result:", result);
 
+      if (result.success) {
+        // Complete success - user created and email sent
         toast({
-          title: "Success",
+          title: "Success!",
           description: result.message,
         });
+      } else if (result.userCreated && !result.emailSent) {
+        // Partial success - user created but email failed
+        toast({
+          title: "User Created",
+          description: result.message,
+          variant: "default",
+        });
       } else {
-        console.warn("User invitation had issues:", result);
-        
-        // Show different messages based on what succeeded/failed
-        if (result.userCreated && !result.emailSent) {
-          toast({
-            title: "Partial Success",
-            description: result.message,
-            variant: "default", // Not destructive since user was created
-          });
-        } else {
-          toast({
-            title: "Error",
-            description: result.message,
-            variant: "destructive",
-          });
-        }
+        // Complete failure - user not created
+        toast({
+          title: "Error",
+          description: result.message,
+          variant: "destructive",
+        });
       }
 
       // Reset form and close dialog if user was created (regardless of email status)

@@ -1,6 +1,6 @@
 
 import { createUser } from './simpleUserService';
-import { sendInvitationEmail } from '../email/invitationEmail';
+import { sendInvitationEmail } from '../email/invitationService';
 import { UserRole, UserStatus } from '@/types/users';
 
 interface InviteUserData {
@@ -23,7 +23,7 @@ interface InvitationResult {
 }
 
 /**
- * Simplified user invitation service that creates user and sends invitation email
+ * Comprehensive user invitation service that creates user and sends invitation email
  */
 export const inviteUser = async (
   userData: InviteUserData,
@@ -53,7 +53,7 @@ export const inviteUser = async (
     result.userCreated = true;
     console.log("User created successfully, now sending invitation email...");
     
-    // Step 2: Send invitation email with simplified approach
+    // Step 2: Send invitation email
     const emailResult = await sendInvitationEmail(
       userData.email,
       `${userData.first_name} ${userData.last_name}`,
@@ -64,11 +64,11 @@ export const inviteUser = async (
     if (emailResult.success) {
       result.emailSent = true;
       result.success = true;
-      result.message = `User ${userData.first_name} ${userData.last_name} has been created and invitation email sent to ${userData.email}`;
+      result.message = `Success: User ${userData.first_name} ${userData.last_name} has been created and invitation email sent to ${userData.email}`;
       console.log("Invitation process completed successfully");
     } else {
       result.errors.push(`Email sending failed: ${emailResult.message}`);
-      result.message = `User created successfully, but invitation email failed. Please manually inform ${userData.email} about their account. Error: ${emailResult.message}`;
+      result.message = `User created successfully, but invitation email failed to send. Please manually inform ${userData.email} about their account. Email error: ${emailResult.message}`;
       console.warn("User created but email failed:", emailResult.message);
     }
     
