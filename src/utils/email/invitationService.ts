@@ -54,32 +54,31 @@ export const sendInvitationEmail = async (
       senderName
     );
 
-    // Log parameters for debugging
-    console.log("[Invitation] Preparing to send invite email with template parameters:", {
-      name: userName,
-      email: userEmail,
-      title: subject,
-      message: message
-    });
-
-    // Initialize EmailJS
-    initEmailJS();
-
-    // Use template parameters that match your EmailJS template structure
-    const templateParams = {
-      name: userName,          // Maps to {{name}} in your template
-      email: userEmail,        // Maps to {{email}} in your template  
-      title: subject,          // Maps to {{title}} in your template
-      message: message         // Maps to {{message}} in your template
-    };
-
-    console.log("[Invitation] Sending with EmailJS configuration:", {
+    // Log configuration for debugging
+    console.log("[Invitation] Using EmailJS configuration:", {
       serviceId: EMAILJS_CONFIG.SERVICE_ID,
       templateId: EMAILJS_CONFIG.TEMPLATE_ID,
       publicKey: EMAILJS_CONFIG.PUBLIC_KEY
     });
 
-    // Use the correct EmailJS configuration
+    // Initialize EmailJS
+    initEmailJS();
+
+    // Use template parameters that match Contact Us template format
+    const templateParams = {
+      name: userName,          // User's name
+      email: userEmail,        // User's email address
+      subject: subject,        // Email subject
+      message: message         // The invitation message content
+    };
+
+    console.log("[Invitation] Sending invitation email with parameters:", {
+      name: userName,
+      email: userEmail,
+      subject: subject
+    });
+
+    // Send the email using the correct template ID
     const response = await emailjs.send(
       EMAILJS_CONFIG.SERVICE_ID,
       EMAILJS_CONFIG.TEMPLATE_ID,
