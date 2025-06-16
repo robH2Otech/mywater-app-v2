@@ -37,7 +37,7 @@ X-WATER Team`;
 };
 
 /**
- * Send invitation email using the proven working email configuration and template.
+ * Send invitation email using the correct EmailJS configuration and template parameters.
  */
 export const sendInvitationEmail = async (
   userEmail: string,
@@ -55,37 +55,35 @@ export const sendInvitationEmail = async (
     );
 
     // Log parameters for debugging
-    console.log("[Invitation] Preparing to send invite email with params:", {
-      to_email: userEmail,
-      to_name: userName,
-      from_name: senderName,
-      subject,
-      message,
-      reply_to: "noreply@mywatertechnologies.com",
-      html_body: message.replace(/\n/g, "<br>"),
-      referral_code: "BUSINESS_INVITE"
+    console.log("[Invitation] Preparing to send invite email with template parameters:", {
+      name: userName,
+      email: userEmail,
+      title: subject,
+      message: message
     });
 
     // Initialize EmailJS
     initEmailJS();
 
-    // Compose minimal parameters tested for deliverability
-    const inviteParams = {
-      to_email: userEmail,
-      to_name: userName,
-      from_name: senderName,
-      subject,
-      message, // plaintext for template body
-      reply_to: "noreply@mywatertechnologies.com",
-      html_body: message.replace(/\n/g, "<br>"),
-      referral_code: "BUSINESS_INVITE"
+    // Use template parameters that match your EmailJS template structure
+    const templateParams = {
+      name: userName,          // Maps to {{name}} in your template
+      email: userEmail,        // Maps to {{email}} in your template  
+      title: subject,          // Maps to {{title}} in your template
+      message: message         // Maps to {{message}} in your template
     };
 
-    // Use modern emailjs.send only!
+    console.log("[Invitation] Sending with EmailJS configuration:", {
+      serviceId: EMAILJS_CONFIG.SERVICE_ID,
+      templateId: EMAILJS_CONFIG.TEMPLATE_ID,
+      publicKey: EMAILJS_CONFIG.PUBLIC_KEY
+    });
+
+    // Use the correct EmailJS configuration
     const response = await emailjs.send(
       EMAILJS_CONFIG.SERVICE_ID,
       EMAILJS_CONFIG.TEMPLATE_ID,
-      inviteParams as any,
+      templateParams,
       EMAILJS_CONFIG.PUBLIC_KEY
     );
 

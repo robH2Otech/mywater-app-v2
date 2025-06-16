@@ -2,12 +2,12 @@ import { addDoc, updateDoc, doc, collection, getDocs, query, where } from "fireb
 import { db } from "@/integrations/firebase/client";
 import emailjs from 'emailjs-com';
 
-// EmailJS configuration
+// EmailJS configuration - Updated with correct template and keys
 export const EMAILJS_CONFIG = {
   SERVICE_ID: 'service_g41yi1m',
-  TEMPLATE_ID: 'template_referral',
+  TEMPLATE_ID: 'template_6fa0sil', // Updated to match your actual template
   USER_ID: '20lKGYgYsf1DIICqM',
-  PUBLIC_KEY: '20lKGYgYsf1DIICqM'
+  PUBLIC_KEY: 'o1aq3nZWqwn0TYfwt' // Updated to your actual public key
 };
 
 // Keep track of initialization status
