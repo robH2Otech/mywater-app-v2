@@ -22,5 +22,5 @@ export { sendInvitationEmail, generateInvitationEmailContent } from './invitatio
 export { generateReferralEmailTemplate } from './templates';
 export { processPendingEmails } from './firestoreEmail';
 
-// Legacy compatibility exports (cleaned up)
-export { sendEmailWithEmailJS };
+// Legacy compatibility exports (cleaned up) - re-export the function properly
+export { sendEmailWithEmailJS } from './emailService';
