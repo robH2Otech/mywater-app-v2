@@ -1,13 +1,14 @@
 
-// Export all Cloud Functions
+// Export only the functions that actually exist
 
 // Auth functions
 export { createBusinessUser } from './auth/createBusinessUser';
-export { setUserClaims, syncUserClaims, initializeUserClaims, migrateUserClaims } from './auth/claimsManager';
 
-// Location tracking functions
-export { updateAllLocations, cleanupLocationHistory } from './locations/updateLocations';
-export { manualLocationUpdate } from './locations/manualLocationUpdate';
+// Note: Other functions (setUserClaims, location functions, order functions) 
+// are commented out because the source files don't exist yet
+// Uncomment these when the corresponding files are created:
 
-// Order processing functions
-export { onOrderCreated } from './orders/orderWebhook';
+// export { setUserClaims, syncUserClaims, initializeUserClaims, migrateUserClaims } from './auth/claimsManager';
+// export { updateAllLocations, cleanupLocationHistory } from './locations/updateLocations';
+// export { manualLocationUpdate } from './locations/manualLocationUpdate';
+// export { onOrderCreated } from './orders/orderWebhook';

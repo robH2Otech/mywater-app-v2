@@ -1,15 +1,11 @@
 
-import * as admin from 'firebase-admin';
+import { initializeApp, getApps } from 'firebase-admin/app';
+import { getAuth } from 'firebase-admin/auth';
+import { getFirestore } from 'firebase-admin/firestore';
 
-// Initialize Firebase Admin SDK only once
-if (!admin.apps.length) {
-  admin.initializeApp();
+// Initialize Firebase Admin SDK if not already initialized
+if (getApps().length === 0) {
+  initializeApp();
 }
 
-export const getFirestore = (): admin.firestore.Firestore => {
-  return admin.firestore();
-};
-
-export const getAuth = (): admin.auth.Auth => {
-  return admin.auth();
-};
+export { getAuth, getFirestore };
