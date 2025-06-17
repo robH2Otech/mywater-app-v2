@@ -22,4 +22,4 @@ export { generateReferralEmailTemplate } from './templates';
 export { processPendingEmails } from '../email/firestoreEmail';
 
 // Legacy compatibility exports
-export { sendEmailWithEmailJS, sendEmailDirect as sendEmailWithEmailJS as sendEmailDirect };
+export { sendEmailWithEmailJS, sendEmailDirect };
