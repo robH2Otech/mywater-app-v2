@@ -3,28 +3,33 @@ import emailjs from 'emailjs-com';
 import { EMAILJS_CONFIG, initEmailJS } from '../email';
 
 /**
- * Generate invitation email content for new business users
+ * Generate invitation email content for new business users with login credentials
  */
 export const generateInvitationEmailContent = (
   userName: string,
   userEmail: string,
+  userPassword: string,
   companyName: string,
   senderName: string = "X-WATER Admin"
 ): { subject: string; message: string } => {
-  const subject = `Welcome to X-WATER - You've been invited to join ${companyName}`;
+  const subject = `Welcome to X-WATER - Your Account Details for ${companyName}`;
 
   const message = `Hi ${userName},
 
-You've been invited to join ${companyName} on the X-WATER business platform!
+Welcome to X-WATER! Your business account has been created for ${companyName}.
 
-Your account has been created with the following details:
-- Email: ${userEmail}
-- Company: ${companyName}
+Your login credentials:
+• Email: ${userEmail}
+• Password: ${userPassword}
+• Login URL: https://x-water-v2.lovable.app/
 
-To get started:
-1. Visit the X-WATER business portal: https://x-water.com/auth
-2. Sign in using your email address: ${userEmail}
-3. Create your password when prompted
+To access your account:
+1. Visit: https://x-water-v2.lovable.app/
+2. Click "Sign In"
+3. Enter your email: ${userEmail}
+4. Enter your password: ${userPassword}
+
+For security, we recommend changing your password after your first login.
 
 If you have any questions, please contact your administrator or our support team.
 
@@ -33,28 +38,30 @@ Welcome to X-WATER!
 Best regards,
 ${senderName}
 X-WATER Team`;
+
   return { subject, message };
 };
 
 /**
- * Send invitation email using the correct EmailJS configuration and template parameters.
+ * Send invitation email with login credentials using EmailJS
  */
 export const sendInvitationEmail = async (
   userEmail: string,
   userName: string,
+  userPassword: string,
   companyName: string,
   senderName: string = "X-WATER Admin"
 ): Promise<{ success: boolean; message: string }> => {
   try {
-    // Prepare content
+    // Prepare content with login credentials
     const { subject, message } = generateInvitationEmailContent(
       userName,
       userEmail,
+      userPassword,
       companyName,
       senderName
     );
 
-    // Log configuration for debugging
     console.log("[Invitation] Using EmailJS configuration:", {
       serviceId: EMAILJS_CONFIG.SERVICE_ID,
       templateId: EMAILJS_CONFIG.TEMPLATE_ID,
@@ -64,21 +71,17 @@ export const sendInvitationEmail = async (
     // Initialize EmailJS
     initEmailJS();
 
-    // Use template parameters that match Contact Us template format
+    // Template parameters for EmailJS
     const templateParams = {
-      name: userName,          // User's name
-      email: userEmail,        // User's email address
-      subject: subject,        // Email subject
-      message: message         // The invitation message content
-    };
-
-    console.log("[Invitation] Sending invitation email with parameters:", {
       name: userName,
       email: userEmail,
-      subject: subject
-    });
+      subject: subject,
+      message: message
+    };
 
-    // Send the email using the correct template ID
+    console.log("[Invitation] Sending invitation email with login credentials to:", userEmail);
+
+    // Send the email
     const response = await emailjs.send(
       EMAILJS_CONFIG.SERVICE_ID,
       EMAILJS_CONFIG.TEMPLATE_ID,
@@ -86,11 +89,11 @@ export const sendInvitationEmail = async (
       EMAILJS_CONFIG.PUBLIC_KEY
     );
 
-    console.log("[Invitation] Invitation email sent successfully. EmailJS response:", response);
+    console.log("[Invitation] Invitation email sent successfully:", response);
 
     return {
       success: true,
-      message: `Invitation email sent successfully to ${userEmail}.`
+      message: `Invitation email with login credentials sent successfully to ${userEmail}`
     };
   } catch (error: any) {
     let errorDetails = "";
@@ -105,12 +108,10 @@ export const sendInvitationEmail = async (
         errorDetails = String(error);
       }
     }
-    console.error("[Invitation] Critical: Invitation email failed:", errorDetails, error);
+    console.error("[Invitation] Failed to send invitation email:", errorDetails, error);
     return {
       success: false,
-      message:
-        "Failed to send invitation email. " +
-        (errorDetails ? errorDetails : "Unknown error.")
+      message: "Failed to send invitation email. " + (errorDetails ? errorDetails : "Unknown error.")
     };
   }
 };

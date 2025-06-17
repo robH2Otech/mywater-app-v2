@@ -12,6 +12,7 @@ interface InviteUserData {
   job_title: string;
   role: UserRole;
   status: UserStatus;
+  password: string;
 }
 
 interface InvitationResult {
@@ -20,10 +21,11 @@ interface InvitationResult {
   userCreated: boolean;
   emailSent: boolean;
   errors: string[];
+  password?: string;
 }
 
 /**
- * Comprehensive user invitation service that creates user and sends invitation email
+ * Comprehensive user invitation service that creates user and sends invitation email with credentials
  */
 export const inviteUser = async (
   userData: InviteUserData,
@@ -34,13 +36,14 @@ export const inviteUser = async (
     message: '',
     userCreated: false,
     emailSent: false,
-    errors: []
+    errors: [],
+    password: userData.password
   };
   
   try {
     console.log(`Starting invitation process for ${userData.email}`);
     
-    // Step 1: Create the user
+    // Step 1: Create the user with the provided password
     console.log("Creating user account...");
     const userCreationResult = await createUser(userData);
     
@@ -51,12 +54,13 @@ export const inviteUser = async (
     }
     
     result.userCreated = true;
-    console.log("User created successfully, now sending invitation email...");
+    console.log("User created successfully, now sending invitation email with login credentials...");
     
-    // Step 2: Send invitation email using the working configuration
+    // Step 2: Send invitation email with login credentials
     const emailResult = await sendInvitationEmail(
       userData.email,
       `${userData.first_name} ${userData.last_name}`,
+      userData.password,
       userData.company,
       senderName
     );
@@ -64,7 +68,7 @@ export const inviteUser = async (
     if (emailResult.success) {
       result.emailSent = true;
       result.success = true;
-      result.message = `Success: User ${userData.first_name} ${userData.last_name} has been created and invitation email sent to ${userData.email}`;
+      result.message = `Success: User ${userData.first_name} ${userData.last_name} has been created and invitation email with login credentials sent to ${userData.email}`;
       console.log("Invitation process completed successfully");
     } else {
       result.errors.push(`Email sending failed: ${emailResult.message}`);

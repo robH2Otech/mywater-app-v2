@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
@@ -6,6 +7,7 @@ import { UserRole, UserStatus } from "@/types/users";
 import { AddUserDialogContent } from "./AddUserDialogContent";
 import { usePermissions } from "@/hooks/usePermissions";
 import { inviteUser } from "@/utils/admin/userInvitationService";
+import { generateSecurePassword } from "@/utils/admin/passwordUtils";
 
 interface FormData {
   first_name: string;
@@ -16,6 +18,7 @@ interface FormData {
   job_title: string;
   role: UserRole;
   status: UserStatus;
+  password: string;
 }
 
 interface AddUserDialogProps {
@@ -37,11 +40,17 @@ export function AddUserDialog({ open, onOpenChange }: AddUserDialogProps) {
     company: currentUserCompany || "",
     job_title: "",
     role: "user",
-    status: "active"
+    status: "active",
+    password: generateSecurePassword()
   });
 
   const handleInputChange = (field: keyof FormData, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
+  };
+
+  const handleGeneratePassword = () => {
+    const newPassword = generateSecurePassword();
+    setFormData(prev => ({ ...prev, password: newPassword }));
   };
 
   const handleSubmit = async () => {
@@ -58,11 +67,11 @@ export function AddUserDialog({ open, onOpenChange }: AddUserDialogProps) {
       }
       
       // Validate required fields
-      if (!formData.first_name || !formData.last_name || !formData.email || !formData.company) {
-        throw new Error("First name, last name, email, and company are required");
+      if (!formData.first_name || !formData.last_name || !formData.email || !formData.company || !formData.password) {
+        throw new Error("First name, last name, email, company, and password are required");
       }
 
-      // Send invitation using the simplified service
+      // Send invitation using the service with password
       const result = await inviteUser(formData, "X-WATER Admin");
 
       console.log("Invitation result:", result);
@@ -99,7 +108,8 @@ export function AddUserDialog({ open, onOpenChange }: AddUserDialogProps) {
           company: currentUserCompany || "",
           job_title: "",
           role: "user",
-          status: "active"
+          status: "active",
+          password: generateSecurePassword()
         });
         
         if (onOpenChange) {
@@ -134,6 +144,7 @@ export function AddUserDialog({ open, onOpenChange }: AddUserDialogProps) {
           canCreateSuperAdmin={userRole === "superadmin"}
           canCreateAdmin={userRole === "superadmin"}
           isSubmitting={isSubmitting}
+          onGeneratePassword={handleGeneratePassword}
         />
       </DialogContent>
     </Dialog>
