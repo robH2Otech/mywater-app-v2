@@ -1,3 +1,4 @@
+
 // Re-export from the modular email components
 export { 
   sendEmailWithEmailJS as sendEmail, 
@@ -19,7 +20,7 @@ export { sendInvitationEmail, generateInvitationEmailContent } from './invitatio
 
 // Keep other exports for backward compatibility
 export { generateReferralEmailTemplate } from './templates';
-export { processPendingEmails } from '../email/firestoreEmail';
+export { processPendingEmails } from './firestoreEmail';
 
-// Legacy compatibility exports
-export { sendEmailWithEmailJS, sendEmailDirect };
+// Legacy compatibility exports (cleaned up)
+export { sendEmailWithEmailJS };

@@ -1,4 +1,3 @@
-
 import emailjs from 'emailjs-com';
 import { EMAILJS_CONFIG, initEmailJS } from './config';
 
@@ -115,3 +114,6 @@ export const sendEmailDirect = async (
     }
   }
 };
+
+// Export initEmailJS for external use
+export { initEmailJS };
