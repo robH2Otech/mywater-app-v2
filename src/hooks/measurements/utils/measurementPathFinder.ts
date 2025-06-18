@@ -17,20 +17,20 @@ export async function findMeasurementPath(unitId: string): Promise<string | null
     return cachedPath || null;
   }
 
-  // For MYWATER units, try the preferred path first
-  const isMyWaterUnit = unitId.startsWith("MYWATER_");
+  // For special units (MYWATER and X-WATER), try the preferred paths first
+  const isSpecialUnit = unitId.startsWith("MYWATER_") || unitId.startsWith("X-WATER");
   let pathsToTry = [...MEASUREMENT_PATHS];
   
-  if (isMyWaterUnit) {
-    // For MYWATER units, always prioritize this path as it's the most reliable
-    const myWaterPriorityPath = "units/{unitId}/data";
+  if (isSpecialUnit) {
+    // For special units, always prioritize this path as it's the most reliable
+    const specialPriorityPath = "units/{unitId}/data";
     
     // Remove this path from the original array to avoid duplicates
-    pathsToTry = pathsToTry.filter(path => path !== myWaterPriorityPath);
+    pathsToTry = pathsToTry.filter(path => path !== specialPriorityPath);
     
     // Add priority path at the beginning
-    pathsToTry = [myWaterPriorityPath, ...pathsToTry];
-    console.log(`MYWATER unit detected (${unitId}). Prioritizing path: ${myWaterPriorityPath}`);
+    pathsToTry = [specialPriorityPath, ...pathsToTry];
+    console.log(`Special unit detected (${unitId}). Prioritizing path: ${specialPriorityPath}`);
   }
 
   // Try each path sequentially with a small delay between attempts
@@ -49,7 +49,16 @@ export async function findMeasurementPath(unitId: string): Promise<string | null
       const snapshot = await getDocs(testQuery);
       
       if (!snapshot.empty) {
-        console.log(`✅ Found valid path with data: ${path} for unit ${unitId}`);
+        const testDoc = snapshot.docs[0].data();
+        console.log(`✅ Found valid path with data: ${path} for unit ${unitId}`, {
+          hasUvcHours: testDoc.uvc_hours !== undefined,
+          hasVolume: testDoc.volume !== undefined || testDoc.total_volume !== undefined,
+          sampleData: {
+            uvc_hours: testDoc.uvc_hours,
+            volume: testDoc.volume || testDoc.total_volume,
+            timestamp: testDoc.timestamp
+          }
+        });
         // Store in cache for future use
         successfulPathsCache.set(unitId, path);
         return path;
@@ -66,10 +75,10 @@ export async function findMeasurementPath(unitId: string): Promise<string | null
   
   console.warn(`⚠️ No valid measurement path found for unit ${unitId}`);
   
-  // For MYWATER units, default to units/{unitId}/data even if empty
-  if (isMyWaterUnit) {
+  // For special units, default to units/{unitId}/data even if empty
+  if (isSpecialUnit) {
     const defaultPath = `units/${unitId}/data`;
-    console.log(`Using default path for MYWATER unit: ${defaultPath}`);
+    console.log(`Using default path for special unit: ${defaultPath}`);
     successfulPathsCache.set(unitId, defaultPath);
     return defaultPath;
   }

@@ -19,43 +19,40 @@ export async function processUnitUVCData(
   const isSpecialUnit = unitId.startsWith("MYWATER_") || unitId.startsWith("X-WATER");
   const isUVCUnit = unitData.unit_type === 'uvc' || isSpecialUnit;
   
-  // Skip processing for non-UVC units that don't have any UVC hours
-  if (!isUVCUnit && !baseUvcHours && !unitData.uvc_hours && !unitData.uvc_status) {
-    return {
-      id: unitId,
-      ...unitData,
-      uvc_hours: 0,
-      uvc_status: 'active',
-      is_uvc_accumulated: false,
-      total_volume: totalVolume
-    };
-  }
-  
-  console.log(`🔧 Processing UVC data for unit ${unitId} (Special: ${isSpecialUnit}, UVC: ${isUVCUnit})`);
+  console.log(`🔧 Processing UVC data for unit ${unitId} (Special: ${isSpecialUnit}, UVC: ${isUVCUnit}, BaseHours: ${baseUvcHours})`);
   
   // If we don't have preloaded measurement data, get it now
   const measurementData = preloadedMeasurementData || await fetchLatestMeasurement(unitId);
   
   try {
-    // For X-WATER and MYWATER units, prioritize measurement data for accurate UVC hours
+    // Initialize with base UVC hours
     let totalUvcHours = baseUvcHours;
     let shouldUseMeasurementData = false;
     
     if (measurementData.hasMeasurementData && measurementData.latestMeasurementUvcHours > 0) {
-      console.log(`📊 Unit ${unitId} - Measurement UVC hours: ${measurementData.latestMeasurementUvcHours}, Base UVC hours: ${baseUvcHours}`);
+      console.log(`📊 Unit ${unitId} - Found measurement data:`, {
+        measurementUvcHours: measurementData.latestMeasurementUvcHours,
+        baseUvcHours: baseUvcHours,
+        isSpecialUnit: isSpecialUnit,
+        isAccumulated: unitData.is_uvc_accumulated
+      });
       
-      // For special units or when base hours are 0, use measurement directly
-      if (isSpecialUnit || baseUvcHours === 0) {
+      // For special units (X-WATER, MYWATER), always use measurement data directly
+      // as it represents the current state from the device
+      if (isSpecialUnit) {
         totalUvcHours = measurementData.latestMeasurementUvcHours;
         shouldUseMeasurementData = true;
-        console.log(`✅ Unit ${unitId} - Using measurement data directly: ${totalUvcHours} hours`);
+        console.log(`✅ Unit ${unitId} - Using measurement data directly (special unit): ${totalUvcHours} hours`);
       } 
-      // For other units, use the accumulated flag to determine behavior
-      else if (!unitData.is_uvc_accumulated) {
-        totalUvcHours += measurementData.latestMeasurementUvcHours;
-        console.log(`📈 Unit ${unitId} - Adding measurement to base: ${baseUvcHours} + ${measurementData.latestMeasurementUvcHours} = ${totalUvcHours} hours`);
-      } else {
-        console.log(`📊 Unit ${unitId} - Using accumulated base hours: ${totalUvcHours} hours`);
+      // For other UVC units, check if data has been accumulated
+      else if (!unitData.is_uvc_accumulated && measurementData.latestMeasurementUvcHours > baseUvcHours) {
+        // If measurement hours are greater than base, use measurement directly
+        totalUvcHours = measurementData.latestMeasurementUvcHours;
+        shouldUseMeasurementData = true;
+        console.log(`✅ Unit ${unitId} - Using measurement data (higher than base): ${totalUvcHours} hours`);
+      }
+      else {
+        console.log(`📊 Unit ${unitId} - Using base UVC hours (accumulated or lower measurement): ${totalUvcHours} hours`);
       }
     } else {
       console.log(`⚠️ Unit ${unitId} - No valid measurement data, using base hours: ${totalUvcHours}`);

@@ -39,8 +39,8 @@ export function useUVCData() {
         
         console.log(`📊 Found ${unitsSnapshot.docs.length} total units`);
         
-        // Check if special units exist (MYWATER_003, X-WATER units)
-        const specialUnits = ["MYWATER_003"];
+        // Check if special units exist (MYWATER, X-WATER units)
+        const specialUnits = ["MYWATER_003", "X-WATER 000"];
         const specialUnitPromises = specialUnits.map(async (unitId) => {
           const unitDoc = await getDoc(doc(db, "units", unitId));
           if (!unitDoc.exists()) {
@@ -79,8 +79,9 @@ export function useUVCData() {
           const isUVCType = unitData.unit_type === 'uvc';
           const hasUVCData = unitData.uvc_hours !== undefined || unitData.uvc_status;
           
-          // Only process units that are UVC-related
-          if (!isUVCType && !isSpecialUnit && !hasUVCData) {
+          // For special units, always process them regardless of type
+          // For other units, only process if they're UVC-related
+          if (!isSpecialUnit && !isUVCType && !hasUVCData) {
             return null;
           }
           
@@ -129,9 +130,9 @@ export function useUVCData() {
       }
     },
     // Set a shorter staleTime to ensure data is refreshed more frequently
-    staleTime: 10 * 1000, // 10 seconds stale time for more frequent updates
+    staleTime: 5 * 1000, // 5 seconds stale time for more frequent updates
     refetchOnMount: true,
     refetchOnWindowFocus: true,
-    refetchInterval: 30 * 1000, // Refetch every 30 seconds for real-time data
+    refetchInterval: 15 * 1000, // Refetch every 15 seconds for real-time data
   });
 }
