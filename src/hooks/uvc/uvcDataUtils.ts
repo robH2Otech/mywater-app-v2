@@ -6,7 +6,7 @@ import { fetchLatestMeasurement } from "./measurementUtils";
 import { processUnitBaseData } from "./unitDataUtils";
 
 /**
- * Processes UVC hours for a unit, calculating total hours based on base and measurement data
+ * Processes UVC hours for a unit, prioritizing measurement data for accurate display
  */
 export async function processUnitUVCData(
   unitDoc: any, 
@@ -25,43 +25,44 @@ export async function processUnitUVCData(
   const measurementData = preloadedMeasurementData || await fetchLatestMeasurement(unitId);
   
   try {
-    // Initialize with base UVC hours
-    let totalUvcHours = baseUvcHours;
+    // For UVC display, we want to use the most current data from measurements
+    let finalUvcHours = baseUvcHours;
     let shouldUseMeasurementData = false;
     
     if (measurementData.hasMeasurementData && measurementData.latestMeasurementUvcHours > 0) {
-      console.log(`📊 Unit ${unitId} - Found measurement data:`, {
+      console.log(`📊 Unit ${unitId} - Found valid measurement data:`, {
         measurementUvcHours: measurementData.latestMeasurementUvcHours,
         baseUvcHours: baseUvcHours,
-        isSpecialUnit: isSpecialUnit,
-        isAccumulated: unitData.is_uvc_accumulated
+        isSpecialUnit: isSpecialUnit
       });
       
       // For special units (X-WATER, MYWATER), always use measurement data directly
-      // as it represents the current state from the device
+      // as it represents the current state from the device (same as "Last 24 hours Water Data")
       if (isSpecialUnit) {
-        totalUvcHours = measurementData.latestMeasurementUvcHours;
+        finalUvcHours = measurementData.latestMeasurementUvcHours;
         shouldUseMeasurementData = true;
-        console.log(`✅ Unit ${unitId} - Using measurement data directly (special unit): ${totalUvcHours} hours`);
+        console.log(`✅ Special unit ${unitId} - Using measurement data directly: ${finalUvcHours} hours`);
       } 
-      // For other UVC units, check if data has been accumulated
-      else if (!unitData.is_uvc_accumulated && measurementData.latestMeasurementUvcHours > baseUvcHours) {
-        // If measurement hours are greater than base, use measurement directly
-        totalUvcHours = measurementData.latestMeasurementUvcHours;
+      // For other UVC units, use measurement data if it's more recent/accurate
+      else if (measurementData.latestMeasurementUvcHours >= baseUvcHours) {
+        finalUvcHours = measurementData.latestMeasurementUvcHours;
         shouldUseMeasurementData = true;
-        console.log(`✅ Unit ${unitId} - Using measurement data (higher than base): ${totalUvcHours} hours`);
+        console.log(`✅ Unit ${unitId} - Using measurement data (more recent): ${finalUvcHours} hours`);
       }
       else {
-        console.log(`📊 Unit ${unitId} - Using base UVC hours (accumulated or lower measurement): ${totalUvcHours} hours`);
+        // Use accumulated hours (base + measurement) if measurement is incremental
+        finalUvcHours = baseUvcHours + measurementData.latestMeasurementUvcHours;
+        shouldUseMeasurementData = true;
+        console.log(`📊 Unit ${unitId} - Using accumulated hours: ${baseUvcHours} + ${measurementData.latestMeasurementUvcHours} = ${finalUvcHours}`);
       }
     } else {
-      console.log(`⚠️ Unit ${unitId} - No valid measurement data, using base hours: ${totalUvcHours}`);
+      console.log(`⚠️ Unit ${unitId} - No valid measurement data, using base hours: ${finalUvcHours}`);
     }
     
-    console.log(`🎯 Unit ${unitId} - Final calculated UVC hours: ${totalUvcHours}`);
+    console.log(`🎯 Unit ${unitId} - Final UVC hours for display: ${finalUvcHours}`);
     
-    // Calculate the UVC status based on total hours
-    const uvcStatus = determineUVCStatus(totalUvcHours);
+    // Calculate the UVC status based on final hours
+    const uvcStatus = determineUVCStatus(finalUvcHours);
     
     // Calculate the correct filter status based on volume
     const filterStatus = determineUnitStatus(totalVolume);
@@ -72,8 +73,8 @@ export async function processUnitUVCData(
       // Always use calculated statuses
       status: filterStatus,
       uvc_status: uvcStatus,
-      // Use total UVC hours
-      uvc_hours: totalUvcHours,
+      // Use final UVC hours (prioritizing measurement data)
+      uvc_hours: finalUvcHours,
       // Update accumulated flag if we used measurement data
       is_uvc_accumulated: shouldUseMeasurementData ? true : (unitData.is_uvc_accumulated || false),
       // Ensure total_volume is a number

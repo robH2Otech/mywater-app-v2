@@ -4,7 +4,7 @@ import { db } from "@/integrations/firebase/client";
 import { tryAllMeasurementPaths } from "@/hooks/measurements/utils/collectionPaths";
 
 /**
- * Fetches the latest measurement data for a unit with improved reliability for all unit types
+ * Fetches the latest measurement data for a unit with improved UVC hours extraction
  */
 export async function fetchLatestMeasurement(unitId: string): Promise<{
   latestMeasurementUvcHours: number;
@@ -29,45 +29,62 @@ export async function fetchLatestMeasurement(unitId: string): Promise<{
       const latestMeasurement = snapshot.docs[0].data();
       console.log(`📊 Latest measurement raw data for unit ${unitId}:`, {
         uvc_hours: latestMeasurement.uvc_hours,
+        uvc: latestMeasurement.uvc,
+        uvc_time: latestMeasurement.uvc_time,
         volume: latestMeasurement.volume || latestMeasurement.total_volume || latestMeasurement.cumulative_volume,
         timestamp: latestMeasurement.timestamp,
         allFields: Object.keys(latestMeasurement)
       });
       
-      // Extract UVC hours with multiple fallback fields
+      // Extract UVC hours with multiple fallback fields and better parsing
       let uvcHours = 0;
       
       // Try different field names that might contain UVC hours
-      if (latestMeasurement.uvc_hours !== undefined && latestMeasurement.uvc_hours !== null) {
-        uvcHours = typeof latestMeasurement.uvc_hours === 'string' 
-          ? parseFloat(latestMeasurement.uvc_hours) 
-          : (latestMeasurement.uvc_hours || 0);
-      } else if (latestMeasurement.uvc !== undefined && latestMeasurement.uvc !== null) {
-        uvcHours = typeof latestMeasurement.uvc === 'string'
-          ? parseFloat(latestMeasurement.uvc)
-          : (latestMeasurement.uvc || 0);
-      } else if (latestMeasurement.uvc_time !== undefined && latestMeasurement.uvc_time !== null) {
-        uvcHours = typeof latestMeasurement.uvc_time === 'string'
-          ? parseFloat(latestMeasurement.uvc_time)
-          : (latestMeasurement.uvc_time || 0);
+      const possibleUvcFields = ['uvc_hours', 'uvc', 'uvc_time', 'uvchours', 'uvcTime'];
+      
+      for (const field of possibleUvcFields) {
+        if (latestMeasurement[field] !== undefined && latestMeasurement[field] !== null) {
+          const value = latestMeasurement[field];
+          
+          if (typeof value === 'string') {
+            const parsedValue = parseFloat(value);
+            if (!isNaN(parsedValue) && parsedValue > 0) {
+              uvcHours = parsedValue;
+              console.log(`📊 Found UVC hours in field '${field}' for unit ${unitId}: ${uvcHours}`);
+              break;
+            }
+          } else if (typeof value === 'number' && value > 0) {
+            uvcHours = value;
+            console.log(`📊 Found UVC hours in field '${field}' for unit ${unitId}: ${uvcHours}`);
+            break;
+          }
+        }
       }
       
-      console.log(`📊 Extracted UVC hours for unit ${unitId}: ${uvcHours}`);
+      // If no UVC hours found in standard fields, log warning
+      if (uvcHours === 0) {
+        console.warn(`⚠️ No valid UVC hours found in any field for unit ${unitId}. Available fields:`, Object.keys(latestMeasurement));
+      }
       
       // Extract volume with multiple fallback fields
       let volume = undefined;
-      if (latestMeasurement.volume !== undefined) {
-        volume = typeof latestMeasurement.volume === 'string'
-          ? parseFloat(latestMeasurement.volume)
-          : latestMeasurement.volume;
-      } else if (latestMeasurement.total_volume !== undefined) {
-        volume = typeof latestMeasurement.total_volume === 'string'
-          ? parseFloat(latestMeasurement.total_volume)
-          : latestMeasurement.total_volume;
-      } else if (latestMeasurement.cumulative_volume !== undefined) {
-        volume = typeof latestMeasurement.cumulative_volume === 'string'
-          ? parseFloat(latestMeasurement.cumulative_volume)
-          : latestMeasurement.cumulative_volume;
+      const possibleVolumeFields = ['volume', 'total_volume', 'cumulative_volume'];
+      
+      for (const field of possibleVolumeFields) {
+        if (latestMeasurement[field] !== undefined) {
+          const value = latestMeasurement[field];
+          
+          if (typeof value === 'string') {
+            const parsedValue = parseFloat(value);
+            if (!isNaN(parsedValue)) {
+              volume = parsedValue;
+              break;
+            }
+          } else if (typeof value === 'number') {
+            volume = value;
+            break;
+          }
+        }
       }
       
       // Get the timestamp
@@ -83,9 +100,11 @@ export async function fetchLatestMeasurement(unitId: string): Promise<{
         }
       }
       
+      console.log(`📊 Extracted data for unit ${unitId} - UVC Hours: ${uvcHours}, Volume: ${volume}, Has Data: ${uvcHours > 0}`);
+      
       return {
         latestMeasurementUvcHours: uvcHours,
-        hasMeasurementData: true,
+        hasMeasurementData: uvcHours > 0, // Only consider it valid data if we have UVC hours
         timestamp: timestamp,
         volume
       };

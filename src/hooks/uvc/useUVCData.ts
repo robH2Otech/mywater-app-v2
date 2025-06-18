@@ -1,4 +1,3 @@
-
 import { useQuery } from "@tanstack/react-query";
 import { collection, getDocs, query, where, doc, getDoc } from "firebase/firestore";
 import { db } from "@/integrations/firebase/client";
@@ -87,11 +86,8 @@ export function useUVCData() {
           
           console.log(`🔧 Processing UVC unit ${unitId} (Special: ${isSpecialUnit}, Type: ${unitData.unit_type})`);
           
-          // Get the correct measurements collection path for this unit
-          const measurementsPath = getMeasurementsCollectionPath(unitId);
-          console.log(`📊 Getting measurements from ${measurementsPath} for unit ${unitId}`);
-          
-          // Fetch the latest measurement directly from the measurements collection
+          // Fetch the latest measurement directly for each unit
+          console.log(`📊 Fetching fresh measurement data for unit ${unitId}`);
           const measurementData = await fetchLatestMeasurement(unitId);
           
           // Process the unit with its measurement data
@@ -115,7 +111,7 @@ export function useUVCData() {
         
         // Log detailed info for debugging each unit
         unitsData.forEach(unit => {
-          console.log(`📊 Unit ${unit.id}: ${unit.name}, UVC Hours: ${unit.uvc_hours}, Accumulated: ${unit.is_uvc_accumulated}, Status: ${unit.uvc_status}, Latest: ${unit.latest_measurement_timestamp}`);
+          console.log(`📊 UVC Unit ${unit.id}: ${unit.name}, UVC Hours: ${unit.uvc_hours}, Status: ${unit.uvc_status}, Latest: ${unit.latest_measurement_timestamp}`);
         });
         
         return unitsData;
@@ -129,10 +125,10 @@ export function useUVCData() {
         throw error;
       }
     },
-    // Set a shorter staleTime to ensure data is refreshed more frequently
-    staleTime: 5 * 1000, // 5 seconds stale time for more frequent updates
+    // More frequent refreshes to ensure data synchronization
+    staleTime: 2 * 1000, // 2 seconds stale time for near real-time updates
     refetchOnMount: true,
     refetchOnWindowFocus: true,
-    refetchInterval: 15 * 1000, // Refetch every 15 seconds for real-time data
+    refetchInterval: 10 * 1000, // Refetch every 10 seconds for real-time sync
   });
 }

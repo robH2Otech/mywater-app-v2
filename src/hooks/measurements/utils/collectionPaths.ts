@@ -1,7 +1,10 @@
 
+import { collection, query, orderBy, limit, getDocs } from "firebase/firestore";
+import { db } from "@/integrations/firebase/client";
+
 // These are all the possible paths where measurements could be stored
 export const MEASUREMENT_PATHS = [
-  // Primary paths
+  // Primary paths - prioritize units/{unitId}/data for special units
   "units/{unitId}/data",
   "units/{unitId}/measurements",
   
@@ -40,8 +43,6 @@ export function getMeasurementsCollectionPath(unitId: string, isMyWaterUnit?: bo
 export async function tryCollectionPath(path: string, count: number = 24) {
   try {
     console.log(`Trying to fetch measurements from: ${path}`);
-    const { collection, query, orderBy, limit, getDocs } = require("firebase/firestore");
-    const { db } = require("@/integrations/firebase/client");
     
     const measurementsQuery = query(
       collection(db, path),
@@ -69,9 +70,6 @@ export async function tryAllMeasurementPaths(unitId: string, count: number = 24)
     console.log(`Trying primary path first for ${unitId}: ${specialPath}`);
     
     try {
-      const { collection, query, orderBy, limit, getDocs } = require("firebase/firestore");
-      const { db } = require("@/integrations/firebase/client");
-      
       const measurementsQuery = query(
         collection(db, specialPath),
         orderBy("timestamp", "desc"),
