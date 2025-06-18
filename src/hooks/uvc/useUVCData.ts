@@ -1,3 +1,4 @@
+
 import { useQuery } from "@tanstack/react-query";
 import { collection, getDocs, query, where, doc, getDoc } from "firebase/firestore";
 import { db } from "@/integrations/firebase/client";
@@ -125,10 +126,10 @@ export function useUVCData() {
         throw error;
       }
     },
-    // More frequent refreshes to ensure data synchronization
-    staleTime: 2 * 1000, // 2 seconds stale time for near real-time updates
+    // Reduced refresh frequency as requested - changed from 10 seconds to 60 seconds
+    staleTime: 60 * 1000, // 60 seconds stale time instead of 2 seconds
     refetchOnMount: true,
     refetchOnWindowFocus: true,
-    refetchInterval: 10 * 1000, // Refetch every 10 seconds for real-time sync
+    refetchInterval: 60 * 1000, // Refetch every 60 seconds instead of 10 seconds
   });
 }
