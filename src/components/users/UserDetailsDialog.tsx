@@ -12,6 +12,7 @@ import { UserActionButtons } from "./UserActionButtons";
 import { FormSlider } from "@/components/shared/FormSlider";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { usePermissions } from "@/hooks/usePermissions";
+import { useAuth } from "@/contexts/AuthContext";
 import { Shield, ShieldAlert, ShieldCheck } from "lucide-react";
 
 interface UserDetailsDialogProps {
@@ -36,7 +37,8 @@ export function UserDetailsDialog({ user, open, onOpenChange }: UserDetailsDialo
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const isMobile = useIsMobile();
-  const { hasPermission, userRole, company: currentUserCompany, currentUser } = usePermissions();
+  const { hasPermission, userRole, company: currentUserCompany } = usePermissions();
+  const { currentUser } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   
