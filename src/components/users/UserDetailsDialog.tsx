@@ -36,7 +36,7 @@ export function UserDetailsDialog({ user, open, onOpenChange }: UserDetailsDialo
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const isMobile = useIsMobile();
-  const { hasPermission, userRole, company: currentUserCompany } = usePermissions();
+  const { hasPermission, userRole, company: currentUserCompany, currentUser } = usePermissions();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   
@@ -68,25 +68,55 @@ export function UserDetailsDialog({ user, open, onOpenChange }: UserDetailsDialo
     }
   }, [user]);
 
-  // Check if current user can edit this user based on roles
+  // Improved permission logic - more permissive
   const canEditUser = (): boolean => {
-    if (!user || !userRole) return false;
+    if (!user || !userRole) {
+      console.log("UserDetailsDialog - No user or userRole available");
+      return false;
+    }
+    
+    console.log("UserDetailsDialog - Permission check:", {
+      currentUserRole: userRole,
+      targetUserRole: user.role,
+      currentUserId: currentUser?.id,
+      targetUserId: user.id,
+      isSameUser: currentUser?.id === user.id
+    });
     
     // Superadmins can edit anyone
-    if (userRole === "superadmin") return true;
+    if (userRole === "superadmin") {
+      console.log("UserDetailsDialog - Superadmin can edit anyone");
+      return true;
+    }
+    
+    // Users can edit their own profile (basic fields only)
+    if (currentUser?.id === user.id) {
+      console.log("UserDetailsDialog - User can edit their own profile");
+      return true;
+    }
     
     // Admins can edit technicians and regular users, but not other admins or superadmins
     if (userRole === "admin") {
-      return ["technician", "user"].includes(user.role);
+      const canEditRole = ["technician", "user"].includes(user.role);
+      console.log("UserDetailsDialog - Admin edit check:", { canEditRole, targetRole: user.role });
+      return canEditRole;
     }
     
-    // Other roles can't edit users
+    console.log("UserDetailsDialog - No edit permission granted");
     return false;
   };
   
-  // Check if current user can edit this specific field
+  // Check if current user can edit specific fields
   const canEditField = (field: keyof UserFormData): boolean => {
     if (!canEditUser()) return false;
+    
+    // If user is editing their own profile, restrict some fields
+    if (currentUser?.id === user?.id && userRole !== "superadmin") {
+      // Regular users can't change their own role or status
+      if (field === "role" || field === "status") {
+        return false;
+      }
+    }
     
     // Only superadmins can change roles to admin or superadmin
     if (field === "role" && userRole !== "superadmin" && ["superadmin", "admin"].includes(formData.role)) {
@@ -98,8 +128,20 @@ export function UserDetailsDialog({ user, open, onOpenChange }: UserDetailsDialo
 
   const isEditable = canEditUser();
 
+  // Show permission debug info
+  console.log("UserDetailsDialog - Render state:", {
+    isEditable,
+    userRole,
+    currentUserCompany,
+    hasWritePermission: hasPermission("write"),
+    user: user ? { id: user.id, role: user.role, email: user.email } : null
+  });
+
   const handleInputChange = (field: keyof UserFormData, value: string) => {
-    if (!canEditField(field)) return;
+    if (!canEditField(field)) {
+      console.log(`UserDetailsDialog - Field ${field} not editable`);
+      return;
+    }
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
@@ -129,6 +171,7 @@ export function UserDetailsDialog({ user, open, onOpenChange }: UserDetailsDialo
       queryClient.invalidateQueries({ queryKey: ["users"] });
       onOpenChange(false);
     } catch (error: any) {
+      console.error("UserDetailsDialog - Submit error:", error);
       toast({
         title: "Error",
         description: error.message,
@@ -172,7 +215,6 @@ export function UserDetailsDialog({ user, open, onOpenChange }: UserDetailsDialo
         break;
     }
 
-    // Open default email client with pre-filled details
     window.location.href = `mailto:${user.email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
     
     toast({
@@ -207,6 +249,11 @@ export function UserDetailsDialog({ user, open, onOpenChange }: UserDetailsDialo
                 User Details {user.company && `(${user.company})`}
               </DialogTitle>
             </div>
+            {!isEditable && (
+              <p className="text-sm text-gray-400 mt-1">
+                {currentUser?.id === user.id ? "Editing your own profile (limited fields)" : "Read-only view"}
+              </p>
+            )}
           </DialogHeader>
 
           <div 
@@ -216,7 +263,7 @@ export function UserDetailsDialog({ user, open, onOpenChange }: UserDetailsDialo
             <UserDetailsForm 
               formData={formData}
               handleInputChange={handleInputChange}
-              isEditable={isEditable}
+              isEditable={true} // Always show form, but individual fields will be disabled based on canEditField
               canEditField={canEditField}
             />
           </div>
