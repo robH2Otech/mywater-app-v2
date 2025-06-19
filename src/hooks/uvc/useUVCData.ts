@@ -1,4 +1,5 @@
 
+
 import { useQuery } from "@tanstack/react-query";
 import { collection, getDocs, query, where, doc, getDoc } from "firebase/firestore";
 import { db } from "@/integrations/firebase/client";
@@ -39,8 +40,8 @@ export function useUVCData() {
         
         console.log(`📊 Found ${unitsSnapshot.docs.length} total units`);
         
-        // Check if special units exist (MYWATER, X-WATER units)
-        const specialUnits = ["MYWATER_003", "X-WATER 000"];
+        // Check if special units exist (only MYWATER units now)
+        const specialUnits = ["MYWATER_003"];
         const specialUnitPromises = specialUnits.map(async (unitId) => {
           const unitDoc = await getDoc(doc(db, "units", unitId));
           if (!unitDoc.exists()) {
@@ -75,7 +76,7 @@ export function useUVCData() {
           const unitId = unitDoc.id;
           
           // Check if this is a UVC-related unit
-          const isSpecialUnit = unitId.startsWith("MYWATER_") || unitId.startsWith("X-WATER");
+          const isSpecialUnit = unitId.startsWith("MYWATER_");
           const isUVCType = unitData.unit_type === 'uvc';
           const hasUVCData = unitData.uvc_hours !== undefined || unitData.uvc_status;
           
@@ -103,7 +104,6 @@ export function useUVCData() {
           unit !== null && (
             unit.unit_type === 'uvc' || 
             unit.id?.startsWith("MYWATER_") ||
-            unit.id?.startsWith("X-WATER") ||
             (unit.uvc_hours !== undefined && unit.uvc_hours > 0)
           )
         );
@@ -126,10 +126,11 @@ export function useUVCData() {
         throw error;
       }
     },
-    // Reduced refresh frequency as requested - changed from 10 seconds to 60 seconds
-    staleTime: 60 * 1000, // 60 seconds stale time instead of 2 seconds
+    // Changed sync frequency to 1 hour as requested
+    staleTime: 60 * 60 * 1000, // 1 hour stale time
     refetchOnMount: true,
     refetchOnWindowFocus: true,
-    refetchInterval: 60 * 1000, // Refetch every 60 seconds instead of 10 seconds
+    refetchInterval: 60 * 60 * 1000, // Refetch every 1 hour
   });
 }
+

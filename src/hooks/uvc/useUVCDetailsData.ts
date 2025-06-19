@@ -1,4 +1,5 @@
 
+
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { doc, getDoc } from "firebase/firestore";
@@ -67,9 +68,9 @@ export function useUVCDetailsData(unitId: string | undefined, isEnabled: boolean
       };
     },
     enabled: !!unitId && isEnabled,
-    // Reduced refresh frequency to match the main UVC data hook
-    staleTime: 60 * 1000, // 60 seconds instead of aggressive refresh
-    refetchInterval: 60 * 1000, // 60 seconds
+    // Changed sync frequency to 1 hour to match main UVC data hook
+    staleTime: 60 * 60 * 1000, // 1 hour
+    refetchInterval: 60 * 60 * 1000, // 1 hour
   });
   
   // Update lastUpdated state when data changes
@@ -86,3 +87,4 @@ export function useUVCDetailsData(unitId: string | undefined, isEnabled: boolean
     lastUpdated
   };
 }
+
