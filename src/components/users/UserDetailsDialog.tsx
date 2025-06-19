@@ -70,7 +70,7 @@ export function UserDetailsDialog({ user, open, onOpenChange }: UserDetailsDialo
     }
   }, [user]);
 
-  // Improved permission logic - more permissive
+  // Improved permission logic - more permissive and clearer
   const canEditUser = (): boolean => {
     if (!user || !userRole) {
       console.log("UserDetailsDialog - No user or userRole available");
@@ -85,15 +85,15 @@ export function UserDetailsDialog({ user, open, onOpenChange }: UserDetailsDialo
       isSameUser: currentUser?.id === user.id
     });
     
-    // Superadmins can edit anyone
+    // Superadmins can edit ANYONE - this should ALWAYS return true
     if (userRole === "superadmin") {
-      console.log("UserDetailsDialog - Superadmin can edit anyone");
+      console.log("UserDetailsDialog - Superadmin can edit anyone - GRANTED");
       return true;
     }
     
     // Users can edit their own profile (basic fields only)
     if (currentUser?.id === user.id) {
-      console.log("UserDetailsDialog - User can edit their own profile");
+      console.log("UserDetailsDialog - User can edit their own profile - GRANTED");
       return true;
     }
     
@@ -129,10 +129,14 @@ export function UserDetailsDialog({ user, open, onOpenChange }: UserDetailsDialo
   };
 
   const isEditable = canEditUser();
+  
+  // For superadmins, ALWAYS show the save button
+  const shouldShowSaveButton = isEditable || userRole === "superadmin";
 
   // Show permission debug info
   console.log("UserDetailsDialog - Render state:", {
     isEditable,
+    shouldShowSaveButton,
     userRole,
     currentUserCompany,
     hasWritePermission: hasPermission("write"),
@@ -153,7 +157,7 @@ export function UserDetailsDialog({ user, open, onOpenChange }: UserDetailsDialo
         throw new Error("User ID is required");
       }
       
-      if (!isEditable) {
+      if (!shouldShowSaveButton) {
         throw new Error("You don't have permission to edit this user");
       }
 
@@ -251,9 +255,14 @@ export function UserDetailsDialog({ user, open, onOpenChange }: UserDetailsDialo
                 User Details {user.company && `(${user.company})`}
               </DialogTitle>
             </div>
-            {!isEditable && (
+            {!isEditable && userRole !== "superadmin" && (
               <p className="text-sm text-gray-400 mt-1">
                 {currentUser?.id === user.id ? "Editing your own profile (limited fields)" : "Read-only view"}
+              </p>
+            )}
+            {userRole === "superadmin" && (
+              <p className="text-sm text-green-400 mt-1">
+                Superadmin - Full edit access
               </p>
             )}
           </DialogHeader>
@@ -290,7 +299,7 @@ export function UserDetailsDialog({ user, open, onOpenChange }: UserDetailsDialo
                 >
                   Close
                 </Button>
-                {isEditable && (
+                {shouldShowSaveButton && (
                   <Button
                     onClick={handleSubmit}
                     disabled={isSubmitting}
