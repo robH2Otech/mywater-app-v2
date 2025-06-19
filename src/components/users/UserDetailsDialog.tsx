@@ -14,6 +14,8 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { usePermissions } from "@/hooks/usePermissions";
 import { useAuth } from "@/contexts/AuthContext";
 import { Shield, ShieldAlert, ShieldCheck } from "lucide-react";
+import { UserPermissionHandler } from "./UserPermissionHandler";
+import { UserDialogActions } from "./UserDialogActions";
 
 interface UserDetailsDialogProps {
   user: User | null;
@@ -70,81 +72,12 @@ export function UserDetailsDialog({ user, open, onOpenChange }: UserDetailsDialo
     }
   }, [user]);
 
-  // Improved permission logic - more permissive and clearer
-  const canEditUser = (): boolean => {
-    if (!user || !userRole) {
-      console.log("UserDetailsDialog - No user or userRole available");
-      return false;
-    }
-    
-    console.log("UserDetailsDialog - Permission check:", {
-      currentUserRole: userRole,
-      targetUserRole: user.role,
-      currentUserId: currentUser?.id,
-      targetUserId: user.id,
-      isSameUser: currentUser?.id === user.id
-    });
-    
-    // Superadmins can edit ANYONE - this should ALWAYS return true
-    if (userRole === "superadmin") {
-      console.log("UserDetailsDialog - Superadmin can edit anyone - GRANTED");
-      return true;
-    }
-    
-    // Users can edit their own profile (basic fields only)
-    if (currentUser?.id === user.id) {
-      console.log("UserDetailsDialog - User can edit their own profile - GRANTED");
-      return true;
-    }
-    
-    // Admins can edit technicians and regular users, but not other admins or superadmins
-    if (userRole === "admin") {
-      const canEditRole = ["technician", "user"].includes(user.role);
-      console.log("UserDetailsDialog - Admin edit check:", { canEditRole, targetRole: user.role });
-      return canEditRole;
-    }
-    
-    console.log("UserDetailsDialog - No edit permission granted");
-    return false;
-  };
-  
-  // Check if current user can edit specific fields
-  const canEditField = (field: keyof UserFormData): boolean => {
-    if (!canEditUser()) return false;
-    
-    // If user is editing their own profile, restrict some fields
-    if (currentUser?.id === user?.id && userRole !== "superadmin") {
-      // Regular users can't change their own role or status
-      if (field === "role" || field === "status") {
-        return false;
-      }
-    }
-    
-    // Only superadmins can change roles to admin or superadmin
-    if (field === "role" && userRole !== "superadmin" && ["superadmin", "admin"].includes(formData.role)) {
-      return false;
-    }
-    
-    return true;
-  };
-
-  const isEditable = canEditUser();
-  
-  // For superadmins, ALWAYS show the save button
-  const shouldShowSaveButton = isEditable || userRole === "superadmin";
-
-  // Show permission debug info
-  console.log("UserDetailsDialog - Render state:", {
-    isEditable,
-    shouldShowSaveButton,
-    userRole,
-    currentUserCompany,
-    hasWritePermission: hasPermission("write"),
-    user: user ? { id: user.id, role: user.role, email: user.email } : null
-  });
+  const permissionHandler = new UserPermissionHandler(userRole, currentUser, user);
+  const isEditable = permissionHandler.canEditUser();
+  const shouldShowSaveButton = permissionHandler.shouldShowSaveButton();
 
   const handleInputChange = (field: keyof UserFormData, value: string) => {
-    if (!canEditField(field)) {
+    if (!permissionHandler.canEditField(field)) {
       console.log(`UserDetailsDialog - Field ${field} not editable`);
       return;
     }
@@ -274,8 +207,8 @@ export function UserDetailsDialog({ user, open, onOpenChange }: UserDetailsDialo
             <UserDetailsForm 
               formData={formData}
               handleInputChange={handleInputChange}
-              isEditable={true} // Always show form, but individual fields will be disabled based on canEditField
-              canEditField={canEditField}
+              isEditable={true}
+              canEditField={permissionHandler.canEditField.bind(permissionHandler)}
             />
           </div>
 
@@ -283,34 +216,15 @@ export function UserDetailsDialog({ user, open, onOpenChange }: UserDetailsDialo
             <FormSlider containerRef={scrollContainerRef} />
           </div>
 
-          <div className="shrink-0 border-t border-spotify-accent bg-spotify-darker">
-            <div className={`flex ${isMobile ? 'flex-col gap-3' : 'justify-between items-center'} px-6 py-4`}>
-              <div className={`${isMobile ? 'order-2' : ''}`}>
-                {hasPermission("write") && (
-                  <UserActionButtons onAction={handleAction} />
-                )}
-              </div>
-              <div className={`flex gap-2 ${isMobile ? 'order-1 justify-center' : ''}`}>
-                <Button
-                  variant="outline"
-                  onClick={() => onOpenChange(false)}
-                  className="bg-spotify-accent hover:bg-spotify-accent-hover text-white border-none"
-                  disabled={isSubmitting}
-                >
-                  Close
-                </Button>
-                {shouldShowSaveButton && (
-                  <Button
-                    onClick={handleSubmit}
-                    disabled={isSubmitting}
-                    className="bg-mywater-blue hover:bg-mywater-blue/90"
-                  >
-                    {isSubmitting ? "Updating..." : "Update User"}
-                  </Button>
-                )}
-              </div>
-            </div>
-          </div>
+          <UserDialogActions
+            hasWritePermission={hasPermission("write")}
+            shouldShowSaveButton={shouldShowSaveButton}
+            isSubmitting={isSubmitting}
+            isMobile={isMobile}
+            onAction={handleAction}
+            onClose={() => onOpenChange(false)}
+            onSubmit={handleSubmit}
+          />
         </div>
       </DialogContent>
     </Dialog>
