@@ -85,7 +85,21 @@ export class UserPermissionHandler {
   }
 
   shouldShowSaveButton(): boolean {
-    // Always show save button for superadmins and when user can edit
-    return this.canEditUser() || this.userRole === "superadmin";
+    console.log("UserPermissionHandler - shouldShowSaveButton check:", {
+      userRole: this.userRole,
+      canEditUser: this.canEditUser(),
+      isSuperadmin: this.userRole === "superadmin"
+    });
+    
+    // Superadmins ALWAYS see the save button
+    if (this.userRole === "superadmin") {
+      console.log("UserPermissionHandler - Superadmin should see save button - TRUE");
+      return true;
+    }
+    
+    // For other users, show save button if they can edit
+    const canEdit = this.canEditUser();
+    console.log("UserPermissionHandler - shouldShowSaveButton result:", canEdit);
+    return canEdit;
   }
 }
