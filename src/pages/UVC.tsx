@@ -19,7 +19,7 @@ const UVC = () => {
   const { toast } = useToast();
   const { syncAllUnits, isSyncing } = useSyncUVCData();
 
-  // Function to manually refresh UVC data with improved sync
+  // Function to manually refresh UVC data
   const handleRefresh = useCallback(async () => {
     setIsRefreshing(true);
     try {
@@ -34,9 +34,9 @@ const UVC = () => {
       const freshData = await refetch();
       const freshUnits = freshData.data || [];
       
-      // Force sync all units (especially those showing 0 hours)
+      // Force sync all units if needed
       if (freshUnits.length > 0) {
-        console.log(`🎯 Forcing sync for ${freshUnits.length} UVC units`);
+        console.log(`🎯 Syncing ${freshUnits.length} UVC units`);
         await syncAllUnits(freshUnits);
       }
       
@@ -56,16 +56,15 @@ const UVC = () => {
     }
   }, [queryClient, refetch, toast, syncAllUnits]);
 
-  // Auto-sync when component mounts and when units data changes
+  // Auto-sync when component mounts if needed
   useEffect(() => {
     const performInitialSync = async () => {
       if (!isLoading && units.length > 0 && !isRefreshing && !isSyncing) {
         // Check if any units need syncing (showing 0 hours when they shouldn't)
         const unitsNeedingSync = units.filter(unit => {
-          const isSpecialUnit = unit.id?.startsWith("MYWATER_") || unit.id?.startsWith("X-WATER");
           const hasZeroHours = !unit.uvc_hours || unit.uvc_hours === 0;
           const notAccumulated = !unit.is_uvc_accumulated;
-          return (isSpecialUnit || unit.unit_type === 'uvc') && (hasZeroHours || notAccumulated);
+          return unit.unit_type === 'uvc' && (hasZeroHours || notAccumulated);
         });
         
         if (unitsNeedingSync.length > 0) {

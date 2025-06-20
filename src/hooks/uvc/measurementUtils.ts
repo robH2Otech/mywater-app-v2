@@ -15,13 +15,6 @@ export async function fetchLatestMeasurement(unitId: string): Promise<{
   try {
     console.log(`🔍 Fetching latest measurement for unit ${unitId}`);
     
-    // Special handling for X-WATER and MYWATER units
-    const isSpecialUnit = unitId.startsWith("MYWATER_") || unitId.startsWith("X-WATER");
-    
-    if (isSpecialUnit) {
-      console.log(`📊 ${unitId} is a special unit (MYWATER/X-WATER), using priority path`);
-    }
-    
     // Try all paths to find data
     const snapshot = await tryAllMeasurementPaths(unitId, 1);
     

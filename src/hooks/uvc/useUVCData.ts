@@ -1,10 +1,10 @@
+
 import { useQuery } from "@tanstack/react-query";
-import { collection, getDocs, query, where, doc, getDoc } from "firebase/firestore";
+import { collection, getDocs } from "firebase/firestore";
 import { db } from "@/integrations/firebase/client";
 import { useToast } from "@/hooks/use-toast";
 import { processUnitUVCData } from "./uvcDataUtils";
 import { fetchLatestMeasurement } from "./measurementUtils";
-import { getMeasurementsCollectionPath } from "@/hooks/measurements/utils/collectionPaths";
 
 export interface UnitWithUVC {
   id: string;
@@ -32,59 +32,27 @@ export function useUVCData() {
     queryFn: async () => {
       console.log("🔍 Fetching UVC units data with latest measurements...");
       try {
-        // Get all units first
+        // Get only real units from the database
         const unitsCollection = collection(db, "units");
         const unitsSnapshot = await getDocs(unitsCollection);
         
         console.log(`📊 Found ${unitsSnapshot.docs.length} total units`);
         
-        // Check if special units exist (MYWATER, X-WATER units)
-        const specialUnits = ["MYWATER_003", "X-WATER 000"];
-        const specialUnitPromises = specialUnits.map(async (unitId) => {
-          const unitDoc = await getDoc(doc(db, "units", unitId));
-          if (!unitDoc.exists()) {
-            console.log(`📝 Creating special unit entry for ${unitId}`);
-            // Create a document-like object for the special unit with all required UVC properties
-            return {
-              id: unitId,
-              data: () => ({
-                id: unitId,
-                name: unitId.replace("_", " "),
-                unit_type: "uvc",
-                status: "active",
-                location: "Main Office",
-                uvc_hours: 0,
-                uvc_status: 'active' as const,
-                is_uvc_accumulated: false,
-                total_volume: 0
-              }),
-              exists: () => true
-            };
-          }
-          return unitDoc;
-        });
-        
-        const specialUnitDocs = await Promise.all(specialUnitPromises);
-        
-        // Process each unit and directly fetch latest measurements
-        const allUnitDocs = [...unitsSnapshot.docs, ...specialUnitDocs];
-        
-        let unitsPromises = allUnitDocs.map(async (unitDoc) => {
+        // Process each real unit and directly fetch latest measurements
+        let unitsPromises = unitsSnapshot.docs.map(async (unitDoc) => {
           const unitData = unitDoc.data();
           const unitId = unitDoc.id;
           
-          // Check if this is a UVC-related unit
-          const isSpecialUnit = unitId.startsWith("MYWATER_") || unitId.startsWith("X-WATER");
+          // Only process units that are UVC-related or have UVC data
           const isUVCType = unitData.unit_type === 'uvc';
           const hasUVCData = unitData.uvc_hours !== undefined || unitData.uvc_status;
           
-          // For special units, always process them regardless of type
-          // For other units, only process if they're UVC-related
-          if (!isSpecialUnit && !isUVCType && !hasUVCData) {
+          // Skip units that are not UVC-related
+          if (!isUVCType && !hasUVCData) {
             return null;
           }
           
-          console.log(`🔧 Processing UVC unit ${unitId} (Special: ${isSpecialUnit}, Type: ${unitData.unit_type})`);
+          console.log(`🔧 Processing UVC unit ${unitId} (Type: ${unitData.unit_type})`);
           
           // Fetch the latest measurement directly for each unit
           console.log(`📊 Fetching fresh measurement data for unit ${unitId}`);
@@ -101,8 +69,6 @@ export function useUVCData() {
         const unitsData = allUnitsData.filter((unit): unit is UnitWithUVC => 
           unit !== null && (
             unit.unit_type === 'uvc' || 
-            unit.id?.startsWith("MYWATER_") ||
-            unit.id?.startsWith("X-WATER") ||
             (unit.uvc_hours !== undefined && unit.uvc_hours > 0)
           )
         );
@@ -125,10 +91,10 @@ export function useUVCData() {
         throw error;
       }
     },
-    // More frequent refreshes to ensure data synchronization
-    staleTime: 2 * 1000, // 2 seconds stale time for near real-time updates
+    // Reduced refresh frequency to 1 hour for better performance
+    staleTime: 3600 * 1000, // 1 hour stale time
     refetchOnMount: true,
-    refetchOnWindowFocus: true,
-    refetchInterval: 10 * 1000, // Refetch every 10 seconds for real-time sync
+    refetchOnWindowFocus: false, // Disable window focus refetch
+    refetchInterval: 3600 * 1000, // Refetch every 1 hour
   });
 }

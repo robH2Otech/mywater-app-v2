@@ -6,7 +6,7 @@ import { fetchLatestMeasurement } from "./measurementUtils";
 import { processUnitBaseData } from "./unitDataUtils";
 
 /**
- * Processes UVC hours for a unit, prioritizing measurement data for accurate display
+ * Processes UVC hours for a unit, ALWAYS prioritizing measurement data for accurate display
  */
 export async function processUnitUVCData(
   unitDoc: any, 
@@ -15,46 +15,29 @@ export async function processUnitUVCData(
   // Process the basic unit data
   const { id: unitId, unitData, baseUvcHours, totalVolume } = processUnitBaseData(unitDoc);
   
-  // Check if this is a special unit type that should always be processed
-  const isSpecialUnit = unitId.startsWith("MYWATER_") || unitId.startsWith("X-WATER");
-  const isUVCUnit = unitData.unit_type === 'uvc' || isSpecialUnit;
+  // Only process real UVC units
+  const isUVCUnit = unitData.unit_type === 'uvc';
   
-  console.log(`🔧 Processing UVC data for unit ${unitId} (Special: ${isSpecialUnit}, UVC: ${isUVCUnit}, BaseHours: ${baseUvcHours})`);
+  console.log(`🔧 Processing UVC data for unit ${unitId} (UVC: ${isUVCUnit}, BaseHours: ${baseUvcHours})`);
   
   // If we don't have preloaded measurement data, get it now
   const measurementData = preloadedMeasurementData || await fetchLatestMeasurement(unitId);
   
   try {
-    // For UVC display, we want to use the most current data from measurements
+    // ALWAYS use the most current data from measurements when available
     let finalUvcHours = baseUvcHours;
     let shouldUseMeasurementData = false;
     
     if (measurementData.hasMeasurementData && measurementData.latestMeasurementUvcHours > 0) {
       console.log(`📊 Unit ${unitId} - Found valid measurement data:`, {
         measurementUvcHours: measurementData.latestMeasurementUvcHours,
-        baseUvcHours: baseUvcHours,
-        isSpecialUnit: isSpecialUnit
+        baseUvcHours: baseUvcHours
       });
       
-      // For special units (X-WATER, MYWATER), always use measurement data directly
-      // as it represents the current state from the device (same as "Last 24 hours Water Data")
-      if (isSpecialUnit) {
-        finalUvcHours = measurementData.latestMeasurementUvcHours;
-        shouldUseMeasurementData = true;
-        console.log(`✅ Special unit ${unitId} - Using measurement data directly: ${finalUvcHours} hours`);
-      } 
-      // For other UVC units, use measurement data if it's more recent/accurate
-      else if (measurementData.latestMeasurementUvcHours >= baseUvcHours) {
-        finalUvcHours = measurementData.latestMeasurementUvcHours;
-        shouldUseMeasurementData = true;
-        console.log(`✅ Unit ${unitId} - Using measurement data (more recent): ${finalUvcHours} hours`);
-      }
-      else {
-        // Use accumulated hours (base + measurement) if measurement is incremental
-        finalUvcHours = baseUvcHours + measurementData.latestMeasurementUvcHours;
-        shouldUseMeasurementData = true;
-        console.log(`📊 Unit ${unitId} - Using accumulated hours: ${baseUvcHours} + ${measurementData.latestMeasurementUvcHours} = ${finalUvcHours}`);
-      }
+      // ALWAYS prioritize measurement data as it represents the current device state
+      finalUvcHours = measurementData.latestMeasurementUvcHours;
+      shouldUseMeasurementData = true;
+      console.log(`✅ Unit ${unitId} - Using measurement data: ${finalUvcHours} hours`);
     } else {
       console.log(`⚠️ Unit ${unitId} - No valid measurement data, using base hours: ${finalUvcHours}`);
     }
