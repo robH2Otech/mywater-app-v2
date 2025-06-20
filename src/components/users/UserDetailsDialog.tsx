@@ -1,4 +1,3 @@
-
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { useState, useEffect, useRef } from "react";
@@ -8,7 +7,6 @@ import { doc, updateDoc } from "firebase/firestore";
 import { db } from "@/integrations/firebase/client";
 import { User, UserRole, UserStatus } from "@/types/users";
 import { UserDetailsForm } from "./UserDetailsForm";
-import { UserActionButtons } from "./UserActionButtons";
 import { FormSlider } from "@/components/shared/FormSlider";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { usePermissions } from "@/hooks/usePermissions";
@@ -36,7 +34,7 @@ export function UserDetailsDialog({ user, open, onOpenChange }: UserDetailsDialo
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const isMobile = useIsMobile();
-  const { hasPermission, userRole, company: currentUserCompany } = usePermissions();
+  const { userRole } = usePermissions();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   
@@ -139,48 +137,6 @@ export function UserDetailsDialog({ user, open, onOpenChange }: UserDetailsDialo
     }
   };
 
-  const handleAction = (action: 'email' | 'report' | 'reminder' | 'invoice') => {
-    if (!user?.email) {
-      toast({
-        title: "Cannot send email",
-        description: "User email is not available",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    let subject = '';
-    let body = '';
-    const fullName = `${user.first_name} ${user.last_name}`;
-
-    switch (action) {
-      case 'email':
-        subject = `Message from MYWATER`;
-        body = `Hello ${fullName},\n\n`;
-        break;
-      case 'report':
-        subject = `Your Latest Report from MYWATER`;
-        body = `Hello ${fullName},\n\nPlease find attached your latest report from MYWATER.\n\nBest regards,\nMYWATER Team`;
-        break;
-      case 'reminder':
-        subject = `Reminder from MYWATER`;
-        body = `Hello ${fullName},\n\nThis is a friendly reminder about your upcoming service appointment.\n\nBest regards,\nMYWATER Team`;
-        break;
-      case 'invoice':
-        subject = `Invoice from MYWATER`;
-        body = `Hello ${fullName},\n\nPlease find attached your latest invoice from MYWATER.\n\nBest regards,\nMYWATER Team`;
-        break;
-    }
-
-    // Open default email client with pre-filled details
-    window.location.href = `mailto:${user.email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
-    
-    toast({
-      title: "Email client opened",
-      description: `Preparing to send ${action} to ${user.email}`,
-    });
-  };
-
   const getRoleIcon = (role: UserRole) => {
     switch (role) {
       case "superadmin":
@@ -225,32 +181,25 @@ export function UserDetailsDialog({ user, open, onOpenChange }: UserDetailsDialo
             <FormSlider containerRef={scrollContainerRef} />
           </div>
 
-          <div className="shrink-0 border-t border-spotify-accent bg-spotify-darker">
-            <div className={`flex ${isMobile ? 'flex-col gap-3' : 'justify-between items-center'} px-6 py-4`}>
-              <div className={`${isMobile ? 'order-2' : ''}`}>
-                {hasPermission("write") && (
-                  <UserActionButtons onAction={handleAction} />
-                )}
-              </div>
-              <div className={`flex gap-2 ${isMobile ? 'order-1 justify-center' : ''}`}>
+          <div className="shrink-0 border-t border-spotify-accent bg-spotify-darker px-6 py-4">
+            <div className="flex justify-end gap-2">
+              <Button
+                variant="outline"
+                onClick={() => onOpenChange(false)}
+                className="bg-spotify-accent hover:bg-spotify-accent-hover text-white border-none"
+                disabled={isSubmitting}
+              >
+                Cancel
+              </Button>
+              {isEditable && (
                 <Button
-                  variant="outline"
-                  onClick={() => onOpenChange(false)}
-                  className="bg-spotify-accent hover:bg-spotify-accent-hover text-white border-none"
+                  onClick={handleSubmit}
                   disabled={isSubmitting}
+                  className="bg-mywater-blue hover:bg-mywater-blue/90"
                 >
-                  Close
+                  {isSubmitting ? "Updating..." : "Save Changes"}
                 </Button>
-                {isEditable && (
-                  <Button
-                    onClick={handleSubmit}
-                    disabled={isSubmitting}
-                    className="bg-mywater-blue hover:bg-mywater-blue/90"
-                  >
-                    {isSubmitting ? "Updating..." : "Update User"}
-                  </Button>
-                )}
-              </div>
+              )}
             </div>
           </div>
         </div>
