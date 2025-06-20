@@ -1,5 +1,6 @@
 
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
 import { useState, useEffect, useRef } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
@@ -7,13 +8,11 @@ import { doc, updateDoc } from "firebase/firestore";
 import { db } from "@/integrations/firebase/client";
 import { User, UserRole, UserStatus } from "@/types/users";
 import { UserDetailsForm } from "./UserDetailsForm";
+import { UserActionButtons } from "./UserActionButtons";
 import { FormSlider } from "@/components/shared/FormSlider";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { usePermissions } from "@/hooks/usePermissions";
-import { useAuth } from "@/contexts/AuthContext";
 import { Shield, ShieldAlert, ShieldCheck } from "lucide-react";
-import { UserPermissionHandler } from "./UserPermissionHandler";
-import { UserDialogActions } from "./UserDialogActions";
 
 interface UserDetailsDialogProps {
   user: User | null;
@@ -38,7 +37,6 @@ export function UserDetailsDialog({ user, open, onOpenChange }: UserDetailsDialo
   const queryClient = useQueryClient();
   const isMobile = useIsMobile();
   const { hasPermission, userRole, company: currentUserCompany } = usePermissions();
-  const { currentUser } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   
@@ -70,23 +68,38 @@ export function UserDetailsDialog({ user, open, onOpenChange }: UserDetailsDialo
     }
   }, [user]);
 
-  const permissionHandler = new UserPermissionHandler(userRole, currentUser, user);
-  const isEditable = permissionHandler.canEditUser();
-  const shouldShowSaveButton = permissionHandler.shouldShowSaveButton();
+  // Check if current user can edit this user based on roles
+  const canEditUser = (): boolean => {
+    if (!user || !userRole) return false;
+    
+    // Superadmins can edit anyone
+    if (userRole === "superadmin") return true;
+    
+    // Admins can edit technicians and regular users, but not other admins or superadmins
+    if (userRole === "admin") {
+      return ["technician", "user"].includes(user.role);
+    }
+    
+    // Other roles can't edit users
+    return false;
+  };
+  
+  // Check if current user can edit this specific field
+  const canEditField = (field: keyof UserFormData): boolean => {
+    if (!canEditUser()) return false;
+    
+    // Only superadmins can change roles to admin or superadmin
+    if (field === "role" && userRole !== "superadmin" && ["superadmin", "admin"].includes(formData.role)) {
+      return false;
+    }
+    
+    return true;
+  };
 
-  console.log("UserDetailsDialog - Render state:", {
-    userRole,
-    isEditable,
-    shouldShowSaveButton,
-    hasWritePermission: hasPermission("write"),
-    userId: user?.id
-  });
+  const isEditable = canEditUser();
 
   const handleInputChange = (field: keyof UserFormData, value: string) => {
-    if (!permissionHandler.canEditField(field)) {
-      console.log(`UserDetailsDialog - Field ${field} not editable`);
-      return;
-    }
+    if (!canEditField(field)) return;
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
@@ -94,6 +107,10 @@ export function UserDetailsDialog({ user, open, onOpenChange }: UserDetailsDialo
     try {
       if (!user?.id) {
         throw new Error("User ID is required");
+      }
+      
+      if (!isEditable) {
+        throw new Error("You don't have permission to edit this user");
       }
 
       setIsSubmitting(true);
@@ -112,7 +129,6 @@ export function UserDetailsDialog({ user, open, onOpenChange }: UserDetailsDialo
       queryClient.invalidateQueries({ queryKey: ["users"] });
       onOpenChange(false);
     } catch (error: any) {
-      console.error("UserDetailsDialog - Submit error:", error);
       toast({
         title: "Error",
         description: error.message,
@@ -156,6 +172,7 @@ export function UserDetailsDialog({ user, open, onOpenChange }: UserDetailsDialo
         break;
     }
 
+    // Open default email client with pre-filled details
     window.location.href = `mailto:${user.email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
     
     toast({
@@ -181,55 +198,62 @@ export function UserDetailsDialog({ user, open, onOpenChange }: UserDetailsDialo
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[600px] w-[95vw] h-[85vh] bg-spotify-darker border-spotify-accent p-0 overflow-hidden flex flex-col">
-        {/* Header - Fixed */}
-        <DialogHeader className="px-6 py-4 border-b border-spotify-accent shrink-0">
-          <div className="flex items-center gap-2">
-            {getRoleIcon(user.role)}
-            <DialogTitle className="text-xl font-semibold text-white">
-              User Details {user.company && `(${user.company})`}
-            </DialogTitle>
+      <DialogContent className="sm:max-w-[600px] h-[90vh] bg-spotify-darker border-spotify-accent p-0 overflow-hidden">
+        <div className="flex flex-col h-full max-h-[90vh]">
+          <DialogHeader className="px-6 py-4 border-b border-spotify-accent shrink-0">
+            <div className="flex items-center gap-2">
+              {getRoleIcon(user.role)}
+              <DialogTitle className="text-xl font-semibold text-white">
+                User Details {user.company && `(${user.company})`}
+              </DialogTitle>
+            </div>
+          </DialogHeader>
+
+          <div 
+            ref={scrollContainerRef}
+            className="flex-1 overflow-y-auto px-6 py-4 min-h-0"
+          >
+            <UserDetailsForm 
+              formData={formData}
+              handleInputChange={handleInputChange}
+              isEditable={isEditable}
+              canEditField={canEditField}
+            />
           </div>
-          {!isEditable && userRole !== "superadmin" && (
-            <p className="text-sm text-gray-400 mt-1">
-              {currentUser?.id === user.id ? "Editing your own profile (limited fields)" : "Read-only view"}
-            </p>
-          )}
-          {userRole === "superadmin" && (
-            <p className="text-sm text-green-400 mt-1">
-              Superadmin - Full edit access
-            </p>
-          )}
-        </DialogHeader>
 
-        {/* Scrollable Content Area */}
-        <div 
-          ref={scrollContainerRef}
-          className="flex-1 overflow-y-auto px-6 py-4 min-h-0"
-        >
-          <UserDetailsForm 
-            formData={formData}
-            handleInputChange={handleInputChange}
-            isEditable={true}
-            canEditField={permissionHandler.canEditField.bind(permissionHandler)}
-          />
+          <div className="px-6">
+            <FormSlider containerRef={scrollContainerRef} />
+          </div>
+
+          <div className="shrink-0 border-t border-spotify-accent bg-spotify-darker">
+            <div className={`flex ${isMobile ? 'flex-col gap-3' : 'justify-between items-center'} px-6 py-4`}>
+              <div className={`${isMobile ? 'order-2' : ''}`}>
+                {hasPermission("write") && (
+                  <UserActionButtons onAction={handleAction} />
+                )}
+              </div>
+              <div className={`flex gap-2 ${isMobile ? 'order-1 justify-center' : ''}`}>
+                <Button
+                  variant="outline"
+                  onClick={() => onOpenChange(false)}
+                  className="bg-spotify-accent hover:bg-spotify-accent-hover text-white border-none"
+                  disabled={isSubmitting}
+                >
+                  Close
+                </Button>
+                {isEditable && (
+                  <Button
+                    onClick={handleSubmit}
+                    disabled={isSubmitting}
+                    className="bg-mywater-blue hover:bg-mywater-blue/90"
+                  >
+                    {isSubmitting ? "Updating..." : "Update User"}
+                  </Button>
+                )}
+              </div>
+            </div>
+          </div>
         </div>
-
-        {/* Form Slider */}
-        <div className="px-6">
-          <FormSlider containerRef={scrollContainerRef} />
-        </div>
-
-        {/* Actions - Fixed at Bottom */}
-        <UserDialogActions
-          hasWritePermission={hasPermission("write")}
-          shouldShowSaveButton={shouldShowSaveButton}
-          isSubmitting={isSubmitting}
-          isMobile={isMobile}
-          onAction={handleAction}
-          onClose={() => onOpenChange(false)}
-          onSubmit={handleSubmit}
-        />
       </DialogContent>
     </Dialog>
   );
