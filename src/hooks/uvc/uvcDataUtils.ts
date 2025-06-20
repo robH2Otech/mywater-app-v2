@@ -36,12 +36,25 @@ export async function processUnitUVCData(
         isSpecialUnit: isSpecialUnit
       });
       
-      // For ALL UVC units (including special units), ALWAYS use measurement data 
-      // as it represents the current real-time state from the device
-      finalUvcHours = measurementData.latestMeasurementUvcHours;
-      shouldUseMeasurementData = true;
-      
-      console.log(`✅ Unit ${unitId} - Using measurement data directly: ${finalUvcHours} hours (was ${baseUvcHours})`);
+      // For special units (X-WATER, MYWATER), always use measurement data directly
+      // as it represents the current state from the device (same as "Last 24 hours Water Data")
+      if (isSpecialUnit) {
+        finalUvcHours = measurementData.latestMeasurementUvcHours;
+        shouldUseMeasurementData = true;
+        console.log(`✅ Special unit ${unitId} - Using measurement data directly: ${finalUvcHours} hours`);
+      } 
+      // For other UVC units, use measurement data if it's more recent/accurate
+      else if (measurementData.latestMeasurementUvcHours >= baseUvcHours) {
+        finalUvcHours = measurementData.latestMeasurementUvcHours;
+        shouldUseMeasurementData = true;
+        console.log(`✅ Unit ${unitId} - Using measurement data (more recent): ${finalUvcHours} hours`);
+      }
+      else {
+        // Use accumulated hours (base + measurement) if measurement is incremental
+        finalUvcHours = baseUvcHours + measurementData.latestMeasurementUvcHours;
+        shouldUseMeasurementData = true;
+        console.log(`📊 Unit ${unitId} - Using accumulated hours: ${baseUvcHours} + ${measurementData.latestMeasurementUvcHours} = ${finalUvcHours}`);
+      }
     } else {
       console.log(`⚠️ Unit ${unitId} - No valid measurement data, using base hours: ${finalUvcHours}`);
     }

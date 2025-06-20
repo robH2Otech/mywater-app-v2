@@ -39,16 +39,18 @@ export function useUVCDetailsData(unitId: string | undefined, isEnabled: boolean
         baseUvcHours = 0;
       }
       
-      // Get the latest measurement data - ALWAYS fetch fresh data
-      const measurementData = await fetchLatestMeasurement(unitId);
-      
-      // For UVC details, ALWAYS prioritize measurement data if available
+      // Get the latest measurement data
       let totalUvcHours = baseUvcHours;
       let latestMeasurementTimestamp = null;
       
-      if (measurementData.hasMeasurementData && measurementData.latestMeasurementUvcHours > 0) {
+      // Always get latest measurement data
+      const measurementData = await fetchLatestMeasurement(unitId);
+      
+      if (measurementData.hasMeasurementData) {
         // Use measurement hours directly as they are the most current
-        totalUvcHours = measurementData.latestMeasurementUvcHours;
+        if (measurementData.latestMeasurementUvcHours > 0) {
+          totalUvcHours = measurementData.latestMeasurementUvcHours;
+        }
         latestMeasurementTimestamp = measurementData.timestamp;
         console.log(`UVCDetailsData - Using measurement UVC hours: ${totalUvcHours} for unit ${unitId}`);
       } else {
@@ -67,9 +69,6 @@ export function useUVCDetailsData(unitId: string | undefined, isEnabled: boolean
       };
     },
     enabled: !!unitId && isEnabled,
-    // Reduced refresh frequency to match the main UVC data hook
-    staleTime: 60 * 1000, // 60 seconds instead of aggressive refresh
-    refetchInterval: 60 * 1000, // 60 seconds
   });
   
   // Update lastUpdated state when data changes
