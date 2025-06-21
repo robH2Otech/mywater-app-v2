@@ -1,22 +1,44 @@
 
 import React, { useState } from "react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { Leaf, BarChart, Clock, Settings } from "lucide-react";
+import { Leaf, BarChart, Clock, Settings, Activity, TrendingUp } from "lucide-react";
 import { BusinessImpactMetrics } from "./BusinessImpactMetrics";
 import { DowntimeOverview } from "./DowntimeOverview";
 import { EnvironmentalKPIs } from "./EnvironmentalKPIs";
 import { PeriodToggle } from "../dashboard/private/calculator/PeriodToggle";
+import { RealTimeDashboard } from "./dashboard/RealTimeDashboard";
+import { PieChartCard } from "./charts/PieChartCard";
+import { RadialProgressChart } from "./charts/RadialProgressChart";
+import { useEnhancedBusinessImpact } from "@/hooks/impact/useEnhancedBusinessImpact";
+import { motion } from "framer-motion";
 
 export function BusinessImpactTabs() {
   const [activePeriod, setActivePeriod] = useState<"day" | "month" | "year" | "all-time">("year");
+  const { 
+    isLoading, 
+    environmentalBreakdown, 
+    achievements, 
+    realTimeCounters, 
+    energyBreakdown,
+    seasonalTrends
+  } = useEnhancedBusinessImpact(activePeriod);
   
   return (
     <div className="space-y-6">
-      <Tabs defaultValue="environment" className="w-full">
-        <TabsList className="grid w-full grid-cols-4 bg-gradient-to-br from-spotify-darker to-spotify-dark border border-mywater-accent/20 rounded-lg p-1 h-auto">
+      <Tabs defaultValue="realtime" className="w-full">
+        <TabsList className="grid w-full grid-cols-6 bg-gradient-to-br from-spotify-darker to-spotify-dark border border-mywater-accent/20 rounded-lg p-1 h-auto">
+          <TabsTrigger
+            value="realtime"
+            className="flex items-center gap-2 py-3 px-2 data-[state=active]:bg-gradient-to-r data-[state=active]:from-mywater-accent/20 data-[state=active]:to-mywater-secondary/20 data-[state=active]:shadow-lg transition-all duration-300 text-white hover:bg-mywater-accent/10"
+          >
+            <Activity className="h-4 w-4" />
+            <span className="hidden sm:inline">Live</span>
+            <span className="sm:hidden">Live</span>
+          </TabsTrigger>
+          
           <TabsTrigger
             value="environment"
-            className="flex items-center gap-2 py-3 px-4 data-[state=active]:bg-gradient-to-r data-[state=active]:from-mywater-accent/20 data-[state=active]:to-mywater-secondary/20 data-[state=active]:shadow-lg transition-all duration-300 text-white hover:bg-mywater-accent/10"
+            className="flex items-center gap-2 py-3 px-2 data-[state=active]:bg-gradient-to-r data-[state=active]:from-mywater-accent/20 data-[state=active]:to-mywater-secondary/20 data-[state=active]:shadow-lg transition-all duration-300 text-white hover:bg-mywater-accent/10"
           >
             <Leaf className="h-4 w-4" />
             <span className="hidden sm:inline">Environment</span>
@@ -25,7 +47,7 @@ export function BusinessImpactTabs() {
           
           <TabsTrigger
             value="operational"
-            className="flex items-center gap-2 py-3 px-4 data-[state=active]:bg-gradient-to-r data-[state=active]:from-mywater-accent/20 data-[state=active]:to-mywater-secondary/20 data-[state=active]:shadow-lg transition-all duration-300 text-white hover:bg-mywater-accent/10"
+            className="flex items-center gap-2 py-3 px-2 data-[state=active]:bg-gradient-to-r data-[state=active]:from-mywater-accent/20 data-[state=active]:to-mywater-secondary/20 data-[state=active]:shadow-lg transition-all duration-300 text-white hover:bg-mywater-accent/10"
           >
             <Clock className="h-4 w-4" />
             <span className="hidden sm:inline">Operational</span>
@@ -34,7 +56,7 @@ export function BusinessImpactTabs() {
           
           <TabsTrigger
             value="analytics"
-            className="flex items-center gap-2 py-3 px-4 data-[state=active]:bg-gradient-to-r data-[state=active]:from-mywater-accent/20 data-[state=active]:to-mywater-secondary/20 data-[state=active]:shadow-lg transition-all duration-300 text-white hover:bg-mywater-accent/10"
+            className="flex items-center gap-2 py-3 px-2 data-[state=active]:bg-gradient-to-r data-[state=active]:from-mywater-accent/20 data-[state=active]:to-mywater-secondary/20 data-[state=active]:shadow-lg transition-all duration-300 text-white hover:bg-mywater-accent/10"
           >
             <BarChart className="h-4 w-4" />
             <span className="hidden sm:inline">Analytics</span>
@@ -42,14 +64,74 @@ export function BusinessImpactTabs() {
           </TabsTrigger>
           
           <TabsTrigger
+            value="insights"
+            className="flex items-center gap-2 py-3 px-2 data-[state=active]:bg-gradient-to-r data-[state=active]:from-mywater-accent/20 data-[state=active]:to-mywater-secondary/20 data-[state=active]:shadow-lg transition-all duration-300 text-white hover:bg-mywater-accent/10"
+          >
+            <TrendingUp className="h-4 w-4" />
+            <span className="hidden sm:inline">Insights</span>
+            <span className="sm:hidden">Insights</span>
+          </TabsTrigger>
+          
+          <TabsTrigger
             value="kpis"
-            className="flex items-center gap-2 py-3 px-4 data-[state=active]:bg-gradient-to-r data-[state=active]:from-mywater-accent/20 data-[state=active]:to-mywater-secondary/20 data-[state=active]:shadow-lg transition-all duration-300 text-white hover:bg-mywater-accent/10"
+            className="flex items-center gap-2 py-3 px-2 data-[state=active]:bg-gradient-to-r data-[state=active]:from-mywater-accent/20 data-[state=active]:to-mywater-secondary/20 data-[state=active]:shadow-lg transition-all duration-300 text-white hover:bg-mywater-accent/10"
           >
             <Settings className="h-4 w-4" />
             <span className="hidden sm:inline">KPIs</span>
             <span className="sm:hidden">KPIs</span>
           </TabsTrigger>
         </TabsList>
+        
+        <TabsContent value="realtime" className="mt-6">
+          <div className="space-y-4">
+            <div className="flex justify-between items-center">
+              <h3 className="text-lg font-semibold text-white">Real-Time Impact Dashboard</h3>
+            </div>
+            {!isLoading && (
+              <RealTimeDashboard realTimeCounters={realTimeCounters} />
+            )}
+          </div>
+        </TabsContent>
+
+        <TabsContent value="insights" className="mt-6">
+          <div className="space-y-4">
+            <div className="flex justify-between items-center">
+              <h3 className="text-lg font-semibold text-white">Environmental Insights</h3>
+              <PeriodToggle period={activePeriod} setPeriod={setActivePeriod} />
+            </div>
+            
+            {!isLoading && (
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="grid grid-cols-1 lg:grid-cols-2 gap-6"
+              >
+                <PieChartCard
+                  title="Environmental Impact Breakdown"
+                  description="Distribution of environmental benefits"
+                  data={environmentalBreakdown.map(item => ({
+                    name: item.category,
+                    value: item.value,
+                    color: item.color,
+                    percentage: item.percentage
+                  }))}
+                />
+                
+                <PieChartCard
+                  title="Energy Savings Distribution"
+                  description="Sources of energy conservation"
+                  data={energyBreakdown}
+                  innerRadius={40}
+                  outerRadius={80}
+                />
+                
+                <div className="lg:col-span-2">
+                  <RadialProgressChart achievements={achievements} />
+                </div>
+              </motion.div>
+            )}
+          </div>
+        </TabsContent>
         
         <TabsContent value="environment" className="mt-6">
           <div className="space-y-4">
