@@ -159,12 +159,12 @@ export function useEnhancedBusinessImpact(period: "day" | "month" | "year" | "al
     return () => clearInterval(interval);
   }, []);
 
-  // Energy consumption breakdown
+  // Energy consumption breakdown - now with percentage property
   const energyBreakdown = useMemo(() => [
-    { name: "Production Savings", value: 45, color: "#10b981" },
-    { name: "Transportation Avoided", value: 30, color: "#3b82f6" },
-    { name: "Packaging Eliminated", value: 15, color: "#f59e0b" },
-    { name: "Recycling Prevented", value: 10, color: "#ef4444" }
+    { name: "Production Savings", value: 45, color: "#10b981", percentage: 45 },
+    { name: "Transportation Avoided", value: 30, color: "#3b82f6", percentage: 30 },
+    { name: "Packaging Eliminated", value: 15, color: "#f59e0b", percentage: 15 },
+    { name: "Recycling Prevented", value: 10, color: "#ef4444", percentage: 10 }
   ], []);
 
   // Efficiency metrics over time
