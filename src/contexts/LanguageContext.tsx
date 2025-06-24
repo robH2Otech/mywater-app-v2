@@ -35,16 +35,62 @@ const translations: Translations = {
     "dashboard.alerts.title": "Recent Alerts",
     "dashboard.no.alerts": "No recent alerts",
     
+    // Greetings
+    "greeting.good.morning": "Good morning",
+    "greeting.good.afternoon": "Good afternoon", 
+    "greeting.good.evening": "Good evening",
+    "greeting.welcome.back": "Welcome to your dashboard",
+    
+    // Dashboard specific
+    "dashboard.data.loaded": "Data loaded",
+    "dashboard.units": "units",
+    "dashboard.alerts": "alerts", 
+    "dashboard.filters": "filters",
+    "dashboard.superadmin.access": "Superadmin Access",
+    "dashboard.company": "Company",
+    "dashboard.refresh": "Refresh",
+    "dashboard.debug": "Debug",
+    "dashboard.debug.panel": "Debug Panel",
+    "dashboard.auth.error": "Authentication Error",
+    "dashboard.data.loading.error": "Data Loading Error",
+    "dashboard.failed.to.load": "Failed to load data",
+    "dashboard.retry": "Retry",
+    "dashboard.refresh.data": "Refresh Data",
+    "dashboard.loading": "Loading dashboard data...",
+    "dashboard.loading.data": "Loading data...",
+    
+    // Stats
+    "stats.total.units": "Total Units",
+    "stats.filter.changes": "Filter Changes Required", 
+    "stats.active.alerts": "Active Alerts",
+    "stats.volume.today": "Total Volume Today",
+    
+    // Chart
+    "chart.water.usage": "Water Usage",
+    "chart.no.units": "No units",
+    "chart.data.points": "data points",
+    
+    // Recent Alerts
+    "alerts.recent.title": "Recent Alerts (Last 7 Days)",
+    "alerts.error.loading": "Error loading recent alerts",
+    "alerts.no.active": "No active alerts in the last 7 days",
+    "alerts.click.view.all": "Click to view all alerts →",
+    
     // Navigation
     "nav.dashboard": "Dashboard",
     "nav.water.units": "Water Units",
+    "nav.locations": "Units Location",
     "nav.filters": "Filters",
     "nav.uvc": "UVC",
     "nav.alerts": "Alerts",
     "nav.analytics": "Analytics",
+    "nav.predictive.maintenance": "Predictive Maintenance",
     "nav.users": "Users",
-    "nav.settings": "Settings",
     "nav.client.requests": "Client Requests",
+    "nav.impact": "Impact",
+    "nav.settings": "Settings",
+    "nav.logout": "Log Out",
+    "nav.search": "Search...",
     
     // Units
     "units.title": "Water Units",
@@ -158,7 +204,6 @@ const translations: Translations = {
     "chart.loading": "Loading chart data...",
     "chart.no.data": "No data available",
     "chart.volume": "Volume (m³)",
-    "dashboard.loading": "Loading dashboard data...",
     "dashboard.total.units": "Total Units",
     "dashboard.filter.changes": "Filter Changes Required",
     "dashboard.active.alerts": "Active Alerts",
@@ -190,16 +235,62 @@ const translations: Translations = {
     "dashboard.alerts.title": "Nedavna opozorila",
     "dashboard.no.alerts": "Ni nedavnih opozoril",
     
+    // Greetings
+    "greeting.good.morning": "Dobro jutro",
+    "greeting.good.afternoon": "Dober dan",
+    "greeting.good.evening": "Dober večer", 
+    "greeting.welcome.back": "Dobrodošli na svoji nadzorni plošči",
+    
+    // Dashboard specific
+    "dashboard.data.loaded": "Podatki naloženi",
+    "dashboard.units": "enote",
+    "dashboard.alerts": "opozorila",
+    "dashboard.filters": "filtri", 
+    "dashboard.superadmin.access": "Superadmin dostop",
+    "dashboard.company": "Podjetje",
+    "dashboard.refresh": "Osveži",
+    "dashboard.debug": "Razhroščevanje",
+    "dashboard.debug.panel": "Plošča za razhroščevanje",
+    "dashboard.auth.error": "Napaka pri avtentikaciji",
+    "dashboard.data.loading.error": "Napaka pri nalaganju podatkov",
+    "dashboard.failed.to.load": "Nalaganje podatkov neuspešno",
+    "dashboard.retry": "Poskusi znova",
+    "dashboard.refresh.data": "Osveži podatke",
+    "dashboard.loading": "Nalaganje podatkov nadzorne plošče...",
+    "dashboard.loading.data": "Nalaganje podatkov...",
+    
+    // Stats
+    "stats.total.units": "Skupaj enot",
+    "stats.filter.changes": "Potrebne menjave filtrov",
+    "stats.active.alerts": "Aktivna opozorila", 
+    "stats.volume.today": "Skupni volumen danes",
+    
+    // Chart
+    "chart.water.usage": "Poraba vode",
+    "chart.no.units": "Ni enot",
+    "chart.data.points": "podatkovne točke",
+    
+    // Recent Alerts
+    "alerts.recent.title": "Nedavna opozorila (zadnjih 7 dni)",
+    "alerts.error.loading": "Napaka pri nalaganju nedavnih opozoril",
+    "alerts.no.active": "Ni aktivnih opozoril v zadnjih 7 dneh",
+    "alerts.click.view.all": "Kliknite za ogled vseh opozoril →",
+    
     // Navigation
     "nav.dashboard": "Nadzorna plošča",
     "nav.water.units": "Vodne enote",
+    "nav.locations": "Lokacije enot",
     "nav.filters": "Filtri",
     "nav.uvc": "UVC",
     "nav.alerts": "Opozorila",
     "nav.analytics": "Analitika",
+    "nav.predictive.maintenance": "Napovedovalno vzdrževanje",
     "nav.users": "Uporabniki",
-    "nav.settings": "Nastavitve",
     "nav.client.requests": "Zahteve strank",
+    "nav.impact": "Vpliv",
+    "nav.settings": "Nastavitve",
+    "nav.logout": "Odjava",
+    "nav.search": "Iskanje...",
     
     // Units
     "units.title": "Vodne enote",

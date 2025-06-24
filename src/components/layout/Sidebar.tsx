@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { auth } from "@/integrations/firebase/client";
 import { usePermissions } from "@/hooks/usePermissions";
 import { motion } from "framer-motion";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 interface SidebarProps {
   isMobile?: boolean;
@@ -15,6 +16,7 @@ interface SidebarProps {
 export function Sidebar({ isMobile, closeSidebar, isOpen }: SidebarProps) {
   const location = useLocation();
   const navigate = useNavigate();
+  const { t } = useLanguage();
   const { 
     userRole, 
     canViewNavItem
@@ -34,67 +36,67 @@ export function Sidebar({ isMobile, closeSidebar, isOpen }: SidebarProps) {
     { 
       to: "/dashboard", 
       icon: <LayoutDashboard size={isMobile ? 20 : 16} />,
-      text: "Dashboard",
+      text: t("nav.dashboard"),
       visible: canViewNavItem('dashboard')
     },
     { 
       to: "/units", 
       icon: <Droplet size={isMobile ? 20 : 16} />,
-      text: "Water Units",
+      text: t("nav.water.units"),
       visible: canViewNavItem('units')
     },
     { 
       to: "/locations", 
       icon: <MapPin size={isMobile ? 20 : 16} />,
-      text: "Units Location",
+      text: t("nav.locations"),
       visible: canViewNavItem('locations')
     },
     { 
       to: "/filters", 
       icon: <Filter size={isMobile ? 20 : 16} />,
-      text: "Filters",
+      text: t("nav.filters"),
       visible: canViewNavItem('filters')
     },
     { 
       to: "/uvc", 
       icon: <Zap size={isMobile ? 20 : 16} />,
-      text: "UVC",
+      text: t("nav.uvc"),
       visible: canViewNavItem('uvc')
     },
     { 
       to: "/alerts", 
       icon: <Bell size={isMobile ? 20 : 16} />,
-      text: "Alerts",
+      text: t("nav.alerts"),
       visible: canViewNavItem('alerts')
     },
     { 
       to: "/analytics", 
       icon: <BarChart2 size={isMobile ? 20 : 16} />,
-      text: "Analytics",
+      text: t("nav.analytics"),
       visible: canViewNavItem('analytics')
     },
     { 
       to: "/analytics?tab=predictive", 
       icon: <Activity size={isMobile ? 20 : 16} />,
-      text: "Predictive Maintenance",
+      text: t("nav.predictive.maintenance"),
       visible: canViewNavItem('predictive')
     },
     { 
       to: "/users", 
       icon: <Users size={isMobile ? 20 : 16} />,
-      text: "Users",
+      text: t("nav.users"),
       visible: canViewNavItem('users')
     },
     { 
       to: "/client-requests", 
       icon: <MessageSquare size={isMobile ? 20 : 16} />,
-      text: "Client Requests",
+      text: t("nav.client.requests"),
       visible: canViewNavItem('client-requests')
     },
     { 
       to: "/impact", 
       icon: <Droplet size={isMobile ? 20 : 16} />,
-      text: "Impact",
+      text: t("nav.impact"),
       visible: canViewNavItem('impact')
     }
   ];
@@ -110,7 +112,7 @@ export function Sidebar({ isMobile, closeSidebar, isOpen }: SidebarProps) {
             <div className="relative">
               <input
                 type="text"
-                placeholder="Search..."
+                placeholder={t("nav.search")}
                 className="w-full bg-white/5 border border-white/10 rounded-lg py-2 pl-8 pr-4 text-sm text-white placeholder-white/40 focus:outline-none focus:ring-1 focus:ring-mywater-blue"
               />
               <svg className="absolute left-2.5 top-2.5 h-4 w-4 text-white/40" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -157,7 +159,7 @@ export function Sidebar({ isMobile, closeSidebar, isOpen }: SidebarProps) {
               isMobile={isMobile}
               onClick={isMobile ? closeSidebar : undefined}
             >
-              Settings
+              {t("nav.settings")}
             </SidebarNavItem>
           )}
           
@@ -167,7 +169,7 @@ export function Sidebar({ isMobile, closeSidebar, isOpen }: SidebarProps) {
             className={`w-full flex items-center gap-3 ${isMobile ? 'px-6 py-4' : 'px-4 py-3'} mt-2 rounded-md transition-colors text-gray-400 hover:text-white hover:bg-red-600/20 border border-transparent hover:border-red-600/30 bg-white/5`}
           >
             <Settings className={`${isMobile ? 'h-6 w-6' : 'h-5 w-5'} flex-shrink-0 text-red-500`} />
-            <span className={`truncate font-medium ${isMobile ? 'text-base' : 'text-sm'}`}>Log Out</span>
+            <span className={`truncate font-medium ${isMobile ? 'text-base' : 'text-sm'}`}>{t("nav.logout")}</span>
           </button>
         </div>
       </div>

@@ -13,6 +13,7 @@ interface WaterUsageChartProps {
 
 export const WaterUsageChart = ({ units = [] }: WaterUsageChartProps) => {
   const [selectedTimeRange, setSelectedTimeRange] = useState<TimeRange>("24h");
+  const { t } = useLanguage();
   
   // Extract unit IDs more comprehensively
   const unitIds = units.map(unit => {
@@ -49,9 +50,9 @@ export const WaterUsageChart = ({ units = [] }: WaterUsageChartProps) => {
     <Card className="p-6 glass lg:col-span-2">
       <div className="flex justify-between items-center mb-4">
         <div>
-          <h2 className="text-lg font-semibold">Water Usage</h2>
+          <h2 className="text-lg font-semibold">{t("chart.water.usage")}</h2>
           <p className="text-sm text-gray-400">
-            {unitIds.length > 0 ? `${unitIds.length} units` : 'No units'} • {data?.length || 0} data points
+            {unitIds.length > 0 ? `${unitIds.length} ${t("dashboard.units")}` : t("chart.no.units")} • {data?.length || 0} {t("chart.data.points")}
           </p>
         </div>
         <TimeRangeSelector value={selectedTimeRange} onChange={handleTimeRangeChange} />

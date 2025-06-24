@@ -1,5 +1,6 @@
 
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 interface WelcomeMessageProps {
   firstName: string;
@@ -9,12 +10,13 @@ interface WelcomeMessageProps {
 export const WelcomeMessage = ({ firstName, isMobile: propIsMobile }: WelcomeMessageProps) => {
   const hookIsMobile = useIsMobile();
   const isMobile = propIsMobile !== undefined ? propIsMobile : hookIsMobile;
+  const { t } = useLanguage();
 
   const getGreeting = () => {
     const hour = new Date().getHours();
-    if (hour < 12) return "Good morning";
-    if (hour < 18) return "Good afternoon";
-    return "Good evening";
+    if (hour < 12) return t("greeting.good.morning");
+    if (hour < 18) return t("greeting.good.afternoon");
+    return t("greeting.good.evening");
   };
 
   const displayName = firstName || "User";
@@ -26,7 +28,7 @@ export const WelcomeMessage = ({ firstName, isMobile: propIsMobile }: WelcomeMes
       </h1>
       {!isMobile && (
         <p className="text-sm text-gray-400">
-          Welcome to your dashboard
+          {t("greeting.welcome.back")}
         </p>
       )}
     </div>

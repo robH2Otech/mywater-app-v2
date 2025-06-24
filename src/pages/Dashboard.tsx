@@ -47,7 +47,7 @@ const Dashboard = () => {
       <div className="flex items-center justify-center min-h-screen">
         <div className="flex flex-col items-center space-y-4">
           <Loader2 className="h-8 w-8 animate-spin text-blue-500" />
-          <p className="text-gray-400">Loading dashboard...</p>
+          <p className="text-gray-400">{t("dashboard.loading")}</p>
         </div>
       </div>
     );
@@ -60,14 +60,14 @@ const Dashboard = () => {
         <Card className="p-6 max-w-md w-full">
           <div className="flex items-center space-x-3 mb-4">
             <AlertCircle className="h-6 w-6 text-red-500" />
-            <h2 className="text-lg font-semibold text-white">Authentication Error</h2>
+            <h2 className="text-lg font-semibold text-white">{t("dashboard.auth.error")}</h2>
           </div>
           <p className="text-gray-300 mb-4">{authError}</p>
           <button 
             onClick={() => window.location.reload()} 
             className="mt-4 w-full bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded"
           >
-            Retry
+            {t("dashboard.retry")}
           </button>
         </Card>
       </div>
@@ -81,21 +81,21 @@ const Dashboard = () => {
         <Card className="p-6 bg-red-900/20 border-red-800">
           <div className="flex items-center space-x-3 mb-4">
             <AlertCircle className="h-6 w-6 text-red-500" />
-            <h2 className="text-lg font-semibold text-white">Data Loading Error</h2>
+            <h2 className="text-lg font-semibold text-white">{t("dashboard.data.loading.error")}</h2>
           </div>
           <p className="text-red-300 mb-4">
-            Failed to load data: {unitsError?.message || alertsError?.message || filtersError?.message}
+            {t("dashboard.failed.to.load")}: {unitsError?.message || alertsError?.message || filtersError?.message}
           </p>
           <div className="flex gap-2">
             <button 
               onClick={() => window.location.reload()} 
               className="bg-red-600 hover:bg-red-700 text-white py-2 px-4 rounded"
             >
-              Retry
+              {t("dashboard.retry")}
             </button>
             <Button onClick={handleRefreshAll} variant="outline">
               <RefreshCw className="h-4 w-4 mr-2" />
-              Refresh Data
+              {t("dashboard.refresh.data")}
             </Button>
           </div>
         </Card>
@@ -110,7 +110,7 @@ const Dashboard = () => {
       <div className="flex items-center justify-center min-h-screen">
         <div className="flex flex-col items-center space-y-4">
           <Loader2 className="h-8 w-8 animate-spin text-blue-500" />
-          <p className="text-gray-400">Loading data...</p>
+          <p className="text-gray-400">{t("dashboard.loading.data")}</p>
         </div>
       </div>
     );
@@ -129,17 +129,17 @@ const Dashboard = () => {
           <CheckCircle className="h-5 w-5 text-green-500" />
           <div>
             <p className="text-green-300 text-sm">
-              Data loaded: {units.length} units, {alerts.length} alerts, {filters.length} filters
+              {t("dashboard.data.loaded")}: {units.length} {t("dashboard.units")}, {alerts.length} {t("dashboard.alerts")}, {filters.length} {t("dashboard.filters")}
             </p>
             <p className="text-gray-400 text-xs">
-              {userRole === 'superadmin' ? 'Superadmin Access' : `Company: ${company}`}
+              {userRole === 'superadmin' ? t("dashboard.superadmin.access") : `${t("dashboard.company")}: ${company}`}
             </p>
           </div>
         </div>
         <div className="flex items-center gap-2">
           <Button onClick={handleRefreshAll} variant="outline" size="sm">
             <RefreshCw className="h-4 w-4 mr-2" />
-            Refresh
+            {t("dashboard.refresh")}
           </Button>
           {userRole === 'superadmin' && (
             <Button 
@@ -148,7 +148,7 @@ const Dashboard = () => {
               size="sm"
             >
               <Settings className="h-4 w-4 mr-2" />
-              Debug
+              {t("dashboard.debug")}
             </Button>
           )}
         </div>
@@ -161,7 +161,7 @@ const Dashboard = () => {
             <div className="bg-spotify-darker border border-spotify-accent rounded-lg p-4">
               <h3 className="text-lg font-semibold text-white mb-4 flex items-center">
                 <Settings className="h-5 w-5 mr-2" />
-                Debug Panel
+                {t("dashboard.debug.panel")}
               </h3>
               <FirebaseDebugPanel />
             </div>
@@ -171,27 +171,27 @@ const Dashboard = () => {
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard
-          title="Total Units"
+          title={t("stats.total.units")}
           value={units.length}
           icon={<Droplet />}
           link="/units"
         />
         <StatCard
-          title="Filter Changes Required"
+          title={t("stats.filter.changes")}
           value={warningUnits}
           icon={<Calendar />}
           link="/filters"
           iconColor="text-yellow-500"
         />
         <StatCard
-          title="Active Alerts"
+          title={t("stats.active.alerts")}
           value={alerts.length}
           icon={<Bell />}
           link="/alerts"
           iconColor="text-red-500"
         />
         <StatCard
-          title="Total Volume Today"
+          title={t("stats.volume.today")}
           value={`${formatThousands(calculateTotalVolume(units))} m³`}
           icon={<Activity />}
           link="/analytics"
