@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useEffect, ReactNode } from "react";
 
 // Available languages
@@ -58,6 +57,10 @@ const translations: Translations = {
     "dashboard.refresh.data": "Refresh Data",
     "dashboard.loading": "Loading dashboard data...",
     "dashboard.loading.data": "Loading data...",
+    "dashboard.total.units": "Total Units",
+    "dashboard.filter.changes": "Filter Changes Required",
+    "dashboard.active.alerts": "Active Alerts",
+    "dashboard.volume.today": "Total Volume Today",
     
     // Stats
     "stats.total.units": "Total Units",
@@ -69,6 +72,14 @@ const translations: Translations = {
     "chart.water.usage": "Water Usage",
     "chart.no.units": "No units",
     "chart.data.points": "data points",
+    "chart.select.timerange": "Select time range",
+    "chart.24hours": "Last 24 hours",
+    "chart.7days": "Last 7 days",
+    "chart.30days": "Last 30 days",
+    "chart.6months": "Last 6 months",
+    "chart.loading": "Loading chart data...",
+    "chart.no.data": "No data available",
+    "chart.volume": "Volume (m³)",
     
     // Recent Alerts
     "alerts.recent.title": "Recent Alerts (Last 7 Days)",
@@ -194,20 +205,6 @@ const translations: Translations = {
     "system": "System",
     "light": "Light",
     "dark": "Dark",
-
-    // Chart related translations
-    "chart.select.timerange": "Select time range",
-    "chart.24hours": "Last 24 hours",
-    "chart.7days": "Last 7 days",
-    "chart.30days": "Last 30 days",
-    "chart.6months": "Last 6 months",
-    "chart.loading": "Loading chart data...",
-    "chart.no.data": "No data available",
-    "chart.volume": "Volume (m³)",
-    "dashboard.total.units": "Total Units",
-    "dashboard.filter.changes": "Filter Changes Required",
-    "dashboard.active.alerts": "Active Alerts",
-    "dashboard.volume.today": "Total Volume Today",
     
     // Landing page
     "welcome_to": "Welcome to",
@@ -258,6 +255,10 @@ const translations: Translations = {
     "dashboard.refresh.data": "Osveži podatke",
     "dashboard.loading": "Nalaganje podatkov nadzorne plošče...",
     "dashboard.loading.data": "Nalaganje podatkov...",
+    "dashboard.total.units": "Skupne enote",
+    "dashboard.filter.changes": "Potrebne menjave filtrov",
+    "dashboard.active.alerts": "Aktivna opozorila",
+    "dashboard.volume.today": "Skupni volumen danes",
     
     // Stats
     "stats.total.units": "Skupaj enot",
@@ -269,6 +270,14 @@ const translations: Translations = {
     "chart.water.usage": "Poraba vode",
     "chart.no.units": "Ni enot",
     "chart.data.points": "podatkovne točke",
+    "chart.select.timerange": "Izberi časovni razpon",
+    "chart.24hours": "Zadnjih 24 ur",
+    "chart.7days": "Zadnjih 7 dni",
+    "chart.30days": "Zadnjih 30 dni",
+    "chart.6months": "Zadnjih 6 mesecev",
+    "chart.loading": "Nalaganje podatkov...",
+    "chart.no.data": "Ni podatkov",
+    "chart.volume": "Volumen (m³)",
     
     // Recent Alerts
     "alerts.recent.title": "Nedavna opozorila (zadnjih 7 dni)",
@@ -394,21 +403,6 @@ const translations: Translations = {
     "system": "Sistemska",
     "light": "Svetla",
     "dark": "Temna",
-
-    // Chart related translations
-    "chart.select.timerange": "Izberi časovni razpon",
-    "chart.24hours": "Zadnjih 24 ur",
-    "chart.7days": "Zadnjih 7 dni",
-    "chart.30days": "Zadnjih 30 dni",
-    "chart.6months": "Zadnjih 6 mesecev",
-    "chart.loading": "Nalaganje podatkov...",
-    "chart.no.data": "Ni podatkov",
-    "chart.volume": "Volumen (m³)",
-    "dashboard.loading": "Nalaganje podatkov...",
-    "dashboard.total.units": "Skupne enote",
-    "dashboard.filter.changes": "Potrebne menjave filtrov",
-    "dashboard.active.alerts": "Aktivna opozorila",
-    "dashboard.volume.today": "Skupni volumen danes",
     
     // Landing page
     "welcome_to": "Dobrodošli v",
