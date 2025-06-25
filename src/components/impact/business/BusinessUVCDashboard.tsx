@@ -10,12 +10,14 @@ import { MultiLocationComparison } from "./MultiLocationComparison";
 import { ESGReportGenerator } from "./ESGReportGenerator";
 import { calculateBusinessUVCMetrics, calculateCostSavings, UVC_CONSTANTS } from "@/utils/businessUvcCalculations";
 import { motion } from "framer-motion";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 interface BusinessUVCDashboardProps {
   period: "day" | "month" | "year" | "all-time";
 }
 
 export function BusinessUVCDashboard({ period }: BusinessUVCDashboardProps) {
+  const { t } = useLanguage();
   const [selectedLocation, setSelectedLocation] = useState("all");
   
   // Mock data based on period - in real app this would come from props/hooks
@@ -54,27 +56,27 @@ export function BusinessUVCDashboard({ period }: BusinessUVCDashboardProps) {
             <Factory className="h-8 w-8 text-blue-400" />
           </div>
           <div>
-            <h2 className="text-2xl font-bold text-white">Business UVC System Performance</h2>
-            <p className="text-blue-200">Professional water purification metrics and efficiency tracking</p>
+            <h2 className="text-2xl font-bold text-white">{t("business.uvc.title")}</h2>
+            <p className="text-blue-200">{t("business.uvc.subtitle")}</p>
           </div>
         </div>
         
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <div className="text-center">
             <div className="text-2xl font-bold text-blue-400">{businessMetrics.waterProcessed.toFixed(1)}</div>
-            <div className="text-sm text-blue-300">m³ Processed</div>
+            <div className="text-sm text-blue-300">{t("business.uvc.water.processed")}</div>
           </div>
           <div className="text-center">
             <div className="text-2xl font-bold text-green-400">{businessMetrics.systemUptime.toFixed(1)}%</div>
-            <div className="text-sm text-green-300">System Uptime</div>
+            <div className="text-sm text-green-300">{t("business.uvc.system.uptime")}</div>
           </div>
           <div className="text-center">
             <div className="text-2xl font-bold text-yellow-400">€{costSavings.totalCostSavings.toFixed(0)}</div>
-            <div className="text-sm text-yellow-300">Cost Savings</div>
+            <div className="text-sm text-yellow-300">{t("business.uvc.cost.savings")}</div>
           </div>
           <div className="text-center">
             <div className="text-2xl font-bold text-purple-400">{businessMetrics.maintenanceEfficiency.toFixed(1)}%</div>
-            <div className="text-sm text-purple-300">Efficiency</div>
+            <div className="text-sm text-purple-300">{t("business.uvc.efficiency")}</div>
           </div>
         </div>
       </motion.div>
@@ -84,23 +86,23 @@ export function BusinessUVCDashboard({ period }: BusinessUVCDashboardProps) {
         <TabsList className="grid w-full grid-cols-5 bg-gradient-to-r from-spotify-darker to-spotify-dark border border-mywater-accent/20 h-auto p-1">
           <TabsTrigger value="overview" className="flex items-center gap-2 py-3 data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500/20 data-[state=active]:to-cyan-500/20">
             <TrendingUp className="h-4 w-4" />
-            <span className="hidden sm:inline">Overview</span>
+            <span className="hidden sm:inline">{t("nav.dashboard")}</span>
           </TabsTrigger>
           <TabsTrigger value="efficiency" className="flex items-center gap-2 py-3 data-[state=active]:bg-gradient-to-r data-[state=active]:from-green-500/20 data-[state=active]:to-emerald-500/20">
             <Activity className="h-4 w-4" />
-            <span className="hidden sm:inline">Efficiency</span>
+            <span className="hidden sm:inline">{t("business.uvc.efficiency")}</span>
           </TabsTrigger>
           <TabsTrigger value="maintenance" className="flex items-center gap-2 py-3 data-[state=active]:bg-gradient-to-r data-[state=active]:from-yellow-500/20 data-[state=active]:to-amber-500/20">
             <Zap className="h-4 w-4" />
-            <span className="hidden sm:inline">Maintenance</span>
+            <span className="hidden sm:inline">{t("nav.filters")}</span>
           </TabsTrigger>
           <TabsTrigger value="locations" className="flex items-center gap-2 py-3 data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-500/20 data-[state=active]:to-pink-500/20">
             <Building2 className="h-4 w-4" />
-            <span className="hidden sm:inline">Locations</span>
+            <span className="hidden sm:inline">{t("nav.locations")}</span>
           </TabsTrigger>
           <TabsTrigger value="reports" className="flex items-center gap-2 py-3 data-[state=active]:bg-gradient-to-r data-[state=active]:from-indigo-500/20 data-[state=active]:to-blue-500/20">
             <Droplets className="h-4 w-4" />
-            <span className="hidden sm:inline">Reports</span>
+            <span className="hidden sm:inline">{t("analytics.reports")}</span>
           </TabsTrigger>
         </TabsList>
 

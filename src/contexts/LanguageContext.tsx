@@ -267,6 +267,22 @@ const translations: Translations = {
     "business.uvc.compliance.certification": "Compliance & Certification",
     "business.uvc.stakeholder.impact": "Stakeholder Impact",
     "business.uvc.report.summary.metrics": "Report Summary Metrics",
+    
+    // Business UVC Dashboard - Impact Page
+    "business.uvc.dashboard.title": "Business UVC Impact & Efficiency Dashboard",
+    "business.uvc.dashboard.description": "Comprehensive real-time UVC water purification system monitoring with operational KPIs, cost savings analysis, and performance metrics for professional installations.",
+    "business.uvc.live.system.status": "Live System Status",
+    "business.uvc.export.esg.report": "Export ESG Report",
+    "business.uvc.generating": "Generating...",
+    "business.uvc.system.calculations": "UVC Water Purification System Calculations",
+    "business.uvc.professional.grade.metrics": "Professional-grade UVC water purification metrics based on industrial standards and operational efficiency:",
+    "business.uvc.flow.rate": "Flow Rate: 2-10 m³/hour (typical business systems)",
+    "business.uvc.energy.efficiency": "Energy Efficiency: 1.55 kWh saved per m³ processed",
+    "business.uvc.water.waste.prevention": "Water Waste Prevention: 2.33 m³ per m³ purified",
+    "business.uvc.cost.equivalence": "Cost Equivalence: €0.02 per m³ operational savings",
+    "business.uvc.real.time.monitoring": "Real-time system monitoring with predictive maintenance alerts",
+    "business.uvc.professional.analytics": "Professional UVC System Analytics",
+    "business.uvc.comprehensive.metrics": "Comprehensive operational metrics, maintenance tracking, and business impact analysis for UVC water purification systems",
   },
   sl: {
     // Dashboard
@@ -510,6 +526,22 @@ const translations: Translations = {
     "business.uvc.compliance.certification": "Skladnost in certifikacija",
     "business.uvc.stakeholder.impact": "Vpliv na deležnike",
     "business.uvc.report.summary.metrics": "Povzetek metrik poročila",
+    
+    // Business UVC Dashboard - Impact Page
+    "business.uvc.dashboard.title": "Poslovna UVC nadzorna plošča za vpliv in učinkovitost",
+    "business.uvc.dashboard.description": "Celovito spremljanje UVC sistemov za čiščenje vode v realnem času z operativnimi KPI, analizo prihrankov stroškov in metrikami učinkovitosti za profesionalne namestitve.",
+    "business.uvc.live.system.status": "Status sistema v živo",
+    "business.uvc.export.esg.report": "Izvozi ESG poročilo",
+    "business.uvc.generating": "Ustvarjanje...",
+    "business.uvc.system.calculations": "Izračuni UVC sistema za čiščenje vode",
+    "business.uvc.professional.grade.metrics": "Profesionalne UVC metrike za čiščenje vode, ki temeljijo na industrijskih standardih in operativni učinkovitosti:",
+    "business.uvc.flow.rate": "Pretok: 2-10 m³/uro (tipični poslovni sistemi)",
+    "business.uvc.energy.efficiency": "Energijska učinkovitost: 1,55 kWh prihranjeno na m³ obdelanega",
+    "business.uvc.water.waste.prevention": "Preprečevanje izgube vode: 2,33 m³ na m³ prečiščenega",
+    "business.uvc.cost.equivalence": "Stroškovna ekvivalenca: €0,02 na m³ operativnih prihrankov",
+    "business.uvc.real.time.monitoring": "Spremljanje sistema v realnem času s prediktivnimi opozorilami za vzdrževanje",
+    "business.uvc.professional.analytics": "Profesionalna UVC sistemska analitika",
+    "business.uvc.comprehensive.metrics": "Celovite operativne metrike, sledenje vzdrževanju in analiza poslovnega vpliva za UVC sisteme čiščenja vode",
   }
 };
 

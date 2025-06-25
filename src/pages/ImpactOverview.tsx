@@ -7,8 +7,10 @@ import { Factory, Download, Info, TrendingUp, Activity, Target } from "lucide-re
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { motion } from "framer-motion";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 const ImpactOverview = () => {
+  const { t } = useLanguage();
   const [isLoading, setIsLoading] = useState(false);
   const [period, setPeriod] = useState<"day" | "month" | "year" | "all-time">("year");
   
@@ -30,8 +32,8 @@ const ImpactOverview = () => {
     >
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
         <PageHeader
-          title="Business UVC Impact & Efficiency Dashboard"
-          description="Comprehensive real-time UVC water purification system monitoring with operational KPIs, cost savings analysis, and performance metrics for professional installations."
+          title={t("business.uvc.dashboard.title")}
+          description={t("business.uvc.dashboard.description")}
           icon={Factory}
         />
         <div className="flex gap-3">
@@ -40,7 +42,7 @@ const ImpactOverview = () => {
             className="flex items-center gap-2 bg-green-500/10 border-green-500 text-green-400 hover:bg-green-500 hover:text-white transition-all duration-300" 
           >
             <Activity className="h-4 w-4" />
-            <span>Live System Status</span>
+            <span>{t("business.uvc.live.system.status")}</span>
           </Button>
           <Button 
             variant="outline" 
@@ -49,7 +51,7 @@ const ImpactOverview = () => {
             disabled={isLoading}
           >
             <Download className="h-4 w-4" />
-            <span>{isLoading ? "Generating..." : "Export ESG Report"}</span>
+            <span>{isLoading ? t("business.uvc.generating") : t("business.uvc.export.esg.report")}</span>
           </Button>
         </div>
       </div>
@@ -68,20 +70,20 @@ const ImpactOverview = () => {
           <div className="flex-1">
             <h3 className="font-semibold text-blue-100 mb-2 flex items-center gap-2">
               <TrendingUp className="h-4 w-4" />
-              UVC Water Purification System Calculations
+              {t("business.uvc.system.calculations")}
             </h3>
             <p className="text-blue-200/90 text-sm leading-relaxed mb-3">
-              Professional-grade UVC water purification metrics based on industrial standards and operational efficiency:
+              {t("business.uvc.professional.grade.metrics")}
             </p>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-xs text-blue-300/80">
-              <div>• Flow Rate: 2-10 m³/hour (typical business systems)</div>
-              <div>• Energy Efficiency: 1.55 kWh saved per m³ processed</div>
-              <div>• Water Waste Prevention: 2.33 m³ per m³ purified</div>
-              <div>• Cost Equivalence: €0.02 per m³ operational savings</div>
+              <div>• {t("business.uvc.flow.rate")}</div>
+              <div>• {t("business.uvc.energy.efficiency")}</div>
+              <div>• {t("business.uvc.water.waste.prevention")}</div>
+              <div>• {t("business.uvc.cost.equivalence")}</div>
             </div>
             <div className="mt-3 flex items-center gap-2 text-xs text-blue-300/60">
               <Target className="h-3 w-3" />
-              <span>Real-time system monitoring with predictive maintenance alerts</span>
+              <span>{t("business.uvc.real.time.monitoring")}</span>
             </div>
           </div>
         </div>
@@ -98,10 +100,10 @@ const ImpactOverview = () => {
         <Card className="p-6 bg-gradient-to-br from-spotify-darker via-slate-900/50 to-spotify-darker border-spotify-accent/30 shadow-2xl">
           <div className="mb-6">
             <h2 className="text-2xl font-bold mb-2 bg-gradient-to-r from-mywater-blue to-cyan-400 bg-clip-text text-transparent">
-              Professional UVC System Analytics
+              {t("business.uvc.professional.analytics")}
             </h2>
             <p className="text-gray-400">
-              Comprehensive operational metrics, maintenance tracking, and business impact analysis for UVC water purification systems
+              {t("business.uvc.comprehensive.metrics")}
             </p>
           </div>
           
