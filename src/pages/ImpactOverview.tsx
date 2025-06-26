@@ -3,7 +3,7 @@ import React, { useState } from "react";
 import { PageHeader } from "@/components/shared/PageHeader";
 import { BusinessUVCDashboard } from "@/components/impact/business/BusinessUVCDashboard";
 import { Card } from "@/components/ui/card";
-import { Factory, Download, Info, TrendingUp, Activity, Target } from "lucide-react";
+import { Factory, Download, Activity } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { motion } from "framer-motion";
@@ -55,39 +55,6 @@ const ImpactOverview = () => {
           </Button>
         </div>
       </div>
-
-      {/* Scientific Information for UVC Systems */}
-      <motion.div 
-        initial={{ opacity: 0, scale: 0.95 }}
-        animate={{ opacity: 1, scale: 1 }}
-        transition={{ delay: 0.3, duration: 0.4 }}
-        className="bg-gradient-to-r from-blue-900/20 via-blue-800/20 to-cyan-900/20 border border-blue-500/30 rounded-lg p-6 backdrop-blur-sm"
-      >
-        <div className="flex items-start gap-4">
-          <div className="p-2 bg-blue-500/20 rounded-lg">
-            <Info className="h-6 w-6 text-blue-400" />
-          </div>
-          <div className="flex-1">
-            <h3 className="font-semibold text-blue-100 mb-2 flex items-center gap-2">
-              <TrendingUp className="h-4 w-4" />
-              {t("business.uvc.system.calculations")}
-            </h3>
-            <p className="text-blue-200/90 text-sm leading-relaxed mb-3">
-              {t("business.uvc.professional.grade.metrics")}
-            </p>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-xs text-blue-300/80">
-              <div>• {t("business.uvc.flow.rate")}</div>
-              <div>• {t("business.uvc.energy.efficiency")}</div>
-              <div>• {t("business.uvc.water.waste.prevention")}</div>
-              <div>• {t("business.uvc.cost.equivalence")}</div>
-            </div>
-            <div className="mt-3 flex items-center gap-2 text-xs text-blue-300/60">
-              <Target className="h-3 w-3" />
-              <span>{t("business.uvc.real.time.monitoring")}</span>
-            </div>
-          </div>
-        </div>
-      </motion.div>
       
       <Separator className="bg-spotify-accent/20" />
       
@@ -95,7 +62,7 @@ const ImpactOverview = () => {
       <motion.div
         initial={{ opacity: 0, y: 30 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.4, duration: 0.5 }}
+        transition={{ delay: 0.2, duration: 0.5 }}
       >
         <Card className="p-6 bg-gradient-to-br from-spotify-darker via-slate-900/50 to-spotify-darker border-spotify-accent/30 shadow-2xl">
           <div className="mb-6">
