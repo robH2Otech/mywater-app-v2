@@ -25,7 +25,7 @@ export function BusinessUVCDashboard({ period }: BusinessUVCDashboardProps) {
   // Calculate real total water volume from all units
   const realTotalVolume = useMemo(() => {
     return units.reduce((total, unit) => {
-      const unitVolume = unit.total_volume || 0;
+      const unitVolume = Number(unit.total_volume) || 0;
       return total + unitVolume;
     }, 0);
   }, [units]);
