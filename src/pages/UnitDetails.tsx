@@ -11,7 +11,6 @@ import { UnitError } from "@/components/units/details/UnitError";
 import { UnitLoading } from "@/components/units/details/UnitLoading";
 import { useUnitDetails } from "@/hooks/units/useUnitDetails";
 import { toast } from "sonner";
-import { UnitLocationLink } from "@/components/units/UnitLocationLink";
 
 const UnitDetails = () => {
   const { id } = useParams();
@@ -121,10 +120,6 @@ const UnitDetails = () => {
           unitId={unitId}
           unitIccid={unit.iccid || ''}
         />
-        
-        <div className="flex justify-end mb-4">
-          <UnitLocationLink unitId={unitId} iccid={unit.iccid} />
-        </div>
         
         <UnitLocationSection unit={unit} unitId={unitId} />
         <UnitDetailsCard unit={unit} />
