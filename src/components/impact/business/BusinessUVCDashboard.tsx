@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Factory, TrendingUp, Zap, Droplets, Building2, Activity } from "lucide-react";
@@ -11,6 +11,7 @@ import { ESGReportGenerator } from "./ESGReportGenerator";
 import { calculateBusinessUVCMetrics, calculateCostSavings, UVC_CONSTANTS } from "@/utils/businessUvcCalculations";
 import { motion } from "framer-motion";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { useUnits } from "@/hooks/useUnits";
 
 interface BusinessUVCDashboardProps {
   period: "day" | "month" | "year" | "all-time";
@@ -19,33 +20,72 @@ interface BusinessUVCDashboardProps {
 export function BusinessUVCDashboard({ period }: BusinessUVCDashboardProps) {
   const { t } = useLanguage();
   const [selectedLocation, setSelectedLocation] = useState("all");
+  const { data: units = [], isLoading: unitsLoading } = useUnits();
   
-  // Mock data based on period - in real app this would come from props/hooks
-  const getPeriodMultiplier = () => {
+  // Calculate real total water volume from all units
+  const realTotalVolume = useMemo(() => {
+    return units.reduce((total, unit) => {
+      const unitVolume = unit.total_volume || 0;
+      return total + unitVolume;
+    }, 0);
+  }, [units]);
+
+  // Apply period filtering to the real volume
+  const getPeriodAdjustedVolume = () => {
+    if (realTotalVolume === 0) return 0;
+    
+    // For real data, we assume the total_volume represents cumulative data
+    // We'll scale it based on the selected period for realistic representation
     switch (period) {
-      case "day": return 1;
-      case "month": return 30;
-      case "year": return 365;
-      case "all-time": return 730; // 2 years
-      default: return 30;
+      case "day":
+        // Show daily average (assuming total is over ~1 year)
+        return realTotalVolume / 365;
+      case "month":
+        // Show monthly average
+        return realTotalVolume / 12;
+      case "year":
+        // Show the actual total volume
+        return realTotalVolume;
+      case "all-time":
+        // Show total volume (could be over multiple years)
+        return realTotalVolume;
+      default:
+        return realTotalVolume;
     }
   };
   
-  const baseWaterProcessed = 75; // m³ per day baseline
-  const totalWaterProcessed = baseWaterProcessed * getPeriodMultiplier();
+  const adjustedWaterProcessed = getPeriodAdjustedVolume();
   
-  // Calculate business metrics
-  const businessMetrics = calculateBusinessUVCMetrics(totalWaterProcessed, {
-    flowRate: UVC_CONSTANTS.TYPICAL_FLOW_RATES.medium,
-    operatingHours: 16,
-    daysInPeriod: getPeriodMultiplier()
-  });
+  // Calculate business metrics using real data
+  const businessMetrics = useMemo(() => {
+    return calculateBusinessUVCMetrics(adjustedWaterProcessed, {
+      flowRate: UVC_CONSTANTS.TYPICAL_FLOW_RATES.medium,
+      operatingHours: 16,
+      daysInPeriod: period === "day" ? 1 : period === "month" ? 30 : period === "year" ? 365 : 730
+    });
+  }, [adjustedWaterProcessed, period]);
   
-  const costSavings = calculateCostSavings(businessMetrics);
+  const costSavings = useMemo(() => {
+    return calculateCostSavings(businessMetrics);
+  }, [businessMetrics]);
+
+  // Show loading state while fetching real data
+  if (unitsLoading) {
+    return (
+      <div className="space-y-6">
+        <div className="animate-pulse">
+          <div className="h-32 bg-gradient-to-r from-blue-900/20 via-cyan-900/20 to-teal-900/20 border border-blue-500/40 rounded-lg"></div>
+        </div>
+        <div className="animate-pulse">
+          <div className="h-96 bg-spotify-darker border border-spotify-accent/30 rounded-lg"></div>
+        </div>
+      </div>
+    );
+  }
   
   return (
     <div className="space-y-6">
-      {/* Header Section */}
+      {/* Header Section with Real Data */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -58,13 +98,18 @@ export function BusinessUVCDashboard({ period }: BusinessUVCDashboardProps) {
           <div>
             <h2 className="text-2xl font-bold text-white">{t("business.uvc.title")}</h2>
             <p className="text-blue-200">{t("business.uvc.subtitle")}</p>
+            {units.length > 0 && (
+              <p className="text-xs text-blue-300/70 mt-1">
+                Data from {units.length} active unit{units.length !== 1 ? 's' : ''}
+              </p>
+            )}
           </div>
         </div>
         
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <div className="text-center">
             <div className="text-2xl font-bold text-blue-400">{businessMetrics.waterProcessed.toFixed(1)}</div>
-            <div className="text-sm text-blue-300">{t("business.uvc.water.processed")}</div>
+            <div className="text-sm text-blue-300">{t("business.uvc.water.processed")} (m³)</div>
           </div>
           <div className="text-center">
             <div className="text-2xl font-bold text-green-400">{businessMetrics.systemUptime.toFixed(1)}%</div>
@@ -79,6 +124,14 @@ export function BusinessUVCDashboard({ period }: BusinessUVCDashboardProps) {
             <div className="text-sm text-purple-300">{t("business.uvc.efficiency")}</div>
           </div>
         </div>
+
+        {realTotalVolume === 0 && (
+          <div className="mt-4 p-3 bg-yellow-900/20 border border-yellow-600/30 rounded-lg">
+            <p className="text-yellow-200 text-sm">
+              No water processing data available. Metrics will update when units start reporting data.
+            </p>
+          </div>
+        )}
       </motion.div>
 
       {/* Main Dashboard Tabs */}
@@ -112,6 +165,7 @@ export function BusinessUVCDashboard({ period }: BusinessUVCDashboardProps) {
               businessMetrics={businessMetrics}
               costSavings={costSavings}
               period={period}
+              realDataAvailable={realTotalVolume > 0}
             />
             <SystemEfficiencyChart 
               metrics={businessMetrics}
