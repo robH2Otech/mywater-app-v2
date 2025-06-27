@@ -85,55 +85,6 @@ export function BusinessUVCDashboard({ period }: BusinessUVCDashboardProps) {
   
   return (
     <div className="space-y-6">
-      {/* Header Section with Real Data */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="bg-gradient-to-r from-blue-900/30 via-cyan-900/30 to-teal-900/30 border border-blue-500/40 rounded-lg p-6"
-      >
-        <div className="flex items-center gap-4 mb-4">
-          <div className="p-3 bg-blue-500/20 rounded-lg">
-            <Factory className="h-8 w-8 text-blue-400" />
-          </div>
-          <div>
-            <h2 className="text-2xl font-bold text-white">{t("business.uvc.title")}</h2>
-            <p className="text-blue-200">{t("business.uvc.subtitle")}</p>
-            {units.length > 0 && (
-              <p className="text-xs text-blue-300/70 mt-1">
-                Data from {units.length} active unit{units.length !== 1 ? 's' : ''}
-              </p>
-            )}
-          </div>
-        </div>
-        
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <div className="text-center">
-            <div className="text-2xl font-bold text-blue-400">{businessMetrics.waterProcessed.toFixed(1)}</div>
-            <div className="text-sm text-blue-300">{t("business.uvc.water.processed")} (m³)</div>
-          </div>
-          <div className="text-center">
-            <div className="text-2xl font-bold text-green-400">{businessMetrics.systemUptime.toFixed(1)}%</div>
-            <div className="text-sm text-green-300">{t("business.uvc.system.uptime")}</div>
-          </div>
-          <div className="text-center">
-            <div className="text-2xl font-bold text-yellow-400">€{costSavings.totalCostSavings.toFixed(0)}</div>
-            <div className="text-sm text-yellow-300">{t("business.uvc.cost.savings")}</div>
-          </div>
-          <div className="text-center">
-            <div className="text-2xl font-bold text-purple-400">{businessMetrics.maintenanceEfficiency.toFixed(1)}%</div>
-            <div className="text-sm text-purple-300">{t("business.uvc.efficiency")}</div>
-          </div>
-        </div>
-
-        {realTotalVolume === 0 && (
-          <div className="mt-4 p-3 bg-yellow-900/20 border border-yellow-600/30 rounded-lg">
-            <p className="text-yellow-200 text-sm">
-              No water processing data available. Metrics will update when units start reporting data.
-            </p>
-          </div>
-        )}
-      </motion.div>
-
       {/* Main Dashboard Tabs */}
       <Tabs defaultValue="overview" className="w-full">
         <TabsList className="grid w-full grid-cols-5 bg-gradient-to-r from-spotify-darker to-spotify-dark border border-mywater-accent/20 h-auto p-1">

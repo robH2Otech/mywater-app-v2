@@ -8,20 +8,14 @@ import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { motion } from "framer-motion";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { LiveSystemStatusDialog } from "@/components/impact/business/LiveSystemStatusDialog";
+import { ESGReportDialog } from "@/components/impact/business/ESGReportDialog";
 
 const ImpactOverview = () => {
   const { t } = useLanguage();
-  const [isLoading, setIsLoading] = useState(false);
   const [period, setPeriod] = useState<"day" | "month" | "year" | "all-time">("year");
-  
-  // Mock function for downloading reports
-  const handleDownloadReport = () => {
-    setIsLoading(true);
-    // Simulate download process
-    setTimeout(() => {
-      setIsLoading(false);
-    }, 1500);
-  };
+  const [showSystemStatus, setShowSystemStatus] = useState(false);
+  const [showESGReport, setShowESGReport] = useState(false);
 
   return (
     <motion.div 
@@ -40,6 +34,7 @@ const ImpactOverview = () => {
           <Button 
             variant="outline" 
             className="flex items-center gap-2 bg-green-500/10 border-green-500 text-green-400 hover:bg-green-500 hover:text-white transition-all duration-300" 
+            onClick={() => setShowSystemStatus(true)}
           >
             <Activity className="h-4 w-4" />
             <span>{t("business.uvc.live.system.status")}</span>
@@ -47,11 +42,10 @@ const ImpactOverview = () => {
           <Button 
             variant="outline" 
             className="flex items-center gap-2 bg-mywater-blue/10 border-mywater-blue text-mywater-blue hover:bg-mywater-blue hover:text-white transition-all duration-300" 
-            onClick={handleDownloadReport}
-            disabled={isLoading}
+            onClick={() => setShowESGReport(true)}
           >
             <Download className="h-4 w-4" />
-            <span>{isLoading ? t("business.uvc.generating") : t("business.uvc.export.esg.report")}</span>
+            <span>{t("business.uvc.export.esg.report")}</span>
           </Button>
         </div>
       </div>
@@ -64,19 +58,19 @@ const ImpactOverview = () => {
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.2, duration: 0.5 }}
       >
-        <Card className="p-6 bg-gradient-to-br from-spotify-darker via-slate-900/50 to-spotify-darker border-spotify-accent/30 shadow-2xl">
-          <div className="mb-6">
-            <h2 className="text-2xl font-bold mb-2 bg-gradient-to-r from-mywater-blue to-cyan-400 bg-clip-text text-transparent">
-              {t("business.uvc.professional.analytics")}
-            </h2>
-            <p className="text-gray-400">
-              {t("business.uvc.comprehensive.metrics")}
-            </p>
-          </div>
-          
-          <BusinessUVCDashboard period={period} />
-        </Card>
+        <BusinessUVCDashboard period={period} />
       </motion.div>
+
+      {/* Dialogs */}
+      <LiveSystemStatusDialog 
+        open={showSystemStatus} 
+        onOpenChange={setShowSystemStatus} 
+      />
+      <ESGReportDialog 
+        open={showESGReport} 
+        onOpenChange={setShowESGReport}
+        period={period}
+      />
     </motion.div>
   );
 };
