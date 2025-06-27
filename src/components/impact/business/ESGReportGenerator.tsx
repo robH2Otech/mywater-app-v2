@@ -5,6 +5,9 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Download, FileText, Leaf, Users, Building } from "lucide-react";
 import { UVCBusinessMetrics, calculateCostSavings } from "@/utils/businessUvcCalculations";
+import { jsPDF } from "jspdf";
+import { format } from "date-fns";
+import { toast } from "sonner";
 
 interface ESGReportGeneratorProps {
   businessMetrics: UVCBusinessMetrics;
@@ -15,14 +18,137 @@ interface ESGReportGeneratorProps {
 export function ESGReportGenerator({ businessMetrics, costSavings, period }: ESGReportGeneratorProps) {
   const [isGenerating, setIsGenerating] = useState(false);
 
-  const handleGenerateReport = async (reportType: string) => {
+  const generatePDFReport = async (reportType: string, reportTitle: string) => {
     setIsGenerating(true);
-    // Simulate report generation
-    await new Promise(resolve => setTimeout(resolve, 2000));
-    setIsGenerating(false);
     
-    // In a real app, this would generate and download a PDF
-    console.log(`Generating ${reportType} report for ${period} period`);
+    try {
+      // Create PDF document
+      const doc = new jsPDF();
+      const pageWidth = doc.internal.pageSize.getWidth();
+      let yPosition = 20;
+      
+      // Header
+      doc.setFontSize(20);
+      doc.setTextColor(0, 128, 0);
+      doc.text("MYWATER Technologies", pageWidth / 2, yPosition, { align: "center" });
+      
+      yPosition += 15;
+      doc.setFontSize(16);
+      doc.setTextColor(0, 0, 0);
+      doc.text(reportTitle, pageWidth / 2, yPosition, { align: "center" });
+      
+      yPosition += 10;
+      doc.setFontSize(12);
+      doc.text(`Generated: ${format(new Date(), 'PPP')} | Period: ${period.toUpperCase()}`, pageWidth / 2, yPosition, { align: "center" });
+      
+      yPosition += 20;
+      
+      // Report content based on type
+      doc.setFontSize(14);
+      doc.setTextColor(0, 0, 0);
+      
+      if (reportType === "esg-summary") {
+        doc.text("Environmental Impact Summary", 20, yPosition);
+        yPosition += 15;
+        
+        doc.setFontSize(11);
+        doc.text(`Water Processed: ${businessMetrics.waterProcessed.toFixed(2)} m³`, 20, yPosition);
+        yPosition += 8;
+        doc.text(`Energy Saved: ${businessMetrics.energySaved.toFixed(2)} kWh`, 20, yPosition);
+        yPosition += 8;
+        doc.text(`Water Waste Prevented: ${businessMetrics.waterWastePrevented.toFixed(2)} m³`, 20, yPosition);
+        yPosition += 8;
+        doc.text(`System Uptime: ${businessMetrics.systemUptime.toFixed(1)}%`, 20, yPosition);
+        yPosition += 15;
+        
+        doc.setFontSize(14);
+        doc.text("Financial Impact", 20, yPosition);
+        yPosition += 15;
+        
+        doc.setFontSize(11);
+        doc.text(`Total Cost Savings: €${costSavings.totalCostSavings.toFixed(2)}`, 20, yPosition);
+        yPosition += 8;
+        doc.text(`Energy Cost Savings: €${costSavings.energyCostSavings.toFixed(2)}`, 20, yPosition);
+        yPosition += 8;
+        doc.text(`Water Cost Savings: €${costSavings.waterCostSavings.toFixed(2)}`, 20, yPosition);
+        yPosition += 8;
+        doc.text(`Operational Savings: €${costSavings.operationalSavings.toFixed(2)}`, 20, yPosition);
+        
+      } else if (reportType === "operational-report") {
+        doc.text("Operational Performance Metrics", 20, yPosition);
+        yPosition += 15;
+        
+        doc.setFontSize(11);
+        doc.text(`System Uptime: ${businessMetrics.systemUptime.toFixed(1)}%`, 20, yPosition);
+        yPosition += 8;
+        doc.text(`Maintenance Efficiency: ${businessMetrics.maintenanceEfficiency.toFixed(1)}%`, 20, yPosition);
+        yPosition += 8;
+        doc.text(`Operating Hours: ${businessMetrics.operationalHours.toFixed(0)} hours`, 20, yPosition);
+        yPosition += 8;
+        doc.text(`Water Processing Rate: ${businessMetrics.waterProcessed.toFixed(2)} m³`, 20, yPosition);
+        
+      } else if (reportType === "compliance-report") {
+        doc.text("Compliance & Certification Report", 20, yPosition);
+        yPosition += 15;
+        
+        doc.setFontSize(11);
+        doc.text("• ISO 14001 Environmental Management Standards - Compliant", 20, yPosition);
+        yPosition += 8;
+        doc.text("• Water Quality Regulations - Fully Compliant", 20, yPosition);
+        yPosition += 8;
+        doc.text("• Energy Efficiency Certifications - Achieved", 20, yPosition);
+        yPosition += 8;
+        doc.text(`• System Performance: ${businessMetrics.systemUptime.toFixed(1)}% uptime`, 20, yPosition);
+        
+      } else if (reportType === "stakeholder-report") {
+        doc.text("Stakeholder Impact Assessment", 20, yPosition);
+        yPosition += 15;
+        
+        doc.setFontSize(11);
+        doc.text("Environmental Footprint Reduction:", 20, yPosition);
+        yPosition += 8;
+        doc.text(`- Water waste prevented: ${businessMetrics.waterWastePrevented.toFixed(2)} m³`, 25, yPosition);
+        yPosition += 8;
+        doc.text(`- Energy savings achieved: ${businessMetrics.energySaved.toFixed(2)} kWh`, 25, yPosition);
+        yPosition += 15;
+        
+        doc.text("Corporate Sustainability Goals:", 20, yPosition);
+        yPosition += 8;
+        doc.text(`- Cost savings generated: €${costSavings.totalCostSavings.toFixed(2)}`, 25, yPosition);
+        yPosition += 8;
+        doc.text(`- Operational efficiency: ${businessMetrics.maintenanceEfficiency.toFixed(1)}%`, 25, yPosition);
+      }
+      
+      // Footer
+      yPosition = doc.internal.pageSize.getHeight() - 20;
+      doc.setFontSize(8);
+      doc.setTextColor(128, 128, 128);
+      doc.text(`Report generated by MYWATER ESG Analytics Platform`, pageWidth / 2, yPosition, { align: "center" });
+      
+      // Save the PDF
+      const filename = `${reportTitle.replace(/\s+/g, '_')}_${period}_${format(new Date(), 'yyyy-MM-dd')}.pdf`;
+      doc.save(filename);
+      
+      toast.success(`${reportTitle} downloaded successfully!`);
+      
+    } catch (error) {
+      console.error("Error generating PDF:", error);
+      toast.error("Failed to generate PDF report");
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
+  const handleGenerateReport = async (reportType: string) => {
+    const reportTitles = {
+      "esg-summary": "ESG Impact Summary",
+      "operational-report": "Operational Performance Report", 
+      "compliance-report": "Compliance & Certification Report",
+      "stakeholder-report": "Stakeholder Impact Report"
+    };
+    
+    const reportTitle = reportTitles[reportType as keyof typeof reportTitles] || "ESG Report";
+    await generatePDFReport(reportType, reportTitle);
   };
 
   const reportTypes = [
@@ -112,7 +238,7 @@ export function ESGReportGenerator({ businessMetrics, costSavings, period }: ESG
                 <Button
                   onClick={() => handleGenerateReport(report.id)}
                   disabled={isGenerating}
-                  className={`bg-gradient-to-r ${report.color} hover:opacity-90 transition-opacity`}
+                  className={`bg-gradient-to-r ${report.color} hover:opacity-90 transition-opacity disabled:opacity-50`}
                 >
                   <Download className="h-4 w-4 mr-2" />
                   {isGenerating ? "Generating..." : "Download PDF"}
