@@ -26,7 +26,6 @@ export const UnitLocationDetails: React.FC<UnitLocationDetailsProps> = ({
           <div className="h-4 bg-gray-400/30 rounded w-3/4"></div>
           <div className="h-4 bg-gray-400/30 rounded w-2/3"></div>
           <div className="h-4 bg-gray-400/30 rounded w-1/2"></div>
-          <div className="h-4 bg-gray-400/30 rounded w-3/4"></div>
         </div>
       </Card>
     );
@@ -52,11 +51,6 @@ export const UnitLocationDetails: React.FC<UnitLocationDetailsProps> = ({
         
         {locationData ? (
           <>
-            <div>
-              <p className="text-sm text-gray-400">Device Name</p>
-              <p>{locationData.deviceName || 'N/A'}</p>
-            </div>
-            
             <div>
               <p className="text-sm text-gray-400">Country</p>
               <p>{locationData.lastCountry || 'Unknown'}</p>
