@@ -2,7 +2,6 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { BusinessAuthForm } from "@/components/users/business/BusinessAuthForm";
-import { TempAccessButton } from "@/components/users/business/TempAccessButton";
 import { UserMigrationHandler } from "@/components/users/business/UserMigrationHandler";
 import { AuthDebugPanel } from "@/components/debug/AuthDebugPanel";
 import MatrixRain from "@/components/ui/matrix-rain";
@@ -46,14 +45,10 @@ const Auth = () => {
               setIsLogin={setIsLogin} 
             />
 
-            <div className="text-center space-y-4 mt-6">
+            <div className="text-center mt-6">
               <p className="text-mywater-blue">
-                Contact us for account: contact@x-water.eu
+                Contact us for account: robert@x-water.eu
               </p>
-              
-              <div className="pt-2 border-t border-gray-700">
-                <TempAccessButton />
-              </div>
             </div>
 
             {/* Debug Panel for Development */}

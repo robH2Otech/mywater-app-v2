@@ -64,6 +64,12 @@ const LandingPage = () => {
             >
               SL
             </button>
+            <button 
+              className={`px-2 py-1 rounded text-sm ${language === 'hr' ? 'bg-mywater-blue text-white' : 'text-gray-400 hover:text-white'}`}
+              onClick={() => setLanguage('hr')}
+            >
+              HR
+            </button>
           </div>
         </div>
       </div>
