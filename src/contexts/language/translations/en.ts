@@ -1,2 +1,2 @@
 
-export { englishTranslations } from './en';
+export { englishTranslations } from './en/index';
