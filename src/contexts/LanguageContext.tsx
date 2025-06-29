@@ -224,7 +224,7 @@ const translations: Translations = {
     "technical_support": "Technical support and service management",
     "continue": "Continue",
     
-    // Business UVC Dashboard
+    // Business UVC Dashboard  
     "business.uvc.title": "Business UVC System Performance",
     "business.uvc.subtitle": "Professional water purification metrics and efficiency tracking",
     "business.uvc.water.processed": "m³ Processed",
@@ -284,6 +284,18 @@ const translations: Translations = {
     "business.uvc.real.time.monitoring": "Real-time system monitoring with predictive maintenance alerts",
     "business.uvc.professional.analytics": "Professional UVC System Analytics",
     "business.uvc.comprehensive.metrics": "Comprehensive operational metrics, maintenance tracking, and business impact analysis for UVC water purification systems",
+
+    // Units - Additional translations
+    "units.all.from.companies": "ALL UNITS FROM ALL COMPANIES",
+    "units.total": "total units",
+    "units.volume.label": "Volume",
+    "units.type": "Type",
+    "units.type.uvc": "UVC Unit",
+    "units.type.drop": "DROP Filter",
+    "units.type.office": "Office Filter",
+    "units.not.available": "Not available",
+    "units.no.units.found": "No units found. Click \"Add Unit\" to create one.",
+    "units.failed.to.fetch": "Failed to fetch water units",
   },
   sl: {
     // Dashboard
@@ -541,9 +553,21 @@ const translations: Translations = {
     "business.uvc.energy.efficiency": "Energijska učinkovitost: 1,55 kWh prihranjeno na m³ obdelanega",
     "business.uvc.water.waste.prevention": "Preprečevanje izgube vode: 2,33 m³ na m³ prečiščenega",
     "business.uvc.cost.equivalence": "Stroškovna ekvivalenca: €0,02 na m³ operativnih prihrankov",
-    "business.uvc.real.time.monitoring": "Spremljanje sistema v realnem času s prediktivnimi opozorilami za vzdrževanje",
+    "business.uvc.real.time.monitoring": "Spremljanje sistema v realnem času s prediktivnimi opozorili za vzdrževanje",
     "business.uvc.professional.analytics": "Profesionalna UVC sistemska analitika",
     "business.uvc.comprehensive.metrics": "Celovite operativne metrike, sledenje vzdrževanju in analiza poslovnega vpliva za UVC sisteme čiščenja vode",
+
+    // Units - Additional translations
+    "units.all.from.companies": "VSE ENOTE VSEH PODJETIJ",
+    "units.total": "skupaj enot",
+    "units.volume.label": "Volumen",
+    "units.type": "Tip",
+    "units.type.uvc": "UVC enota",
+    "units.type.drop": "DROP filter",
+    "units.type.office": "Pisarniški filter",
+    "units.not.available": "Ni na voljo",
+    "units.no.units.found": "Ni najdenih enot. Kliknite \"Dodaj enoto\" za ustvarjanje.",
+    "units.failed.to.fetch": "Napaka pri pridobivanju vodnih enot",
   },
   hr: {
     // Dashboard
@@ -804,6 +828,18 @@ const translations: Translations = {
     "business.uvc.real.time.monitoring": "Praćenje sustava u stvarnom vremenu s prediktivnim upozorenjem za održavanje",
     "business.uvc.professional.analytics": "Profesionalna UVC analitika sustava",
     "business.uvc.comprehensive.metrics": "Sveobuhvatne operativne metrike, praćenje održavanja i analiza poslovnog utjecaja za UVC sustave pročišćavanja vode",
+
+    // Units - Additional translations
+    "units.all.from.companies": "SVE JEDINICE SVIH TVRTKI",
+    "units.total": "ukupne jedinice",
+    "units.volume.label": "Volumen",
+    "units.type": "Tip",
+    "units.type.uvc": "UVC jedinica",
+    "units.type.drop": "DROP filter",
+    "units.type.office": "Uredski filter",
+    "units.not.available": "Nije dostupno",
+    "units.no.units.found": "Nema pronađenih jedinica. Kliknite \"Dodaj jedinicu\" za stvaranje.",
+    "units.failed.to.fetch": "Greška pri dohvaćanju vodnih jedinica",
   }
 };
 

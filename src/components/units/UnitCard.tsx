@@ -5,6 +5,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
 import { EditUnitDialog } from "./EditUnitDialog";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 interface UnitCardProps {
   id: string;
@@ -46,6 +47,7 @@ export const UnitCard = ({
   unit_type,
 }: UnitCardProps) => {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const { t } = useLanguage();
 
   // Only UVC units should have UVC-specific information displayed
   const isUVCUnit = unit_type === 'uvc';
@@ -69,16 +71,16 @@ export const UnitCard = ({
   const getStatusText = (status: string) => {
     switch (status) {
       case "urgent":
-        return "Urgent Change";
+        return t("status.urgent");
       case "warning":
-        return "Warning";
+        return t("status.warning");
       default:
-        return "Active";
+        return t("status.active");
     }
   };
 
   const formatDate = (date: string | null) => {
-    if (!date) return "Not available";
+    if (!date) return t("units.not.available");
     return new Date(date).toLocaleDateString();
   };
 
@@ -110,9 +112,11 @@ export const UnitCard = ({
     setIsEditDialogOpen(true);
   };
 
-  const unitTypeLabel = isOfficeUnit ? 'Office Filter' : 
-                        isDropUnit ? 'DROP Filter' : 
-                        'UVC Unit';
+  const getUnitTypeLabel = () => {
+    if (isOfficeUnit) return t("units.type.office");
+    if (isDropUnit) return t("units.type.drop");
+    return t("units.type.uvc");
+  };
 
   return (
     <>
@@ -144,19 +148,19 @@ export const UnitCard = ({
           </div>
           <div className="space-y-2">
             <p className="text-sm text-gray-400">
-              Volume: {formatVolume(total_volume)}
+              {t("units.volume.label")}: {formatVolume(total_volume)}
             </p>
             <p className="text-sm text-gray-400">
-              Last Maintenance: {formatDate(last_maintenance)}
+              {t("units.last.maintenance")}: {formatDate(last_maintenance)}
             </p>
             {unit_type && (
               <p className="text-sm text-gray-400">
-                Type: {unitTypeLabel}
+                {t("units.type")}: {getUnitTypeLabel()}
               </p>
             )}
             {isUVCUnit && uvc_hours && (
               <p className="text-sm text-gray-400">
-                UVC Hours: {Math.round(Number(uvc_hours)).toLocaleString()}
+                {t("uvc.hours")}: {Math.round(Number(uvc_hours)).toLocaleString()}
               </p>
             )}
           </div>
