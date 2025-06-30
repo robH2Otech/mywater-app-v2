@@ -19,7 +19,7 @@ function App() {
         },
         refetchOnWindowFocus: false,
         staleTime: 5 * 60 * 1000, // 5 minutes - data stays fresh longer
-        cacheTime: 10 * 60 * 1000, // 10 minutes - keep in cache longer
+        gcTime: 10 * 60 * 1000, // 10 minutes - keep in cache longer (renamed from cacheTime)
         refetchOnMount: 'always',
         refetchInterval: false, // Disable automatic refetching
       },
