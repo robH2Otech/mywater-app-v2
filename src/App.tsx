@@ -13,12 +13,18 @@ function App() {
         retry: (failureCount, error) => {
           // Don't retry if it's a permissions error
           if (error?.message?.includes('Missing or insufficient permissions')) {
-            console.log('Permission error - not retrying');
             return false;
           }
-          return failureCount < 3;
+          return failureCount < 2; // Reduced from 3 to 2
         },
         refetchOnWindowFocus: false,
+        staleTime: 5 * 60 * 1000, // 5 minutes - data stays fresh longer
+        cacheTime: 10 * 60 * 1000, // 10 minutes - keep in cache longer
+        refetchOnMount: 'always',
+        refetchInterval: false, // Disable automatic refetching
+      },
+      mutations: {
+        retry: 1, // Only retry mutations once
       },
     },
   });
@@ -27,7 +33,7 @@ function App() {
     <QueryClientProvider client={queryClient}>
       <LanguageProvider>
         <BrowserRouter>
-          <div className="min-h-screen bg-spotify-dark">
+          <div className="min-h-screen bg-spotify-dark prevent-horizontal-scroll">
             <AppRoutes />
             <Toaster />
           </div>

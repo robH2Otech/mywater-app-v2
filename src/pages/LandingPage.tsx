@@ -8,12 +8,20 @@ import { ArrowRight, Droplet, Shield, Users, Globe, Settings } from "lucide-reac
 import { useLanguage } from "@/contexts/LanguageContext";
 import MatrixRain from "@/components/ui/matrix-rain";
 import { useAuth } from "@/contexts/AuthContext";
+import { usePerformanceMonitor } from "@/hooks/usePerformanceMonitor";
+import { useResponsive } from "@/hooks/use-responsive";
+import { ResponsiveHeading, ResponsiveText } from "@/components/ui/responsive-typography";
+import { TouchOptimizedButton } from "@/components/ui/touch-optimized-button";
 
 const LandingPage = () => {
   const navigate = useNavigate();
   const [selectedOption, setSelectedOption] = useState<string>("private");
   const { language, setLanguage, t } = useLanguage();
   const { firebaseUser, userRole } = useAuth();
+  const { isMobile, isTablet } = useResponsive();
+  
+  // Monitor performance
+  usePerformanceMonitor('LandingPage');
   
   // Set default language to English when the component mounts
   useEffect(() => {
@@ -37,7 +45,7 @@ const LandingPage = () => {
     <div className="min-h-screen bg-spotify-dark flex flex-col items-center justify-center p-4 relative overflow-hidden">
       {/* Matrix Rain Background */}
       <MatrixRain 
-        fontSize={16}
+        fontSize={isMobile ? 12 : 16}
         color="#39afcd"
         characters="100X-WATER"
         fadeOpacity={0.05}
@@ -52,24 +60,30 @@ const LandingPage = () => {
         <div className="flex items-center gap-2 bg-spotify-darker/80 p-2 rounded-md">
           <Globe className="h-4 w-4 text-gray-400" />
           <div className="flex space-x-1">
-            <button 
+            <TouchOptimizedButton 
+              variant="ghost"
+              size="sm"
               className={`px-2 py-1 rounded text-sm ${language === 'en' ? 'bg-mywater-blue text-white' : 'text-gray-400 hover:text-white'}`}
               onClick={() => setLanguage('en')}
             >
               EN
-            </button>
-            <button 
+            </TouchOptimizedButton>
+            <TouchOptimizedButton
+              variant="ghost"
+              size="sm"
               className={`px-2 py-1 rounded text-sm ${language === 'sl' ? 'bg-mywater-blue text-white' : 'text-gray-400 hover:text-white'}`}
               onClick={() => setLanguage('sl')}
             >
               SL
-            </button>
-            <button 
+            </TouchOptimizedButton>
+            <TouchOptimizedButton
+              variant="ghost"
+              size="sm"
               className={`px-2 py-1 rounded text-sm ${language === 'hr' ? 'bg-mywater-blue text-white' : 'text-gray-400 hover:text-white'}`}
               onClick={() => setLanguage('hr')}
             >
               HR
-            </button>
+            </TouchOptimizedButton>
           </div>
         </div>
       </div>
@@ -78,40 +92,44 @@ const LandingPage = () => {
       {firebaseUser && (
         <div className="absolute top-4 left-4 z-20">
           <div className="bg-green-900/80 border border-green-700 p-3 rounded-md">
-            <p className="text-green-300 text-sm mb-2">
+            <ResponsiveText size="sm" className="text-green-300 mb-2">
               ✅ Authenticated as: {firebaseUser.email}
-            </p>
-            <p className="text-green-300 text-sm mb-3">
+            </ResponsiveText>
+            <ResponsiveText size="sm" className="text-green-300 mb-3">
               Role: {userRole || 'Loading...'}
-            </p>
-            <Button 
+            </ResponsiveText>
+            <TouchOptimizedButton 
               onClick={goToDashboard}
               size="sm"
               className="bg-green-600 hover:bg-green-700 text-white"
             >
               <Settings className="h-4 w-4 mr-2" />
               Go to Dashboard
-            </Button>
+            </TouchOptimizedButton>
           </div>
         </div>
       )}
 
-      <div className="max-w-3xl w-full space-y-8 z-10">
+      <div className={`w-full space-y-8 z-10 ${isMobile ? 'max-w-sm' : isTablet ? 'max-w-2xl' : 'max-w-3xl'}`}>
         {/* Hero Section */}
         <div className="text-center space-y-4">
-          <h1 className="text-4xl md:text-5xl font-bold text-white">
+          <ResponsiveHeading level={1} className="text-white">
             {t("welcome_to")} <span className="text-mywater-blue">X-WATER app</span>
-          </h1>
-          <p className="text-lg text-gray-400 max-w-2xl mx-auto">
+          </ResponsiveHeading>
+          <ResponsiveText className="text-gray-400 mx-auto max-w-2xl">
             {t("app_subtitle")}
-          </p>
+          </ResponsiveText>
         </div>
 
         {/* Option Cards */}
         <Tabs defaultValue="private" className="w-full" onValueChange={setSelectedOption}>
-          <TabsList className="grid grid-cols-2 mb-6">
-            <TabsTrigger value="private">{t("private_user")}</TabsTrigger>
-            <TabsTrigger value="business">{t("business_client")}</TabsTrigger>
+          <TabsList className={`grid grid-cols-2 mb-6 ${isMobile ? 'w-full' : ''}`}>
+            <TabsTrigger value="private" className="touch-target">
+              {t("private_user")}
+            </TabsTrigger>
+            <TabsTrigger value="business" className="touch-target">
+              {t("business_client")}
+            </TabsTrigger>
           </TabsList>
           
           <TabsContent value="private" className="space-y-4">
@@ -175,14 +193,17 @@ const LandingPage = () => {
           </TabsContent>
         </Tabs>
 
-        <Button 
+        <TouchOptimizedButton 
           onClick={handleContinue}
-          className="w-full md:w-auto md:min-w-44 mx-auto bg-mywater-blue hover:bg-mywater-blue/90 flex items-center gap-2"
+          className={`bg-mywater-blue hover:bg-mywater-blue/90 flex items-center gap-2 ${
+            isMobile ? 'w-full' : 'w-auto min-w-44 mx-auto'
+          }`}
           size="lg"
+          touchSize="large"
         >
           {t("continue")}
           <ArrowRight className="h-4 w-4" />
-        </Button>
+        </TouchOptimizedButton>
 
         <div className="pt-8 text-center text-sm text-gray-500">
           <p>© 2025 X-WATER. All rights reserved.</p>
